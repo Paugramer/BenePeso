@@ -1,0 +1,168 @@
+/* BENEPESO shared presentation layer.
+   Loaded last so existing pages retain their layout while sharing a consistent
+   accessibility, interaction, and responsive baseline. */
+:root {
+  --bp-color-primary: #176b49;
+  --bp-color-primary-hover: #10573b;
+  --bp-color-primary-soft: #eaf5ef;
+  --bp-color-text: #183127;
+  --bp-color-muted: #60756b;
+  --bp-color-surface: #ffffff;
+  --bp-color-canvas: #f5f8f6;
+  --bp-color-border: #dbe6df;
+  --bp-color-danger: #b42318;
+  --bp-color-warning: #a15c00;
+  --bp-focus: #f5a524;
+  --bp-radius-sm: 8px;
+  --bp-radius-md: 12px;
+  --bp-radius-lg: 16px;
+  --bp-shadow-sm: 0 1px 3px rgba(16, 51, 35, .08);
+  --bp-shadow-md: 0 12px 32px rgba(16, 51, 35, .12);
+}
+
+html { color-scheme: light; scroll-behavior: smooth; }
+body { color: var(--bp-color-text); text-rendering: optimizeLegibility; }
+img { max-width: 100%; }
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--bp-focus) !important;
+  outline-offset: 3px !important;
+}
+
+:where(button, .btn, .btn-main, .modal-btn, [class*="btn-"]) {
+  min-height: 42px;
+  transition: background-color .2s ease, border-color .2s ease,
+              color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+:where(button, .btn, .btn-main, .modal-btn, [class*="btn-"]):disabled {
+  cursor: not-allowed;
+  opacity: .58;
+}
+
+:where(input, select, textarea) {
+  accent-color: var(--bp-color-primary);
+}
+
+:where(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) {
+  min-height: 44px;
+}
+
+:where(input, select, textarea)[aria-invalid="true"] {
+  border-color: var(--bp-color-danger) !important;
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, .12) !important;
+}
+
+:where(.flash, .alert, .notice, .error-message, .success-message) {
+  border-radius: var(--bp-radius-md);
+}
+
+:where(.card, .stat-card, .program-card, .auth-card, .content-card) {
+  border-color: var(--bp-color-border);
+  box-shadow: var(--bp-shadow-sm);
+}
+
+:where(.table-wrapper, .table-container, .activity-table-wrap, .data-table-wrap) {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+:where(table) {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+:where(table) :where(th) {
+  white-space: nowrap;
+}
+
+:where(table) tbody tr {
+  transition: background-color .16s ease;
+}
+
+:where(table) tbody tr:hover {
+  background-color: rgba(23, 107, 73, .045);
+}
+
+:where(.modal-dialog, .modal-content, .modal-box, .modal-landscape) {
+  max-height: min(90vh, 900px);
+  max-height: min(90dvh, 900px);
+}
+
+:where(.modal-close, .modal-close-btn, .modal-close-icon) {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.bp-sr-only {
+  border: 0 !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  height: 1px !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  position: absolute !important;
+  white-space: nowrap !important;
+  width: 1px !important;
+}
+
+@media (max-width: 768px) {
+  :where(.main-area, .content-container, .page-wrap) {
+    max-width: 100%;
+  }
+
+  :where(.filter-bar, .filter-row, .toolbar, .top-actions, .modal-actions,
+         .modal-actions-flex, .form-actions) {
+    gap: 10px;
+  }
+
+  :where(.modal-dialog, .modal-content, .modal-box, .modal-landscape) {
+    margin: 12px;
+    max-height: calc(100dvh - 24px);
+    max-width: calc(100vw - 24px) !important;
+    overflow-y: auto;
+    width: auto !important;
+  }
+
+  :where(.modal-actions, .modal-actions-flex) > :where(button, a) {
+    flex: 1 1 150px;
+  }
+
+  :where(.data-table, .activity-table, .spreadsheet-table) {
+    min-width: 720px;
+  }
+}
+
+@media (max-width: 480px) {
+  :where(.btn-main, .modal-btn, .form-actions > button, .form-actions > a) {
+    width: 100%;
+  }
+
+  :where(.modal-head, .modal-head-alt, .modal-head-sm) {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+@media print {
+  :where(.sidebar, .topbar, .top-area, .filters, .filter-bar, .toolbar,
+         button, [class*="btn-"]) { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  :where(.main-area, .content-container, .page-wrap) { margin: 0 !important; width: 100% !important; }
+}

@@ -1,0 +1,16 @@
+# Local secrets and hosting configuration
+.env
+.env.*
+!.env.example
+config.local.php
+
+# User-uploaded personal files
+uploads/*
+!uploads/.gitkeep
+
+# Local/editor files
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+

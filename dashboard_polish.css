@@ -1,0 +1,221 @@
+.dashboard-chart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(300px, .85fr);
+  gap: 20px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.stat-card-link {
+  color: inherit;
+  cursor: pointer;
+  position: relative;
+  text-decoration: none;
+}
+
+.stat-card-link::after {
+  align-items: center;
+  background: #fff;
+  border: 1px solid rgba(31, 122, 84, .16);
+  border-radius: 50%;
+  bottom: 16px;
+  color: var(--green, #1f7a54);
+  content: "\2192";
+  display: flex;
+  font-size: 16px;
+  font-weight: 800;
+  height: 30px;
+  justify-content: center;
+  opacity: 0;
+  position: absolute;
+  right: 16px;
+  transform: translateX(-5px);
+  transition: opacity .2s ease, transform .2s ease;
+  width: 30px;
+}
+
+.stat-card-link:hover,
+.stat-card-link:focus-visible {
+  border-color: rgba(31, 122, 84, .28);
+  box-shadow: 0 16px 34px rgba(16, 70, 47, .13);
+  transform: translateY(-3px);
+}
+
+.stat-card-link:hover::after,
+.stat-card-link:focus-visible::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.dashboard-chart-card {
+  min-height: 360px;
+  min-width: 0;
+  overflow: visible;
+  padding-bottom: 22px;
+}
+
+.dashboard-chart-canvas {
+  contain: layout;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.dashboard-chart-canvas canvas {
+  display: block !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+.dashboard-chart-canvas--line { height: 255px; }
+.dashboard-chart-canvas--donut { height: 255px; }
+
+.chart-context {
+  align-items: center;
+  background: var(--green-light, #eaf5ef);
+  border: 1px solid rgba(31, 122, 84, .12);
+  border-radius: 999px;
+  color: var(--green-dark, #145339);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+}
+
+.chart-period-menu {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 30;
+}
+
+.chart-period-trigger {
+  align-items: center;
+  background: linear-gradient(180deg, #f3faf6 0%, #e8f5ee 100%);
+  border: 1px solid rgba(31, 122, 84, .2);
+  border-radius: 13px;
+  box-shadow: 0 3px 10px rgba(20, 83, 57, .06);
+  color: var(--green-dark, #145339);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  gap: 8px;
+  justify-content: center;
+  min-height: 42px;
+  min-width: 132px;
+  padding: 0 13px;
+  transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.chart-period-trigger:hover {
+  background: #e5f3eb;
+  border-color: rgba(31, 122, 84, .38);
+  box-shadow: 0 5px 14px rgba(20, 83, 57, .1);
+  transform: translateY(-1px);
+}
+
+.chart-period-menu.is-open .chart-period-trigger {
+  background: #e5f3eb;
+  border-color: var(--green, #1f7a54);
+  box-shadow: 0 0 0 3px rgba(31, 122, 84, .1);
+}
+
+.chart-period-caret {
+  margin-left: auto;
+  transition: transform .2s ease;
+}
+
+.chart-period-menu.is-open .chart-period-caret { transform: rotate(180deg); }
+
+.chart-period-options {
+  background: #fff;
+  border: 1px solid #d8e7df;
+  border-radius: 14px;
+  box-shadow: 0 18px 42px rgba(16, 51, 35, .18), 0 3px 10px rgba(16, 51, 35, .08);
+  min-width: 174px;
+  overflow: hidden;
+  padding: 6px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+}
+
+.chart-period-options[hidden] { display: none; }
+
+.chart-period-options button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  color: #334b40;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 0 11px;
+  text-align: left;
+  width: 100%;
+}
+
+.chart-period-options button:hover,
+.chart-period-options button:focus-visible {
+  background: #eff8f3;
+  color: var(--green-dark, #145339);
+  outline: 0 !important;
+}
+
+.chart-period-options button[aria-selected="true"] {
+  background: var(--green, #1f7a54);
+  color: #fff;
+}
+
+.chart-period-options button[aria-selected="true"]:hover,
+.chart-period-options button[aria-selected="true"]:focus-visible {
+  background: #176844;
+}
+
+.chart-empty {
+  align-items: center;
+  color: var(--muted, #60756b);
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 10px;
+  height: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+.chart-empty i {
+  color: rgba(31, 122, 84, .38);
+  font-size: 52px;
+}
+
+@media (max-width: 1080px) {
+  .dashboard-chart-grid { grid-template-columns: 1fr; }
+  .dashboard-chart-card { min-height: 330px; }
+  .dashboard-chart-card--status { min-height: 350px; }
+  .dashboard-chart-canvas--donut { height: 245px; }
+}
+
+@media (max-width: 600px) {
+  .dashboard-chart-grid { gap: 14px; }
+  .dashboard-chart-card { min-height: 300px; padding: 18px !important; }
+  .dashboard-chart-card--status { min-height: 325px; }
+  .dashboard-chart-canvas--line { height: 205px; }
+  .dashboard-chart-canvas--donut { height: 225px; }
+  .chart-context { display: none; }
+  .chart-period-trigger { min-height: 40px; min-width: 124px; }
+  .chart-period-options { left: auto; right: 0; }
+}
