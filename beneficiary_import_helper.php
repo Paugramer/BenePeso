@@ -182,15 +182,57 @@ function normalizeBeneficiaryImportDate(string $value): string
     $value = cleanBeneficiaryImportText($value);
     if ($value === '') return '';
 
-    if (is_numeric($value) && (float)$value > 1) {
+    // A compact YYYYMMDD value is a date, not an Excel serial number.
+    if (preg_match('/^\d{8}$/', $value)) {
+        $date = DateTimeImmutable::createFromFormat('!Ymd', $value);
+        $errors = DateTimeImmutable::getLastErrors();
+        if ($date instanceof DateTimeImmutable
+            && ($errors === false || ($errors['warning_count'] === 0 && $errors['error_count'] === 0))
+            && $date->format('Ymd') === $value) {
+            return $date->format('Y-m-d');
+        }
+        return '';
+    }
+
+    if (is_numeric($value) && (float)$value > 1 && (float)$value <= 2958465) {
         $days = (int)floor((float)$value);
         $date = new DateTimeImmutable('1899-12-30');
         return $date->modify("+$days days")->format('Y-m-d');
     }
 
-    $value = str_replace('/', '-', $value);
-    $timestamp = strtotime($value);
-    return $timestamp ? date('Y-m-d', $timestamp) : '';
+    // Year-first input is unambiguous and is the preferred CSV format.
+    foreach (['!Y-m-d', '!Y/m/d', '!F j, Y', '!M j, Y'] as $format) {
+        $date = DateTimeImmutable::createFromFormat($format, $value);
+        $errors = DateTimeImmutable::getLastErrors();
+        if ($date instanceof DateTimeImmutable
+            && ($errors === false || ($errors['warning_count'] === 0 && $errors['error_count'] === 0))) {
+            return $date->format('Y-m-d');
+        }
+    }
+
+    // Accept day-first or month-first numeric input only when its order is
+    // unambiguous. For example, 13/02/2026 is day-first and 02/13/2026 is
+    // month-first; 02/03/2026 is rejected instead of being guessed.
+    if (preg_match('/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/', $value, $parts)) {
+        $first = (int)$parts[1];
+        $second = (int)$parts[2];
+        if ($first > 12 && $second <= 12) {
+            $format = '!j/n/Y';
+        } elseif ($second > 12 && $first <= 12) {
+            $format = '!n/j/Y';
+        } else {
+            return '';
+        }
+        $normalized = str_replace('-', '/', $value);
+        $date = DateTimeImmutable::createFromFormat($format, $normalized);
+        $errors = DateTimeImmutable::getLastErrors();
+        if ($date instanceof DateTimeImmutable
+            && ($errors === false || ($errors['warning_count'] === 0 && $errors['error_count'] === 0))) {
+            return $date->format('Y-m-d');
+        }
+    }
+
+    return '';
 }
 
 function normalizeBeneficiaryImportCivilStatus(string $value): string

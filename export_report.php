@@ -167,7 +167,7 @@ if ($format === 'excel_template' && strtoupper($program_name) === 'TUPAD') {
     echo '<tr>';
     echo '<th rowspan="2" class="grid-header">No.</th>';
     echo '<th colspan="6" class="grid-header">Name of Beneficiary</th>';
-    echo '<th rowspan="2" class="grid-header">Birthdate<br>(YYYY/MM/DD)</th>';
+    echo '<th rowspan="2" class="grid-header">Date of Birth<br>(YYYY/MM/DD)</th>';
     echo '<th colspan="5" class="grid-header">Address</th>';
     echo '<th rowspan="2" class="grid-header">Type of ID</th>';
     echo '<th rowspan="2" class="grid-header">ID Number</th>';

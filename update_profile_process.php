@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/auth_session.php';
 require "db.php";
+require_once __DIR__ . '/beneficiary_choices.php';
 
 if (!isset($_SESSION["user_id"])) {
     header("Location: login.php");
@@ -27,29 +28,31 @@ auth_require_csrf();
 
 $user_id       = (int)$_SESSION["user_id"];
 $first_name    = clean_profile_value($_POST['first_name'] ?? '');
-$middle_name   = clean_profile_value($_POST['middle_name'] ?? '');
+$middle_name   = normalize_optional_middle_name(clean_profile_value($_POST['middle_name'] ?? ''));
 $last_name     = clean_profile_value($_POST['last_name'] ?? '');
-$ext_name      = clean_profile_value($_POST['ext_name'] ?? '');
+$ext_name      = normalize_optional_name_part(clean_profile_value($_POST['ext_name'] ?? ''));
 $birthdate     = clean_profile_value($_POST['birthdate'] ?? '');
 $sex           = clean_profile_value($_POST['sex'] ?? '');
 $civil_status  = clean_profile_value($_POST['civil_status'] ?? '');
 $contact_no    = clean_profile_value($_POST['contact_no'] ?? '');
 $street        = clean_profile_value($_POST['street_purok_zone'] ?? '');
-$barangay      = clean_profile_value($_POST['barangay'] ?? '');
+$barangay      = canonical_beneficiary_barangay(clean_profile_value($_POST['barangay'] ?? ''));
 $email         = strtolower(clean_profile_value($_POST['email'] ?? ''));
 
 $allowed_sexes = ['Male', 'Female'];
 $allowed_civil_statuses = ['Single', 'Married', 'Widowed', 'Legally Separated'];
-$allowed_barangays = [
-    'Aguit-It', 'Banocboc', 'Cagbalogo', 'Calangcawan Norte', 'Calangcawan Sur',
-    'Guinacutan', 'Mangcayo', 'Mangcawayan', 'Manlucugan', 'Matango', 'Napilihan',
-    'Pinagtigasan', 'Barangay I (Pob.)', 'Barangay II (Pob.)', 'Barangay III (Pob.)',
-    'Sabang', 'Santo Domingo', 'Singi', 'Sula'
-];
+$allowed_barangays = beneficiary_barangay_options();
 
 if ($first_name === '' || $last_name === '' || $birthdate === '' || $contact_no === '' || $barangay === '' || $email === '') {
     return_to_profile('Update Failed: Required fields cannot be left blank.');
 }
+
+$identity_errors = validate_beneficiary_identity_input([
+    'first_name' => $first_name, 'middle_name' => $middle_name, 'last_name' => $last_name,
+    'birthdate' => $birthdate, 'sex' => $sex, 'civil_status' => $civil_status,
+    'contact_no' => $contact_no, 'email' => $email, 'barangay' => $barangay,
+]);
+if ($identity_errors) return_to_profile('Update Failed: ' . implode(' ', $identity_errors));
 
 if (strlen($first_name) > 50 || strlen($middle_name) > 50 || strlen($last_name) > 50 || strlen($ext_name) > 10 || strlen($street) > 100) {
     return_to_profile('Update Failed: One or more profile fields exceed the allowed length.');
@@ -70,7 +73,7 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 120) {
 $birth_date = DateTime::createFromFormat('!Y-m-d', $birthdate);
 $today = new DateTime('today');
 if (!$birth_date || $birth_date->format('Y-m-d') !== $birthdate || $birth_date > $today) {
-    return_to_profile('Update Failed: Enter a valid birth date that is not in the future.');
+    return_to_profile('Update Failed: Enter a valid date of birth that is not in the future.');
 }
 $age = $birth_date->diff($today)->y;
 

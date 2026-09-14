@@ -79,7 +79,7 @@ $embedded = isset($_GET['embedded']) && $_GET['embedded'] === '1';
 
   <h2>Information we collect</h2>
   <ul>
-    <li>Account and identity details, including name, birth date, sex, civil status, photograph, email address, contact number, and password in secured hashed form.</li>
+    <li>Account and identity details, including name, date of birth, sex, civil status, photograph, email address, contact number, and password in secured hashed form.</li>
     <li>Residence details, including street, purok or zone, barangay, municipality, and district.</li>
     <li>Program and eligibility details, which may include government ID information, employment, occupation, income, education, skills, household and dependent information.</li>
     <li>Program-specific information, which may include family circumstances, disability or sector classification, business registration, assets, capital, earnings, and previous government assistance.</li>

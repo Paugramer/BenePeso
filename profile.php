@@ -352,7 +352,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
                         <input type="text" id="profileFirstName" name="first_name" value="<?= h($user['first_name']) ?>" maxlength="50" autocomplete="given-name" required readonly class="form-input">
                     </div>
                     <div class="info-group">
-                        <label for="profileMiddleName">Middle Name</label>
+                        <label for="profileMiddleName">Middle Name (Optional)</label>
                         <input type="text" id="profileMiddleName" name="middle_name" value="<?= h($user['middle_name']) ?>" maxlength="50" autocomplete="additional-name" readonly class="form-input">
                     </div>
                     <div class="info-group">
@@ -366,7 +366,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
 
                     <div class="section-divider">Identity & Contact</div>
                     <div class="info-group">
-                        <label for="profileBirthdate">Birth Date</label>
+                        <label for="profileBirthdate">Date of Birth</label>
                         <input type="date" id="profileBirthdate" name="birthdate" value="<?= h($user['birthdate']) ?>" max="<?= date('Y-m-d') ?>" autocomplete="bday" required readonly class="form-input">
                     </div>
                     <div class="info-group">

@@ -2,6 +2,7 @@
 require_once __DIR__ . '/auth_session.php';
 require "db.php";
 require_once "privacy_helper.php";
+require_once "beneficiary_choices.php";
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: signup.php');
@@ -10,15 +11,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 auth_require_csrf();
 
 $first_name     = trim($_POST["first_name"] ?? "");
-$middle_name    = trim($_POST["middle_name"] ?? "");
+$middle_name    = normalize_optional_middle_name($_POST["middle_name"] ?? "");
 $last_name      = trim($_POST["last_name"] ?? "");
-$ext_name       = trim($_POST["ext_name"] ?? "");
+$ext_name       = normalize_optional_name_part($_POST["ext_name"] ?? "");
 $birthdate      = trim($_POST["birthdate"] ?? "");
 $sex            = trim($_POST["sex"] ?? "");
 $civil_status   = trim($_POST["civil_status"] ?? "");
 $contact_no     = trim($_POST["contact_no"] ?? "");
 $street_purok   = trim($_POST["street_purok_zone"] ?? "");
-$barangay       = trim($_POST["barangay"] ?? "");
+$barangay       = canonical_beneficiary_barangay($_POST["barangay"] ?? "");
 $district       = trim($_POST["district"] ?? "");
 $email          = trim($_POST["email"] ?? "");
 $password       = $_POST["password"] ?? "";
@@ -31,12 +32,7 @@ if (!isset($_POST['privacy_acknowledgment']) || $_POST['privacy_acknowledgment']
     exit();
 }
 
-$valid_barangays = [
-    "Aguit-It", "Banocboc", "Cagbalogo", "Calangcawan Norte", "Calangcawan Sur",
-    "Guinacutan", "Mangcayo", "Mangcawayan", "Manlucugan", "Matango",
-    "Napilihan", "Pinagtigasan", "Barangay I (Pob.)", "Barangay II (Pob.)",
-    "Barangay III (Pob.)", "Sabang", "Santo Domingo", "Singi", "Sula"
-];
+$valid_barangays = beneficiary_barangay_options();
 $valid_civil_statuses = ['Single', 'Married', 'Widowed', 'Legally Separated'];
 
 if ($first_name === "" || $last_name === "" || $birthdate === "" || $sex === "" || 
@@ -45,6 +41,18 @@ if ($first_name === "" || $last_name === "" || $birthdate === "" || $sex === "" 
     $_SESSION["flash"] = "Please complete all required fields.";
     $_SESSION["form_data"] = $_POST; 
     header("Location: signup.php");
+    exit();
+}
+
+$identity_errors = validate_beneficiary_identity_input([
+    'first_name' => $first_name, 'middle_name' => $middle_name, 'last_name' => $last_name,
+    'birthdate' => $birthdate, 'sex' => $sex, 'civil_status' => $civil_status,
+    'contact_no' => $contact_no, 'email' => $email, 'barangay' => $barangay,
+]);
+if ($identity_errors) {
+    $_SESSION['flash'] = implode(' ', $identity_errors);
+    $_SESSION['form_data'] = $_POST;
+    header('Location: signup.php');
     exit();
 }
 

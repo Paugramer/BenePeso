@@ -182,12 +182,7 @@ $errorModalMessage = $_SESSION["error_modal_message"] ?? "";
 
 unset($_SESSION["flash"], $_SESSION["flash_type"], $_SESSION["show_success_modal"], $_SESSION["success_modal_message"], $_SESSION["import_summary"], $_SESSION["modal_icon"], $_SESSION["show_error_modal"], $_SESSION["error_modal_message"]);
 
-$barangays = [
-  "Aguit-It", "Banocboc", "Cagbalogo", "Calangcawan Norte", "Calangcawan Sur",
-  "Guinacutan", "Mangcayo", "Mangcawayan", "Manlucugan", "Matango",
-  "Napilihan", "Pinagtigasan", "Barangay I (Pob.)", "Barangay II (Pob.)",
-  "Barangay III (Pob.)", "Sabang", "Santo Domingo", "Singi", "Sula"
-];
+$barangays = beneficiary_barangay_options();
 
 /* =========================
    POST ACTIONS (STAFF)
@@ -319,9 +314,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       }
 
       $first_name = trim($_POST["first_name"] ?? "");
-      $middle_name = trim($_POST["middle_name"] ?? "");
+      $middle_name = normalize_optional_middle_name($_POST["middle_name"] ?? "");
       $last_name = trim($_POST["last_name"] ?? "");
-      $ext_name = trim($_POST["ext_name"] ?? ""); 
+      $ext_name = normalize_optional_name_part($_POST["ext_name"] ?? ""); 
       $birthdate = trim($_POST["birthdate"] ?? null);
       $age = (int)($_POST["age"] ?? 0);
       $sex = trim($_POST["owner_sex"] ?? $_POST["sex"] ?? ""); 
@@ -331,7 +326,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $contact_no = trim($_POST["contact_no"] ?? "");
       $email = trim($_POST["email"] ?? "");
       $street = trim($_POST["street_purok_zone"] ?? "");
-      $barangay = trim($_POST["barangay"] ?? "");
+      $barangay = canonical_beneficiary_barangay($_POST["barangay"] ?? "");
       $municipality = trim($_POST["municipality"] ?? "Vinzons");
       $district = trim($_POST["district"] ?? "Camarines Norte");
       $status = trim($_POST["status"] ?? "Active");
@@ -528,11 +523,37 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                $statusStmt->close();
            }
        }
-       $full_name = trim("$first_name $middle_name $last_name $ext_name");
+      $full_name = trim("$first_name $middle_name $last_name $ext_name");
       $last_availed_at = (!empty($date_availed)) ? $date_availed . " 00:00:00" : null;
       $date_availed_val = empty($date_availed) ? null : $date_availed;
       $date_completed_val = empty($date_completed) ? null : $date_completed;
       $birthdate_val = empty($birthdate) ? null : $birthdate;
+
+      $data_quality_errors = validate_beneficiary_identity_input([
+          'first_name' => $first_name, 'middle_name' => $middle_name, 'last_name' => $last_name,
+          'birthdate' => $birthdate, 'sex' => $sex, 'civil_status' => $civil_status,
+          'contact_no' => $contact_no, 'email' => $email, 'barangay' => $barangay,
+      ]);
+      if ($street === '') $data_quality_errors[] = 'Street or purok is required.';
+      foreach (['Date availed' => $date_availed, 'Date completed' => $date_completed] as $label => $value) {
+          if ($value !== '' && !is_strict_iso_date($value)) $data_quality_errors[] = "$label is invalid.";
+      }
+      if ($date_availed !== '' && $date_completed !== '' && is_strict_iso_date($date_availed) && is_strict_iso_date($date_completed) && $date_completed < $date_availed) {
+          $data_quality_errors[] = 'Date completed cannot be earlier than date availed.';
+      }
+      if ($avg_monthly_income !== '' && (!is_numeric($avg_monthly_income) || (float)$avg_monthly_income < 0)) {
+          $data_quality_errors[] = 'Average monthly income must be a non-negative number.';
+      }
+      foreach ($prod_prices as $price) {
+          $price = trim((string)$price);
+          if ($price !== '' && (!is_numeric($price) || (float)$price < 0)) {
+              $data_quality_errors[] = 'Each product price must be a non-negative number.';
+              break;
+          }
+      }
+      if (is_strict_iso_date($birthdate)) {
+          $age = (new DateTimeImmutable($birthdate))->diff(new DateTimeImmutable('today', new DateTimeZone('Asia/Manila')))->y;
+      }
 
       $hasSourceCol = column_exists($conn, "beneficiaries", "application_source");
       $hasStall = column_exists($conn, "beneficiaries", "nm_stall_no");
@@ -541,7 +562,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $stall_col_upd = $hasStall ? ", nm_stall_no=?, nm_date_started=?, business_assets=?, utility_needs=?" : "";
       $stall_type = $hasStall ? "ssss" : "";
 
-      if ($program_id > 0 && $full_name !== "") {
+      if ($data_quality_errors) {
+          $_SESSION["show_error_modal"] = true;
+          $_SESSION["error_modal_message"] = implode(' ', array_values(array_unique($data_quality_errors)));
+      } elseif ($program_id > 0 && $full_name !== "") {
           $householdCheck = check_tupad_household_conflict($conn, $program_id, $full_name, $dependent_name, $bid);
           if (!$householdCheck['eligible']) {
               $_SESSION["show_error_modal"] = true;
@@ -816,6 +840,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   if (empty(trim(implode("", $data)))) continue;
 
                   $row_data = [];
+                  $invalid_import_row = false;
                   foreach ($mapped_headers as $index => $col_name) {
                       $val = cleanBeneficiaryImportText($data[$index] ?? "");
                       
@@ -824,7 +849,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                       }
                       
                       if (in_array($col_name, ['birthdate', 'permit_validity', 'date_availed', 'date_completed', 'nm_date_started'], true) && $val !== '') {
-                          $val = normalizeBeneficiaryImportDate($val);
+                          $normalized_date = normalizeBeneficiaryImportDate($val);
+                          if ($normalized_date === '') $invalid_import_row = true;
+                          $val = $normalized_date;
                       }
                       if ($col_name === 'civil_status' && $val !== '') $val = normalizeBeneficiaryImportCivilStatus($val);
                       
@@ -842,20 +869,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                           $row_data[$col_name] = "";
                       }
                   }
-                  
-                  if (empty($row_data['age']) && !empty($row_data['birthdate'])) {
+
+                  if (!empty($row_data['contact_no']) && !preg_match('/^09\d{9}$/', $row_data['contact_no'])) $invalid_import_row = true;
+                  if (!empty($row_data['email']) && !filter_var($row_data['email'], FILTER_VALIDATE_EMAIL)) $invalid_import_row = true;
+                  if (!empty($row_data['birthdate']) && $row_data['birthdate'] > date('Y-m-d')) $invalid_import_row = true;
+                  if (!empty($row_data['date_availed']) && !empty($row_data['date_completed']) && $row_data['date_completed'] < $row_data['date_availed']) $invalid_import_row = true;
+                  foreach (['avg_monthly_income', 'initial_capital', 'current_capital', 'daily_earnings'] as $numeric_field) {
+                      if (($row_data[$numeric_field] ?? '') !== '' && (!is_numeric($row_data[$numeric_field]) || (float)$row_data[$numeric_field] < 0)) $invalid_import_row = true;
+                  }
+                  if ($invalid_import_row) {
+                      $failedCount++;
+                      continue;
+                  }
+
+                  if (!empty($row_data['birthdate'])) {
                       $dob = new DateTime($row_data['birthdate']);
                       $now = new DateTime();
                       $row_data['age'] = $now->diff($dob)->y;
                   }
 
                   if (empty($row_data['barangay']) && !empty($row_data['street_purok_zone'])) {
-                      $known_brgys = [
-                        "Aguit-It", "Banocboc", "Cagbalogo", "Calangcawan Norte", "Calangcawan Sur",
-                        "Guinacutan", "Mangcayo", "Mangcawayan", "Manlucugan", "Matango",
-                        "Napilihan", "Pinagtigasan", "Barangay I (Pob.)", "Barangay II (Pob.)",
-                        "Barangay III (Pob.)", "Sabang", "Santo Domingo", "Singi", "Sula"
-                      ];
+                      $known_brgys = beneficiary_barangay_options();
                       foreach ($known_brgys as $kb) {
                           if (stripos($row_data['street_purok_zone'], $kb) !== false) {
                               $row_data['barangay'] = $kb;
@@ -865,21 +899,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   }
 
                   $first_name = $row_data['first_name'] ?? "";
-                  $middle_name = $row_data['middle_name'] ?? "";
+                  $middle_name = normalize_optional_middle_name($row_data['middle_name'] ?? "");
                   $last_name = $row_data['last_name'] ?? "";
                   $full_name = $row_data['full_name'] ?? "";
-                  
-                  if (!empty($full_name) && empty($first_name) && empty($last_name)) {
-                      $nameParts = preg_split('/\s+/', trim($full_name));
-                      $first_name = $nameParts[0] ?? '';
-                      if (count($nameParts) >= 3) {
-                          $last_name = array_pop($nameParts);
-                          array_shift($nameParts);
-                          $middle_name = implode(' ', $nameParts);
-                      } else {
-                          $last_name = $nameParts[1] ?? '';
-                      }
-                  }
+                  $row_data['middle_name'] = $middle_name;
                   
                   if (empty($full_name)) {
                       $full_name = trim("$first_name $middle_name $last_name");
@@ -892,6 +915,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   }
                   $full_name = preg_replace('/\s+/u', ' ', cleanBeneficiaryImportText($full_name));
                   $row_data['full_name'] = $full_name;
+                  if (!empty($row_data['barangay'])) {
+                      $row_data['barangay'] = canonical_beneficiary_barangay($row_data['barangay']);
+                      if (!in_array($row_data['barangay'], beneficiary_barangay_options(), true)) {
+                          $failedCount++;
+                          continue;
+                      }
+                  }
 
                   $checkStmt->bind_param("is", $program_id, $full_name);
                   $checkStmt->execute();
@@ -942,7 +972,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
               if ($failedCount > 0) {
                   $_SESSION["show_error_modal"] = true;
-                  $_SESSION["error_modal_message"] = "$successCount new and $updatedCount existing records were saved, but $failedCount row(s) failed. $skippedCount row(s) without a beneficiary name were skipped." . $emailSummary;
+                  $_SESSION["error_modal_message"] = "$successCount new and $updatedCount existing records were saved, but $failedCount row(s) failed validation (for example, an invalid or ambiguous date, contact number, email, barangay, or numeric value). $skippedCount row(s) without a beneficiary name were skipped." . $emailSummary;
               } else {
                   $_SESSION["show_success_modal"] = true;
                   $_SESSION["success_modal_message"] = "$successCount new records uploaded (Pending). $updatedCount existing records fully updated to '$batch_availment'." . ($skippedCount ? " $skippedCount unnamed row(s) skipped." : "") . $emailSummary;
@@ -1519,9 +1549,9 @@ if ($selectedProgramName !== "") {
               </div>
 
               <div class="span-2 section-title"><i class="ph-fill ph-user-circle"></i> Basic Information</div>
-              <div class="form-group"><label>First Name</label><input type="text" name="first_name" id="first_name" required></div>
-              <div class="form-group"><label>Last Name</label><input type="text" name="last_name" id="last_name" required></div>
-              <div class="form-group"><label>Middle Name</label><input type="text" name="middle_name" id="middle_name" required></div>
+              <div class="form-group"><label>First Name</label><input type="text" name="first_name" id="first_name" maxlength="50" autocomplete="given-name" required></div>
+              <div class="form-group"><label>Last Name</label><input type="text" name="last_name" id="last_name" maxlength="50" autocomplete="family-name" required></div>
+              <div class="form-group"><label>Middle Name (Optional)</label><input type="text" name="middle_name" id="middle_name" class="not-required" maxlength="50" placeholder="Complete legal middle name; leave blank if none" autocomplete="additional-name"></div>
               <div class="form-group"><label>Extension Name (Optional)</label><input type="text" name="ext_name" id="ext_name" class="not-required" placeholder="Jr, Sr, etc."></div>
               <div class="form-group span-2"><label>Full Address (Street/Purok, Barangay)</label><input type="text" name="street_purok_zone" id="street_purok_zone" placeholder="Street/Purok" required></div>
               <div class="form-group">
@@ -1533,7 +1563,7 @@ if ($selectedProgramName !== "") {
                       <?php endforeach; ?>
                   </select>
               </div>
-              <div class="form-group"><label>Contact No.</label><input type="text" name="contact_no" id="contact_no" required></div>
+              <div class="form-group"><label>Contact Number</label><input type="tel" name="contact_no" id="contact_no" inputmode="numeric" maxlength="11" pattern="09[0-9]{9}" placeholder="09XXXXXXXXX" autocomplete="tel" required></div>
           </div>
       </div>
 
@@ -1561,7 +1591,7 @@ if ($selectedProgramName !== "") {
                   <div class="form-group"><label>Interested in Wage Employment?</label><select name="interested_in_employment" id="interested_in_employment" required><option value="No">No</option><option value="Yes">Yes</option></select></div>
                   <div class="form-group"><label>Sex</label><select name="sex" id="sex" required><option value="">-- Select --</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
                   <div class="form-group"><label>Civil Status</label><select name="civil_status" id="civil_status" required><option value="">-- Select --</option><option value="Single">Single</option><option value="Married">Married</option><option value="Widowed">Widowed</option><option value="Legally Separated">Separated</option></select></div>
-                  <div class="form-group"><label>Date of Birth</label><input type="date" name="birthdate" id="birthdateInput" required></div>
+                  <div class="form-group"><label>Date of Birth</label><input type="date" name="birthdate" id="birthdateInput" max="<?php echo date('Y-m-d'); ?>" required></div>
                   <div class="form-group"><label>Age</label><input type="number" name="age" id="ageOutput" readonly style="background:#f4f8f5;" required></div>
               </div>
           </div>
@@ -1625,7 +1655,7 @@ if ($selectedProgramName !== "") {
                   <div class="form-group"><label>Citizenship</label><input type="text" name="citizenship" id="citizenship" value="Filipino" required></div>
                   <div class="form-group"><label>Social Media URLs (Optional)</label><input type="text" name="social_urls" id="social_urls" class="not-required" placeholder="Facebook, LinkedIn..."></div>
                   <div class="form-group"><label>Email</label><input type="email" name="email" id="email" required></div>
-                  <div class="form-group"><label>Date of Birth</label><input type="date" name="birthdate" id="birthdateInput" required></div>
+                  <div class="form-group"><label>Date of Birth</label><input type="date" name="birthdate" id="birthdateInput" max="<?php echo date('Y-m-d'); ?>" required></div>
                   <div class="form-group"><label>Age</label><input type="number" name="age" id="ageOutput" readonly style="background:#f4f8f5;" required></div>
               </div>
           </div>
@@ -1849,7 +1879,7 @@ if ($selectedProgramName !== "") {
                           <option value="Female">Female</option>
                       </select>
                   </div>
-                  <div class="form-group"><label>Date of Birth</label><input type="date" name="birthdate" id="birthdateInput" required></div>
+                  <div class="form-group"><label>Date of Birth</label><input type="date" name="birthdate" id="birthdateInput" max="<?php echo date('Y-m-d'); ?>" required></div>
                   <div class="form-group"><label>Age</label><input type="text" name="age" id="ageOutput" oninput="this.value = this.value.replace(/[^0-9]/g, '')" readonly style="background:#f4f8f5;" required></div>
                   <div class="form-group"><label>Civil Status</label>
                       <select name="owner_civil_status" id="civil_status" required>
@@ -2012,7 +2042,7 @@ if ($selectedProgramName !== "") {
                           <label><input type="checkbox" name="programs_needed[]" value="Skills Training"> Skills Training</label>
                           <label><input type="checkbox" name="programs_needed[]" value="Marketing Support"> Marketing Support</label>
                           <label><input type="checkbox" name="programs_needed[]" value="Product Development & Innovation"> Product Development</label>
-                          <label><input type="checkbox" name="programs_needed[]" value="Business Registration Assistance"> Business Registration Assist</label>
+                          <label><input type="checkbox" name="programs_needed[]" value="Business Registration Assistance"> Business Registration Assistance</label>
                           <label><input type="checkbox" name="programs_needed[]" value="Export Assistance"> Export Assistance</label>
                           <label><input type="checkbox" name="programs_needed[]" value="Others" onchange="document.getElementById('prog_n_other').style.display=this.checked?'block':'none'"> Others</label>
                       </div>

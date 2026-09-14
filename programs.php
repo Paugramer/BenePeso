@@ -1613,7 +1613,7 @@ if ($barangay_summary_result) {
                             </select>
                         </div>
                         <div class="form-group"><label>Contact No.</label><input type="text" name="owner_contact_no" value="<?php echo h($user_data['contact_no']??''); ?>" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div>
-                        <div class="form-group"><label>Date of Birth</label><input type="date" name="owner_birthdate" id="msme_owner_birthdate" value="<?php echo h($user_data['birthdate']??''); ?>" onchange="syncMsmeOwnerAge()"></div>
+                        <div class="form-group"><label>Date of Birth</label><input type="date" name="owner_birthdate" id="msme_owner_birthdate" max="<?php echo date('Y-m-d'); ?>" value="<?php echo h($user_data['birthdate']??''); ?>" onchange="syncMsmeOwnerAge()"></div>
                         <div class="form-group"><label>Age</label><input type="text" name="owner_age" id="msme_owner_age" value="<?php echo $userAge; ?>" readonly></div>
                         <div class="form-group"><label>Civil Status</label>
                             <select name="owner_civil_status">
@@ -1798,7 +1798,7 @@ if ($barangay_summary_result) {
                                 <label><input type="checkbox" name="programs_needed[]" value="Skills Training"> Skills Training</label>
                                 <label><input type="checkbox" name="programs_needed[]" value="Marketing Support"> Marketing Support</label>
                                 <label><input type="checkbox" name="programs_needed[]" value="Product Development & Innovation"> Product Development</label>
-                                <label><input type="checkbox" name="programs_needed[]" value="Business Registration Assistance"> Business Registration Assist</label>
+                                <label><input type="checkbox" name="programs_needed[]" value="Business Registration Assistance"> Business Registration Assistance</label>
                                 <label><input type="checkbox" name="programs_needed[]" value="Export Assistance"> Export Assistance</label>
                                 <label><input type="checkbox" name="programs_needed[]" value="Others" onchange="document.getElementById('prog_n_other').style.display=this.checked?'block':'none'"> Others</label>
                             </div>

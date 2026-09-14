@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/beneficiary_choices.php';
 
 $flash = $_SESSION["flash"] ?? "";
 unset($_SESSION["flash"]);
@@ -19,27 +20,7 @@ function get_sel($field, $value) {
     return (isset($form_data[$field]) && $form_data[$field] === $value) ? 'selected' : '';
 }
 
-$barangays = [
-  "Aguit-It",
-  "Banocboc",
-  "Cagbalogo",
-  "Calangcawan Norte",
-  "Calangcawan Sur",
-  "Guinacutan",
-  "Mangcayo",
-  "Mangcawayan",
-  "Manlucugan",
-  "Matango",
-  "Napilihan",
-  "Pinagtigasan",
-  "Barangay I (Pob.)",
-  "Barangay II (Pob.)",
-  "Barangay III (Pob.)",
-  "Sabang",
-  "Santo Domingo",
-  "Singi",
-  "Sula"
-];
+$barangays = beneficiary_barangay_options();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -117,29 +98,29 @@ $barangays = [
               <div class="form-row">
                 <div class="form-group">
                   <label for="firstName">First Name</label>
-                  <input type="text" id="firstName" name="first_name" placeholder="e.g. Juan" value="<?php echo get_val('first_name'); ?>" required>
+                  <input type="text" id="firstName" name="first_name" maxlength="50" autocomplete="given-name" placeholder="e.g. Juan" value="<?php echo get_val('first_name'); ?>" required>
                 </div>
                 <div class="form-group">
-                  <label for="middleName">Middle Name</label>
-                  <input type="text" id="middleName" name="middle_name" placeholder="e.g. Santos or N/A" value="<?php echo get_val('middle_name'); ?>" required>
+                  <label for="middleName">Middle Name (Optional)</label>
+                  <input type="text" id="middleName" name="middle_name" maxlength="50" placeholder="Complete legal middle name; leave blank if none" value="<?php echo get_val('middle_name'); ?>" autocomplete="additional-name">
                 </div>
               </div>
 
               <div class="form-row">
                 <div class="form-group">
                   <label for="lastName">Last Name</label>
-                  <input type="text" id="lastName" name="last_name" placeholder="e.g. Dela Cruz" value="<?php echo get_val('last_name'); ?>" required>
+                  <input type="text" id="lastName" name="last_name" maxlength="50" autocomplete="family-name" placeholder="e.g. Dela Cruz" value="<?php echo get_val('last_name'); ?>" required>
                 </div>
                 <div class="form-group">
-                  <label for="extName">Extension Name</label>
-                  <input type="text" id="extName" name="ext_name" placeholder="e.g. Jr., or N/A" value="<?php echo get_val('ext_name'); ?>">
+                  <label for="extName">Extension Name (Optional)</label>
+                  <input type="text" id="extName" name="ext_name" maxlength="10" placeholder="e.g. Jr.; leave blank if none" value="<?php echo get_val('ext_name'); ?>">
                 </div>
               </div>
 
               <div class="form-row">
                 <div class="form-group">
-                  <label for="birthDate">Birthdate</label>
-                  <input type="date" id="birthDate" name="birthdate" value="<?php echo get_val('birthdate'); ?>" required onchange="calculateAge()">
+                  <label for="birthDate">Date of Birth</label>
+                  <input type="date" id="birthDate" name="birthdate" max="<?php echo date('Y-m-d'); ?>" value="<?php echo get_val('birthdate'); ?>" required onchange="calculateAge()">
                 </div>
                 <div class="form-group">
                   <label for="ageInput">Age</label>
