@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth_rate_limit.php';
 require "db.php";
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: login.php'); exit(); }
@@ -31,6 +32,21 @@ if ($email === "") {
   header("Location: login.php");
   exit();
 }
+
+$reset_identity = mb_strtolower($email);
+$reset_ip = auth_request_ip();
+$reset_retry_after = max(
+  auth_rate_limit_retry_after('reset-account', $reset_identity, 3, 900, 900),
+  auth_rate_limit_retry_after('reset-ip', $reset_ip, 10, 900, 900)
+);
+if ($reset_retry_after > 0) {
+  $_SESSION['fp_msg'] = 'Too many recovery requests. Please wait before trying again.';
+  header('Retry-After: ' . $reset_retry_after);
+  header('Location: login.php');
+  exit();
+}
+auth_rate_limit_hit('reset-account', $reset_identity, 3, 900, 900);
+auth_rate_limit_hit('reset-ip', $reset_ip, 10, 900, 900);
 
 $user_role = "";
 $user_found = false;

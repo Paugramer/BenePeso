@@ -7,10 +7,15 @@ config.local.php
 # User-uploaded personal files
 uploads/*
 !uploads/.gitkeep
+!uploads/.htaccess
+
+# Local database and code backups must remain outside version control.
+_safety_backups/*
+!_safety_backups/.htaccess
+!_safety_backups/index.php
 
 # Local/editor files
 .vscode/
 .idea/
 Thumbs.db
 .DS_Store
-

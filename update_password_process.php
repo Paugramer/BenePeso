@@ -1,12 +1,9 @@
 <?php
-require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth.php';
 require "db.php";
 
 // 1. Strict Security Check: Ensure user is logged in
-if (!isset($_SESSION["user_id"])) {
-    header("Location: login.php");
-    exit();
-}
+check_user_role('user');
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     auth_require_csrf();

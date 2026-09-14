@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require 'db.php';
 require_once 'tupad_household_helper.php';
 header('Content-Type: application/json; charset=utf-8');

@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require "db.php";
 
 /** * SMART REDIRECTION 
@@ -106,9 +106,9 @@ function format_date($date_str) {
     <link rel="stylesheet" href="home.css?v=10">
     
     <link rel="stylesheet" href="index.css?v=15">
-    <link rel="stylesheet" href="frontend_polish.css?v=1">
+    <link rel="stylesheet" href="frontend_polish.css?v=9">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-    <script src="frontend_polish.js?v=1" defer></script>
+    <script src="frontend_polish.js?v=5" defer></script>
 </head>
 <body>
 
@@ -332,6 +332,9 @@ function format_date($date_str) {
           <div class="footer-head">Office</div>
           <div class="footer-text">Municipality of Vinzons, Camarines Norte</div>
           <div class="footer-text">Public Employment Service Office (PESO)</div>
+          <a class="footer-contact-link" href="#peso-contact" data-contact-kind="email"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span>lguvinzonspeso@gmail.com</span></a>
+          <a class="footer-contact-link" href="#peso-contact" data-contact-kind="phone"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>+63 947 997 1186</span></a>
+          <a class="footer-contact-link" href="https://www.facebook.com/peso.vinzons" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook" aria-hidden="true"></i><span>PESO Vinzons on Facebook</span></a>
         </div>
       </div>
 

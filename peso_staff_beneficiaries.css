@@ -1614,6 +1614,52 @@ svg { flex-shrink: 0; margin-right: 4px; }
 .report-column-count { color: var(--green); font-size: 11px; text-transform: none; white-space: nowrap; }
 .report-column-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #f7faf8; }
 .report-column-tools button { min-height: 34px; border: 1px solid #b9d4c6; border-radius: 6px; background: #fff; color: var(--green-dark); font-size: 11px; font-weight: 700; cursor: pointer; }
+
+/* Compact, scannable report controls and a clear custom focus state. */
+.records-filter-container .filter-search:focus-within {
+  border-color: #79ae94;
+  box-shadow: 0 0 0 4px rgba(31, 122, 84, .12);
+}
+.records-filter-container .search-input:focus { outline: none; box-shadow: none; }
+.records-filter-container .search-input::-webkit-search-cancel-button { cursor: pointer; }
+
+#generateReportModal .report-controls { width: 330px; flex-basis: 330px; padding: 22px 20px; }
+#generateReportModal .report-controls > div:first-child { margin-bottom: 16px !important; padding-right: 38px; }
+#generateReportModal .report-form > div[style*="overflow-y: auto"] {
+  gap: 12px !important;
+  margin-bottom: 12px !important;
+  padding-right: 5px !important;
+}
+#generateReportModal .report-form .form-group label { margin-bottom: 6px; }
+#generateReportModal .report-form select {
+  min-height: 44px;
+  padding-right: 36px;
+  border-color: #cfe0d7;
+  border-radius: 10px;
+  background-color: #fff;
+}
+#generateReportModal .report-form select:focus {
+  outline: none;
+  border-color: #579b78;
+  box-shadow: 0 0 0 3px rgba(31, 122, 84, .12);
+}
+#generateReportModal .report-column-picker summary { position: relative; padding-right: 34px; list-style: none; }
+#generateReportModal .report-column-picker summary::-webkit-details-marker { display: none; }
+#generateReportModal .report-column-picker summary::after {
+  content: '›';
+  position: absolute;
+  right: 14px;
+  font-size: 19px;
+  transform: rotate(90deg);
+  transition: transform .2s ease;
+}
+#generateReportModal .report-column-picker[open] summary::after { transform: rotate(-90deg); }
+#generateReportModal .report-column-list { max-height: min(220px, 27vh); }
+#generateReportModal .report-actions { padding-top: 14px; }
+
+@media (max-width: 900px) {
+  #generateReportModal .report-controls { width: 250px; flex-basis: 250px; padding: 16px 13px; }
+}
 .report-column-list { max-height: 220px; padding: 8px 12px; overflow-y: auto; }
 .report-column-list label { min-height: 34px; display: flex; align-items: center; gap: 9px; color: #344b40; font-size: 12px; cursor: pointer; }
 .report-column-list input { width: 16px; height: 16px; accent-color: var(--green); flex: 0 0 auto; }

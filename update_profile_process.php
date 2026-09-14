@@ -1,12 +1,9 @@
 <?php
-require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth.php';
 require "db.php";
 require_once __DIR__ . '/beneficiary_choices.php';
 
-if (!isset($_SESSION["user_id"])) {
-    header("Location: login.php");
-    exit();
-}
+check_user_role('user');
 
 function return_to_profile(string $message): void
 {

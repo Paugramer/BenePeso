@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth_rate_limit.php';
 require "db.php";
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: login.php'); exit(); }
@@ -32,6 +33,17 @@ if ($role === "") {
   exit();
 }
 
+$verify_identity = mb_strtolower($email) . '|' . auth_request_ip();
+$verify_retry_after = auth_rate_limit_retry_after('reset-code', $verify_identity, 5, 900, 900);
+if ($verify_retry_after > 0) {
+  unset($_SESSION['fp_code'], $_SESSION['fp_role']);
+  $_SESSION['fp_step'] = 'email';
+  $_SESSION['fp_msg'] = 'Too many incorrect attempts. Request a new recovery code later.';
+  header('Retry-After: ' . $verify_retry_after);
+  header('Location: login.php');
+  exit();
+}
+
 $table = "users";
 if ($role === "peso_staff") $table = "peso_staff";
 if ($role === "admin") $table = "admins";
@@ -61,6 +73,7 @@ $codeMatches = ($storedCodeInfo['algoName'] ?? 'unknown') !== 'unknown'
   ? password_verify($code, $storedCode)
   : hash_equals($storedCode, $code); // Compatibility for codes issued before hashing was enabled.
 if (!$codeMatches) {
+  auth_rate_limit_hit('reset-code', $verify_identity, 5, 900, 900);
   $_SESSION["fp_msg"] = "Incorrect code. Please try again.";
   header("Location: login.php");
   exit();
@@ -73,6 +86,7 @@ if (strtotime($row["reset_expire"]) < time()) {
 }
 
 // Keep the stored verifier in the session; never retain the submitted code.
+auth_rate_limit_clear('reset-code', $verify_identity);
 $_SESSION["fp_code"] = $storedCode;
 $_SESSION['fp_attempts'] = 0;
 $_SESSION["fp_step"] = "reset";

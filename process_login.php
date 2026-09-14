@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth_rate_limit.php';
 require "db.php";
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -36,6 +37,21 @@ if ($email === "" || $password === "") {
     exit();
 }
 
+$login_identity = mb_strtolower($email);
+$login_ip = auth_request_ip();
+$login_combo = $login_identity . '|' . $login_ip;
+$retry_after = max(
+    auth_rate_limit_retry_after('login-combination', $login_combo, 5, 900, 900),
+    auth_rate_limit_retry_after('login-account', $login_identity, 20, 900, 900),
+    auth_rate_limit_retry_after('login-ip', $login_ip, 50, 900, 900)
+);
+if ($retry_after > 0) {
+    $_SESSION['flash'] = 'Too many login attempts. Please wait before trying again.';
+    header('Retry-After: ' . $retry_after);
+    header('Location: login.php');
+    exit();
+}
+
 $user_found = false;
 
 /* ==========================================
@@ -51,6 +67,8 @@ if ($stmt_admin) {
         $row = $res_admin->fetch_assoc();
         
         if (password_verify($password, $row["password_hash"])) {
+            auth_rate_limit_clear('login-combination', $login_combo);
+            auth_rate_limit_clear('login-account', $login_identity);
             $_SESSION["fail_count"] = 0;
             $_SESSION["lock_until"] = 0;
             $_SESSION["admin_id"] = (int)$row["admin_id"];
@@ -91,6 +109,9 @@ if ($stmt_staff) {
                 header("Location: login.php?msg=banned");
                 exit();
             }
+
+            auth_rate_limit_clear('login-combination', $login_combo);
+            auth_rate_limit_clear('login-account', $login_identity);
 
             $_SESSION["fail_count"] = 0;
             $_SESSION["lock_until"] = 0;
@@ -158,6 +179,9 @@ if ($stmt_user) {
                 exit();
             }
 
+            auth_rate_limit_clear('login-combination', $login_combo);
+            auth_rate_limit_clear('login-account', $login_identity);
+
             $_SESSION["fail_count"] = 0;
             $_SESSION["lock_until"] = 0;
 
@@ -203,11 +227,18 @@ if ($stmt_user) {
    FAILED LOGIN HANDLING
 ========================================== */
 $_SESSION["login_email"] = $email; 
+$persistent_retry_after = max(
+    auth_rate_limit_hit('login-combination', $login_combo, 5, 900, 900),
+    auth_rate_limit_hit('login-account', $login_identity, 20, 900, 900),
+    auth_rate_limit_hit('login-ip', $login_ip, 50, 900, 900)
+);
 $_SESSION["fail_count"] = ($_SESSION["fail_count"] ?? 0) + 1;
 
-if ($_SESSION["fail_count"] >= 3) {
+if ($_SESSION["fail_count"] >= 3 || $persistent_retry_after > 0) {
     $_SESSION["lock_until"] = time() + 60;
-    $_SESSION["flash"] = "Too many failed attempts. Please wait 1 minute before trying again.";
+    $_SESSION["flash"] = $persistent_retry_after > 0
+        ? "Too many failed attempts. Please wait before trying again."
+        : "Too many failed attempts. Please wait 1 minute before trying again.";
     header("Location: login.php");
     exit();
 }

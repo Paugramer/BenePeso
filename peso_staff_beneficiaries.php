@@ -1105,7 +1105,14 @@ if ($selectedProgramName !== "") {
     $countStmt->close();
   }
   $totalPages = max(1, ceil($totalRecords / $limit));
-  $orderBy = "b.created_at DESC, b.beneficiary_id DESC";
+  $orderBy = $approvalFilter === 'Pending'
+      ? "b.created_at ASC, b.beneficiary_id ASC"
+      : ($approvalFilter === 'All'
+          ? "CASE WHEN b.approval_status = 'Pending' THEN 0 ELSE 1 END ASC,
+             CASE WHEN b.approval_status = 'Pending' THEN b.created_at END ASC,
+             CASE WHEN b.approval_status <> 'Pending' THEN b.created_at END DESC,
+             b.beneficiary_id ASC"
+          : "b.created_at DESC, b.beneficiary_id DESC");
   
   $sqlList = "SELECT b.*, p.program_code, u.profile_pic AS user_profile_pic,
       CASE WHEN b.user_id IS NOT NULL THEN 'Online Applicant'
@@ -1168,9 +1175,9 @@ if ($selectedProgramName !== "") {
       .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #ccc; padding: 6px 3px; font-size: 9px; white-space: normal; overflow-wrap: anywhere; }
       .spreadsheet-table thead th { background: #e6f4ed; color: #0d2618; position: sticky; top: 0; z-index: 10; font-weight: 700;}
   </style>
-<link rel="stylesheet" href="frontend_polish.css?v=7">
+<link rel="stylesheet" href="frontend_polish.css?v=9">
   <link rel="stylesheet" href="peso_staff_responsive.css?v=22">
-<script src="frontend_polish.js?v=3" defer></script>
+<script src="frontend_polish.js?v=5" defer></script>
 </head>
 <body class="peso-staff-beneficiaries-page">
   <div class="page-wrap">
@@ -1308,10 +1315,10 @@ if ($selectedProgramName !== "") {
       <section class="panel-card animate-fade-in" style="flex: 1; animation-delay: 0.1s; margin-top: 8px; display: flex; flex-direction: column;">
         <div class="records-toolbar">
             <div class="custom-tabs">
-                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'All' ? 'active' : ''; ?>">All Records</a>
-                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Pending', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Pending' ? 'active' : ''; ?>">Needs Approval</a>
-                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Approved', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Approved' ? 'active' : ''; ?>">Approved</a>
-                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Rejected', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Rejected' ? 'active' : ''; ?>">Rejected</a>
+                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'All' ? 'active' : ''; ?>">All Records</a>
+                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Pending', 'availment' => 'All', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Pending' ? 'active' : ''; ?>">Needs Approval</a>
+                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Approved', 'availment' => 'All', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Approved' ? 'active' : ''; ?>">Approved</a>
+                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Rejected', 'availment' => 'All', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Rejected' ? 'active' : ''; ?>">Rejected</a>
             </div>
             
             <button class="btn-main" type="button" id="openReportModal" style="margin-bottom: 12px;">
@@ -1334,7 +1341,7 @@ if ($selectedProgramName !== "") {
             
             <div class="filter-search">
               <i class="ph-bold ph-magnifying-glass search-icon"></i>
-              <input type="text" name="search" value="<?php echo h($search); ?>" placeholder="Search by name, email..." class="search-input" id="liveSearchInput">
+              <input type="search" name="search" value="<?php echo h($search); ?>" placeholder="Search by name or email..." class="search-input" id="liveSearchInput" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Search beneficiaries">
             </div>
             
             <select name="program_id" class="filter-select auto-submit">

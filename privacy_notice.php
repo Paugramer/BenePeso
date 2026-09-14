@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 $backLink = isset($_SESSION['user_id']) ? 'home.php' : 'index.php';
 $embedded = isset($_GET['embedded']) && $_GET['embedded'] === '1';
 ?>

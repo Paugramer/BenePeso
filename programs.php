@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth.php';
 require "db.php";
 require_once "program_eligibility_helper.php";
 require_once "tupad_category_helper.php";
@@ -14,7 +14,7 @@ ensure_tupad_category_schema($conn);
 ensure_tupad_document_schema($conn);
 ensureSpesParentStatusCapacity($conn);
 
-if (!isset($_SESSION["user_id"])) { header("Location: login.php"); exit(); }
+check_user_role('user');
 
 function h($str) { return htmlspecialchars((string)$str, ENT_QUOTES, 'UTF-8'); }
 
@@ -778,9 +778,9 @@ if ($barangay_summary_result) {
     
     <link rel="stylesheet" href="home.css?v=14">
     <link rel="stylesheet" href="programs.css?v=22">
-<link rel="stylesheet" href="frontend_polish.css?v=5">
+<link rel="stylesheet" href="frontend_polish.css?v=9">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-    <script src="frontend_polish.js?v=1" defer></script>
+    <script src="frontend_polish.js?v=5" defer></script>
 </head>
 <body>
 
@@ -1006,6 +1006,13 @@ if ($barangay_summary_result) {
                     </div>
                 <?php endif; ?>
             </div>
+            <?php if (count($completed_programs) > 6): ?>
+            <nav class="archive-pagination" id="archivePagination" aria-label="Completed program pages">
+                <button type="button" id="archivePrevious">Previous</button>
+                <span id="archivePageStatus" aria-live="polite"></span>
+                <button type="button" id="archiveNext">Next</button>
+            </nav>
+            <?php endif; ?>
         </div>
     </section>
 </main>
@@ -1032,6 +1039,9 @@ if ($barangay_summary_result) {
       <div class="footer-head">Office</div>
       <div class="footer-text">Municipality of Vinzons, Camarines Norte</div>
       <div class="footer-text">Public Employment Service Office (PESO)</div>
+      <a class="footer-contact-link" href="#peso-contact" data-contact-kind="email"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span>lguvinzonspeso@gmail.com</span></a>
+      <a class="footer-contact-link" href="#peso-contact" data-contact-kind="phone"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>+63 947 997 1186</span></a>
+      <a class="footer-contact-link" href="https://www.facebook.com/peso.vinzons" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook" aria-hidden="true"></i><span>PESO Vinzons on Facebook</span></a>
     </div>
   </div>
   <div class="content-wrap footer-bottom">
@@ -1120,6 +1130,17 @@ if ($barangay_summary_result) {
 
         <p class="archive-summary-note">This batch concluded in <strong id="archEnd"></strong>. Figures reflect approved beneficiaries recorded by PESO.</p>
         <button class="btn-secondary archive-summary-close" onclick="closeModal('archiveModal')">Close Summary</button>
+    </div>
+</div>
+
+<!-- MULTIPLE ACTIVE BATCH CHOOSER -->
+<div class="modal" id="batchChooserModal" role="dialog" aria-modal="true" aria-labelledby="batchChooserTitle" aria-hidden="true">
+    <div class="modal-content batch-chooser-dialog">
+        <button type="button" class="modal-close" onclick="closeModal('batchChooserModal')" aria-label="Close batch choices">&times;</button>
+        <span class="batch-chooser-kicker">Choose your schedule</span>
+        <h2 id="batchChooserTitle">Available Batches</h2>
+        <p class="batch-chooser-intro">This program has more than one active batch. Review the dates and remaining slots before continuing.</p>
+        <div class="batch-choice-list" id="batchChoiceList"></div>
     </div>
 </div>
 
@@ -1884,7 +1905,7 @@ if ($barangay_summary_result) {
         let input = document.getElementById('searchInput');
         let filter = input.value.toLowerCase();
         let categoryFilter = document.getElementById('tupadCategoryFilter')?.value || 'all';
-        let cards = document.getElementsByClassName('program-card');
+        let cards = document.querySelectorAll('.program-card:not(.program-batch-duplicate)');
         let grid = document.getElementById('programGrid');
         let hasMatch = false;
         
@@ -1938,6 +1959,88 @@ if ($barangay_summary_result) {
         modal.classList.remove('show');
         modal.setAttribute('aria-hidden', 'true');
         if (lastModalTrigger && document.contains(lastModalTrigger)) lastModalTrigger.focus();
+    }
+
+    function initializeProgramCollections() {
+        const cards = Array.from(document.querySelectorAll('#programGrid .program-card'));
+        const groups = new Map();
+
+        cards.forEach(card => {
+            const key = `${(card.dataset.title || '').trim().toLowerCase()}::${(card.dataset.category || '').trim().toLowerCase()}`;
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push(card);
+        });
+
+        groups.forEach(groupCards => {
+            if (groupCards.length < 2) return;
+            const representative = groupCards[0];
+            groupCards.slice(1).forEach(card => {
+                card.classList.add('program-batch-duplicate');
+                card.hidden = true;
+            });
+            representative.removeAttribute('onclick');
+            representative.classList.add('program-multi-batch');
+            representative.setAttribute('aria-label', `${representative.dataset.title}: choose from ${groupCards.length} active batches`);
+            representative.addEventListener('click', () => openBatchChooser(groupCards));
+
+            const batchLabel = representative.querySelector('.batch-code');
+            if (batchLabel) batchLabel.textContent = `${groupCards.length} ACTIVE BATCHES`;
+            const actionButton = representative.querySelector('.program-btn, .btn-check-status');
+            if (actionButton) actionButton.textContent = 'Choose Batch';
+        });
+
+        initializeArchivePagination();
+
+        const requestedId = new URLSearchParams(window.location.search).get('program_id');
+        if (requestedId) {
+            const requestedCard = cards.find(card => card.dataset.progId === requestedId);
+            if (requestedCard) window.setTimeout(() => openProgramDetails(requestedCard), 180);
+        }
+    }
+
+    function openBatchChooser(cards) {
+        const modal = document.getElementById('batchChooserModal');
+        const list = document.getElementById('batchChoiceList');
+        const title = document.getElementById('batchChooserTitle');
+        if (!modal || !list || !cards.length) return;
+
+        title.textContent = `${cards[0].dataset.title} Batches`;
+        list.replaceChildren();
+        cards.forEach((card, index) => {
+            const choice = document.createElement('button');
+            choice.type = 'button';
+            choice.className = 'batch-choice-card';
+            choice.innerHTML = `<span class="batch-choice-number">${index + 1}</span><span class="batch-choice-copy"><strong>${escapeHtml(card.dataset.batch || 'Batch')}</strong><small>${escapeHtml(card.dataset.start || 'TBA')} – ${escapeHtml(card.dataset.end || 'TBA')}</small></span><span class="batch-choice-slots">${escapeHtml(card.dataset.slots || '0')} slots</span><span class="batch-choice-arrow" aria-hidden="true">→</span>`;
+            choice.addEventListener('click', () => {
+                closeModal('batchChooserModal');
+                openProgramDetails(card);
+            });
+            list.appendChild(choice);
+        });
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        window.setTimeout(() => list.querySelector('button')?.focus(), 80);
+    }
+
+    function initializeArchivePagination() {
+        const items = Array.from(document.querySelectorAll('.completed-list .completed-item'));
+        const previous = document.getElementById('archivePrevious');
+        const next = document.getElementById('archiveNext');
+        const status = document.getElementById('archivePageStatus');
+        if (!previous || !next || !status || items.length <= 6) return;
+
+        const perPage = 6;
+        const pages = Math.ceil(items.length / perPage);
+        let page = 1;
+        const render = () => {
+            items.forEach((item, index) => { item.hidden = index < (page - 1) * perPage || index >= page * perPage; });
+            previous.disabled = page === 1;
+            next.disabled = page === pages;
+            status.textContent = `Page ${page} of ${pages}`;
+        };
+        previous.addEventListener('click', () => { if (page > 1) { page--; render(); } });
+        next.addEventListener('click', () => { if (page < pages) { page++; render(); } });
+        render();
     }
 
     function showProfessionalNotice(message, title = 'Information Required') {
@@ -2493,6 +2596,8 @@ if ($barangay_summary_result) {
         submitButton.disabled = true;
         submitButton.textContent = 'Submitting Application...';
     });
+
+    initializeProgramCollections();
 </script>
 </body>
 </html>

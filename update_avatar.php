@@ -1,11 +1,8 @@
 <?php
-require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/db.php';
 
-if (!auth_has_role('user')) {
-    header('Location: login.php');
-    exit();
-}
+check_user_role('user');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: profile.php');
     exit();

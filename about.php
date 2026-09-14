@@ -80,7 +80,7 @@ try {
     <link rel="icon" type="image/png" href="img/pesologo.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us | BENEPESO</title>
+    <title>BENEPESO | About Us</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -88,11 +88,11 @@ try {
     
     <link rel="stylesheet" href="home.css?v=14">
     <link rel="stylesheet" href="about.css?v=11">
-    <link rel="stylesheet" href="frontend_polish.css?v=5">
+    <link rel="stylesheet" href="frontend_polish.css?v=9">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-    <script src="frontend_polish.js?v=1" defer></script>
+    <script src="frontend_polish.js?v=5" defer></script>
 </head>
-<body>
+<body data-disable-page-loader>
 
 <header class="topbar">
   <div class="topbar-inner">
@@ -384,6 +384,9 @@ try {
       <div class="footer-head">Office</div>
       <div class="footer-text">Municipality of Vinzons, Camarines Norte</div>
       <div class="footer-text">Public Employment Service Office (PESO)</div>
+      <a class="footer-contact-link" href="#peso-contact" data-contact-kind="email"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span>lguvinzonspeso@gmail.com</span></a>
+      <a class="footer-contact-link" href="#peso-contact" data-contact-kind="phone"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>+63 947 997 1186</span></a>
+      <a class="footer-contact-link" href="https://www.facebook.com/peso.vinzons" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook" aria-hidden="true"></i><span>PESO Vinzons on Facebook</span></a>
     </div>
   </div>
 

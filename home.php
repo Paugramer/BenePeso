@@ -1,10 +1,9 @@
 <?php
 require "auth.php"; // This handles session_start() and the routing logic
+require "db.php";
 check_user_role("user"); // Protects this page for standard users only
 
 // If they pass all checks, they are a user. Continue loading page...
-require "db.php"; 
-
 $user_id = (int)$_SESSION["user_id"];
 $user_display_name = "User";
 $first_char = "U";
@@ -48,16 +47,21 @@ $has_programs_table = true;
 
 try {
     $today = (new DateTimeImmutable('today', new DateTimeZone('Asia/Manila')))->format('Y-m-d');
-    $q = $conn->prepare("SELECT program_id, program_name, description, start_date, image_path
+    $q = $conn->prepare("SELECT program_id, program_name, description, start_date, end_date, image_path
         FROM programs
         WHERE approval_status = 'Approved'
           AND LOWER(COALESCE(status, '')) <> 'completed'
           AND (end_date IS NULL OR end_date = '0000-00-00' OR end_date >= ?)
           AND (start_date IS NULL OR end_date IS NULL OR end_date = '0000-00-00' OR end_date >= start_date)
-        ORDER BY program_id DESC
-        LIMIT 6");
+        ORDER BY CASE
+                   WHEN start_date IS NULL OR start_date = '0000-00-00' OR start_date <= ? THEN 0
+                   ELSE 1
+                 END,
+                 COALESCE(NULLIF(end_date, '0000-00-00'), '9999-12-31') ASC,
+                 program_id DESC
+        LIMIT 3");
     if ($q) {
-        $q->bind_param('s', $today);
+        $q->bind_param('ss', $today, $today);
         $q->execute();
         $result = $q->get_result();
         while ($p = $result->fetch_assoc()) $programs[] = $p;
@@ -80,9 +84,9 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="home.css?v=14" />
-<link rel="stylesheet" href="frontend_polish.css?v=5">
+<link rel="stylesheet" href="frontend_polish.css?v=9">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-    <script src="frontend_polish.js?v=1" defer></script>
+    <script src="frontend_polish.js?v=5" defer></script>
 </head>
 <body>
 
@@ -261,8 +265,8 @@ try {
     <div class="content-wrap">
         <div class="area-head">
             <div>
-                <h2 class="area-title">Latest Programs</h2>
-                <p class="area-sub">Check ongoing and updated PESO services.</p>
+                <h2 class="area-title">Open Programs</h2>
+                <p class="area-sub">Current and upcoming PESO opportunities that are still accepting beneficiaries.</p>
             </div>
             <a class="see-more" href="programs.php">See all →</a>
         </div>
@@ -292,7 +296,9 @@ try {
                         <div class="program-top">
                             <span class="program-tag">Program</span>
                             <span class="program-date">
-                                <?php echo !empty($p["start_date"]) ? htmlspecialchars(date("M d, Y", strtotime($p["start_date"]))) : "Updated"; ?>
+                                <?php echo !empty($p["end_date"]) && $p["end_date"] !== '0000-00-00'
+                                    ? 'Open until ' . htmlspecialchars(date("M d, Y", strtotime($p["end_date"])))
+                                    : (!empty($p["start_date"]) ? 'Starts ' . htmlspecialchars(date("M d, Y", strtotime($p["start_date"]))) : "Schedule available"); ?>
                             </span>
                         </div>
 
@@ -386,6 +392,9 @@ try {
             <div class="footer-head">Office</div>
             <div class="footer-text">Municipality of Vinzons, Camarines Norte</div>
             <div class="footer-text">Public Employment Service Office (PESO)</div>
+            <a class="footer-contact-link" href="#peso-contact" data-contact-kind="email"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span>lguvinzonspeso@gmail.com</span></a>
+            <a class="footer-contact-link" href="#peso-contact" data-contact-kind="phone"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>+63 947 997 1186</span></a>
+            <a class="footer-contact-link" href="https://www.facebook.com/peso.vinzons" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook" aria-hidden="true"></i><span>PESO Vinzons on Facebook</span></a>
         </div>
     </div>
 
