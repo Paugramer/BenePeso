@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require "db.php";
 
 // 1. Strict Security Check: Ensure user is logged in
@@ -9,16 +9,29 @@ if (!isset($_SESSION["user_id"])) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    auth_require_csrf();
     $user_id = (int)$_SESSION["user_id"];
 
     // Fetch inputs
+    $current_pass     = $_POST['current_pass'] ?? '';
     $new_pass         = $_POST['new_pass'] ?? '';
     $confirm_new_pass = $_POST['confirm_new_pass'] ?? '';
 
     // 2. Initial Validation: Check for empty fields
-    if (empty($new_pass) || empty($confirm_new_pass)) {
+    if (empty($current_pass) || empty($new_pass) || empty($confirm_new_pass)) {
         $_SESSION["flash"] = "Security Error: Password fields cannot be empty.";
         header("Location: profile.php");
+        exit();
+    }
+
+    $current_stmt = $conn->prepare('SELECT password_hash FROM users WHERE user_id = ? LIMIT 1');
+    $current_stmt->bind_param('i', $user_id);
+    $current_stmt->execute();
+    $current_user = $current_stmt->get_result()->fetch_assoc();
+    $current_stmt->close();
+    if (!$current_user || !password_verify($current_pass, $current_user['password_hash'])) {
+        $_SESSION['flash'] = 'Security Error: Your current password is incorrect.';
+        header('Location: profile.php');
         exit();
     }
 

@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require "db.php";
 require_once "report_columns.php";
 require_once "xlsx_report_helper.php";
@@ -20,7 +20,8 @@ if (
     empty($_SESSION["peso_staff_id"]) &&
     empty($_SESSION["staff_id"])
 ) {
-    die("<h3>Unauthorized access. Please log in.</h3>");
+    http_response_code(403);
+    exit("Unauthorized access. Please log in.");
 }
 
 // 2. Fetch Form Data
@@ -36,7 +37,7 @@ if (empty($program_name)) {
 }
 
 // 3. Build the Beneficiaries Query
-$whereParts = ["p.program_name = ?"];
+$whereParts = ["p.program_name = ?", "b.approval_status = 'Approved'"];
 $params = [$program_name];
 $types = "s";
 
@@ -59,7 +60,7 @@ if ($availment !== "All") {
 }
 
 if (stripos($program_name, 'MSME') !== false && $business_nature !== "All") {
-    $whereParts[] = "b.business_nature = ?";
+    $whereParts[] = "FIND_IN_SET(?, REPLACE(REPLACE(REPLACE(b.business_nature, ';', ','), ', ', ','), ' ,', ',')) > 0";
     $params[] = $business_nature;
     $types .= "s";
 }
@@ -262,12 +263,12 @@ elseif (strtoupper($program_name) === 'MSME PROFILING' || stripos($program_name,
 
     echo $excel_header;
 
-    // Main Grouped Grid Headers Updated to 46 Columns
+    // Main grouped MSME report headers (44 columns including row number).
     echo '<tr>';
     echo '<th rowspan="2" class="grid-header" style="width:40px;">No.</th>';
     echo '<th colspan="13" class="grid-header">I. BUSINESS PROFILE</th>';
     echo '<th colspan="9" class="grid-header">II. OWNER/ENTREPRENEUR INFORMATION</th>';
-    echo '<th colspan="4" class="grid-header">III. BUSINESS OPERATIONS</th>';
+    echo '<th colspan="2" class="grid-header">III. BUSINESS OPERATIONS</th>';
     echo '<th colspan="5" class="grid-header">IV. HUMAN RESOURCES</th>';
     echo '<th colspan="7" class="grid-header">V. FINANCIAL INFORMATION</th>';
     echo '<th colspan="7" class="grid-header">VI. GOVERNMENT ASSISTANCE</th>';
@@ -277,14 +278,14 @@ elseif (strtoupper($program_name) === 'MSME PROFILING' || stripos($program_name,
     echo '<tr>';
     echo '<th class="grid-header">Business/Trade Name</th><th class="grid-header">Type of Ownership</th><th class="grid-header">Nature of Business</th><th class="grid-header">Primary Products Offered</th><th class="grid-header">Product Price</th><th class="grid-header">Year Business Started</th><th class="grid-header">Business Permit No.</th><th class="grid-header">Valid Until</th><th class="grid-header">DTI Registration No.</th><th class="grid-header">Tax Identification No. (TIN)</th><th class="grid-header">Landline/Mobile Number</th><th class="grid-header">Email</th><th class="grid-header">Website/Social Media</th>';
     echo '<th class="grid-header">Full Name</th><th class="grid-header">Contact Number</th><th class="grid-header">Sex</th><th class="grid-header">Date of Birth</th><th class="grid-header">Age</th><th class="grid-header">Civil Status</th><th class="grid-header">Complete Address</th><th class="grid-header">Educational Attainment</th><th class="grid-header">Work Experience</th>';
-    echo '<th class="grid-header">Stall/Booth No.</th><th class="grid-header">Date Started</th><th class="grid-header">Business Assets Owned</th><th class="grid-header">Utility Needs</th>';
+    echo '<th class="grid-header">Business Assets Owned</th><th class="grid-header">Utility Needs</th>';
     echo '<th class="grid-header">Number of Workers</th><th class="grid-header">Male Employees</th><th class="grid-header">Female Employees</th><th class="grid-header">Employment Type</th><th class="grid-header">Skills Needed</th>';
     echo '<th class="grid-header">Estimated Daily Sales</th><th class="grid-header">Estimated Monthly Sales</th><th class="grid-header">Estimated Capital</th><th class="grid-header">Source of Capital</th><th class="grid-header">Average Monthly Expenses</th><th class="grid-header">Banking Access</th><th class="grid-header">Existing Loans/Credit</th>';
     echo '<th class="grid-header">DTI Assistance</th><th class="grid-header">DOLE Assistance</th><th class="grid-header">LGU Assistance</th><th class="grid-header">TESDA Training</th><th class="grid-header">Financial Assistance</th><th class="grid-header">Livelihood Assistance</th><th class="grid-header">Business Training</th>';
     echo '</tr>';
 
     if (empty($beneficiaries)) {
-        echo '<tr><td colspan="46" class="grid-cell-center" style="padding: 15px;">No records found.</td></tr>';
+        echo '<tr><td colspan="44" class="grid-cell-center" style="padding: 15px;">No records found.</td></tr>';
     } else {
         $counter = 1;
         foreach ($beneficiaries as $b) {
@@ -359,8 +360,6 @@ elseif (strtoupper($program_name) === 'MSME PROFILING' || stripos($program_name,
             echo '<td class="grid-cell">' . htmlspecialchars($b['educational_attainment'] ?? '') . '</td>';
             echo '<td class="grid-cell">' . htmlspecialchars($b['work_experience'] ?? '') . '</td>';
             
-            echo '<td class="grid-cell-center">' . htmlspecialchars($b['nm_stall_no'] ?? '') . '</td>';
-            echo '<td class="grid-cell-center">' . htmlspecialchars($b['nm_date_started'] ?? '') . '</td>';
             echo '<td class="grid-cell">' . htmlspecialchars($b['business_assets'] ?? '') . '</td>';
             echo '<td class="grid-cell">' . htmlspecialchars($b['utility_needs'] ?? '') . '</td>';
 

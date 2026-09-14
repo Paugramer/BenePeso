@@ -1,10 +1,33 @@
 <?php
-function logActivity($conn, $staff_id, $module, $action, $target, $description) {
-    $ip = $_SERVER['REMOTE_ADDR'];
-    $sql = "INSERT INTO activity_logs (staff_id, module_name, action_type, target_name, description, ip_address, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())";
+function logActivity($conn, $actor_id, $module, $action, $target, $description) {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    $staff_id = null;
+    $actor_name = 'System';
+    $actor_role = 'System';
+
+    if (isset($_SESSION['admin_id'])) {
+        $actor_name = 'PESO VINZONS';
+        $actor_role = 'Administrator';
+    } elseif (isset($_SESSION['staff_id'])) {
+        $staff_id = (int)$actor_id;
+        $actor_name = 'PESO Staff';
+        $actor_role = 'PESO Staff';
+        $name_stmt = $conn->prepare("SELECT first_name, last_name FROM peso_staff WHERE staff_id = ? LIMIT 1");
+        if ($name_stmt) {
+            $name_stmt->bind_param('i', $staff_id);
+            $name_stmt->execute();
+            if ($staff_row = $name_stmt->get_result()->fetch_assoc()) {
+                $resolved_name = trim(($staff_row['first_name'] ?? '') . ' ' . ($staff_row['last_name'] ?? ''));
+                if ($resolved_name !== '') $actor_name = $resolved_name;
+            }
+            $name_stmt->close();
+        }
+    }
+
+    $sql = "INSERT INTO activity_logs (staff_id, actor_name, actor_role, module_name, action_type, target_name, description, ip_address, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
     $stmt = $conn->prepare($sql);
     if ($stmt) {
-        $stmt->bind_param("isssss", $staff_id, $module, $action, $target, $description, $ip);
+        $stmt->bind_param("isssssss", $staff_id, $actor_name, $actor_role, $module, $action, $target, $description, $ip);
         $stmt->execute();
         $stmt->close();
     }

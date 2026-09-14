@@ -1,6 +1,18 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require "db.php";
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: login.php'); exit(); }
+auth_require_csrf();
+
+$_SESSION['fp_attempts'] = (int)($_SESSION['fp_attempts'] ?? 0) + 1;
+if ($_SESSION['fp_attempts'] > 5) {
+  unset($_SESSION['fp_code'], $_SESSION['fp_role']);
+  $_SESSION['fp_step'] = 'email';
+  $_SESSION['fp_msg'] = 'Too many incorrect attempts. Request a new recovery code.';
+  header('Location: login.php');
+  exit();
+}
 
 $email = $_SESSION["fp_email"] ?? "";
 $role  = $_SESSION["fp_role"] ?? "";
@@ -43,7 +55,12 @@ if (!$row["reset_code"] || !$row["reset_expire"]) {
   exit();
 }
 
-if ($row["reset_code"] !== $code) {
+$storedCode = (string)$row['reset_code'];
+$storedCodeInfo = password_get_info($storedCode);
+$codeMatches = ($storedCodeInfo['algoName'] ?? 'unknown') !== 'unknown'
+  ? password_verify($code, $storedCode)
+  : hash_equals($storedCode, $code); // Compatibility for codes issued before hashing was enabled.
+if (!$codeMatches) {
   $_SESSION["fp_msg"] = "Incorrect code. Please try again.";
   header("Location: login.php");
   exit();
@@ -55,7 +72,9 @@ if (strtotime($row["reset_expire"]) < time()) {
   exit();
 }
 
-$_SESSION["fp_code"] = $code;
+// Keep the stored verifier in the session; never retain the submitted code.
+$_SESSION["fp_code"] = $storedCode;
+$_SESSION['fp_attempts'] = 0;
 $_SESSION["fp_step"] = "reset";
 $_SESSION["fp_msg"] = "Code verified. Please create your new password.";
 header("Location: login.php");

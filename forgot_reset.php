@@ -1,6 +1,9 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require "db.php";
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: login.php'); exit(); }
+auth_require_csrf();
 
 $email = $_SESSION["fp_email"] ?? "";
 $role  = $_SESSION["fp_role"] ?? "";
@@ -46,7 +49,7 @@ if ($res->num_rows !== 1) {
 
 $row = $res->fetch_assoc();
 
-if ($row["reset_code"] !== $code) {
+if (!hash_equals((string)$row['reset_code'], (string)$code)) {
   $_SESSION["fp_msg"] = "Invalid code. Please resend the code.";
   header("Location: login.php");
   exit();

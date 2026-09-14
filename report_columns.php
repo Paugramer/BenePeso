@@ -172,6 +172,59 @@ function reportDateValue($value): string
     return $timestamp ? date('Y/m/d', $timestamp) : (string)$value;
 }
 
+function reportUniqueListItems($value): array
+{
+    if (is_array($value)) {
+        $items = [];
+        foreach ($value as $item) {
+            foreach (reportUniqueListItems($item) as $nestedItem) $items[] = $nestedItem;
+        }
+    } else {
+        $raw = trim((string)$value);
+        $decoded = $raw !== '' ? json_decode($raw, true) : null;
+        if (is_array($decoded)) return reportUniqueListItems($decoded);
+        $items = preg_split('/\s*(?:,|;|\r?\n)\s*/', $raw, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    }
+    $seen = [];
+    $unique = [];
+    foreach ($items as $item) {
+        $item = trim($item);
+        $key = strtolower(preg_replace('/\s+/', ' ', $item) ?? $item);
+        if ($key === '' || isset($seen[$key])) continue;
+        $seen[$key] = true;
+        $unique[] = $item;
+    }
+    return $unique;
+}
+
+function reportStructuredListItems($value): array
+{
+    if (is_array($value)) return reportUniqueListItems($value);
+    $raw = trim((string)$value);
+    if ($raw === '') return [];
+    $decoded = json_decode($raw, true);
+    if (is_array($decoded)) return reportUniqueListItems($decoded);
+    if (preg_match('/[;\r\n]/', $raw)) {
+        $seen = [];
+        $items = [];
+        foreach (preg_split('/\s*(?:;|\r?\n)\s*/', $raw, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $item) {
+            $normalized = strtolower(preg_replace('/\s+/', ' ', trim($item)) ?? trim($item));
+            if ($normalized === '' || isset($seen[$normalized])) continue;
+            $seen[$normalized] = true;
+            $items[] = trim($item);
+        }
+        return $items;
+    }
+    return [$raw];
+}
+
+function reportBulletListValue($value): string
+{
+    $items = is_array($value) ? array_values($value) : reportUniqueListItems($value);
+    if (count($items) <= 1) return (string)($items[0] ?? '');
+    return implode("\n", array_map(static fn($item) => '• ' . $item, $items));
+}
+
 function getReportCellValue(array $row, string $key): string
 {
     switch ($key) {
@@ -199,7 +252,40 @@ function getReportCellValue(array $row, string $key): string
                 }
             }
             if ($storedPrices !== '') $prices = array_map('trim', explode(',', $storedPrices));
-            return $key === 'primary_products' ? implode(', ', $names) : implode(', ', array_filter($prices, static fn($price) => $price !== ''));
+
+            // Group by product so a product's distinct prices remain paired with it.
+            $groups = [];
+            foreach ($names as $index => $name) {
+                $name = trim((string)$name);
+                if ($name === '') continue;
+                $nameKey = strtolower(preg_replace('/\s+/', ' ', $name) ?? $name);
+                if (!isset($groups[$nameKey])) $groups[$nameKey] = ['name' => $name, 'prices' => []];
+                $price = trim((string)($prices[$index] ?? ''));
+                if ($price !== '' && !in_array($price, $groups[$nameKey]['prices'], true)) $groups[$nameKey]['prices'][] = $price;
+            }
+            $groupedNames = array_column(array_values($groups), 'name');
+            $groupedPrices = array_map(
+                static fn($group) => $group['prices'] ? implode(' / ', $group['prices']) : '—',
+                array_values($groups)
+            );
+            return $key === 'primary_products' ? reportBulletListValue($groupedNames) : reportBulletListValue($groupedPrices);
+        case 'business_nature':
+        case 'assets_owned':
+        case 'utility_needs':
+        case 'source_of_capital':
+        case 'mode_of_payment':
+        case 'distribution_channels':
+        case 'assistance_availed':
+        case 'past_programs':
+        case 'programs_needed':
+        case 'challenges_encountered':
+        case 'special_skills':
+        case 'parents_status':
+        case 'ownership_type':
+        case 'hr_skills':
+        case 'skills_training_needed':
+        case 'type_of_beneficiary':
+            return reportBulletListValue(reportUniqueListItems($row[$key] ?? ''));
         case 'owner_name':
             return trim((string)(($row['full_name'] ?? '') ?: (($row['first_name'] ?? '') . ' ' . ($row['middle_name'] ?? '') . ' ' . ($row['last_name'] ?? '') . ' ' . ($row['ext_name'] ?? ''))));
         case 'owner_contact':
@@ -240,37 +326,47 @@ function getReportCellValue(array $row, string $key): string
         case 'hr_total':
             return (string)(!empty($row['hr_total']) ? $row['hr_total'] : ((int)($row['hr_male'] ?? 0) + (int)($row['hr_female'] ?? 0)));
         case 'employment_type':
-            if (!empty($row['employment_type'])) return (string)$row['employment_type'];
+            if (!empty($row['employment_type'])) return reportBulletListValue(reportUniqueListItems($row['employment_type']));
             $types = [];
             foreach (['emp_regular' => 'Regular', 'emp_seasonal' => 'Seasonal', 'emp_contractual' => 'Contractual', 'emp_family' => 'Family'] as $field => $label) {
                 if (!empty($row[$field])) $types[] = $label;
             }
-            return implode(', ', $types);
+            return reportBulletListValue($types);
         case 'spes_history':
             $history = trim((string)($row['spes_history'] ?? ''));
             $decoded = json_decode($history, true);
+            if (is_string($decoded)) $decoded = json_decode($decoded, true);
             if (is_array($decoded)) {
                 $entries = [];
                 foreach ($decoded as $entry) {
                     if (!is_array($entry)) continue;
-                    $parts = array_values(array_filter(array_map(static fn($value) => trim((string)$value), $entry), static fn($value) => $value !== ''));
-                    if ($parts) $entries[] = implode(' / ', $parts);
+                    $establishment = trim((string)($entry['establishment'] ?? $entry[1] ?? ''));
+                    $year = trim((string)($entry['year'] ?? $entry[2] ?? ''));
+                    $id = trim((string)($entry['id'] ?? $entry[3] ?? ''));
+                    $parts = array_values(array_filter([
+                        $establishment,
+                        $year !== '' ? 'Year: ' . $year : '',
+                        $id !== '' ? 'SPES ID: ' . $id : '',
+                    ], static fn($value) => $value !== ''));
+                    if ($parts) $entries[] = implode(' | ', $parts);
                 }
-                if ($entries) return implode('; ', $entries);
+                if ($entries) return implode("\n", array_map(static fn($entry) => '• ' . $entry, $entries));
             }
-            if ($history !== '') return $history;
             $entries = [];
             for ($number = 1; $number <= 4; $number++) {
                 $parts = array_filter([
-                    trim((string)($row["spes_history_{$number}_year"] ?? '')),
-                    trim((string)($row["spes_history_{$number}_id"] ?? '')),
+                    trim((string)($row["spes_history_{$number}_establishment"] ?? '')),
+                    !empty($row["spes_history_{$number}_year"]) ? 'Year: ' . trim((string)$row["spes_history_{$number}_year"]) : '',
+                    !empty($row["spes_history_{$number}_id"]) ? 'SPES ID: ' . trim((string)$row["spes_history_{$number}_id"]) : '',
                 ], static fn($value) => $value !== '');
-                if ($parts) $entries[] = implode(' / ', $parts);
+                if ($parts) $entries[] = implode(' | ', $parts);
             }
-            return implode('; ', $entries);
+            if ($entries) return implode("\n", array_map(static fn($entry) => '• ' . $entry, $entries));
+            return $history;
         case 'current_capital':
             return (string)($row['current_capital'] ?? ($row['initial_capital'] ?? ''));
         default:
-            return (string)($row[$key] ?? '');
+            $items = reportStructuredListItems($row[$key] ?? '');
+            return reportBulletListValue($items);
     }
 }

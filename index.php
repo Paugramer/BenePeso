@@ -107,6 +107,7 @@ function format_date($date_str) {
     
     <link rel="stylesheet" href="index.css?v=15">
     <link rel="stylesheet" href="frontend_polish.css?v=1">
+    <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
     <script src="frontend_polish.js?v=1" defer></script>
 </head>
 <body>
@@ -194,7 +195,7 @@ function format_date($date_str) {
                         ?>
                             <div class="program-card reveal" style="transition-delay: <?= $delay ?>s;" data-program="<?= $modalData ?>" onclick="openProgramModal(this)">
                                 <div class="card-img-wrapper">
-                                    <img src="<?= $img ?>" alt="Program Image" class="card-img" onerror="this.onerror=null; this.src='img/pesologo.png';">
+                                    <img src="<?= $img ?>" alt="Program Image" class="card-img" decoding="async" onerror="this.onerror=null; this.src='img/pesologo.png';">
                                     <div class="program-image-badges" aria-hidden="true">
                                         <span class="program-code-badge"><?= htmlspecialchars($row['program_code']) ?></span>
                                         <span class="program-slot-badge <?= $remaining_slots <= 0 ? 'is-full' : '' ?>">

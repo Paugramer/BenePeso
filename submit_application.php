@@ -1,6 +1,5 @@
 <?php
-session_start();
-require "db.php";
+require_once __DIR__ . '/auth_session.php';
 
 // 1. Check if the user is logged in
 if (!isset($_SESSION["user_id"])) {
@@ -9,11 +8,11 @@ if (!isset($_SESSION["user_id"])) {
 }
 
 // 2. Prevent Direct Access (Only allow POST requests)
-if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    header("Location: programs.php");
-    exit();
-}
-
+// Applications are handled by programs.php and stored in beneficiaries.
+// Keep this former endpoint as a safe compatibility redirect for old bookmarks/forms.
+header('Location: programs.php?status=error&msg=outdated_form');
+exit();
+/* Legacy implementation retained below for reference; it is intentionally unreachable.
 // 3. Collect and Sanitize Data
 $user_id = (int)$_SESSION["user_id"];
 $program_id = (int)($_POST['program_id'] ?? 0);
@@ -100,5 +99,5 @@ if ($stmt->execute()) {
 
 $stmt->close();
 $conn->close();
-exit();
+exit(); */
 ?>

@@ -1429,6 +1429,42 @@ input[type="number"] { -moz-appearance: textfield; }
     overflow: hidden;
 }
 
+.privacy-notice-link {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--green);
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#applicationPrivacyModal {
+    z-index: 1100;
+}
+
+#applicationPrivacyModal .application-privacy-dialog {
+    display: flex;
+    flex-direction: column;
+    width: min(860px, 100%);
+    max-width: 860px;
+    height: min(760px, calc(100dvh - 32px));
+    padding: 28px 30px 22px;
+    overflow: hidden;
+}
+
+.application-privacy-dialog > h2,
+.application-privacy-dialog > p {
+    flex: 0 0 auto;
+    margin-right: 48px;
+}
+
+.application-privacy-dialog > h2 { margin-bottom: 4px; color: var(--green-dark); }
+.application-privacy-dialog > p { margin-top: 0; color: var(--text-muted); }
+.application-privacy-dialog iframe { flex: 1 1 auto; width: 100%; min-height: 0; border: 1px solid var(--border-light); border-radius: 12px; background: #fff; }
+.application-privacy-actions { flex: 0 0 auto; display: flex; justify-content: flex-end; padding-top: 16px; }
+
 #applicationModal .modal-content > h2 {
     flex: 0 0 auto;
     margin: 0 50px 4px 0 !important;
@@ -1954,10 +1990,12 @@ input[type="number"] { -moz-appearance: textfield; }
 }
 .privacy-acknowledgment {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-  margin: 18px 0 4px;
+  min-height: 58px;
+  margin: 10px 0 0;
   padding: 13px 15px;
+  box-sizing: border-box;
   border: 1px solid rgba(31, 77, 56, 0.18);
   border-radius: 10px;
   background: #f7fbf8;
@@ -1965,5 +2003,37 @@ input[type="number"] { -moz-appearance: textfield; }
   font-size: 12.5px;
   line-height: 1.5;
 }
-.privacy-acknowledgment input { width: 16px; height: 16px; margin-top: 2px; flex: 0 0 auto; accent-color: #1f6a49; }
+.privacy-acknowledgment input { width: 16px; height: 16px; margin: 0; flex: 0 0 auto; accent-color: #1f6a49; }
 .privacy-acknowledgment a { color: #17633f; font-weight: 700; text-decoration: underline; }
+
+#tupad-step-3 .tupad-fitness-field {
+  display: grid;
+  grid-template-rows: minmax(38px, auto) 58px;
+  align-content: end;
+}
+
+#tupad-step-3 .tupad-fitness-field select { height: 58px; }
+
+/* MSME application: compact rows and vertically aligned confirmation controls. */
+#tupadWrapper .form-grid,
+#spesWrapper .form-grid,
+#msmeWrapper .form-grid { grid-auto-flow: row dense; }
+#msmeWrapper .form-grid { gap: 12px 18px; }
+#msmeWrapper .section-title { margin-top: 6px; }
+#msmeWrapper .msme-confirmation-step .form-grid { gap: 8px; }
+#msmeWrapper .msme-confirmation-step .privacy-acknowledgment {
+  align-items: center;
+  margin: 10px 0 0;
+}
+#msmeWrapper .msme-confirmation-step .privacy-acknowledgment input {
+  margin-top: 0;
+}
+
+@media (max-width: 800px) {
+  #tupad-step-3 .tupad-fitness-field {
+    display: flex;
+  }
+}
+#msmeWrapper .msme-confirmation-step .form-actions {
+  margin-top: 18px;
+}

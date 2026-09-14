@@ -1,6 +1,7 @@
 <?php
 session_start();
 $backLink = isset($_SESSION['user_id']) ? 'home.php' : 'index.php';
+$embedded = isset($_GET['embedded']) && $_GET['embedded'] === '1';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,10 +46,13 @@ $backLink = isset($_SESSION['user_id']) ? 'home.php' : 'index.php';
     .actions { display:flex; justify-content:center; margin-top:38px; padding-top:26px; border-top:1px solid var(--line); }
     .back { display:inline-flex; align-items:center; gap:9px; padding:12px 20px; border-radius:10px; background:var(--green); color:#fff; text-decoration:none; font-weight:700; box-shadow:0 9px 20px rgba(31,106,73,.2); transition:.2s ease; }
     .back:hover { background:var(--dark); transform:translateY(-1px); }
-    @media (max-width:640px) { header{padding-inline:12px}.wrap{width:min(100% - 20px,1040px)}.nav-notice span{display:none}.hero{grid-template-columns:1fr;padding-top:38px}.hero-icon{display:none}header p{font-size:15px}main{padding:25px 20px}.summary{grid-template-columns:1fr} }
+    @media (max-width:640px) { html,body{width:100%;max-width:100%;overflow-x:clip}header{padding-inline:12px}.wrap{width:calc(100% - 20px);max-width:1040px;min-width:0}.topbar,.brand,.hero,.hero>*,main{min-width:0;max-width:100%}.brand{overflow-wrap:anywhere}.hero{grid-template-columns:minmax(0,1fr);padding-top:38px}.hero-icon{display:none}header p,main p,main li,h1,h2{max-width:100%;overflow-wrap:anywhere}.nav-notice span{display:none}header p{font-size:15px}main{padding:25px 20px}.summary{grid-template-columns:1fr} }
+    body.embedded { background:#fff; }
+    body.embedded header, body.embedded .actions { display:none; }
+    body.embedded main { width:100%; margin:0; padding:24px; border:0; border-radius:0; box-shadow:none; }
   </style>
 </head>
-<body>
+<body class="<?= $embedded ? 'embedded' : '' ?>">
 <header>
   <div class="wrap">
     <nav class="topbar" aria-label="Privacy notice navigation">

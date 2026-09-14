@@ -8,7 +8,7 @@ function beneficiary_choice_options(string $group): array
         'skills_training' => ['Agriculture', 'Automotive Servicing', 'Carpentry', 'Computer/Digital Skills', 'Cookery', 'Dressmaking/Sewing', 'Electrical Installation', 'Entrepreneurship', 'Food Processing', 'Housekeeping', 'Massage Therapy', 'Welding'],
         'beneficiary_type' => ['Unemployed', 'Underemployed', 'Displaced Worker', 'Seasonal Worker', 'Informal Sector Worker', 'Self-employed'],
         'dependent_relationship' => ['Spouse', 'Child', 'Parent', 'Sibling', 'Grandparent', 'Grandchild', 'Legal Guardian'],
-        'ownership_type' => ['Sole Proprietorship', 'Partnership', 'Corporation', 'Cooperative', 'Association'],
+        'ownership_type' => ['Sole Proprietorship', 'Partnership', 'Corporation', 'Cooperative'],
     ];
     return $choices[$group] ?? [];
 }
@@ -18,7 +18,9 @@ function render_beneficiary_options(string $group): void
     foreach (beneficiary_choice_options($group) as $choice) {
         echo '<option value="' . htmlspecialchars($choice, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($choice, ENT_QUOTES, 'UTF-8') . '</option>';
     }
-    echo '<option value="Others">Others</option>';
+    if ($group !== 'ownership_type') {
+        echo '<option value="Others">Others</option>';
+    }
 }
 
 function choice_or_other(array $source, string $field): string
@@ -30,4 +32,3 @@ function choice_or_other(array $source, string $field): string
     }
     return $value;
 }
-

@@ -1,9 +1,11 @@
 <?php
 require "auth.php"; // This handles the session_start and role routing
 require "db.php";
+require_once "program_status_helper.php";
 
 // Protect this page for admins only using our new function
 check_user_role("admin");
+sync_program_statuses($conn);
 
 if (!isset($conn) || !($conn instanceof mysqli)) {
   die("Database connection not found. Please check db.php");
@@ -29,11 +31,11 @@ if (!function_exists('time_ago')) {
         $now = new DateTime;
         $ago = new DateTime($datetime ?: 'now');
         $diff = $now->diff($ago);
-        $diff->w = floor($diff->d / 7);
-        $diff->d -= $diff->w * 7;
-        $string = array('y' => 'year', 'm' => 'month', 'w' => 'week', 'd' => 'day', 'h' => 'hour', 'i' => 'minute', 's' => 'second');
-        foreach ($string as $k => &$v) {
-            if ($diff->$k) { $v = $diff->$k . ' ' . $v . ($diff->$k > 1 ? 's' : ''); } else { unset($string[$k]); }
+        $values = ['y' => $diff->y, 'm' => $diff->m, 'w' => intdiv($diff->d, 7), 'd' => $diff->d % 7, 'h' => $diff->h, 'i' => $diff->i, 's' => $diff->s];
+        $labels = ['y' => 'year', 'm' => 'month', 'w' => 'week', 'd' => 'day', 'h' => 'hour', 'i' => 'minute', 's' => 'second'];
+        $string = [];
+        foreach ($values as $k => $value) {
+            if ($value) { $string[$k] = $value . ' ' . $labels[$k] . ($value > 1 ? 's' : ''); }
         }
         if (!$full) $string = array_slice($string, 0, 1);
         return $string ? implode(', ', $string) . ' ago' : 'just now';
@@ -138,7 +140,7 @@ if (table_exists($conn, "admins")) {
   }
 }
 
-if (empty(trim($admin_name))) { $admin_name = "System Administrator"; }
+$admin_name = "PESO VINZONS";
 $pic_path = "uploads/admin_pics/" . $admin_pic; 
 if (!file_exists($pic_path) || empty($admin_pic)) { $pic_path = "img/default_avatar.png"; }
 
@@ -306,9 +308,10 @@ if (table_exists($conn, "activity_logs")) {
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="admin_dashboard.css">
   <link rel="stylesheet" href="shared_sidebar.css">
-  <link rel="stylesheet" href="dashboard_polish.css?v=2">
-  <link rel="stylesheet" href="frontend_polish.css?v=1">
-  <script src="frontend_polish.js?v=1" defer></script>
+  <link rel="stylesheet" href="dashboard_polish.css?v=4">
+<link rel="stylesheet" href="frontend_polish.css?v=7">
+<link rel="stylesheet" href="admin_responsive.css?v=17">
+<script src="frontend_polish.js?v=3" defer></script>
 </head>
 <body>
 
@@ -346,7 +349,7 @@ if (table_exists($conn, "activity_logs")) {
       <a href="admin_beneficiaries.php" class="nav-item"><i class="ph ph-users"></i> Beneficiaries</a>
       <a href="admin_accounts.php" class="nav-item"><i class="ph ph-user-circle-gear"></i> Manage Accounts</a>
       <a href="admin_activity_log.php" class="nav-item"><i class="ph ph-clock-counter-clockwise"></i> System Logs</a>
-      <a href="logout.php?role=admin" class="nav-item logout-item"><i class="ph ph-sign-out"></i> Logout</a>
+      <form method="POST" action="logout.php" class="sidebar-logout-form"><?php echo auth_csrf_input(); ?><input type="hidden" name="role" value="admin"><button type="submit" class="nav-item logout-item"><i class="ph ph-sign-out"></i> Logout</button></form>
     </nav>
   </aside>
 
@@ -380,8 +383,8 @@ if (table_exists($conn, "activity_logs")) {
           <div class="stat-icon"><i class="ph-fill ph-briefcase"></i></div>
         </div>
         <div class="stat-value"><?php echo (int)$totalPrograms; ?></div>
-        <div class="stat-trend trend-neutral"><i class="ph-bold ph-database"></i> System wide</div>
-        <div class="stat-note">All recorded PESO programs</div>
+        <div class="stat-trend trend-neutral"><i class="ph-bold ph-database"></i> All programs</div>
+        <div class="stat-note">Programs listed in BENEPESO.</div>
       </div>
 
       <div class="stat-card animate-fade-in" style="animation-delay: 0.2s;">
@@ -390,19 +393,19 @@ if (table_exists($conn, "activity_logs")) {
           <div class="stat-icon"><i class="ph-fill ph-check-circle"></i></div>
         </div>
         <div class="stat-value"><?php echo (int)$activePrograms; ?></div>
-        <div class="stat-trend trend-neutral"><i class="ph-bold ph-activity"></i> Live programs</div>
-        <div class="stat-note">Currently running programs</div>
+        <div class="stat-trend trend-neutral"><i class="ph-bold ph-activity"></i> Running now</div>
+        <div class="stat-note">Programs currently in progress.</div>
       </div>
 
-      <a href="admin_beneficiaries.php" class="stat-card stat-card-link animate-fade-in" style="animation-delay: 0.3s;" aria-label="Open beneficiary records">
+      <div class="stat-card animate-fade-in" style="animation-delay: 0.3s;">
         <div class="stat-top">
           <div class="stat-label">Unique Beneficiaries</div>
           <div class="stat-icon"><i class="ph-fill ph-users-three"></i></div>
         </div>
         <div class="stat-value"><?php echo (int)$totalBeneficiaries; ?></div>
-        <div class="stat-trend trend-neutral"><i class="ph-bold ph-files"></i> <?php echo (int)$totalBeneficiaryRecords; ?> program records</div>
-        <div class="stat-note">Each person is counted once across programs</div>
-      </a>
+        <div class="stat-trend trend-neutral"><i class="ph-bold ph-files"></i> <?php echo (int)$totalBeneficiaryRecords; ?> total enrollments</div>
+        <div class="stat-note">Each person is counted once.</div>
+      </div>
 
       <div class="stat-card animate-fade-in" style="animation-delay: 0.4s;">
         <div class="stat-top">
@@ -410,8 +413,8 @@ if (table_exists($conn, "activity_logs")) {
           <div class="stat-icon"><i class="ph-fill ph-clock-countdown"></i></div>
         </div>
         <div class="stat-value"><?php echo (int)$pendingReviews; ?></div>
-        <div class="stat-trend trend-down"><i class="ph-bold ph-trend-down"></i> Action Needed</div>
-        <div class="stat-note">Require admin attention</div>
+        <div class="stat-trend trend-down"><i class="ph-bold ph-clock"></i> For review</div>
+        <div class="stat-note">Applications waiting for admin review.</div>
       </div>
     </section>
 

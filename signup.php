@@ -1,8 +1,10 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 
 $flash = $_SESSION["flash"] ?? "";
 unset($_SESSION["flash"]);
+$show_age_notice = !empty($_SESSION['show_age_notice']);
+unset($_SESSION['show_age_notice']);
 
 $form_data = $_SESSION["form_data"] ?? [];
 unset($_SESSION["form_data"]);
@@ -51,8 +53,9 @@ $barangays = [
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=16" />
+  <link rel="stylesheet" href="style.css?v=20" />
   <link rel="stylesheet" href="frontend_polish.css?v=1">
+  <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
   <script src="frontend_polish.js?v=1" defer></script>
 </head>
 <body class="auth-page auth-signup">
@@ -86,7 +89,7 @@ $barangays = [
         <div class="role-label stagger-1" style="margin-top: 15px;">User Registration</div>
 
         <h2 class="stagger-2">Create User Account</h2>
-        
+
         <div class="step-tracker stagger-2">
             <div class="step-item active" id="tracker1">
                 <div class="step-circle">1</div>
@@ -105,6 +108,7 @@ $barangays = [
         </div>
 
         <form action="process_signup.php" method="POST" enctype="multipart/form-data" autocomplete="off" id="signupForm" class="stagger-3" novalidate>
+          <?= auth_csrf_input() ?>
           <input type="hidden" name="role" value="user" id="roleInput">
           <input type="hidden" name="municipality" value="Vinzons" id="municipalityHidden">
 
@@ -159,7 +163,7 @@ $barangays = [
                       <option value="Single" <?php echo get_sel('civil_status', 'Single'); ?>>Single</option>
                       <option value="Married" <?php echo get_sel('civil_status', 'Married'); ?>>Married</option>
                       <option value="Widowed" <?php echo get_sel('civil_status', 'Widowed'); ?>>Widowed</option>
-                      <option value="Legally Separated" <?php echo get_sel('civil_status', 'Legally Separated'); ?>>Legally Separated</option>
+                      <option value="Legally Separated" <?php echo get_sel('civil_status', 'Legally Separated'); ?>>Separated</option>
                     </select>
                   </div>
               </div>
@@ -247,12 +251,12 @@ $barangays = [
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px; vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
                     Upload Photo
                 </label>
-                <input type="file" name="profile_pic" id="profile_pic" accept="image/*" autocomplete="off" style="display:none;" required>
+                <input type="file" name="profile_pic" id="profile_pic" accept="image/*" style="display:none;" required>
               </div>
 
               <label class="privacy-acknowledgment" for="privacyAcknowledgment">
                 <input type="checkbox" id="privacyAcknowledgment" name="privacy_acknowledgment" value="1" required>
-                <span>I have read and understood the <a href="privacy_notice.php" target="_blank" rel="noopener">BenePeso Privacy Notice</a>, including how PESO Vinzons processes my personal data to create and manage my beneficiary account.</span>
+                <span>I have read and understood the <button type="button" class="privacy-notice-link" onclick="openPrivacyNotice()">Privacy Notice</button>, including how PESO Vinzons processes my personal data to create and manage my beneficiary account.</span>
               </label>
 
               <div class="btn-group">
@@ -277,12 +281,44 @@ $barangays = [
 <div class="modal-bg" id="modalBg">
   <div class="modal modal--notice" role="dialog" aria-modal="true" aria-labelledby="signupNoticeTitle">
     <button class="modal-close-btn" type="button" id="closeNoticeBtn" name="close_notice_btn" onclick="closeModal('modalBg')" aria-label="Close notice">&times;</button>
-    <div class="modal-icon-header" style="color: #f39c12; background: #fef5e7;">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+    <div class="modal-icon-header notice-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <defs><linearGradient id="signupNoticeGradient" x1="4" y1="3" x2="20" y2="21"><stop stop-color="#39c77a"/><stop offset="1" stop-color="#12613e"/></linearGradient></defs>
+        <circle cx="12" cy="12" r="9" fill="none" stroke="url(#signupNoticeGradient)" stroke-width="2"/>
+        <path d="M12 10.5v6" fill="none" stroke="url(#signupNoticeGradient)" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="12" cy="7.5" r="1.2" fill="url(#signupNoticeGradient)"/>
+      </svg>
     </div>
     <h3 class="modal-title" id="signupNoticeTitle">BENEPESO Notice</h3>
     <p style="color:var(--muted); font-size:14px; margin-bottom:25px;" id="modalText"></p>
     <button class="modal-btn" type="button" id="okNoticeBtn" name="ok_notice_btn" onclick="closeModal('modalBg')">Close</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="ageNoticeBg" aria-hidden="true">
+  <div class="modal modal--notice age-notice-modal" role="dialog" aria-modal="true" aria-labelledby="ageNoticeTitle" aria-describedby="ageNoticeText">
+    <button class="modal-close-btn" type="button" onclick="closeAgeNotice()" aria-label="Close age requirement notice">&times;</button>
+    <div class="age-notice-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <defs><linearGradient id="ageIconGradient" x1="3" y1="3" x2="21" y2="21"><stop stop-color="#2fbf71"/><stop offset="1" stop-color="#11623e"/></linearGradient></defs>
+        <circle cx="12" cy="12" r="9" fill="none" stroke="url(#ageIconGradient)" stroke-width="2"/>
+        <path d="M12 7v6" fill="none" stroke="url(#ageIconGradient)" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="12" cy="16.5" r="1.1" fill="url(#ageIconGradient)"/>
+      </svg>
+    </div>
+    <h3 class="modal-title" id="ageNoticeTitle">Age Requirement Notice</h3>
+    <p class="modal-subtitle" id="ageNoticeText">You must be at least 18 years old to create a BENEPESO account. Please check your birthdate.</p>
+    <button class="modal-btn" type="button" onclick="closeAgeNotice()">Review Birthdate</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="privacyNoticeBg" aria-hidden="true">
+  <div class="modal signup-privacy-modal" role="dialog" aria-modal="true" aria-labelledby="privacyNoticeTitle">
+    <button class="modal-close-btn" type="button" onclick="closePrivacyNotice()" aria-label="Close privacy notice">&times;</button>
+    <h3 class="modal-title" id="privacyNoticeTitle">Privacy Notice</h3>
+    <p class="signup-privacy-intro">Review how PESO Vinzons processes and protects your account information.</p>
+    <iframe src="privacy_notice.php?embedded=1" title="PESO Vinzons Privacy Notice"></iframe>
+    <button class="modal-btn signup-privacy-return" type="button" onclick="closePrivacyNotice()">Return to Registration</button>
   </div>
 </div>
 
@@ -307,15 +343,21 @@ $barangays = [
 
   function calculateAge() {
       const birthDateVal = document.getElementById('birthDate').value;
-      if (!birthDateVal) return;
-      const birthDate = new Date(birthDateVal);
+      if (!birthDateVal) {
+          document.getElementById('ageInput').value = '';
+          return null;
+      }
+      const parts = birthDateVal.split('-').map(Number);
+      if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+      const birthDate = new Date(parts[0], parts[1] - 1, parts[2]);
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
       const m = today.getMonth() - birthDate.getMonth();
       if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
           age--;
       }
-      document.getElementById('ageInput').value = Math.max(0, age); 
+      document.getElementById('ageInput').value = Math.max(0, age);
+      return age;
   }
 
   function goToStep(step) {
@@ -341,9 +383,22 @@ $barangays = [
               return;
           }
 
+          if (currentStep === 1) {
+              const age = calculateAge();
+              if (age === null || age < 18) {
+                  const birthDateInput = document.getElementById('birthDate');
+                  birthDateInput.style.borderColor = "#c0392b";
+                  birthDateInput.style.boxShadow = "0 0 0 4px rgba(192,57,43,0.1)";
+                  openModal("ageNoticeBg");
+                  return;
+              }
+          }
+
           if (currentStep === 2) {
-              const pass = document.getElementById('passwordInput').value;
-              const conf = document.getElementById('confirmPasswordInput').value;
+              const passInput = document.getElementById('passwordInput');
+              const confirmInput = document.getElementById('confirmPasswordInput');
+              const pass = passInput ? passInput.value : '';
+              const conf = confirmInput ? confirmInput.value : '';
               const contact = document.getElementById('contactInput').value;
               
               if (contact.length !== 11 || !contact.startsWith("09")) {
@@ -351,12 +406,12 @@ $barangays = [
                   openModal("modalBg");
                   return;
               }
-              if (pass !== conf) {
+              if (passInput && pass !== conf) {
                   document.getElementById("modalText").textContent = "Passwords do not match.";
                   openModal("modalBg");
                   return;
               }
-              if (pass.length < 8) {
+              if (passInput && pass.length < 8) {
                   document.getElementById("modalText").textContent = "Password must be at least 8 characters.";
                   openModal("modalBg");
                   return;
@@ -414,8 +469,8 @@ $barangays = [
       }
   }
 
-  pass1.addEventListener('input', checkPasswordMatch);
-  pass2.addEventListener('input', checkPasswordMatch);
+  pass1?.addEventListener('input', checkPasswordMatch);
+  pass2?.addEventListener('input', checkPasswordMatch);
 
   const flash = <?php echo json_encode($flash); ?>;
   function openModal(id){
@@ -432,7 +487,31 @@ $barangays = [
     if (!hasOpenModal) document.body.classList.remove("modal-open");
   }
 
-  if (flash){
+  function openPrivacyNotice() {
+    const modal = document.getElementById('privacyNoticeBg');
+    modal.setAttribute('aria-hidden', 'false');
+    openModal('privacyNoticeBg');
+    modal.querySelector('.modal-close-btn')?.focus();
+  }
+
+  function closePrivacyNotice() {
+    const modal = document.getElementById('privacyNoticeBg');
+    modal.setAttribute('aria-hidden', 'true');
+    closeModal('privacyNoticeBg');
+    document.querySelector('.privacy-notice-link')?.focus();
+  }
+
+  function closeAgeNotice() {
+    const modal = document.getElementById('ageNoticeBg');
+    modal.setAttribute('aria-hidden', 'true');
+    closeModal('ageNoticeBg');
+    document.getElementById('birthDate')?.focus();
+  }
+
+  const showAgeNotice = <?= $show_age_notice ? 'true' : 'false' ?>;
+  if (showAgeNotice) {
+    openModal("ageNoticeBg");
+  } else if (flash){
     document.getElementById("modalText").textContent = flash;
     openModal("modalBg");
   }
@@ -441,9 +520,23 @@ $barangays = [
     if (event.target === event.currentTarget) closeModal("modalBg");
   });
 
+  document.getElementById("ageNoticeBg").addEventListener("mousedown", (event) => {
+    if (event.target === event.currentTarget) closeAgeNotice();
+  });
+
+  document.getElementById("privacyNoticeBg").addEventListener("mousedown", (event) => {
+    if (event.target === event.currentTarget) closePrivacyNotice();
+  });
+
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && document.getElementById("modalBg").style.display === "flex") {
-      closeModal("modalBg");
+    if (event.key === "Escape") {
+      if (document.getElementById("ageNoticeBg").style.display === "flex") {
+        closeAgeNotice();
+      } else if (document.getElementById("privacyNoticeBg").style.display === "flex") {
+        closePrivacyNotice();
+      } else if (document.getElementById("modalBg").style.display === "flex") {
+        closeModal("modalBg");
+      }
     }
   });
 
@@ -490,7 +583,7 @@ $barangays = [
   });
 
   document.getElementById("signupForm").addEventListener("submit", (e) => {
-    if (!profileInput.value) {
+    if (profileInput.required && !profileInput.value) {
         e.preventDefault();
         uploadContainer.style.borderColor = "#c0392b";
         uploadContainer.style.background = "#fdf2f0";
@@ -499,9 +592,9 @@ $barangays = [
         return;
     }
 
-    const password = document.getElementById("passwordInput").value;
-    const confirmPassword = document.getElementById("confirmPasswordInput").value;
-    if (password !== confirmPassword){
+    const passwordInput = document.getElementById("passwordInput");
+    const confirmPasswordInput = document.getElementById("confirmPasswordInput");
+    if (passwordInput && passwordInput.value !== confirmPasswordInput.value){
       e.preventDefault();
       document.getElementById("modalText").textContent = "Passwords do not match. Please retype carefully.";
       openModal("modalBg");

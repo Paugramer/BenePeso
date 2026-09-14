@@ -2,8 +2,17 @@
 require_once __DIR__ . '/auth_session.php';
 require "db.php";
 
-$requested_role = $_GET['role'] ?? ($_SESSION['role'] ?? null);
+$requested_role = $_POST['role'] ?? $_GET['role'] ?? ($_SESSION['role'] ?? null);
 $role = is_string($requested_role) && auth_has_role($requested_role) ? $requested_role : null;
+
+// Every logout changes authentication state and must be deliberate and CSRF-protected.
+if (in_array($requested_role, ['admin', 'peso_staff', 'user'], true)) {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        header('Location: ' . (auth_has_role('user') ? 'home.php' : 'login.php'));
+        exit();
+    }
+    auth_require_csrf();
+}
 
 if ($role !== null) {
     

@@ -72,6 +72,52 @@
     });
   }
 
+  function improveDisabledLinks() {
+    document.querySelectorAll('a.disabled').forEach((link) => {
+      link.setAttribute('aria-disabled', 'true');
+      link.setAttribute('tabindex', '-1');
+      link.addEventListener('click', (event) => event.preventDefault());
+    });
+  }
+
+  function enhanceMotion() {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const saveData = navigator.connection && navigator.connection.saveData;
+    if (reducedMotion || saveData) return;
+
+    document.documentElement.classList.add('bp-motion-enabled');
+    document.querySelectorAll('.stats-grid, .program-grid, table tbody').forEach((group) => {
+      Array.from(group.children).slice(0, 16).forEach((item, index) => {
+        item.style.setProperty('--bp-order', String(index));
+        item.classList.add('bp-stagger-item');
+      });
+    });
+  }
+
+  function syncDialogState(container) {
+    const visible = isVisible(container);
+    container.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    if (visible) {
+      const dialog = container.matches('[role="dialog"]') ? container : container.querySelector('[role="dialog"]');
+      window.setTimeout(() => {
+        if (dialog && !dialog.contains(document.activeElement)) {
+          const first = Array.from(dialog.querySelectorAll(focusableSelector)).find(isVisible);
+          (first || dialog).focus();
+        }
+      }, 0);
+    }
+  }
+
+  function observeDialogs() {
+    document.querySelectorAll(dialogSelector).forEach((container) => {
+      syncDialogState(container);
+      new MutationObserver(() => syncDialogState(container)).observe(container, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
+      });
+    });
+  }
+
   document.addEventListener('pointerdown', (event) => {
     const candidate = event.target.closest('button, a, [role="button"]');
     if (candidate && !candidate.matches(closeSelector)) lastTrigger = candidate;
@@ -114,11 +160,15 @@
   });
 
   function initialize() {
+    document.documentElement.classList.add('bp-ui-ready');
     prepareDialogs();
     labelIconButtons();
     improveImages();
     improveTables();
     improveMessages();
+    improveDisabledLinks();
+    enhanceMotion();
+    observeDialogs();
   }
 
   if (document.readyState === 'loading') {

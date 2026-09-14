@@ -4,7 +4,7 @@ require 'db.php';
 require_once 'tupad_household_helper.php';
 header('Content-Type: application/json; charset=utf-8');
 
-if (empty($_SESSION['admin_id']) && empty($_SESSION['peso_staff_id'])) {
+if (empty($_SESSION['admin_id']) && empty($_SESSION['staff_id'])) {
     http_response_code(403);
     echo json_encode(['found' => false, 'message' => 'Unauthorized.']);
     exit();

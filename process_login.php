@@ -2,6 +2,12 @@
 require_once __DIR__ . '/auth_session.php';
 require "db.php";
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: login.php');
+    exit();
+}
+auth_require_csrf();
+
 $now = time();
 
 $lock_until = $_SESSION["lock_until"] ?? 0;
@@ -11,7 +17,7 @@ if ($lock_until && $lock_until > $now) {
     exit();
 }
 
-$email    = trim($_POST["email"] ?? "");
+$email    = trim($_POST["email"] ?? ""); // Email or beneficiary phone number.
 $password = $_POST["password"] ?? "";
 
 function password_matches($password, $hash): bool {
@@ -25,7 +31,7 @@ function password_matches($password, $hash): bool {
 
 if ($email === "" || $password === "") {
     $_SESSION["login_email"] = $email; 
-    $_SESSION["flash"] = "Please enter your email and password.";
+    $_SESSION["flash"] = "Please enter your phone number or email and password.";
     header("Location: login.php");
     exit();
 }
@@ -50,6 +56,7 @@ if ($stmt_admin) {
             $_SESSION["admin_id"] = (int)$row["admin_id"];
             $_SESSION["admin_name"] = "Administrator"; 
             auth_activate_role("admin");
+            auth_regenerate_session();
 
             // DIRECT UNIFIED SQL LOGGING FOR ADMIN
             $log_stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES ('System Admin', 'Administrator', 'Auth', 'LOGIN', 'System', 'Admin logged in securely.', NOW())");
@@ -94,6 +101,7 @@ if ($stmt_staff) {
             $_SESSION["staff_name"] = $staff_full_name;
             $_SESSION["staff_pic"] = $row["profile_picture"];
             auth_activate_role("peso_staff");
+            auth_regenerate_session();
 
             // DIRECT UNIFIED SQL LOGGING FOR STAFF
             $log_desc = $staff_full_name . " logged in securely.";
@@ -116,17 +124,29 @@ if ($stmt_staff) {
 /* ==========================================
    STEP 3: CHECK USERS TABLE (Beneficiaries)
 ========================================== */
-$stmt_user = $conn->prepare("SELECT user_id, first_name, last_name, profile_pic, password_hash, status FROM users WHERE email = ? LIMIT 1");
+$stmt_user = $conn->prepare("SELECT user_id, first_name, last_name, profile_pic, password_hash, status FROM users WHERE contact_no = ? OR email = ?");
 if ($stmt_user) {
-    $stmt_user->bind_param("s", $email);
+    $stmt_user->bind_param("ss", $email, $email);
     $stmt_user->execute();
     $res_user = $stmt_user->get_result();
 
-    if ($res_user->num_rows === 1) {
-        $row = $res_user->fetch_assoc();
+    if ($res_user->num_rows > 0) {
+        $row = null;
+        $first_candidate_id = 0;
+        $matching_accounts = 0;
+        while ($candidate = $res_user->fetch_assoc()) {
+            if ($first_candidate_id === 0) $first_candidate_id = (int)$candidate['user_id'];
+            if (password_verify($password, $candidate['password_hash'])) {
+                $row = $candidate;
+                $matching_accounts++;
+            }
+        }
+
+        // Legacy duplicate phone numbers are resolved by password, but an ambiguous
+        // match is rejected instead of selecting an account unpredictably.
+        if ($matching_accounts === 1 && $row !== null) {
         $user_id = (int)$row["user_id"];
 
-        if (password_verify($password, $row["password_hash"])) {
             if (isset($row["status"]) && strcasecmp($row["status"], "Banned") === 0) {
                 $status_log = "failed";
                 $h = $conn->prepare("INSERT INTO login_history (user_id, status) VALUES (?, ?)");
@@ -153,6 +173,7 @@ if ($stmt_user) {
             $_SESSION["user_name"] = $user_full_name;
             $_SESSION["user_pic"] = $row["profile_pic"] ?? 'default_avatar.png';
             auth_activate_role("user");
+            auth_regenerate_session();
 
             // DIRECT UNIFIED SQL LOGGING FOR USERS
             $log_desc = "User successfully logged into the system.";
@@ -167,6 +188,7 @@ if ($stmt_user) {
             exit();
         } else {
             $status = "failed";
+            $user_id = $first_candidate_id;
             $h = $conn->prepare("INSERT INTO login_history (user_id, status) VALUES (?, ?)");
             if ($h) {
                 $h->bind_param("is", $user_id, $status);
@@ -190,7 +212,7 @@ if ($_SESSION["fail_count"] >= 3) {
     exit();
 }
 
-$_SESSION["flash"] = "Invalid email or password. Attempts: " . $_SESSION["fail_count"] . "/3";
+$_SESSION["flash"] = "Invalid phone number/email or password. Attempts: " . $_SESSION["fail_count"] . "/3";
 header("Location: login.php");
 exit();
 ?>

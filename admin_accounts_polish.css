@@ -158,6 +158,131 @@ body {
   .form-header, .steps-container { padding-left: 18px !important; padding-right: 18px !important; }
   #addStaffForm { padding-left: 18px; padding-right: 18px; }
 }
+
+/* Shared profile card polish for PESO staff and registered users */
+#idCardModal .id-card-dialog {
+  max-width: 860px !important;
+  min-height: 520px;
+  background: #f8fcfa !important;
+  border-color: #cfe2d8 !important;
+}
+#idCardModal .id-card-left {
+  background: linear-gradient(155deg, #e5f5ec 0%, #f8fcfa 58%, #dff1e7 100%) !important;
+  border-right: 1px solid #cfe2d8 !important;
+}
+#idCardModal .id-card-left::after {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(31,122,84,.1);
+  border-radius: 20px;
+  pointer-events: none;
+}
+#idCardModal .id-avatar-large {
+  aspect-ratio: 1 / 1;
+  flex: 0 0 150px;
+  width: 150px;
+  height: 150px;
+  min-width: 150px;
+  min-height: 150px;
+  border: 6px solid rgba(255,255,255,.95);
+  box-shadow: 0 16px 38px rgba(13,75,49,.16);
+}
+#idCardModal .id-badge {
+  padding: 9px 22px;
+  border-color: #c9dfd3;
+  box-shadow: 0 7px 18px rgba(13,75,49,.08);
+}
+#idCardModal .id-card-right {
+  position: relative;
+  justify-content: flex-start;
+  padding: 42px !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f5faf7 100%) !important;
+}
+#idCardModal .id-card-right::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #176b45, #42a675);
+}
+#idCardModal .id-header {
+  margin-bottom: 22px;
+  padding: 0 0 20px;
+  border-bottom: 1px solid #cfe2d8;
+  text-align: center;
+}
+#idCardModal .id-header > div:first-child {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+#idCardModal .id-joined { text-align: center; }
+#idCardModal .id-name { line-height: 1.25; }
+#idCardModal .id-details-grid {
+  gap: 12px;
+  margin-bottom: 24px;
+}
+#idCardModal .detail-group {
+  min-width: 0;
+  padding: 15px 16px;
+  border: 1px solid #d9e8e0;
+  border-radius: 13px;
+  background: rgba(255,255,255,.9);
+  box-shadow: 0 5px 15px rgba(13,75,49,.035);
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+#idCardModal .detail-group:hover {
+  transform: translateY(-2px);
+  border-color: #abd1bd;
+  box-shadow: 0 9px 20px rgba(13,75,49,.07);
+}
+#idCardModal .detail-group label { margin-bottom: 6px; }
+#idCardModal .id-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+  margin-top: auto !important;
+  padding-top: 22px !important;
+  border-top-color: #cfe2d8 !important;
+}
+#idCardModal .id-actions > button {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 50px;
+  padding-inline: 16px;
+  justify-content: center;
+}
+#idCardModal .modal-close-icon {
+  width: 44px;
+  height: 44px;
+  box-shadow: 0 6px 18px rgba(13,75,49,.09);
+  transition: transform .22s cubic-bezier(.2,.8,.2,1), background-color .22s ease, color .22s ease, box-shadow .22s ease !important;
+}
+#idCardModal .modal-close-icon i { transition: transform .25s cubic-bezier(.2,.8,.2,1); }
+#idCardModal .modal-close-icon:hover {
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 10px 24px rgba(31,122,84,.22);
+}
+#idCardModal .modal-close-icon:hover i { transform: rotate(90deg); }
+#idCardModal .modal-close-icon:active { transform: scale(.94); }
+#idCardModal .modal-close-icon:focus-visible { outline: 0; box-shadow: 0 0 0 4px rgba(31,122,84,.18); }
+@media (max-width: 760px) {
+  #idCardModal .id-card-dialog { min-height: 0; }
+  #idCardModal .id-card-left { padding: 28px 20px !important; }
+  #idCardModal .id-card-left::after { inset: 10px; }
+  #idCardModal .id-avatar-large {
+    flex-basis: 112px;
+    width: 112px;
+    height: 112px;
+    min-width: 112px;
+    min-height: 112px;
+  }
+  #idCardModal .id-card-right { padding: 28px 20px !important; }
+  #idCardModal .detail-group[style*="grid-column"] { grid-column: auto !important; }
+}
 @media (prefers-reduced-motion: reduce) {
   .top-area::before, .landscape-modal, .success-dialog, .id-card-dialog { animation: none !important; }
   .stat-card, .clickable-row { transition: none !important; }
@@ -316,16 +441,134 @@ body {
   .content-wrapper .form-header {
     min-height: 0;
     padding: 18px !important;
-    align-items: flex-start;
-    text-align: left !important;
+    align-items: center;
+    text-align: center !important;
   }
+  .content-wrapper .form-header h2,
+  .content-wrapper .form-header p { width: 100%; text-align: center !important; }
   .content-wrapper .form-header p { white-space: normal; }
   .content-wrapper .step-tracker {
-    justify-content: flex-start !important;
-    overflow-x: auto;
+    display: grid !important;
+    grid-template-columns: auto minmax(20px, 74px) auto !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: visible;
     padding: 13px 18px !important;
   }
-  .content-wrapper .step-item { min-width: max-content; }
-  .content-wrapper .step-connector { min-width: 38px; width: 38px !important; }
+  .content-wrapper .step-item {
+    min-width: 0;
+    justify-content: center;
+    text-align: center;
+  }
+  .content-wrapper .step-connector { min-width: 20px; width: 100% !important; }
   .content-wrapper #addStaffForm { padding: 0 18px 20px !important; }
+
+  .admin-add-staff-page .content-wrapper {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+  .admin-add-staff-page .content-wrapper .form-card {
+    width: 100% !important;
+    border-radius: 16px !important;
+  }
+  .admin-add-staff-page .content-wrapper .form-actions {
+    display: flex !important;
+    gap: 10px !important;
+  }
+  .admin-add-staff-page .content-wrapper .form-actions > button,
+  .admin-add-staff-page .content-wrapper .form-actions > a {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    justify-content: center !important;
+    white-space: normal !important;
+    text-align: center !important;
+  }
+
+  /* The same hamburger remains available as a close control. */
+  .admin-add-staff-page.sidebar-open .menu-toggle {
+    position: fixed !important;
+    z-index: 1105 !important;
+    top: 18px !important;
+    left: 244px !important;
+    display: grid !important;
+    place-content: center !important;
+    background: #fff !important;
+    box-shadow: 0 8px 22px rgba(13, 54, 37, .16) !important;
+  }
+  .admin-accounts-page.sidebar-open .menu-toggle {
+    position: fixed !important;
+    z-index: 1105 !important;
+    top: 18px !important;
+    left: 244px !important;
+    display: grid !important;
+    place-content: center !important;
+    background: #fff !important;
+    box-shadow: 0 8px 22px rgba(13, 54, 37, .16) !important;
+  }
+  .admin-add-staff-page.sidebar-open #sideClose { display: none !important; }
+  .admin-accounts-page.sidebar-open #sideClose { display: none !important; }
+  .admin-add-staff-page.sidebar-open .menu-toggle span:nth-child(1) { transform: translateY(4.5px) rotate(45deg); }
+  .admin-add-staff-page.sidebar-open .menu-toggle span:nth-child(2) { opacity: 0; }
+  .admin-add-staff-page.sidebar-open .menu-toggle span:nth-child(3) { transform: translateY(-4.5px) rotate(-45deg); }
+  .admin-accounts-page.sidebar-open .menu-toggle span:nth-child(1) { transform: translateY(4.5px) rotate(45deg); }
+  .admin-accounts-page.sidebar-open .menu-toggle span:nth-child(2) { opacity: 0; }
+  .admin-accounts-page.sidebar-open .menu-toggle span:nth-child(3) { transform: translateY(-4.5px) rotate(-45deg); }
+}
+
+@media (min-width: 600px) and (max-width: 760px) {
+  .admin-add-staff-page .content-wrapper .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+  }
+}
+
+@media (max-width: 599px) {
+  .admin-add-staff-page .content-wrapper .form-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px !important;
+  }
+  .admin-add-staff-page .content-wrapper .back-link-inner {
+    margin: 12px 12px 0 !important;
+  }
+  .admin-add-staff-page .content-wrapper .form-header {
+    padding: 16px 14px !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+  .admin-add-staff-page .content-wrapper .step-tracker {
+    gap: 9px !important;
+    padding: 12px 14px !important;
+    justify-content: center !important;
+  }
+  .admin-add-staff-page .content-wrapper .step-connector {
+    min-width: 20px !important;
+    width: 20px !important;
+  }
+  .admin-add-staff-page .content-wrapper #addStaffForm {
+    padding: 0 14px 16px !important;
+  }
+  .admin-add-staff-page .content-wrapper .step2-landscape {
+    gap: 18px !important;
+    padding: 16px 12px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .admin-add-staff-page .content-wrapper .step-item {
+    gap: 6px !important;
+    font-size: 11.5px !important;
+  }
+  .admin-add-staff-page .content-wrapper .step-circle {
+    width: 31px !important;
+    height: 31px !important;
+    min-width: 31px !important;
+  }
+  .admin-add-staff-page .content-wrapper .form-actions {
+    flex-direction: column !important;
+  }
+  .admin-add-staff-page .content-wrapper .form-actions > button,
+  .admin-add-staff-page .content-wrapper .form-actions > a {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+  }
 }

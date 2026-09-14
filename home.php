@@ -8,9 +8,10 @@ require "db.php";
 $user_id = (int)$_SESSION["user_id"];
 $user_display_name = "User";
 $first_char = "U";
+$user_profile_src = '';
 
 // Fetching individual name components based on your table structure
-$stmt = $conn->prepare("SELECT first_name, middle_name, last_name, ext_name FROM users WHERE user_id=? LIMIT 1");
+$stmt = $conn->prepare("SELECT first_name, middle_name, last_name, ext_name, profile_pic FROM users WHERE user_id=? LIMIT 1");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $res = $stmt->get_result();
@@ -35,16 +36,32 @@ if ($res && $res->num_rows === 1) {
     if (!empty($fn)) {
         $first_char = strtoupper(substr($fn, 0, 1));
     }
+
+    $profile_filename = basename((string)($row['profile_pic'] ?? ''));
+    if ($profile_filename !== '' && is_file(__DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $profile_filename)) {
+        $user_profile_src = 'uploads/' . rawurlencode($profile_filename);
+    }
 }
 
 $programs = [];
 $has_programs_table = true;
 
 try {
-    // If you don't have programs table yet, it will fallback automatically
-    $q = $conn->query("SELECT program_id, title, description, start_date, image_path FROM programs ORDER BY program_id DESC LIMIT 6");
+    $today = (new DateTimeImmutable('today', new DateTimeZone('Asia/Manila')))->format('Y-m-d');
+    $q = $conn->prepare("SELECT program_id, program_name, description, start_date, image_path
+        FROM programs
+        WHERE approval_status = 'Approved'
+          AND LOWER(COALESCE(status, '')) <> 'completed'
+          AND (end_date IS NULL OR end_date = '0000-00-00' OR end_date >= ?)
+          AND (start_date IS NULL OR end_date IS NULL OR end_date = '0000-00-00' OR end_date >= start_date)
+        ORDER BY program_id DESC
+        LIMIT 6");
     if ($q) {
-        while ($p = $q->fetch_assoc()) $programs[] = $p;
+        $q->bind_param('s', $today);
+        $q->execute();
+        $result = $q->get_result();
+        while ($p = $result->fetch_assoc()) $programs[] = $p;
+        $q->close();
     }
 } catch (Throwable $e) {
     $has_programs_table = false;
@@ -62,8 +79,9 @@ try {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="home.css?v=10" />
-    <link rel="stylesheet" href="frontend_polish.css?v=1">
+    <link rel="stylesheet" href="home.css?v=14" />
+<link rel="stylesheet" href="frontend_polish.css?v=5">
+    <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
     <script src="frontend_polish.js?v=1" defer></script>
 </head>
 <body>
@@ -82,7 +100,7 @@ try {
             </div>
         </a>
 
-        <button class="menu-button" id="menuButton" type="button" aria-label="Toggle menu">
+        <button class="menu-button" id="menuButton" type="button" aria-label="Toggle menu" aria-controls="menuArea" aria-expanded="false">
             <span></span><span></span><span></span>
         </button>
 
@@ -93,7 +111,10 @@ try {
 
             <div class="account-area" id="accountWrap">
                 <button class="account-button" id="accountButton" type="button">
-                    <span class="account-icon"><?php echo htmlspecialchars($first_char); ?></span>
+                    <span class="account-icon">
+                        <?php echo htmlspecialchars($first_char); ?>
+                        <?php if ($user_profile_src !== ''): ?><img src="<?php echo htmlspecialchars($user_profile_src); ?>" alt="" onerror="this.remove()"><?php endif; ?>
+                    </span>
                     <span class="account-text"><?php echo htmlspecialchars($user_display_name); ?></span>
                     <span class="account-arrow">▾</span>
                 </button>
@@ -102,7 +123,13 @@ try {
                     <a href="profile.php">My Profile</a>
                     <a href="verification.php">Verification</a>
                     <div class="dropdown-line"></div>
-                    <a class="logout-link" href="logout.php?role=user">Logout</a>
+                    <form class="logout-form" action="logout.php" method="POST">
+                        <?= auth_csrf_input() ?><input type="hidden" name="role" value="user">
+                        <button class="logout-link" type="submit">
+                          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M15 4h3a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3h-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                          <span>Log out</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </nav>
@@ -134,21 +161,21 @@ try {
 
             <div class="welcome-stats">
                 <div class="stat-box">
-                    <div class="stat-icon" style="color: #f39c12;">🔒</div>
+                    <div class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg></div>
                     <div>
                         <div class="stat-title">Secure</div>
                         <div class="stat-sub">Protected Access</div>
                     </div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-icon" style="color: #e67e22;">⚡</div>
+                    <div class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m13 2-9 12h8l-1 8 9-12h-8l1-8Z"></path></svg></div>
                     <div>
                         <div class="stat-title">Fast</div>
                         <div class="stat-sub">Live Verification</div>
                     </div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-icon" style="color: #8e44ad;">👤</div>
+                    <div class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg></div>
                     <div>
                         <div class="stat-title">Easy</div>
                         <div class="stat-sub">User Profiling</div>
@@ -191,7 +218,7 @@ try {
 
             <div class="quick-links">
                 <a class="quick-link" href="programs.php">
-                    <div class="quick-icon">📋</div>
+                    <div class="quick-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"></rect><path d="M9 4V2h6v2M9 9h6M9 13h6M9 17h4"></path></svg></div>
                     <div>
                         <div class="quick-name">Programs</div>
                         <div class="quick-desc">See active programs</div>
@@ -199,7 +226,7 @@ try {
                 </a>
 
                 <a class="quick-link" href="verification.php">
-                    <div class="quick-icon">✅</div>
+                    <div class="quick-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path></svg></div>
                     <div>
                         <div class="quick-name">Verification</div>
                         <div class="quick-desc">Check eligibility</div>
@@ -207,7 +234,7 @@ try {
                 </a>
 
                 <a class="quick-link" href="profile.php">
-                    <div class="quick-icon">👤</div>
+                    <div class="quick-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg></div>
                     <div>
                         <div class="quick-name">Profile</div>
                         <div class="quick-desc">Update your info</div>
@@ -215,7 +242,7 @@ try {
                 </a>
 
                 <a class="quick-link" href="about.php">
-                    <div class="quick-icon">ℹ️</div>
+                    <div class="quick-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7h.01"></path></svg></div>
                     <div>
                         <div class="quick-name">About</div>
                         <div class="quick-desc">Learn more</div>
@@ -243,9 +270,9 @@ try {
         <div class="program-list">
             <?php if ($has_programs_table && count($programs) > 0): ?>
                 <?php foreach($programs as $p): ?>
-                    <a href="program_view.php?id=<?php echo (int)$p["program_id"]; ?>" class="program-card reveal">
+                    <a href="programs.php?program_id=<?php echo (int)$p["program_id"]; ?>" class="program-card reveal">
                         <?php
-                            $program_title = trim($p["title"] ?? "Program");
+                            $program_title = trim($p["program_name"] ?? "Program");
                             $program_key = strtolower($program_title);
                             $program_image = trim($p["image_path"] ?? "");
 
@@ -269,7 +296,7 @@ try {
                             </span>
                         </div>
 
-                        <h3 class="program-title"><?php echo htmlspecialchars($p["title"]); ?></h3>
+                        <h3 class="program-title"><?php echo htmlspecialchars($program_title); ?></h3>
                         <p class="program-text">
                             <?php
                                 $desc = trim($p["description"] ?? "");
@@ -281,29 +308,11 @@ try {
                     </a>
                 <?php endforeach; ?>
             <?php else: ?>
-                <a href="programs.php" class="program-card reveal" style="transition-delay: 0.1s;">
-                    <img class="program-image" src="img/tupads.png" alt="TUPAD emergency employment program" loading="lazy" decoding="async">
-                    <div class="program-top"><span class="program-tag">Program</span><span class="program-date">TUPAD</span></div>
-                    <h3 class="program-title">Emergency Employment</h3>
-                    <p class="program-text">DOLE's Tulong Panghanapbuhay sa Ating Disadvantaged/Displaced Workers.</p>
-                    <div class="program-btn">View details</div>
-                </a>
-
-                <a href="programs.php" class="program-card reveal" style="transition-delay: 0.2s;">
-                    <img class="program-image" src="img/spes.png" alt="SPES student employment program" loading="lazy" decoding="async">
-                    <div class="program-top"><span class="program-tag">Program</span><span class="program-date">SPES</span></div>
-                    <h3 class="program-title">Student Employment</h3>
-                    <p class="program-text">Special Program for Employment of Students providing temporary employment.</p>
-                    <div class="program-btn">View details</div>
-                </a>
-
-                <a href="programs.php" class="program-card reveal" style="transition-delay: 0.3s;">
-                    <img class="program-image" src="img/msme.png" alt="MSME profiling program" loading="lazy" decoding="async">
-                    <div class="program-top"><span class="program-tag">Program</span><span class="program-date">MSME</span></div>
-                    <h3 class="program-title">MSME Profiling</h3>
-                    <p class="program-text">Assessing local businesses to provide targeted livelihood assistance and capacity building.</p>
-                    <div class="program-btn">View details</div>
-                </a>
+                <div class="program-card reveal" style="grid-column:1/-1; text-align:center; padding:40px;">
+                    <h3 class="program-title">No current programs</h3>
+                    <p class="program-text">There are no active or upcoming approved programs at this time. Please check again later.</p>
+                    <a class="program-btn" href="programs.php">View program archive</a>
+                </div>
             <?php endif; ?>
         </div>
     </div>
@@ -367,6 +376,7 @@ try {
             <div class="footer-head">Links</div>
             <a href="home.php">Home</a>
             <a href="programs.php">Programs</a>
+            <a href="about.php">About</a>
             <a href="verification.php">Verification</a>
             <a href="profile.php">Profile</a>
             <a href="privacy_notice.php">Privacy Notice</a>
@@ -409,7 +419,8 @@ try {
         const menuArea = document.getElementById('menuArea');
         if(menuBtn && menuArea) {
             menuBtn.addEventListener('click', function() {
-                menuArea.classList.toggle('open');
+                const isOpen = menuArea.classList.toggle('open');
+                menuBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             });
         }
 

@@ -26,10 +26,9 @@ function ensure_program_eligibility_schema(mysqli $conn): void
             }
         }
     }
-    // Bring legacy SPES defaults in line with the statutory 15–30 age range,
-    // while preserving any age rules that PESO has already configured manually.
-    foreach (['program_categories', 'programs'] as $table) {
-        $conn->query("UPDATE `$table` SET minimum_age=15, maximum_age=30 WHERE UPPER(TRIM(program_name))='SPES' AND minimum_age=18 AND maximum_age IS NULL");
+
+    if (!eligibility_column_exists($conn, 'beneficiaries', 'spes_is_pregnant')) {
+        $conn->query("ALTER TABLE `beneficiaries` ADD COLUMN `spes_is_pregnant` ENUM('Yes','No','Not Applicable') NULL DEFAULT NULL");
     }
 }
 
@@ -88,4 +87,18 @@ function evaluate_program_eligibility(mysqli $conn, int $userId, int $programId)
     }
 
     return ['eligible' => true, 'message' => 'You meet the configured age, sex, and household rules.'];
+}
+
+function evaluate_spes_local_eligibility(array $application): array
+{
+    $pregnancyStatus = trim((string)($application['spes_is_pregnant'] ?? ''));
+    if ($pregnancyStatus === 'Yes') {
+        return ['eligible' => false, 'message' => 'Pregnant applicants are not eligible for SPES.'];
+    }
+    $studentType = strtolower(trim((string)($application['spes_type'] ?? '')));
+    $collegeYear = strtolower(trim((string)($application['tert_year_level'] ?? '')));
+    if ($studentType === 'student' && $collegeYear === '4th year') {
+        return ['eligible' => false, 'message' => 'Fourth-year college students are not eligible for this PESO Vinzons SPES batch.'];
+    }
+    return ['eligible' => true, 'message' => 'The applicant meets the PESO Vinzons college-year rule.'];
 }

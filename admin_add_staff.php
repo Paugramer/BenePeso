@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
+auth_enable_csrf_form_injection();
 require "db.php";
 
 function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, "UTF-8"); }
@@ -24,6 +25,7 @@ $error = "";
 $success = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    auth_require_csrf();
     $fname = trim($_POST['first_name']);
     $lname = trim($_POST['last_name']);
     $ext = trim($_POST['extension_name'] ?? '');
@@ -36,8 +38,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if ($pass !== $cpass) {
         $error = "Passwords do not match.";
-    } elseif (strlen($pass) < 6) {
-        $error = "Password must be at least 6 characters long.";
+    } elseif (strlen($pass) < 8) {
+        $error = "Password must be at least 8 characters long.";
     } else {
         $stmt = $conn->prepare("SELECT email FROM peso_staff WHERE email = ? UNION SELECT email FROM users WHERE email = ?");
         $stmt->bind_param("ss", $email, $email);
@@ -50,10 +52,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === 0) {
                 $allowed = ['jpg', 'jpeg', 'png'];
+                $allowed_mimes = ['image/jpeg', 'image/png'];
                 $filename = $_FILES['profile_pic']['name'];
                 $ext_file = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                $detected_mime = (new finfo(FILEINFO_MIME_TYPE))->file($_FILES['profile_pic']['tmp_name']);
 
-                if (in_array($ext_file, $allowed)) {
+                if ($_FILES['profile_pic']['size'] <= 5 * 1024 * 1024
+                    && in_array($ext_file, $allowed, true)
+                    && in_array($detected_mime, $allowed_mimes, true)) {
                     $new_name = uniqid("staff_") . "." . $ext_file;
                     $dest_dir = "uploads/staff_pics/";
 
@@ -63,7 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         $profile_pic = $new_name;
                     }
                 } else {
-                    $error = "Invalid image format. Only JPG and PNG are allowed.";
+                    $error = "Upload a valid JPG or PNG image up to 5 MB.";
                 }
             }
 
@@ -423,11 +429,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         .form-card { padding: 24px; }
     }
 </style>
-<link rel="stylesheet" href="admin_accounts_polish.css">
-<link rel="stylesheet" href="frontend_polish.css?v=1">
-<script src="frontend_polish.js?v=1" defer></script>
+<link rel="stylesheet" href="admin_accounts_polish.css?v=5">
+<link rel="stylesheet" href="frontend_polish.css?v=7">
+<link rel="stylesheet" href="admin_responsive.css?v=17">
+<script src="frontend_polish.js?v=3" defer></script>
 </head>
-<body>
+<body class="admin-add-staff-page">
 
 <div class="page-wrap">
 
@@ -463,7 +470,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <a href="admin_beneficiaries.php" class="<?php echo navClass('admin_beneficiaries.php'); ?>"><i class="ph ph-users"></i> Beneficiaries</a>
             <a href="admin_accounts.php" class="<?php echo navClass('admin_add_staff.php'); ?>"><i class="ph ph-user-circle-gear"></i> Manage Accounts</a>
             <a href="admin_activity_log.php" class="<?php echo navClass('admin_activity_log.php'); ?>"><i class="ph ph-clock-counter-clockwise"></i> System Logs</a>
-            <a href="logout.php?role=admin" class="nav-item logout-item"><i class="ph ph-sign-out"></i> Logout</a>
+            <form method="POST" action="logout.php" class="sidebar-logout-form"><?php echo auth_csrf_input(); ?><input type="hidden" name="role" value="admin"><button type="submit" class="nav-item logout-item"><i class="ph ph-sign-out"></i> Logout</button></form>
         </nav>
     </aside>
 
@@ -471,7 +478,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         
         <header class="top-area animate-fade-in">
             <div class="top-left">
-                <button class="menu-toggle" id="menuToggle" aria-label="Open menu">
+                <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false" aria-controls="sideArea">
                     <span></span><span></span><span></span>
                 </button>
                 <div class="top-title">
@@ -579,7 +586,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                 <div class="form-group">
                                     <label for="password">Account Password <span style="color:#e11d48;">*</span></label>
                                     <div class="password-wrap">
-                                        <input type="password" id="password" name="password" placeholder="Create a strong password" required minlength="6">
+                                        <input type="password" id="password" name="password" placeholder="Create a strong password" required minlength="8">
                                         <button type="button" class="toggle-pass" data-target="password" aria-label="Show password">
                                             <i class="ph-bold ph-eye-slash"></i>
                                         </button>
@@ -589,7 +596,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                 <div class="form-group">
                                     <label for="confirm_password">Confirm Password <span style="color:#e11d48;">*</span></label>
                                     <div class="password-wrap">
-                                        <input type="password" id="confirm_password" name="confirm_password" placeholder="Retype password" required minlength="6">
+                                        <input type="password" id="confirm_password" name="confirm_password" placeholder="Retype password" required minlength="8">
                                         <button type="button" class="toggle-pass" data-target="confirm_password" aria-label="Show password">
                                             <i class="ph-bold ph-eye-slash"></i>
                                         </button>
@@ -694,9 +701,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         const sideClose = document.getElementById('sideClose');
         const overlay = document.getElementById('sidebarOverlay');
 
-        if(menuToggle) menuToggle.addEventListener('click', () => { sideArea.classList.add('open'); overlay.classList.add('show'); });
-        if(sideClose) sideClose.addEventListener('click', () => { sideArea.classList.remove('open'); overlay.classList.remove('show'); });
-        if(overlay) overlay.addEventListener('click', () => { sideArea.classList.remove('open'); overlay.classList.remove('show'); });
+        const setSidebarOpen = (open) => {
+            if (!sideArea || !overlay || !menuToggle) return;
+            sideArea.classList.toggle('open', open);
+            overlay.classList.toggle('show', open);
+            document.body.classList.toggle('sidebar-open', open);
+            menuToggle.setAttribute('aria-expanded', String(open));
+            menuToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+        };
+
+        if(menuToggle) menuToggle.addEventListener('click', () => setSidebarOpen(!sideArea.classList.contains('open')));
+        if(sideClose) sideClose.addEventListener('click', () => setSidebarOpen(false));
+        if(overlay) overlay.addEventListener('click', () => setSidebarOpen(false));
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && sideArea && sideArea.classList.contains('open')) setSidebarOpen(false);
+        });
     });
 </script>
 

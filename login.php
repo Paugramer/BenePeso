@@ -1,7 +1,5 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/auth_session.php';
 require_once "db.php"; 
 
 $flash = $_SESSION["flash"] ?? "";
@@ -26,22 +24,21 @@ $reset_name = "User Account";
 $masked_email = "";
 
 if (!empty($fp_email) && !empty($fp_role)) {
-    $tbl = "users";
-    if ($fp_role === "peso_staff") {
-        $tbl = "peso_staff";
-    } elseif ($fp_role === "admin") {
-        $tbl = "admin"; 
-    }
-
-    $stmt_n = $conn->prepare("SELECT first_name, last_name FROM $tbl WHERE email=?");
-    if ($stmt_n) {
-        $stmt_n->bind_param("s", $fp_email);
-        $stmt_n->execute();
-        $res_n = $stmt_n->get_result();
-        if ($row_n = $res_n->fetch_assoc()) {
-            $reset_name = trim(($row_n["first_name"] ?? "") . " " . ($row_n["last_name"] ?? ""));
+    if ($fp_role === 'admin') {
+        $reset_name = 'System Administrator';
+    } else {
+        $tbl = $fp_role === 'peso_staff' ? 'peso_staff' : 'users';
+        $stmt_n = $conn->prepare("SELECT first_name, last_name FROM $tbl WHERE email=?");
+        if ($stmt_n) {
+            $stmt_n->bind_param("s", $fp_email);
+            $stmt_n->execute();
+            $res_n = $stmt_n->get_result();
+            if ($row_n = $res_n->fetch_assoc()) {
+                $display_name = trim(($row_n["first_name"] ?? "") . " " . ($row_n["last_name"] ?? ""));
+                if ($display_name !== '') $reset_name = $display_name;
+            }
+            $stmt_n->close();
         }
-        $stmt_n->close();
     }
 
     function maskEmail($email) {
@@ -82,8 +79,9 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=15" />
+  <link rel="stylesheet" href="style.css?v=20" />
   <link rel="stylesheet" href="frontend_polish.css?v=1">
+  <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
   <script src="frontend_polish.js?v=1" defer></script>
 </head>
 <body class="auth-page auth-login">
@@ -117,7 +115,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
         <div class="role-label stagger-1" style="margin-top: 20px;">System Access</div>
 
         <h2 class="stagger-2">Welcome Back</h2>
-        <p class="sub stagger-2">Please enter your email and password to log in.</p>
+        <p class="sub stagger-2">Please enter your phone number or email and password to log in.</p>
 
         <?php if ($locked): ?>
           <div class="lock-box stagger-3">
@@ -126,14 +124,15 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
         <?php endif; ?>
 
         <form action="process_login.php" method="POST" autocomplete="off" id="loginForm" class="stagger-3" onsubmit="showLoading('Authenticating', 'Verifying your credentials securely...')">
+          <?= auth_csrf_input() ?>
           
           <div class="form-group">
-              <label for="email">Email Address</label>
+              <label for="email">Phone Number or Email</label>
               <input
-                type="email"
+                type="text"
                 id="email"
                 name="email"
-                placeholder="e.g. juan@email.com"
+                placeholder="e.g. 09XXXXXXXXX or juan@email.com"
                 value="<?php echo htmlspecialchars($login_email); ?>"
                 required
                 <?php echo $locked ? "disabled" : ""; ?>
@@ -182,8 +181,13 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
 <div class="modal-bg" id="modalBg">
   <div class="modal modal--notice" role="dialog" aria-modal="true" aria-labelledby="noticeTitle">
     <button class="modal-close-btn" type="button" onclick="closeModal('modalBg')" aria-label="Close notice">&times;</button>
-    <div class="modal-icon-header" style="color: #f39c12; background: #fef5e7;">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+    <div class="modal-icon-header notice-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <defs><linearGradient id="loginNoticeGradient" x1="4" y1="3" x2="20" y2="21"><stop stop-color="#39c77a"/><stop offset="1" stop-color="#12613e"/></linearGradient></defs>
+        <circle cx="12" cy="12" r="9" fill="none" stroke="url(#loginNoticeGradient)" stroke-width="2"/>
+        <path d="M12 10.5v6" fill="none" stroke="url(#loginNoticeGradient)" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="12" cy="7.5" r="1.2" fill="url(#loginNoticeGradient)"/>
+      </svg>
     </div>
     <h3 class="modal-title" id="noticeTitle">BENEPESO Notice</h3>
     <p style="color:var(--muted); font-size:14px; margin-bottom:25px;" id="modalText"></p>
@@ -211,6 +215,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
 
     <form action="forgot_send.php" method="POST" style="margin-top:20px; text-align:left;" autocomplete="off"
           onsubmit="showLoading('Sending Code', 'Sending verification code securely...')">
+      <?= auth_csrf_input() ?>
       <div class="form-group">
           <label>Email Address</label>
           <input type="email" name="email" placeholder="e.g. juan@email.com" value="<?php echo htmlspecialchars($fp_email); ?>" required>
@@ -234,14 +239,15 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
     <p class="modal-subtitle">We sent a 6-digit verification code to <b><?php echo htmlspecialchars($masked_email ?: $fp_email); ?></b></p>
 
     <form action="forgot_verify.php" method="POST" id="verifyCodeForm" style="margin-top:10px;" autocomplete="off">
+      <?= auth_csrf_input() ?>
       
       <div class="otp-container">
-          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" required>
-          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" required>
-          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" required>
-          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" required>
-          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" required>
-          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" required>
+          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" autocomplete="one-time-code" aria-label="Recovery code digit 1 of 6" required>
+          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" aria-label="Recovery code digit 2 of 6" required>
+          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" aria-label="Recovery code digit 3 of 6" required>
+          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" aria-label="Recovery code digit 4 of 6" required>
+          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" aria-label="Recovery code digit 5 of 6" required>
+          <input type="text" class="otp-box" maxlength="1" inputmode="numeric" aria-label="Recovery code digit 6 of 6" required>
       </div>
       <input type="hidden" name="code" id="actualCodeInput" required>
 
@@ -250,6 +256,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
 
     <form action="forgot_send.php" method="POST" style="margin-top:10px;"
           onsubmit="showLoading('Resending Code', 'Resending verification code...')">
+      <?= auth_csrf_input() ?>
       <input type="hidden" name="email" value="<?php echo htmlspecialchars($fp_email); ?>">
       <button class="modal-btn btn-secondary" type="submit">Resend Code</button>
     </form>
@@ -281,6 +288,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
 
     <form action="forgot_reset.php" method="POST" style="text-align:left;" autocomplete="off"
           onsubmit="showLoading('Updating Password', 'Updating your password securely...')">
+      <?= auth_csrf_input() ?>
       
       <div class="form-group">
           <label>New Password</label>

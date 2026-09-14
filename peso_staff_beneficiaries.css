@@ -249,6 +249,9 @@ svg { flex-shrink: 0; margin-right: 4px; }
 
 .filter-container { background: #fff; padding: 6px; border-radius: 14px; box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 8px; margin-bottom: 24px; border: 1px solid var(--line); flex-wrap: wrap; transition: 0.3s; }
 .filter-container:focus-within { border-color: rgba(31, 122, 84, 0.4); box-shadow: var(--shadow-soft); }
+.filter-container.records-filter-container { display:flex; flex-wrap:nowrap; gap:0; }
+.filter-container.records-filter-container .filter-search { flex:2 1 260px; min-width:220px; }
+.filter-container.records-filter-container .filter-select { flex:1 1 150px; min-width:0; width:auto; }
 .search-input { flex: 1; border: none; outline: none; font-size: 13.5px; padding: 10px 16px; min-width: 150px; font-weight: 500; font-family: inherit; background: transparent; }
 .filter-select { padding: 10px 36px 10px 16px; border: none; border-left: 1px solid var(--line); outline: none; font-size: 13.5px; font-weight: 600; cursor: pointer; background-color: transparent; appearance: none; -webkit-appearance: none; color: var(--text); font-family: inherit; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%235c7365' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; transition: 0.2s;}
 .filter-select:hover { color: var(--green); }
@@ -320,6 +323,17 @@ svg { flex-shrink: 0; margin-right: 4px; }
 .table-wrap::after { content: ''; flex: 1; background-image: repeating-linear-gradient(to bottom, transparent, transparent 55px, rgba(31, 122, 84, 0.02) 55px, rgba(31, 122, 84, 0.02) 56px); opacity: 0.8; pointer-events: none; min-height: 100px; }
 
 .avatar-circle { border-radius: 50%; background: #e8f2ec; color: var(--green-dark); display: grid; place-items: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+.beneficiary-table-avatar { position: relative; overflow: hidden; }
+.beneficiary-table-avatar > span { grid-area: 1 / 1; }
+.beneficiary-table-avatar > img {
+  grid-area: 1 / 1;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
 
 /* FIXED: Removed z-index to prevent conflict with modal layers */
 .action-menu-wrap { display: flex; align-items: center; gap: 8px; position: relative; justify-content: flex-end;}
@@ -454,6 +468,42 @@ svg { flex-shrink: 0; margin-right: 4px; }
   max-width: 100%;
 }
 
+#quickStatusModal select {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 42px 0 14px;
+  border: 1px solid #b9d2c4;
+  border-radius: 12px;
+  background-color: #fff;
+  color: #173728;
+  font-size: 15px;
+  box-shadow: none;
+  outline: none;
+}
+
+#quickStatusModal select:focus {
+  border-color: #1f7a54;
+  box-shadow: 0 0 0 3px rgba(31, 122, 84, .14);
+}
+
+#quickStatusModal .status-field-help {
+  display: block;
+  margin-top: 7px;
+  color: #687b70;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+}
+#quickStatusModal .resubmission-option{display:flex;align-items:flex-start;gap:12px;margin:2px 0 0;padding:14px 15px;border:1px solid #d7e6de;border-radius:12px;background:#f7fbf9;cursor:pointer;transition:border-color .2s ease,background .2s ease,box-shadow .2s ease}
+#quickStatusModal .resubmission-option:hover{border-color:#9acbb0;background:#f0f8f4}
+#quickStatusModal .resubmission-option:has(input:checked){border-color:#e2a33a;background:#fff8e8;box-shadow:0 0 0 3px rgba(226,163,58,.1)}
+#quickStatusModal .resubmission-option input{width:19px!important;height:19px!important;min-width:19px!important;margin:2px 0 0!important;accent-color:#c47b08;cursor:pointer}
+#quickStatusModal .resubmission-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+#quickStatusModal .resubmission-copy strong{color:#173728;font-size:13px;line-height:1.3}
+#quickStatusModal .resubmission-copy small{color:#667a6e;font-size:11.5px;font-weight:500;line-height:1.5;text-transform:none;letter-spacing:0}
+
 #quickStatusModal .modal-actions-sm {
   display: flex;
   justify-content: flex-end;
@@ -496,6 +546,23 @@ svg { flex-shrink: 0; margin-right: 4px; }
     width: 100%;
     justify-content: center;
   }
+}
+
+@media (max-width: 992px) {
+  .menu-toggle.sidebar-toggle-floating {
+    position: fixed !important;
+    top: 18px !important;
+    left: 218px !important;
+    display: block !important;
+    z-index: 1002 !important;
+    margin: 0 !important;
+  }
+
+  .side-area.open .side-close { display: none !important; }
+
+  .menu-toggle.is-open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+  .menu-toggle.is-open span:nth-child(2) { opacity: 0; }
+  .menu-toggle.is-open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 }
 
 @keyframes modalSlideUp {
@@ -1099,15 +1166,21 @@ svg { flex-shrink: 0; margin-right: 4px; }
 .flash.error { border-left-color: #dc2626; }
 
 /* ================= REPORT SPREADSHEET MODAL ================= */
-.split-layout { flex-direction: row; width: calc(100vw - 32px); height: calc(100vh - 32px); max-width: 1800px; padding: 0; overflow: hidden !important;}
+#generateReportModal { padding: 0; }
+#generateReportModal .split-layout { flex-direction: row; width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border-radius: 0; overflow: hidden !important;}
 .report-controls { width: 300px; flex: 0 0 300px; background: #fcfdfc; padding: 28px 24px; border-right: 1px solid var(--line); z-index: 2; box-shadow: 4px 0 24px rgba(0,0,0,0.03); display: flex; flex-direction: column; overflow: hidden;}
-.report-preview { min-width: 0; flex: 1; background: var(--bg); padding: 16px; display: flex; align-items: stretch; justify-content: stretch; position:relative; overflow: hidden; }
+.report-preview { min-width: 0; min-height: 0; flex: 1; background: var(--bg); padding: 8px; display: flex; align-items: stretch; justify-content: stretch; position:relative; overflow: hidden; }
+.report-filter-toggle { display: none; }
 .spreadsheet-container { width: 100%; height: 100%; background: #fff; border-radius: 8px; box-shadow: var(--shadow-soft); border: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; }
 
-.preview-header { background: linear-gradient(180deg, #f8fcfa 0%, #e6f3ec 100%); padding: 12px 16px 10px; color: var(--green-dark); text-align: center; flex-shrink: 0; border-bottom: 1px solid rgba(31, 122, 84, 0.18); }
-.preview-header h2 { max-width: 1050px; margin: 8px auto 0; font-size: 18px; line-height: 1.2; font-weight: 800; letter-spacing: -0.2px; }
+.preview-header { background: linear-gradient(180deg, #f8fcfa 0%, #e6f3ec 100%); padding: 6px 12px; color: var(--green-dark); text-align: center; flex-shrink: 0; border-bottom: 1px solid rgba(31, 122, 84, 0.18); }
+.preview-header h2 { max-width: 1050px; margin: 4px auto 0; font-size: 14px; line-height: 1.15; font-weight: 800; letter-spacing: -0.1px; }
 .preview-header p { display: inline-flex; align-items: center; justify-content: center; margin: 4px 0 0; padding: 4px 11px; border-radius: 999px; background: #dcefe5; font-size: 9px; color: var(--green); font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
-.official-report-header { display: block; width: 100%; height: auto; margin: 0; border-radius: 8px; background: #fff; box-shadow: 0 8px 24px rgba(17, 74, 49, 0.10); }
+.official-report-header { display: block; width: 100%; height: 64px; object-fit: contain; margin: 0; border-radius: 6px; background: #fff; }
+.report-column-pagination { min-height: 42px; padding: 5px 10px; display: grid; grid-template-columns: minmax(118px, auto) 1fr minmax(118px, auto); align-items: center; gap: 8px; border-bottom: 1px solid var(--line); background: #f8fbf9; }
+.report-column-pagination button { min-height: 30px; padding: 5px 10px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 1px solid #b9d4c6; border-radius: 7px; background: #fff; color: var(--green-dark); font-size: 10px; font-weight: 800; cursor: pointer; }
+.report-column-pagination button:disabled { opacity: .4; cursor: not-allowed; }
+.report-column-page-status { text-align: center; color: var(--green); font-size: 10px; font-weight: 800; }
 .dependent-profile-link { display:inline-flex;align-items:center;width:max-content;padding:5px 10px;border:1px solid #b9dcc9;border-radius:999px;background:#eef8f2;color:#18744e;cursor:pointer;text-decoration:none;transition:.2s ease; }
 .dependent-profile-link::after { content:'View profile';margin-left:7px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;opacity:.72; }
 .dependent-profile-link:hover { background:#dff2e8;color:#0d5135;border-color:#83c4a1;transform:translateY(-1px); }
@@ -1120,7 +1193,7 @@ svg { flex-shrink: 0; margin-right: 4px; }
 .dependent-notice-x{position:absolute;top:15px;right:15px;width:36px;height:36px;display:grid;place-items:center;border:1px solid #dce9e2;border-radius:50%;background:#fff;color:#536b5e;cursor:pointer}.dependent-notice-x:hover{background:#eaf6ef;color:#176b45}
 .dependent-notice-dialog h3{margin:0 0 9px;color:#102e20;font-size:21px}.dependent-notice-dialog p{margin:0;color:#61776b;font-size:14px;line-height:1.6}.dependent-notice-close{width:100%;margin-top:22px;justify-content:center}
 
-.scrollable-table-wrap { flex: 1; overflow: auto; background: #fff; position: relative; min-height: 300px; background-image: repeating-linear-gradient(to bottom, transparent, transparent 40px, rgba(31, 122, 84, 0.02) 40px, rgba(31, 122, 84, 0.02) 41px);}
+.scrollable-table-wrap { flex: 1; min-height: 0; overflow: hidden; background: #fff; position: relative; background-image: repeating-linear-gradient(to bottom, transparent, transparent 40px, rgba(31, 122, 84, 0.02) 40px, rgba(31, 122, 84, 0.02) 41px);}
 .spreadsheet-table { width: 100%; min-width: 0; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; position: relative; z-index: 2;}
 .spreadsheet-table th, .spreadsheet-table td { 
   border-bottom: 1px solid var(--line); 
@@ -1128,11 +1201,13 @@ svg { flex-shrink: 0; margin-right: 4px; }
   padding: 7px 4px; 
   color: var(--text); 
   font-size: 9px; 
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-align: center; 
 }
 .spreadsheet-table td { background: #fff; transition: background-color 0.2s; }
+.spreadsheet-table td.report-multivalue { padding: 7px 9px; white-space: pre-line; line-height: 1.45; text-align: left; vertical-align: top; }
 
 .spreadsheet-table thead { position: sticky; top: 0; z-index: 10; }
 .spreadsheet-table th { background-color: rgba(244, 248, 245, 0.95); backdrop-filter: blur(8px); color: var(--green-dark); font-weight: 600; text-align: center; vertical-align: middle; }
@@ -1164,9 +1239,9 @@ svg { flex-shrink: 0; margin-right: 4px; }
 
 /* ================= RESPONSIVE ================= */
 @media(max-width: 900px) {
-  .split-layout { flex-direction: column; height: 95vh; overflow-y: auto; max-width: 900px; }
-  .report-controls { width: 100%; border-right: none; border-bottom: 1px solid var(--line); box-shadow: none; justify-content: flex-start; gap: 16px; overflow: visible;}
-  .report-preview { min-height: 500px; padding: 16px; }
+  #generateReportModal .split-layout { flex-direction: row; height: 100dvh; overflow: hidden; max-width: none; }
+  #generateReportModal .report-controls { width: 230px; flex-basis: 230px; padding: 18px 14px; border-right: 1px solid var(--line); border-bottom: 0; overflow: hidden; }
+  #generateReportModal .report-preview { min-height: 0; padding: 6px; }
 }
 
 @media(max-width: 992px) {
@@ -1496,6 +1571,25 @@ svg { flex-shrink: 0; margin-right: 4px; }
   min-height: 0;
 }
 #profileModal .id-card-right-inner { padding-top: 26px !important; }
+#profileModal .id-card-right{background:linear-gradient(180deg,#fbfefc 0%,#f3f9f6 100%)!important}
+#profileModal .id-card-right-inner{background:transparent}
+#profileModal .id-avatar-large{overflow:hidden;background:#fff!important}
+#profileModal .id-avatar-large img{width:100%;height:100%;display:block;object-fit:cover;border-radius:50%}
+#profileModal .resume-section{padding:16px;border:1px solid #dce9e2;border-radius:16px;background:rgba(255,255,255,.88);box-shadow:0 7px 20px rgba(13,75,49,.045)}
+#profileModal .resume-field-grid{border-color:#d9e8e0;background:#f8fcfa}
+#profileModal .resume-field{background:rgba(255,255,255,.72)}
+#profileModal .resume-field:nth-child(4n+2),#profileModal .resume-field:nth-child(4n+3){background:#f5faf7}
+
+/* Keep profile fields visually balanced when an odd field spans the row. */
+#profileModal .resume-field,
+#profileModal .resume-field:nth-child(4n+2),
+#profileModal .resume-field:nth-child(4n+3) { background:#fff; }
+#profileModal .profile-close-button{z-index:8;width:42px!important;height:42px!important;background:rgba(255,255,255,.92)!important;border:1px solid #d8e7df!important;color:#5e7468!important;box-shadow:0 5px 16px rgba(13,75,49,.08);transition:transform .22s cubic-bezier(.2,.8,.2,1),background-color .22s ease,color .22s ease,border-color .22s ease,box-shadow .22s ease!important}
+#profileModal .profile-close-button i{font-size:18px;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+#profileModal .profile-close-button:hover{background:#1f7a54!important;border-color:#1f7a54!important;color:#fff!important;transform:translateY(-2px) scale(1.06);box-shadow:0 9px 22px rgba(31,122,84,.24)}
+#profileModal .profile-close-button:hover i{transform:rotate(90deg)}
+#profileModal .profile-close-button:active{transform:translateY(0) scale(.94)}
+#profileModal .profile-close-button:focus-visible{outline:0;box-shadow:0 0 0 4px rgba(31,122,84,.18),0 8px 20px rgba(31,122,84,.16)}
 
 @media (max-width: 700px) {
   #profileModal .id-card-left {
@@ -2123,6 +2217,7 @@ body{background-color:#e8eeea;background-image:linear-gradient(135deg,rgba(232,2
 }
 
 /* Beneficiary add/edit wizard: shared polish for TUPAD, SPES and MSME */
+#adminAddBeneficiaryModal .form-grid,#adminAddBeneficiaryModal .form-grid-2{grid-auto-flow:row dense}
 #adminAddBeneficiaryModal .modal-dialog{width:min(1180px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:hidden;display:flex;flex-direction:column}
 #adminAddBeneficiaryModal .modal-head-alt{flex:0 0 auto;padding:26px 34px 24px}
 #adminAddBeneficiaryModal .wizard-nav{flex:0 0 auto;padding:22px 34px 18px;overflow-x:auto;scrollbar-width:thin}
@@ -2260,9 +2355,106 @@ body .panel-card .action-menu-wrap .btn-quick-status .btn-label {
   box-shadow: 0 6px 15px rgba(31, 122, 84, .16);
   color: #fff;
 }
+@media(max-width:1200px){.filter-container.records-filter-container{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.filter-container.records-filter-container .filter-search{grid-column:1/-1;min-width:0}.filter-container.records-filter-container .filter-select{width:100%}}
+@media(max-width:768px){.filter-container.records-filter-container{grid-template-columns:1fr}}
 @media (max-width: 1450px) {
   .panel-card .action-menu-wrap .beneficiary-availment-button {
     max-width: 100%;
     width: 100%;
+  }
+}
+
+/* Generate Report uses the same close control as every other modal. */
+#generateReportModal .report-close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+}
+
+@media (max-width: 520px) {
+  #generateReportModal .report-close-button {
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+}
+
+/* Program overview artwork: preserve the full banner on every card width. */
+.program-grid .program-card-shell{height:auto!important;min-width:0}
+.program-grid .program-image-wrap{width:100%;height:auto!important;aspect-ratio:2/1;background:#eef4f1!important}
+.program-grid .program-image{display:block;width:100%;height:100%;object-fit:contain!important;object-position:center}
+.program-grid .program-body{min-width:0}
+@media(max-width:760px){.program-grid .program-image-wrap{aspect-ratio:16/9}.program-grid .program-card-shell{padding:10px!important;gap:10px!important}}
+@media(max-width:420px){.program-grid .program-card-shell{border-radius:14px!important}.program-grid .program-body{padding-inline:2px}}
+
+
+/* Center collapsed beneficiary cards at medium and small widths. */
+@media (max-width: 1450px) {
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .panel-card .data-table tbody tr:has(.bulk-row-check) > td {
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .panel-card .data-table tbody tr:has(.bulk-row-check) > td::before {
+    width: 100%;
+    text-align: center !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .panel-card .data-table tbody tr:has(.bulk-row-check) > td:nth-child(2) > div {
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .panel-card .data-table tbody tr:has(.bulk-row-check) > td:nth-child(2) > div > div:last-child {
+    flex: 0 1 auto !important;
+    text-align: center !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .panel-card .data-table tbody tr:has(.bulk-row-check) .bulk-row-check,
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .panel-card .data-table tbody tr:has(.bulk-row-check) .action-menu-wrap {
+    justify-content: center !important;
+    margin-inline: auto !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .panel-card .data-table tbody tr:has(.bulk-row-check) .action-menu-wrap {
+    width: 100% !important;
+  }
+
+  /* Availment is a complete card section, not one half of the details row. */
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .panel-card .data-table tbody tr:has(.bulk-row-check) > td:nth-child(5) {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+  }
+
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .panel-card .data-table tbody tr:has(.bulk-row-check) > td:nth-child(5) > * {
+    margin-inline: auto !important;
+  }
+
+  /* Keep header actions compact when the content area becomes narrower. */
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-left {
+    min-width: 0;
+  }
+
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-actions {
+    flex: 0 0 auto;
+    gap: 8px;
+    height: auto;
+  }
+
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-actions .btn-main,
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-actions .btn-light {
+    width: auto;
+    min-width: 0;
+    min-height: 42px;
+    padding: 9px 13px;
+    font-size: 12px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-chip {
+    min-height: 42px;
+    padding-right: 12px;
+    font-size: 12px;
+    white-space: nowrap;
   }
 }

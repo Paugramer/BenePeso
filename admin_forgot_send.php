@@ -1,4 +1,10 @@
 <?php
+// Legacy endpoint retained only as a safe compatibility redirect.
+// Administrator recovery is handled by the unified, CSRF-protected flow.
+require_once __DIR__ . '/auth_session.php';
+header('Location: login.php', true, 303);
+exit();
+
 session_start();
 require "db.php";
 
@@ -58,11 +64,11 @@ try{
   $mail->SMTPSecure = "tls";
   $mail->Port = 587;
 
-  $mail->setFrom($smtp_username, "BENEPESO Admin Security");
+  $mail->setFrom($smtp_username, "PESO Vinzons");
   $mail->addAddress($email);
 
-  $mail->Subject = "BENEPESO Admin Reset Code";
-  $mail->Body = "Your BENEPESO Admin verification code is: $code\n\nThis code will expire in 10 minutes.";
+  $mail->Subject = "PESO Vinzons Administrator Recovery Code";
+  $mail->Body = "A password reset was requested for your PESO Vinzons administrator account.\n\nVerification code: $code\n\nThis code expires in 10 minutes and may be used only once. Do not share it. If you did not request this reset, disregard this message.";
 
   $mail->send();
 

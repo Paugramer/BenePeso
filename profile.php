@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require "db.php";
 
 if (!isset($_SESSION["user_id"])) {
@@ -28,18 +28,20 @@ $user_display_name = !empty($user_display_name) ? $user_display_name : "User";
 
 $basic_name = trim($fn . " " . $ln);
 
-$profile_pic = !empty($user['profile_pic']) ? "uploads/" . htmlspecialchars($user['profile_pic']) : "img/default_user.png";
+$profile_pic = !empty($user['profile_pic']) ? "uploads/" . htmlspecialchars($user['profile_pic']) : "img/default_user.svg";
 $first_char = !empty($fn) ? strtoupper(substr($fn, 0, 1)) : "U";
 
 $prog_stmt = $conn->prepare("
-    SELECT b.beneficiary_id, p.program_name, p.requirements, p.venue, 
-           b.availment_status, b.approval_status, b.approval_note, b.created_at 
+    SELECT b.beneficiary_id, p.program_name, p.requirements, p.venue,
+           p.status AS program_status, p.end_date AS program_end_date,
+           b.availment_status, b.approval_status, b.approval_note,
+           b.date_completed, b.date_availed, b.created_at
     FROM beneficiaries b 
     JOIN programs p ON b.program_id = p.program_id 
-    WHERE b.email = ? 
+    WHERE b.user_id = ? OR (b.user_id IS NULL AND b.email = ?)
     ORDER BY b.created_at DESC
 ");
-$prog_stmt->bind_param("s", $user['email']);
+$prog_stmt->bind_param("is", $user_id, $user['email']);
 $prog_stmt->execute();
 $availed_programs_result = $prog_stmt->get_result();
 
@@ -76,7 +78,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="home.css?v=14">
     <style>
         .status-card-horizontal {
             background: #ffffff;
@@ -226,8 +228,10 @@ while ($row = $activity_logs_result->fetch_assoc()) {
             .log-premium-right { text-align: left; align-items: flex-start; }
         }
     </style>
-    <link rel="stylesheet" href="profile.css?v=8">
-    <link rel="stylesheet" href="frontend_polish.css?v=1">
+    <link rel="stylesheet" href="profile.css?v=12">
+    <link rel="stylesheet" href="spes_form_modal.css?v=20260904c">
+<link rel="stylesheet" href="frontend_polish.css?v=5">
+    <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
     <script src="frontend_polish.js?v=1" defer></script>
 </head>
 <body>
@@ -242,7 +246,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
       </div>
     </a>
 
-    <button class="menu-button" id="menuButton" type="button" aria-label="Toggle menu">
+    <button class="menu-button" id="menuButton" type="button" aria-label="Toggle menu" aria-controls="menuArea" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
 
@@ -253,7 +257,10 @@ while ($row = $activity_logs_result->fetch_assoc()) {
 
       <div class="account-area" id="accountWrap">
         <button class="account-button active" id="accountButton" type="button">
-          <span class="account-icon"><?php echo htmlspecialchars($first_char); ?></span>
+          <span class="account-icon">
+              <?php echo htmlspecialchars($first_char); ?>
+              <img src="<?= $profile_pic ?>" alt="" onerror="this.remove()">
+          </span>
           <span class="account-text"><?php echo htmlspecialchars($user_display_name); ?></span>
           <span class="account-arrow">▾</span>
         </button>
@@ -262,7 +269,13 @@ while ($row = $activity_logs_result->fetch_assoc()) {
           <a href="profile.php">My Profile</a>
           <a href="verification.php">Verification</a>
           <div class="dropdown-line"></div>
-          <a class="logout-link" href="logout.php?role=user">Logout</a>
+          <form class="logout-form" action="logout.php" method="POST">
+            <?= auth_csrf_input() ?><input type="hidden" name="role" value="user">
+            <button class="logout-link" type="submit">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M15 4h3a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3h-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Log out</span>
+            </button>
+          </form>
         </div>
       </div>
     </nav>
@@ -275,8 +288,9 @@ while ($row = $activity_logs_result->fetch_assoc()) {
         <div class="id-card-inner">
             <div class="id-avatar-wrapper">
                 <form id="avatarForm" action="update_avatar.php" method="POST" enctype="multipart/form-data">
+                    <?= auth_csrf_input() ?>
                     <div class="id-avatar">
-                        <img id="profileImagePreview" src="<?= $profile_pic ?>" alt="Profile Picture" onerror="this.src='img/default_user.png'">
+                        <img id="profileImagePreview" src="<?= $profile_pic ?>" alt="Profile Picture" onerror="this.onerror=null;this.src='img/default_user.svg'">
                         <label for="avatarUpload" class="avatar-edit-overlay">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                         </label>
@@ -330,6 +344,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
             </div>
             
             <form id="profileForm" action="update_profile_process.php" method="POST">
+                <?= auth_csrf_input() ?>
                 <div class="info-grid">
                     <div class="section-divider">Name Information</div>
                     <div class="info-group">
@@ -367,7 +382,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
                             <option value="Single" <?= $user['civil_status'] == 'Single' ? 'selected' : '' ?>>Single</option>
                             <option value="Married" <?= $user['civil_status'] == 'Married' ? 'selected' : '' ?>>Married</option>
                             <option value="Widowed" <?= $user['civil_status'] == 'Widowed' ? 'selected' : '' ?>>Widowed</option>
-                            <option value="Legally Separated" <?= $user['civil_status'] == 'Legally Separated' ? 'selected' : '' ?>>Legally Separated</option>
+                            <option value="Legally Separated" <?= $user['civil_status'] == 'Legally Separated' ? 'selected' : '' ?>>Separated</option>
                         </select>
                     </div>
                     <div class="info-group">
@@ -504,9 +519,14 @@ while ($row = $activity_logs_result->fetch_assoc()) {
                     </ul>
                 </div>
                 <form id="securityForm" class="security-form-panel" action="update_password_process.php" method="POST">
+                    <?= auth_csrf_input() ?>
                     <div class="security-form-heading">
                         <h4>Change Password</h4>
-                        <p>Enter and confirm your new account password.</p>
+                        <p>Verify your current password, then enter and confirm your new account password.</p>
+                    </div>
+                    <div class="info-group security-field">
+                        <label for="currentPass">Current Password</label>
+                        <input type="password" name="current_pass" id="currentPass" required autocomplete="current-password" class="form-input" placeholder="Enter current password">
                     </div>
                     <div class="info-group security-field">
                         <label for="newPass">New Password</label>
@@ -592,6 +612,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
       <div class="footer-head">Links</div>
       <a href="home.php">Home</a>
       <a href="programs.php">Programs</a>
+      <a href="about.php">About</a>
       <a href="verification.php">Verification</a>
       <a href="profile.php">Profile</a>
       <a href="privacy_notice.php">Privacy Notice</a>
@@ -631,7 +652,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuArea = document.getElementById('menuArea');
     if(menuBtn && menuArea) {
         menuBtn.addEventListener('click', function() {
-            menuArea.classList.toggle('open');
+            const isOpen = menuArea.classList.toggle('open');
+            menuBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         });
     }
 
@@ -761,7 +783,18 @@ document.getElementById('securityForm').addEventListener('submit', function(e) {
 const allPrograms = <?php 
     $formatted_programs = array_map(function($p) {
         $p['formatted_date'] = date("M d, Y", strtotime($p['created_at']));
-        $p['approval_status_clean'] = strtolower($p['approval_status'] ?? 'pending');
+        $programEnded = !empty($p['program_end_date']) && $p['program_end_date'] < date('Y-m-d');
+        $isCompleted = strtolower(trim((string)($p['availment_status'] ?? ''))) === 'completed'
+            || strtolower(trim((string)($p['program_status'] ?? ''))) === 'completed'
+            || $programEnded;
+        $p['display_status'] = $isCompleted ? 'completed' : strtolower($p['approval_status'] ?? 'pending');
+        $completedDate = $p['date_completed'] ?? '';
+        if ($completedDate === '' && $isCompleted) {
+            $completedDate = $p['program_end_date'] ?? ($p['date_availed'] ?? '');
+        }
+        $p['formatted_completed_date'] = $completedDate !== ''
+            ? date("M d, Y", strtotime($completedDate))
+            : '';
         $p['approval_note'] = $p['approval_note'] ?? 'No specific reason provided.';
         $p['requirements'] = $p['requirements'] ?? 'Please visit the main office for document requirements.';
         $p['venue'] = $p['venue'] ?? 'PESO Main Office';
@@ -786,7 +819,7 @@ function escapeHtml(value) {
 
 function getStatusKey(status) {
     const normalized = String(status || '').toLowerCase();
-    return normalized === 'approved' || normalized === 'rejected' ? normalized : 'pending';
+    return ['approved', 'rejected', 'completed'].includes(normalized) ? normalized : 'pending';
 }
 
 function getStatusLabel(status) {
@@ -820,12 +853,13 @@ function renderPrograms() {
     const pageItems = allPrograms.slice(startIdx, endIdx);
 
     pageItems.forEach(item => {
-        const statusKey = getStatusKey(item.approval_status_clean);
+        const statusKey = getStatusKey(item.display_status);
         const safeTitle = escapeHtml(item.program_name);
         const safeReason = escapeHtml(item.approval_note);
         const safeReqs = escapeHtml(item.requirements);
         const safeVenue = escapeHtml(item.venue);
         const safeDate = escapeHtml(item.formatted_date);
+        const safeCompletedDate = escapeHtml(item.formatted_completed_date);
         const spesFormAction = String(item.program_name || '').trim().toUpperCase() === 'SPES'
             ? `<button type="button" class="btn-spes-form" onclick="event.stopPropagation(); openSpesForm(${encodeURIComponent(item.beneficiary_id)})">SPES Form</button>`
             : '';
@@ -839,6 +873,7 @@ function renderPrograms() {
                  data-reason="${safeReason}"
                  data-reqs="${safeReqs}"
                  data-venue="${safeVenue}"
+                 data-completed-date="${safeCompletedDate}"
                  onclick="handleCardClick(this)">
                   
                 <div class="card-left">
@@ -848,12 +883,12 @@ function renderPrograms() {
                     <div class="program-copy">
                         <span class="program-kicker">PESO Program</span>
                         <h4>${safeTitle}</h4>
-                        <span class="date-applied">Applied on ${safeDate}</span>
+                        <span class="date-applied">${statusKey === 'completed' && safeCompletedDate ? `Completed on ${safeCompletedDate}` : `Applied on ${safeDate}`}</span>
                     </div>
                 </div>
                 <div class="card-right">
                     <div class="status-summary">
-                        <span class="status-caption">Approval Status</span>
+                        <span class="status-caption">${statusKey === 'completed' ? 'Program Status' : 'Approval Status'}</span>
                         <span class="status-pill ${statusKey}"><span class="status-dot"></span>${getStatusLabel(statusKey)}</span>
                     </div>
                     ${spesFormAction}
@@ -959,6 +994,7 @@ function handleCardClick(element) {
     const reason = element.getAttribute('data-reason');
     const reqs = element.getAttribute('data-reqs');
     const venue = element.getAttribute('data-venue');
+    const completedDate = element.getAttribute('data-completed-date');
     
     const modal = document.getElementById('statusModal');
     const modalTitle = document.getElementById('statusModalTitle');
@@ -989,7 +1025,22 @@ function handleCardClick(element) {
             </div>
             <div class="status-note">Bring the listed documents to the venue for the next verification step.</div>
         `;
-    } 
+    }
+    else if (status === 'completed') {
+        modalIcon.classList.add("icon-success");
+        modalIcon.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10"></path><path d="m8 12 3 3 7-7"></path></svg>`;
+        modalTitle.innerText = "Program Completed";
+        modalBody.innerHTML = `
+            <p class="status-message">Your participation in <strong>${escapeHtml(title)}</strong> is complete.</p>
+            <div class="status-detail-panel">
+                <section class="status-detail-section">
+                    <h4>Completion status</h4>
+                    <p class="status-reason">${completedDate ? `Completed on <strong>${escapeHtml(completedDate)}</strong>.` : 'This program is recorded as completed. Contact PESO if a completion date needs to be added.'}</p>
+                </section>
+            </div>
+            <div class="status-note">Contact PESO Vinzons if the displayed completion information needs correction.</div>
+        `;
+    }
     else if (status === 'rejected') {
         modalIcon.classList.add("icon-danger");
         modalIcon.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path></svg>`;
@@ -1026,6 +1077,6 @@ function handleCardClick(element) {
 }
 </script>
 <script src="spes_form_modal.js?v=20260813y"></script>
-<script src="msme_form_modal.js?v=20260820y"></script>
+<script src="msme_form_modal.js?v=20260906e"></script>
 </body>
 </html>

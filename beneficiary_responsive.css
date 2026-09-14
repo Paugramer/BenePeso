@@ -1,0 +1,639 @@
+/* Beneficiary-only responsive and motion layer. Loaded after page styles. */
+:root {
+  --beneficiary-edge: clamp(12px, 3vw, 40px);
+  --beneficiary-motion: cubic-bezier(.2, .8, .2, 1);
+}
+
+body { min-width: 0; }
+.content-wrap,
+.topbar-inner { width: min(1180px, calc(100% - (var(--beneficiary-edge) * 2))); }
+
+.account-icon {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px;
+  flex: 0 0 34px !important;
+  overflow: hidden;
+  border-radius: 50% !important;
+}
+
+.account-button .account-icon > img {
+  width: 34px !important;
+  height: 34px !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+}
+
+/* Consistent, restrained interaction feedback. */
+:where(.btn-explore, .btn-verify, .btn-primary, .btn-secondary, .modal-btn,
+       .program-btn, .see-more, .quick-link, .program-card) {
+  transition: transform .22s var(--beneficiary-motion),
+              box-shadow .22s var(--beneficiary-motion),
+              background-color .22s ease, border-color .22s ease;
+}
+
+:where(.btn-explore, .btn-verify, .btn-primary, .btn-secondary, .modal-btn,
+       .program-btn, .see-more):active { transform: translateY(1px) scale(.985); }
+
+/* Modal backdrop and panel entrance. Page-specific colors and structure remain intact. */
+:where(.modal.show, .modal-overlay.show, .modal-bg[style*="display: flex"],
+       .modal-bg[style*="display:flex"]) {
+  animation: beneficiaryBackdropIn .24s ease-out both;
+}
+
+:where(.modal.show, .modal-overlay.show) > :where(.modal-content, .modal-box, .modal-landscape),
+:where(.modal-bg[style*="display: flex"], .modal-bg[style*="display:flex"]) > .modal {
+  transform-origin: 50% 35%;
+  animation: beneficiaryDialogIn .34s var(--beneficiary-motion) both;
+}
+
+@keyframes beneficiaryBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes beneficiaryDialogIn {
+  from { opacity: 0; transform: translateY(18px) scale(.975); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* When a two-column row has one card left, keep that card centered at column width. */
+@media (min-width: 481px) and (max-width: 1024px) {
+  :where(.program-grid, .program-list, .info-list, .quick-links, .grid-three)
+  > :last-child:nth-child(odd) {
+    grid-column: 1 / -1 !important;
+    width: calc(50% - 8px) !important;
+    max-width: 560px;
+    justify-self: center;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 760px) {
+  /* Center an unpaired profile tab while preserving the two-column tab width. */
+  .profile-tabs-nav > .tab-link:last-child:nth-child(odd) {
+    grid-column: 1 / -1 !important;
+    justify-self: center;
+    width: calc(50% - 3px) !important;
+  }
+
+  /* Public Programs has one optional category filter; keep it centered at column width. */
+  .page-wrap .program-area .area-head > #tupadCategoryFilter {
+    align-self: center;
+    width: calc(50% - 6px);
+  }
+}
+
+/* Tablets and compact laptops. */
+@media (max-width: 1024px) {
+  .welcome-title { font-size: clamp(38px, 6vw, 64px) !important; }
+  .welcome-inner {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: clamp(24px, 4vw, 48px);
+  }
+  .welcome-left { width: 100%; max-width: 760px; }
+  .welcome-right,
+  .hero-graphic { display: none !important; }
+  .welcome-stats { justify-content: flex-start !important; }
+  .program-list { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .program-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .quick-links { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .modal-content { max-width: min(880px, calc(100vw - 40px)) !important; }
+  .application-privacy-dialog { width: min(760px, calc(100vw - 40px)) !important; }
+}
+
+/* Phones and portrait tablets. */
+@media (max-width: 768px) {
+  body { font-size: 15px; }
+  .topbar { position: relative; z-index: 100; }
+  .topbar-inner { min-height: 72px; }
+  .brand-logo { width: 44px !important; height: 44px !important; }
+  .brand-title { font-size: 18px !important; }
+  .brand-subtitle { font-size: 10px !important; }
+
+  .menu-button {
+    display: inline-flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0 !important;
+  }
+  .menu-button span {
+    display: block !important;
+    width: 20px !important;
+    height: 2px !important;
+    margin: 0 !important;
+    flex: 0 0 2px;
+    border-radius: 999px;
+    background: var(--bp-color-text, #183127) !important;
+  }
+  .menu-area {
+    left: var(--beneficiary-edge) !important;
+    right: var(--beneficiary-edge) !important;
+    width: auto !important;
+    max-height: calc(100dvh - 88px);
+    overflow-y: auto;
+    border-radius: 14px !important;
+  }
+  .menu-area.open { animation: beneficiaryMenuIn .24s var(--beneficiary-motion) both; }
+  .menu-area .menu-item,
+  .menu-area .account-area,
+  .menu-area .account-button { width: 100%; }
+  .menu-area .account-button { justify-content: flex-start !important; }
+  .menu-area .account-arrow { margin-left: auto; }
+
+  .welcome-area { min-height: auto !important; }
+  .welcome-inner {
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-height: 0 !important;
+    padding-top: 42px !important;
+    padding-bottom: 42px !important;
+  }
+  .welcome-title { font-size: clamp(34px, 5.4vw, 40px) !important; line-height: 1.08 !important; }
+  .welcome-text { max-width: 650px; font-size: 16px !important; line-height: 1.65 !important; }
+  .welcome-right { display: none; }
+  .welcome-actions { flex-wrap: wrap; }
+  .welcome-actions > * { min-height: 50px !important; padding: 12px 20px !important; flex: 1 1 190px; text-align: center; }
+  .welcome-stats { flex-wrap: wrap; gap: 12px !important; }
+  .stat-box { flex: 1 1 145px; min-width: 0 !important; }
+  .stat-box + .stat-box { padding-left: 12px !important; border-left: 0 !important; }
+
+  .quick-area { padding: 22px !important; border-radius: 18px !important; }
+  .quick-links,
+  .program-grid,
+  .program-list,
+  .info-list,
+  .grid-three,
+  .stats-grid,
+  .mission-vision-grid,
+  .services-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .quick-link { min-height: 76px; padding: 14px !important; }
+  .program-card { width: 100%; }
+
+  .area-head { align-items: flex-start !important; flex-direction: column; }
+  .area-title { font-size: clamp(28px, 8vw, 36px) !important; }
+
+  .verify-hero-content { width: 100%; }
+  .v-search-box,
+  .search-container { width: 100% !important; max-width: 100% !important; }
+  .v-search-box { align-items: stretch; flex-direction: column; padding: 10px !important; }
+  .v-search-box select,
+  .v-search-box input,
+  .v-search-box button { width: 100% !important; min-height: 48px; }
+
+  .profile-layout,
+  .profile-main-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .profile-tabs { max-width: 100%; overflow-x: auto; scrollbar-width: thin; }
+  .profile-tabs button { flex: 0 0 auto; white-space: nowrap; }
+
+  .wizard-nav {
+    justify-content: flex-start !important;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scroll-behavior: smooth;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+  .wizard-step-indicator { min-width: 92px; flex: 0 0 92px !important; }
+  .wizard-step-indicator { scroll-snap-align: center; }
+  .form-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .form-grid .span-2 { grid-column: 1 !important; }
+
+  :where(.modal, .modal-overlay, .modal-bg) { padding: 12px !important; }
+  :where(.modal-content, .modal-box, .modal-landscape) {
+    width: min(100%, 680px) !important;
+    max-width: 100% !important;
+    max-height: calc(100dvh - 24px) !important;
+    overflow-y: auto !important;
+    border-radius: 18px !important;
+  }
+  .modal-split { flex-direction: column !important; }
+  .modal-left,
+  .modal-right { width: 100% !important; }
+  .modal-left { min-height: 210px; }
+  .modal-actions,
+  .modal-actions-centered,
+  .form-actions { flex-wrap: wrap; }
+  .modal-actions > *,
+  .modal-actions-centered > *,
+  .form-actions > * { flex: 1 1 160px; }
+}
+
+@media (max-width: 480px) {
+  .page-wrap .program-area .area-head > #tupadCategoryFilter {
+    width: 100%;
+  }
+}
+
+@keyframes beneficiaryMenuIn {
+  from { opacity: 0; transform: translateY(-8px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Small phones. */
+@media (max-width: 480px) {
+  .content-wrap,
+  .topbar-inner { width: calc(100% - 24px) !important; }
+  .account-text { max-width: min(180px, 52vw) !important; }
+  .welcome-badge { max-width: 100%; white-space: normal; }
+  .welcome-title { font-size: clamp(32px, 11vw, 44px) !important; }
+  .welcome-actions { flex-direction: column; }
+  .welcome-actions > * { flex-basis: auto; width: 100%; }
+  .welcome-stats { display: grid !important; grid-template-columns: 1fr; }
+  .stat-box { padding: 8px 0 !important; }
+  .quick-area { padding: 18px 14px !important; }
+  .quick-top { align-items: flex-start; gap: 10px; }
+  .quick-link { padding: 14px !important; }
+  .quick-links,
+  .program-grid,
+  .program-list,
+  .info-list,
+  .grid-three,
+  .stats-grid,
+  .mission-vision-grid,
+  .services-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  :where(.program-grid, .program-list, .info-list, .quick-links, .grid-three) > :last-child:nth-child(odd) {
+    grid-column: auto !important;
+    width: 100% !important;
+    max-width: none;
+  }
+  .program-area { padding-block: 48px !important; }
+  .program-card { border-radius: 14px !important; }
+
+  :where(input, select, textarea) { font-size: 16px !important; }
+  :where(.modal, .modal-overlay, .modal-bg) { padding: 8px !important; align-items: flex-end !important; }
+  :where(.modal-content, .modal-box, .modal-landscape) {
+    width: 100% !important;
+    max-height: calc(100dvh - 16px) !important;
+    border-radius: 18px 18px 10px 10px !important;
+  }
+  :where(.modal-actions, .modal-actions-centered, .form-actions) { flex-direction: column; }
+  :where(.modal-actions, .modal-actions-centered, .form-actions) > * { width: 100% !important; flex-basis: auto; }
+  .modal-close,
+  .modal-close-btn { min-width: 44px !important; min-height: 44px !important; }
+}
+
+/* Short landscape devices. */
+@media (max-height: 560px) and (orientation: landscape) {
+  :where(.modal, .modal-overlay, .modal-bg) { align-items: flex-start !important; }
+  :where(.modal-content, .modal-box, .modal-landscape) { max-height: calc(100dvh - 16px) !important; }
+  .welcome-inner { padding-block: 32px !important; }
+  .welcome-right { display: none; }
+}
+
+/* Login and signup: keep the complete auth experience proportional on phones. */
+@media (max-width: 560px) {
+  body.auth-page {
+    min-height: 100dvh;
+    padding: 12px;
+    background: url("img/pesobgs.jpg") center / cover no-repeat fixed;
+  }
+
+  body.auth-login {
+    display: flex;
+    align-items: safe center;
+    justify-content: center;
+  }
+
+  body.auth-page::before { content: ""; }
+
+  .auth-page .box,
+  .auth-page .card,
+  .auth-page .card.compact {
+    width: 100%;
+    max-width: 480px;
+    margin-inline: auto;
+  }
+
+  .auth-page .card,
+  .auth-page .card.compact {
+    min-height: 0;
+    border: 1px solid rgba(255, 255, 255, .72);
+    border-radius: 12px;
+    box-shadow: 0 16px 42px rgba(7, 35, 23, .22);
+  }
+
+  .auth-page .left,
+  .auth-page .card.compact .left {
+    width: 100%;
+    max-width: none;
+    padding: 16px 18px;
+  }
+
+  .auth-page .brand {
+    width: 100%;
+    max-width: none;
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 2px 12px;
+  }
+
+  .auth-page .logo {
+    width: 52px !important;
+    height: 52px !important;
+    flex-basis: 52px !important;
+  }
+
+  .auth-page .left h1 { font-size: 20px; }
+  .auth-page .left p { font-size: 10.5px; line-height: 1.4; }
+
+  .auth-page .right,
+  .auth-page .card.compact .right {
+    width: 100%;
+    max-width: none;
+    padding: 22px 18px 26px;
+  }
+
+  .auth-page .right-inner {
+    width: 100%;
+    max-width: none;
+  }
+
+  .auth-page .role-label { padding: 5px 8px; font-size: 9px; }
+  .auth-page .role-label[style] { margin-top: 0 !important; }
+  .auth-page .right h2 { font-size: 22px; }
+  .auth-page .sub { margin-bottom: 18px; font-size: 12.5px; line-height: 1.5; }
+  .auth-page .form-group { margin-bottom: 12px; }
+
+  .auth-page input,
+  .auth-page select {
+    min-height: 46px;
+    padding: 10px 12px;
+    font-size: 16px !important;
+  }
+
+  .auth-page .btn,
+  .auth-page .modal-btn { min-height: 46px; }
+  .auth-page .btn { margin-top: 14px; }
+  .auth-page .small { font-size: 11.5px; }
+
+  .auth-page .step-tracker {
+    margin: 12px 0 16px;
+    padding-inline: 4px;
+  }
+
+  .auth-page .profile-upload-container {
+    margin: 12px 0;
+    padding: 18px;
+  }
+
+  .auth-page .modal-bg {
+    align-items: center !important;
+    padding: 12px !important;
+  }
+
+  .auth-page .modal {
+    width: min(100%, 390px);
+    max-height: calc(100dvh - 24px);
+    padding: 28px 18px 20px !important;
+    border-radius: 12px;
+  }
+
+  .auth-page .modal--loading { padding: 30px 20px !important; }
+  .auth-page .modal-close-btn { top: 10px; right: 10px; }
+  .auth-page .modal-icon-header,
+  .auth-page .notice-icon,
+  .auth-page .age-notice-icon {
+    width: 54px;
+    height: 54px;
+    margin-bottom: 14px;
+  }
+
+  .auth-page .modal-title { font-size: 19px; }
+  .auth-page .modal-subtitle,
+  .auth-page #modalText { font-size: 12.5px !important; line-height: 1.5; }
+  .auth-page .otp-box { height: 44px; font-size: 17px; }
+
+  .auth-page #privacyNoticeBg .signup-privacy-modal {
+    width: min(100%, 480px);
+    height: calc(100dvh - 24px);
+    padding: 22px 16px 16px !important;
+    align-items: stretch !important;
+  }
+}
+
+/* Paired signup fields stay paired until the screen is genuinely narrow. */
+@media (min-width: 381px) and (max-width: 900px) {
+  body.auth-page {
+    display: flex;
+    align-items: safe center;
+    justify-content: center;
+  }
+
+  .auth-signup .form-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(10px, 2vw, 14px);
+  }
+
+  .auth-signup .right,
+  .auth-signup .card.compact .right {
+    padding: clamp(18px, 4vw, 30px) clamp(18px, 5vw, 42px);
+  }
+
+  .auth-signup .form-group { margin-bottom: 10px; }
+  .auth-signup label { margin-bottom: 4px; font-size: 10px; }
+
+  .auth-signup input,
+  .auth-signup select {
+    min-height: 44px;
+    padding: 8px 10px;
+  }
+
+  .auth-signup .btn { min-height: 44px; margin-top: 10px; }
+  .auth-signup .small { margin-top: 8px; }
+}
+
+@media (max-width: 360px) {
+  body.auth-page { padding: 8px; }
+
+  .auth-page .left,
+  .auth-page .card.compact .left { padding: 14px; }
+
+  .auth-page .brand {
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 2px 10px;
+  }
+
+  .auth-page .logo {
+    width: 46px !important;
+    height: 46px !important;
+    flex-basis: 46px !important;
+  }
+
+  .auth-page .left h1 { font-size: 18px; }
+  .auth-page .left p { font-size: 9.5px; }
+
+  .auth-page .right,
+  .auth-page .card.compact .right { padding: 18px 14px 22px; }
+
+  .auth-page .right h2 { font-size: 20px; }
+  .auth-page .step-text { font-size: 8px; }
+
+  .auth-page .modal-bg { padding: 8px !important; }
+  .auth-page .modal {
+    max-height: calc(100dvh - 16px);
+    padding: 26px 14px 16px !important;
+  }
+
+  .auth-page .otp-container { gap: 3px; }
+  .auth-page .otp-box { height: 40px; font-size: 16px; }
+  .auth-page #privacyNoticeBg .signup-privacy-modal { height: calc(100dvh - 16px); }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  body.auth-page { padding: 8px; }
+
+  .auth-page .box,
+  .auth-page .card,
+  .auth-page .card.compact { max-width: 780px; }
+
+  .auth-page .card,
+  .auth-page .card.compact {
+    grid-template-columns: 200px minmax(0, 1fr);
+    min-height: 0;
+    border-radius: 10px;
+  }
+
+  .auth-page .left,
+  .auth-page .card.compact .left {
+    min-height: 0;
+    padding: 16px;
+    border-right: 4px solid var(--green);
+    border-bottom: 0;
+  }
+
+  .auth-page .brand {
+    display: flex;
+    max-width: 168px;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .auth-page .logo {
+    width: 54px !important;
+    height: 54px !important;
+    flex-basis: 54px !important;
+  }
+
+  .auth-page .left h1 { font-size: 20px; }
+  .auth-page .left p { font-size: 9.5px; line-height: 1.4; }
+
+  .auth-page .right,
+  .auth-page .card.compact .right { padding: 16px 22px; }
+
+  .auth-page .right h2 { font-size: 21px; }
+  .auth-page .sub { margin-bottom: 14px; }
+  .auth-page .form-group { margin-bottom: 10px; }
+  .auth-page input,
+  .auth-page select { min-height: 44px; padding-block: 9px; }
+
+  .auth-page .modal-bg {
+    align-items: center !important;
+    padding: 8px !important;
+  }
+
+  .auth-page .modal {
+    width: min(390px, 100%);
+    max-height: calc(100dvh - 16px);
+    padding: 22px 18px 18px !important;
+  }
+
+  .auth-page #privacyNoticeBg .signup-privacy-modal {
+    width: min(720px, 100%);
+    height: calc(100dvh - 16px);
+    align-items: stretch !important;
+  }
+}
+
+/* Large displays: keep lines readable instead of stretching cards indefinitely. */
+@media (min-width: 1440px) {
+  .content-wrap,
+  .topbar-inner { max-width: 1240px; }
+  .program-list { gap: 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.modal.show, .modal-overlay.show, .modal-bg, .modal-content, .modal-box, .modal-landscape, .menu-area.open) {
+    animation: none !important;
+  }
+}
+
+/* Final narrow-screen guardrails.
+   Keep these last so older page-specific rules cannot restore desktop widths. */
+@media (max-width: 600px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  :where(.page-wrap, .content-wrap, .topbar, .topbar-inner, .welcome-inner,
+         .welcome-left, .area-head, .section-heading, .program-area,
+         .profile-layout, .profile-main-grid) {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  :where(h1, h2, h3, p, .welcome-text, .about-description, .sub,
+         .brand-name, .brand-subtitle, .card-title, .card-desc) {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  body.auth-page {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .auth-page .box,
+  .auth-page .card,
+  .auth-page .card.compact {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+
+  .auth-page .card,
+  .auth-page .card.compact {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .auth-page .left,
+  .auth-page .right,
+  .auth-page .card.compact .left,
+  .auth-page .card.compact .right,
+  .auth-page .right-inner,
+  .auth-page form,
+  .auth-page .form-row,
+  .auth-page .form-group,
+  .auth-page .step-tracker {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .auth-page input,
+  .auth-page select,
+  .auth-page textarea,
+  .auth-page button {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  /* One field per row is more reliable on common 360-430px phones. */
+  .auth-signup .form-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+  }
+
+  .auth-page .left,
+  .auth-page .card.compact .left {
+    padding-inline: 14px !important;
+  }
+
+  .auth-page .right,
+  .auth-page .card.compact .right {
+    padding-inline: 14px !important;
+  }
+}

@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require "db.php";
 
 if (!isset($_SESSION["admin_id"])) {
@@ -26,6 +26,8 @@ if ($admin_info) {
     }
     $admin_info->close();
 }
+
+$admin_name = "PESO VINZONS";
 
 function h($v){
     return htmlspecialchars((string)($v ?? ""), ENT_QUOTES, "UTF-8");
@@ -130,6 +132,16 @@ if (!empty($params)) {
 $stmt->execute();
 $result = $stmt->get_result();
 
+/* Resolve names for legacy staff log rows that stored only staff_id. */
+$staff_names = [];
+$staff_name_result = $conn->query("SELECT staff_id, first_name, last_name FROM peso_staff");
+if ($staff_name_result) {
+    while ($staff_row = $staff_name_result->fetch_assoc()) {
+        $resolved = trim(($staff_row['first_name'] ?? '') . ' ' . ($staff_row['last_name'] ?? ''));
+        if ($resolved !== '') $staff_names[(int)$staff_row['staff_id']] = $resolved;
+    }
+}
+
 $clean_modules = [
     'Auth' => 'Authentication',
     'Accounts' => 'Manage Accounts',
@@ -153,8 +165,9 @@ $clean_modules = [
 <link rel="stylesheet" href="shared_sidebar.css">
 <link rel="stylesheet" href="activity_filter_polish.css?v=1">
 <script src="activity_filter_polish.js?v=1" defer></script>
-<link rel="stylesheet" href="frontend_polish.css?v=1">
-<script src="frontend_polish.js?v=1" defer></script>
+<link rel="stylesheet" href="frontend_polish.css?v=7">
+<link rel="stylesheet" href="admin_responsive.css?v=23">
+<script src="frontend_polish.js?v=3" defer></script>
 </head>
 <body>
 
@@ -191,7 +204,7 @@ $clean_modules = [
             <a href="admin_beneficiaries.php" class="<?php echo navClass('admin_beneficiaries.php'); ?>"><i class="ph ph-users"></i> Beneficiaries</a>
             <a href="admin_accounts.php" class="<?php echo navClass('admin_accounts.php'); ?>"><i class="ph ph-user-circle-gear"></i> Manage Accounts</a>
             <a href="admin_activity_log.php" class="<?php echo navClass('admin_activity_log.php'); ?>"><i class="ph ph-clock-counter-clockwise"></i> System Logs</a>
-            <a href="logout.php?role=admin" class="nav-item logout-item"><i class="ph ph-sign-out"></i> Logout</a>
+            <form method="POST" action="logout.php" class="sidebar-logout-form"><?php echo auth_csrf_input(); ?><input type="hidden" name="role" value="admin"><button type="submit" class="nav-item logout-item"><i class="ph ph-sign-out"></i> Logout</button></form>
         </nav>
     </aside>
 
@@ -199,7 +212,7 @@ $clean_modules = [
 
         <header class="top-area animate-fade-in">
             <div class="top-left">
-                <button class="menu-toggle" id="menuToggle" aria-label="Open menu">
+                <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu">
                     <span></span><span></span><span></span>
                 </button>
                 <div class="top-title">
@@ -212,7 +225,7 @@ $clean_modules = [
             <div class="top-actions">
                 <div class="top-chip">
                     <img src="<?php echo h($pic_path ?? ''); ?>" alt="" class="chip-img" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<?php echo urlencode($admin_name); ?>&background=1f7a54&color=fff';">
-                    Administrator
+                    <?php echo h($admin_name); ?>
                 </div>
             </div>
         </header>
@@ -224,7 +237,7 @@ $clean_modules = [
                     <div class="stat-icon" style="color: var(--green); background: var(--green-light);"><i class="ph-fill ph-stack"></i></div>
                 </div>
                 <div class="stat-value"><?= number_format($total_logs) ?></div>
-                <div class="stat-note">All recorded system activities</div>
+                <div class="stat-note">All activity recorded in the system.</div>
             </div>
             
             <div class="stat-card animate-fade-in" style="animation-delay: 0.2s;">
@@ -242,7 +255,7 @@ $clean_modules = [
                     <div class="stat-icon" style="color: #4338ca; background: #e0e7ff;"><i class="ph-fill ph-users-three"></i></div>
                 </div>
                 <div class="stat-value"><?= number_format($staff_logs) ?></div>
-                <div class="stat-note">Actions by active PESO Staff</div>
+                <div class="stat-note">Actions recorded for PESO staff.</div>
             </div>
         </section>
 
@@ -302,8 +315,20 @@ $clean_modules = [
                             <?php if($result && $result->num_rows > 0): ?>
                                 <?php while($row = $result->fetch_assoc()): 
                                     
-                                    $display_role = h($row['actor_role'] ?? 'Unknown');
-                                    $actor_name = h($row['actor_name'] ?? $row['target_name'] ?? 'System');
+                                    $raw_description = trim((string)($row['description'] ?? ''));
+                                    $raw_actor_name = trim((string)($row['actor_name'] ?? ''));
+                                    $raw_actor_role = trim((string)($row['actor_role'] ?? ''));
+                                    $legacy_admin_entry = stripos($raw_description, 'Admin ') === 0;
+                                    if ($legacy_admin_entry) {
+                                        $raw_actor_name = 'PESO VINZONS';
+                                        $raw_actor_role = 'Administrator';
+                                    } elseif (($raw_actor_name === '' || strcasecmp($raw_actor_name, 'PESO Staff') === 0)
+                                        && !empty($row['staff_id']) && isset($staff_names[(int)$row['staff_id']])) {
+                                        $raw_actor_name = $staff_names[(int)$row['staff_id']];
+                                        $raw_actor_role = 'PESO Staff';
+                                    }
+                                    $display_role = h($raw_actor_role !== '' ? $raw_actor_role : 'Unknown');
+                                    $actor_name = h($raw_actor_name !== '' ? $raw_actor_name : ($row['target_name'] ?? 'System'));
                                     $action_title = strtoupper(h($row['action_type'] ?? 'LOG'));
                                     $module_name = h($row['module_name'] ?? 'System');
                                     $desc = h($row['description'] ?? '');

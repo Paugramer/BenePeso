@@ -13,6 +13,11 @@
   text-decoration: none;
 }
 
+/* Keep the card's link indicator clear of the description at every width. */
+.stat-card-link .stat-note {
+  padding-right: 42px;
+}
+
 .stat-card-link::after {
   align-items: center;
   background: #fff;
@@ -45,6 +50,38 @@
 .stat-card-link:focus-visible::after {
   opacity: 1;
   transform: translateX(0);
+}
+
+@media (max-width: 600px) {
+  .stat-card-link .stat-note {
+    padding-right: 36px;
+  }
+
+  .stat-card-link::after {
+    bottom: 14px;
+    right: 14px;
+    height: 26px;
+    width: 26px;
+  }
+}
+
+/* Dashboard controls stay beside their heading, including on narrow screens. */
+.dashboard-chart-card .panel-head {
+  align-items: flex-start !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+}
+
+.dashboard-chart-card .panel-head > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dashboard-chart-card .chart-period-trigger,
+.dashboard-chart-card .panel-link {
+  flex: 0 0 auto;
 }
 
 .dashboard-chart-card {
@@ -216,6 +253,10 @@
   .dashboard-chart-canvas--line { height: 205px; }
   .dashboard-chart-canvas--donut { height: 225px; }
   .chart-context { display: none; }
-  .chart-period-trigger { min-height: 40px; min-width: 124px; }
+  .chart-period-trigger { min-height: 40px; min-width: 112px; padding-inline: 10px; }
+  .dashboard-chart-card .panel-head { gap: 10px; }
+  .dashboard-chart-card .panel-title { font-size: clamp(1.08rem, 5.2vw, 1.35rem); }
+  .dashboard-chart-card .panel-sub { font-size: .75rem; line-height: 1.4; }
+  .dashboard-chart-card .panel-link { min-height: 40px; padding-inline: 12px; }
   .chart-period-options { left: auto; right: 0; }
 }

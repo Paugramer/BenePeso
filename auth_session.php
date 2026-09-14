@@ -39,6 +39,39 @@ function auth_verify_csrf(?string $token): bool
         && hash_equals($_SESSION['csrf_token'], $token);
 }
 
+function auth_require_csrf(): void
+{
+    if (!auth_verify_csrf($_POST['csrf_token'] ?? null)) {
+        http_response_code(403);
+        exit('Invalid or expired request token. Please return to the previous page and try again.');
+    }
+}
+
+function auth_csrf_input(): string
+{
+    return '<input type="hidden" name="csrf_token" value="'
+        . htmlspecialchars(auth_csrf_token(), ENT_QUOTES, 'UTF-8')
+        . '">';
+}
+
+function auth_enable_csrf_form_injection(): void
+{
+    ob_start(static function (string $html): string {
+        $field = auth_csrf_input();
+        return (string)preg_replace_callback(
+            '/<form\b(?=[^>]*\bmethod\s*=\s*(["\'])post\1)[^>]*>/i',
+            static fn(array $match): string => $match[0] . $field,
+            $html
+        );
+    });
+}
+
+function auth_regenerate_session(): void
+{
+    session_regenerate_id(true);
+    unset($_SESSION['csrf_token']);
+}
+
 function auth_role_id_key(string $role): ?string
 {
     return [
@@ -92,4 +125,3 @@ function auth_remaining_roles(): array
 }
 
 start_secure_session();
-

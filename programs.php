@@ -1,13 +1,18 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require "db.php";
 require_once "program_eligibility_helper.php";
 require_once "tupad_category_helper.php";
 require_once "beneficiary_choices.php";
 require_once "privacy_helper.php";
+require_once "email_helper.php";
 require_once "tupad_household_helper.php";
+require_once "tupad_document_helper.php";
+require_once "spes_schema_helper.php";
 ensure_program_eligibility_schema($conn);
 ensure_tupad_category_schema($conn);
+ensure_tupad_document_schema($conn);
+ensureSpesParentStatusCapacity($conn);
 
 if (!isset($_SESSION["user_id"])) { header("Location: login.php"); exit(); }
 
@@ -17,6 +22,7 @@ $user_id = (int)$_SESSION["user_id"];
 $user_display_name = "User";
 $first_char = "U";
 $is_logged_in = true;
+$user_profile_src = '';
 
 // FETCH USER DATA FOR AUTOFILL
 $stmt = $conn->prepare("SELECT * FROM users WHERE user_id=? LIMIT 1");
@@ -34,6 +40,10 @@ if ($res && $res->num_rows === 1) {
     $full_name = trim($fn . ($mn ? " " . substr($mn, 0, 1) . "." : "") . " " . $ln . ($ex ? " " . $ex : ""));
     if (!empty($full_name)) $user_display_name = $full_name;
     if (!empty($fn)) $first_char = strtoupper(substr($fn, 0, 1));
+    $profile_filename = basename((string)($user_data['profile_pic'] ?? ''));
+    if ($profile_filename !== '' && is_file(__DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $profile_filename)) {
+        $user_profile_src = 'uploads/' . rawurlencode($profile_filename);
+    }
 }
 $stmt->close();
 
@@ -54,10 +64,20 @@ $full_address = $combined_street_brgy ? "$combined_street_brgy, Vinzons, Camarin
 // ==========================================
 // AJAX HANDLER FOR CLICK LOGGING
 // ==========================================
-if (isset($_GET['action']) && $_GET['action'] === 'log_view') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'log_view') {
+    auth_require_csrf();
     header('Content-Type: application/json');
-    $prog_name = $_GET['prog_name'] ?? 'a program';
-    $log_type = $_GET['type'] ?? 'Viewed';
+    $prog_name = trim((string)($_POST['prog_name'] ?? 'a program'));
+    $log_type = $_POST['type'] ?? 'Viewed';
+    if ($prog_name === '') $prog_name = 'a program';
+    $prog_name = mb_substr($prog_name, 0, 150);
+
+    $logFingerprint = hash('sha256', $log_type . '|' . $prog_name);
+    $lastViewLog = $_SESSION['last_program_view_log'] ?? [];
+    if (($lastViewLog['fingerprint'] ?? '') === $logFingerprint && (int)($lastViewLog['time'] ?? 0) > time() - 5) {
+        echo json_encode(['status' => 'skipped']);
+        exit();
+    }
     
     $desc = ($log_type === 'status') ? "Opened status details for $prog_name." : "Viewed details for $prog_name.";
     $mod = "Programs";
@@ -65,6 +85,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'log_view') {
     $log_stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, 'Registered User', ?, 'VIEW', ?, ?, NOW())");
     $log_stmt->bind_param("ssss", $user_display_name, $mod, $prog_name, $desc);
     $log_stmt->execute();
+    $_SESSION['last_program_view_log'] = ['fingerprint' => $logFingerprint, 'time' => time()];
     echo json_encode(['status' => 'success']);
     exit();
 }
@@ -96,7 +117,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_eligibility') {
         JOIN programs p ON b.program_id = p.program_id 
         WHERE b.user_id = ? 
         AND (b.approval_status = 'Pending' 
-             OR (b.approval_status = 'Approved' AND b.availment_status IN ('Ongoing', 'Not Yet Availed', 'Requirements Received'))) 
+             OR (b.approval_status = 'Approved' AND b.availment_status IN ('Not Yet Availed', 'Requirements Received', 'Orientation', 'Examination', 'Exam Passed', 'Exam Failed', 'Ongoing', 'Salary Distribution')))
         ORDER BY b.created_at DESC LIMIT 1
     ");
     $activeAppStmt->bind_param("i", $user_id);
@@ -108,28 +129,20 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_eligibility') {
         echo json_encode(['eligible' => false, 'message' => "You currently have an active or pending application for " . $activeApp['program_name'] . ". You cannot apply for another program until it is completed."]); exit();
     }
 
-    // RULE 2: Cooldown Block - 20 months for the same program category across different batches.
-    $twentyMonthsAgo = date('Y-m-d', strtotime('-20 months'));
-    $searchBase = $base_prog_name . '%';
-    $cooldownStmt = $conn->prepare("
-        SELECT b.date_completed, b.date_availed 
-        FROM beneficiaries b 
-        JOIN programs p ON b.program_id = p.program_id 
-        WHERE b.user_id = ? 
-        AND p.program_name LIKE ? 
-        AND b.approval_status = 'Approved' 
-        AND b.availment_status = 'Completed' 
-        ORDER BY b.created_at DESC LIMIT 1
-    ");
-    $cooldownStmt->bind_param("is", $user_id, $searchBase);
-    $cooldownStmt->execute();
-    $lastAvail = $cooldownStmt->get_result()->fetch_assoc();
-    $cooldownStmt->close();
-
-    if ($lastAvail) {
-        $compareDate = !empty($lastAvail['date_completed']) ? $lastAvail['date_completed'] : (!empty($lastAvail['date_availed']) ? $lastAvail['date_availed'] : null);
-        if ($compareDate && $compareDate > $twentyMonthsAgo) {
-            echo json_encode(['eligible' => false, 'message' => "You must wait 1 year and 8 months after completing a $base_prog_name program before applying for a new batch."]); exit();
+    // RULE 2: The PESO Vinzons 20-month cooldown applies only to TUPAD.
+    if (strcasecmp($base_prog_name, 'TUPAD') === 0) {
+        $twentyMonthsAgo = date('Y-m-d', strtotime('-20 months'));
+        $searchBase = $base_prog_name . '%';
+        $cooldownStmt = $conn->prepare("SELECT b.date_completed, b.date_availed FROM beneficiaries b JOIN programs p ON b.program_id = p.program_id WHERE b.user_id = ? AND p.program_name LIKE ? AND b.approval_status = 'Approved' AND b.availment_status = 'Completed' ORDER BY b.created_at DESC LIMIT 1");
+        $cooldownStmt->bind_param("is", $user_id, $searchBase);
+        $cooldownStmt->execute();
+        $lastAvail = $cooldownStmt->get_result()->fetch_assoc();
+        $cooldownStmt->close();
+        if ($lastAvail) {
+            $compareDate = !empty($lastAvail['date_completed']) ? $lastAvail['date_completed'] : (!empty($lastAvail['date_availed']) ? $lastAvail['date_availed'] : null);
+            if ($compareDate && $compareDate > $twentyMonthsAgo) {
+                echo json_encode(['eligible' => false, 'message' => "You must wait 1 year and 8 months after completing a TUPAD program before applying for a new batch."]); exit();
+            }
         }
     }
 
@@ -142,16 +155,205 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_eligibility') {
 
 // HANDLE BULLETPROOF FORM SUBMISSION
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['action'] === 'submit_application') {
+    auth_require_csrf();
     if (!isset($_POST['privacy_acknowledgment']) || $_POST['privacy_acknowledgment'] !== '1') {
         $_SESSION['app_error'] = 'Please read and acknowledge the Privacy Notice before submitting your application.';
         header('Location: programs.php');
         exit();
     }
     $submittedProgramId = (int)($_POST['program_id'] ?? 0);
+    $programNameStmt = $conn->prepare("SELECT p.program_name,p.status,p.start_date,p.end_date,p.slots,p.minimum_age,p.maximum_age,
+        (SELECT COUNT(*) FROM beneficiaries approved WHERE approved.program_id=p.program_id AND approved.approval_status='Approved') AS approved_count
+        FROM programs p WHERE p.program_id=? LIMIT 1");
+    $programNameStmt->bind_param('i', $submittedProgramId);
+    $programNameStmt->execute();
+    $submittedProgram = $programNameStmt->get_result()->fetch_assoc() ?: [];
+    $submittedProgramName = (string)($submittedProgram['program_name'] ?? '');
+    $programNameStmt->close();
+    $isTupadApplication = stripos($submittedProgramName, 'TUPAD') !== false;
+    $isSpesApplication = stripos($submittedProgramName, 'SPES') !== false;
+    $isMsmeApplication = stripos($submittedProgramName, 'MSME') !== false;
     $configuredEligibility = evaluate_program_eligibility($conn, $user_id, $submittedProgramId);
     if (!$configuredEligibility['eligible']) {
         $_SESSION['app_error'] = $configuredEligibility['message'];
         header('Location: programs.php'); exit();
+    }
+    if ($isMsmeApplication) {
+        $today = date('Y-m-d');
+        $msmeUnavailable = strtolower((string)($submittedProgram['status'] ?? '')) === 'completed'
+            || (!empty($submittedProgram['end_date']) && $submittedProgram['end_date'] < $today)
+            || (!empty($submittedProgram['start_date']) && !empty($submittedProgram['end_date']) && $submittedProgram['end_date'] < $submittedProgram['start_date'])
+            || ((int)($submittedProgram['slots'] ?? 0) > 0 && (int)($submittedProgram['approved_count'] ?? 0) >= (int)$submittedProgram['slots']);
+        if ($msmeUnavailable) {
+            $_SESSION['app_error'] = 'This MSME profiling batch is no longer accepting applications.';
+            header('Location: programs.php'); exit();
+        }
+
+        $requiredMsmeFields = [
+            'business_name' => 'Business/Trade Name', 'ownership_type' => 'Type of Ownership',
+            'owner_full_name' => 'Owner Full Name', 'owner_contact_no' => 'Owner Contact Number',
+            'owner_birthdate' => 'Owner Date of Birth', 'owner_full_address' => 'Owner Full Address',
+            'educational_attainment' => 'Educational Attainment', 'business_size' => 'Business Size',
+            'year_started' => 'Year Started', 'business_email' => 'Business Email'
+        ];
+        foreach ($requiredMsmeFields as $field => $label) {
+            if (trim((string)($_POST[$field] ?? '')) === '') {
+                $_SESSION['app_error'] = "Please complete the MSME field: {$label}.";
+                header('Location: programs.php'); exit();
+            }
+        }
+        if (empty($_POST['business_nature_arr']) || !is_array($_POST['business_nature_arr'])) {
+            $_SESSION['app_error'] = 'Please select at least one nature of business.';
+            header('Location: programs.php'); exit();
+        }
+        if (in_array('Others', $_POST['business_nature_arr'], true) && trim((string)($_POST['other_business_nature'] ?? '')) === '') {
+            $_SESSION['app_error'] = 'Please specify the other nature of business.';
+            header('Location: programs.php'); exit();
+        }
+        $hasProduct = false;
+        foreach ((array)($_POST['prod_name'] ?? []) as $productName) {
+            if (trim((string)$productName) !== '') { $hasProduct = true; break; }
+        }
+        if (!$hasProduct) {
+            $_SESSION['app_error'] = 'Please provide at least one primary product or service.';
+            header('Location: programs.php'); exit();
+        }
+        $businessEmail = trim((string)($_POST['business_email'] ?? $_POST['contact_details'] ?? ''));
+        if (!filter_var($businessEmail, FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['app_error'] = 'Please enter a valid business email address.';
+            header('Location: programs.php'); exit();
+        }
+        $yearStarted = trim((string)($_POST['year_started'] ?? ''));
+        $currentYear = (int)date('Y');
+        if (!preg_match('/^\d{4}$/', $yearStarted) || (int)$yearStarted < 1900 || (int)$yearStarted > $currentYear) {
+            $_SESSION['app_error'] = 'Please select a valid year when the business started.';
+            header('Location: programs.php'); exit();
+        }
+        $ownerBirthdate = trim((string)($_POST['owner_birthdate'] ?? ''));
+        $parsedOwnerBirthdate = DateTimeImmutable::createFromFormat('!Y-m-d', $ownerBirthdate);
+        if (!$parsedOwnerBirthdate || $parsedOwnerBirthdate->format('Y-m-d') !== $ownerBirthdate || $parsedOwnerBirthdate > new DateTimeImmutable('today')) {
+            $_SESSION['app_error'] = 'Please enter a valid owner date of birth.';
+            header('Location: programs.php'); exit();
+        }
+        $verifiedOwnerAge = (new DateTimeImmutable('today'))->diff($parsedOwnerBirthdate)->y;
+        $minimumOwnerAge = (int)($submittedProgram['minimum_age'] ?? 18);
+        $maximumOwnerAge = $submittedProgram['maximum_age'] === null ? null : (int)$submittedProgram['maximum_age'];
+        if ($verifiedOwnerAge < $minimumOwnerAge || ($maximumOwnerAge !== null && $verifiedOwnerAge > $maximumOwnerAge)) {
+            $_SESSION['app_error'] = $maximumOwnerAge === null
+                ? "The business owner must be at least {$minimumOwnerAge} years old."
+                : "The business owner must be {$minimumOwnerAge}–{$maximumOwnerAge} years old.";
+            header('Location: programs.php'); exit();
+        }
+        $_POST['owner_age'] = (string)$verifiedOwnerAge;
+        if (($_POST['msme_certified_truthful'] ?? '') !== '1') {
+            $_SESSION['app_error'] = 'Please certify that the MSME information is true and complete.';
+            header('Location: programs.php'); exit();
+        }
+    }
+    if ($isSpesApplication) {
+        $today = date('Y-m-d');
+        $spesUnavailable = strtolower((string)($submittedProgram['status'] ?? '')) === 'completed'
+            || (!empty($submittedProgram['end_date']) && $submittedProgram['end_date'] < $today)
+            || (!empty($submittedProgram['start_date']) && !empty($submittedProgram['end_date']) && $submittedProgram['end_date'] < $submittedProgram['start_date'])
+            || ((int)($submittedProgram['slots'] ?? 0) > 0 && (int)($submittedProgram['approved_count'] ?? 0) >= (int)$submittedProgram['slots']);
+        if ($spesUnavailable) {
+            $_SESSION['app_error'] = 'This SPES batch is no longer accepting applications.';
+            header('Location: programs.php'); exit();
+        }
+
+        $activeSpesStmt = $conn->prepare("SELECT 1 FROM beneficiaries WHERE user_id=? AND (approval_status='Pending' OR (approval_status='Approved' AND availment_status IN ('Not Yet Availed','Requirements Received','Orientation','Examination','Exam Passed','Ongoing','Salary Distribution'))) LIMIT 1");
+        $activeSpesStmt->bind_param('i', $user_id);
+        $activeSpesStmt->execute();
+        $hasActiveApplication = $activeSpesStmt->get_result()->num_rows > 0;
+        $activeSpesStmt->close();
+        if ($hasActiveApplication) {
+            $_SESSION['app_error'] = 'You already have a pending or active program application. Complete that application before applying for SPES.';
+            header('Location: programs.php'); exit();
+        }
+
+        $spesPregnancy = trim((string)($_POST['spes_is_pregnant'] ?? ''));
+        if (!in_array($spesPregnancy, ['Yes', 'No', 'Not Applicable'], true)) {
+            $_SESSION['app_error'] = 'Please answer the SPES pregnancy declaration.';
+            header('Location: programs.php'); exit();
+        }
+        $spesLocalEligibility = evaluate_spes_local_eligibility($_POST);
+        if (!$spesLocalEligibility['eligible']) {
+            $_SESSION['app_error'] = $spesLocalEligibility['message'];
+            header('Location: programs.php'); exit();
+        }
+        if (($_POST['spes_certified_truthful'] ?? '') !== '1') {
+            $_SESSION['app_error'] = 'Please certify that your SPES information is true and complete.';
+            header('Location: programs.php'); exit();
+        }
+        $submittedGsisBeneficiary = trim((string)($_POST['gsis_beneficiary'] ?? ''));
+        $submittedGsisRelationship = trim((string)($_POST['gsis_relationship'] ?? ''));
+        if ($submittedGsisBeneficiary !== '' && $submittedGsisRelationship === '') {
+            $_SESSION['app_error'] = 'Please select your relationship to the GSIS beneficiary.';
+            header('Location: programs.php'); exit();
+        }
+        if ($submittedGsisBeneficiary !== '' && $submittedGsisRelationship === 'Others' && trim((string)($_POST['other_gsis_relationship'] ?? '')) === '') {
+            $_SESSION['app_error'] = 'Please specify your relationship to the GSIS beneficiary.';
+            header('Location: programs.php'); exit();
+        }
+    }
+    if ($isTupadApplication) {
+        $today = date('Y-m-d');
+        $tupadUnavailable = strtolower((string)($submittedProgram['status'] ?? '')) === 'completed'
+            || (!empty($submittedProgram['end_date']) && $submittedProgram['end_date'] < $today)
+            || (!empty($submittedProgram['start_date']) && !empty($submittedProgram['end_date']) && $submittedProgram['end_date'] < $submittedProgram['start_date'])
+            || ((int)($submittedProgram['slots'] ?? 0) > 0 && (int)($submittedProgram['approved_count'] ?? 0) >= (int)$submittedProgram['slots']);
+        if ($tupadUnavailable) {
+            $_SESSION['app_error'] = 'This TUPAD batch is no longer accepting applications.';
+            header('Location: programs.php'); exit();
+        }
+
+        $activeTupadStmt = $conn->prepare("SELECT 1 FROM beneficiaries b
+            WHERE b.user_id=?
+              AND (b.approval_status='Pending' OR (b.approval_status='Approved' AND b.availment_status IN ('Ongoing','Not Yet Availed','Requirements Received')))
+            LIMIT 1");
+        $activeTupadStmt->bind_param('i', $user_id);
+        $activeTupadStmt->execute();
+        $hasActiveTupad = $activeTupadStmt->get_result()->num_rows > 0;
+        $activeTupadStmt->close();
+        if ($hasActiveTupad) {
+            $_SESSION['app_error'] = 'You already have a pending or active program application. Complete that application before applying for TUPAD.';
+            header('Location: programs.php'); exit();
+        }
+
+        $cooldownStmt = $conn->prepare("SELECT COALESCE(b.date_completed,b.date_availed) AS reference_date
+            FROM beneficiaries b JOIN programs p ON p.program_id=b.program_id
+            WHERE b.user_id=? AND p.program_name LIKE 'TUPAD%' AND b.approval_status='Approved' AND b.availment_status='Completed'
+            ORDER BY COALESCE(b.date_completed,b.date_availed,b.created_at) DESC LIMIT 1");
+        $cooldownStmt->bind_param('i', $user_id);
+        $cooldownStmt->execute();
+        $lastTupad = $cooldownStmt->get_result()->fetch_assoc();
+        $cooldownStmt->close();
+        if (!empty($lastTupad['reference_date']) && date('Y-m-d', strtotime($lastTupad['reference_date'] . ' +20 months')) > $today) {
+            $_SESSION['app_error'] = 'You must wait 1 year and 8 months after completing TUPAD before applying for another batch.';
+            header('Location: programs.php'); exit();
+        }
+
+        $isPregnant = trim((string)($_POST['tupad_is_pregnant'] ?? ''));
+        $isPwd = trim((string)($_POST['tupad_is_pwd'] ?? ''));
+        $hasLimitation = trim((string)($_POST['tupad_has_work_limitation'] ?? ''));
+        $capableOfWork = trim((string)($_POST['tupad_capable_of_work'] ?? ''));
+        if (!in_array($isPregnant, ['Yes','No','Not Applicable'], true) || !in_array($isPwd, ['Yes','No'], true) || !in_array($hasLimitation, ['Yes','No'], true) || !in_array($capableOfWork, ['Yes','No'], true)) {
+            $_SESSION['app_error'] = 'Please complete the TUPAD fitness-to-work declarations.';
+            header('Location: programs.php'); exit();
+        }
+        if ($isPregnant === 'Yes') {
+            $_SESSION['app_error'] = 'Pregnant applicants are not eligible for TUPAD.';
+            header('Location: programs.php'); exit();
+        }
+        if ($capableOfWork !== 'Yes') {
+            $_SESSION['app_error'] = 'You selected No for the ability-to-work declaration. Selecting Yes for PWD does not disqualify you; PWD applicants may apply when they are able and willing to perform assigned work with reasonable accommodation if needed.';
+            header('Location: programs.php'); exit();
+        }
+        if (($_POST['tupad_certified_truthful'] ?? '') !== '1') {
+            $_SESSION['app_error'] = 'Please certify that your TUPAD information is true and complete.';
+            header('Location: programs.php'); exit();
+        }
+        $needsFitnessCertificate = $isPwd === 'Yes' || $hasLimitation === 'Yes';
     }
     
     $first_name = trim($user_data['first_name'] ?? '');
@@ -167,7 +369,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
     $submitted_address = trim($_POST['owner_full_address'] ?? '');
 
     function processArrayField($post_key) {
-        return isset($_POST[$post_key]) && is_array($_POST[$post_key]) ? implode(', ', array_map('trim', $_POST[$post_key])) : trim($_POST[$post_key] ?? "");
+        if (!isset($_POST[$post_key]) || !is_array($_POST[$post_key])) return trim($_POST[$post_key] ?? "");
+        $values = array_values(array_filter(array_map(static fn($value) => trim((string)$value), $_POST[$post_key]), static fn($value) => $value !== ''));
+        if (count($values) > 1) $values = array_values(array_filter($values, static fn($value) => !in_array(strtolower($value), ['other', 'others'], true)));
+        return implode(', ', $values);
     }
 
     $type_of_id = trim($_POST["type_of_id"] ?? "");
@@ -176,6 +381,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
     $occupation = choice_or_other($_POST, 'occupation');
     $type_of_beneficiary = choice_or_other($_POST, 'type_of_beneficiary');
     $dependent_relationship = choice_or_other($_POST, 'dependent_relationship');
+    $gsis_relationship = trim((string)($_POST['gsis_relationship'] ?? ''));
+    if ($gsis_relationship === 'Others') $gsis_relationship = trim((string)($_POST['other_gsis_relationship'] ?? 'Others'));
+    $allowedGsisRelationships = ['', 'Father', 'Mother', 'Guardian', 'Spouse'];
+    if (!in_array($gsis_relationship, $allowedGsisRelationships, true) && trim((string)($_POST['gsis_relationship'] ?? '')) !== 'Others') $gsis_relationship = '';
     $skills_training_needed = choice_or_other($_POST, 'skills_training_needed');
     $ownership_type = choice_or_other($_POST, 'ownership_type');
     
@@ -198,16 +407,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
     $form_sex = trim($_POST['owner_sex'] ?? $user_data['sex'] ?? '');
     $form_civil = trim($_POST['owner_civil_status'] ?? $user_data['civil_status'] ?? '');
     if ($form_civil === 'Widow/er') $form_civil = 'Widowed';
-    if ($form_civil === 'Separated') $form_civil = 'Legally Separated';
+    if (!in_array($form_civil, ['Single', 'Married', 'Widowed', 'Legally Separated'], true)) $form_civil = '';
 
     $msme_nature = processArrayField('business_nature_arr');
-    if (strpos($msme_nature, 'Others') !== false && !empty($_POST['other_business_nature'])) {
-        $msme_nature = str_replace('Others', trim($_POST['other_business_nature']), $msme_nature);
+    if (in_array('Others', (array)($_POST['business_nature_arr'] ?? []), true) && trim((string)($_POST['other_business_nature'] ?? '')) !== '') {
+        $standardNature = trim(str_replace('Others', '', $msme_nature), " ,");
+        $msme_nature = implode(', ', array_filter([$standardNature, trim((string)$_POST['other_business_nature'])]));
     }
     
     $msme_product_names = [];
     $msme_product_prices = [];
-    foreach (($_POST['prod_name'] ?? []) as $index => $productName) {
+    foreach (array_slice((array)($_POST['prod_name'] ?? []), 0, 10) as $index => $productName) {
         $productName = trim((string)$productName);
         if ($productName === '') continue;
         $msme_product_names[] = $productName;
@@ -264,8 +474,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
 
         // SPES Fields
         "spes_type" => trim($_POST["spes_type"] ?? ""),
+        "spes_is_pregnant" => trim($_POST["spes_is_pregnant"] ?? ""),
         "gsis_beneficiary_name" => trim($_POST["gsis_beneficiary"] ?? ""),
-        "gsis_relationship" => trim($_POST["gsis_relationship"] ?? ""),
+        "gsis_relationship" => $gsis_relationship,
         "place_of_birth" => trim($_POST["place_of_birth"] ?? ""),
         "citizenship" => trim($_POST["citizenship"] ?? ""),
         "social_media" => trim($_POST["social_urls"] ?? ""),
@@ -310,7 +521,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
         "tin_no" => trim($_POST["tin_no"] ?? ""),
         "educational_attainment" => $educational_attainment,
         "work_experience" => trim($_POST["work_experience"] ?? ""),
-        "business_email" => trim($_POST["contact_details"] ?? ""), 
+        "business_email" => trim($_POST["business_email"] ?? $_POST["contact_details"] ?? ""),
         "business_social_media" => trim($_POST["business_social_media"] ?? ""),
         "assets_owned" => $msme_assets,
         "utility_needs" => $msme_utilities,
@@ -360,6 +571,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
         else $types .= 's';
     }
 
+    if (!$conn->begin_transaction()) {
+        $_SESSION['app_error'] = 'Your application could not be started safely. Please try again.';
+        header('Location: programs.php');
+        exit();
+    }
+
     $sql = "INSERT INTO beneficiaries ($columns, created_at, updated_at) VALUES ($placeholders, NOW(), NOW())";
     $stmt = $conn->prepare($sql);
     
@@ -367,43 +584,36 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
         $stmt->bind_param($types, ...$values);
         if ($stmt->execute()) {
             $new_beneficiary_id = (int)$stmt->insert_id;
-            if (!record_privacy_acknowledgment($conn, (int)$user_id, 'program_application', $new_beneficiary_id)) {
-                $deleteStmt = $conn->prepare('DELETE FROM beneficiaries WHERE beneficiary_id = ? AND user_id = ?');
-                if ($deleteStmt) {
-                    $deleteStmt->bind_param('ii', $new_beneficiary_id, $user_id);
-                    $deleteStmt->execute();
-                    $deleteStmt->close();
+            if ($isTupadApplication) {
+                $documentError = null;
+                $documentsSaved = save_tupad_details($conn, $new_beneficiary_id, $_POST);
+                if (!$documentsSaved) $documentError = 'The TUPAD declaration could not be stored.';
+                if ($documentsSaved) $documentsSaved = create_tupad_document_checklist($conn, $new_beneficiary_id, $needsFitnessCertificate);
+                if (!$documentsSaved && $documentError === null) $documentError = 'The physical-document checklist could not be created.';
+                if (!$documentsSaved) {
+                    $conn->rollback();
+                    $_SESSION['app_error'] = $documentError ?: 'Your TUPAD documents could not be stored.';
+                    $stmt->close();
+                    header('Location: programs.php'); exit();
                 }
+            }
+            if (!record_privacy_acknowledgment($conn, (int)$user_id, 'program_application', $new_beneficiary_id)) {
+                $conn->rollback();
                 $_SESSION['app_error'] = 'Your application could not be recorded. Please try again.';
                 $stmt->close();
                 header('Location: programs.php');
                 exit();
             }
-            $queue_position = null;
-
-            $queueStmt = $conn->prepare("
-                SELECT COUNT(*) AS queue_position
-                FROM beneficiaries b
-                JOIN beneficiaries current_b ON current_b.beneficiary_id = ?
-                WHERE b.program_id = ?
-                  AND b.approval_status = 'Pending'
-                  AND (
-                    b.created_at < current_b.created_at
-                    OR (b.created_at = current_b.created_at AND b.beneficiary_id <= current_b.beneficiary_id)
-                  )
-            ");
-            if ($queueStmt) {
-                $submitted_program_id = (int)$_POST['program_id'];
-                $queueStmt->bind_param("ii", $new_beneficiary_id, $submitted_program_id);
-                $queueStmt->execute();
-                $queueRow = $queueStmt->get_result()->fetch_assoc();
-                $queue_position = isset($queueRow['queue_position']) ? (int)$queueRow['queue_position'] : null;
-                $queueStmt->close();
+            if (!$conn->commit()) {
+                $conn->rollback();
+                $_SESSION['app_error'] = 'Your application could not be finalized. Please try again.';
+                $stmt->close();
+                header('Location: programs.php');
+                exit();
             }
-
-            $_SESSION["app_success"] = "Your application has been successfully submitted! It is now pending for approval.";
-            if ($queue_position !== null && $queue_position > 0) {
-                $_SESSION["app_success"] .= " You are currently number {$queue_position} in this batch's application queue. Qualified applicants are reviewed in submission order until all slots are filled.";
+            $_SESSION["app_success"] = "Your application was submitted and is pending PESO review. Please wait for an official update before visiting the office or submitting documents.";
+            if ($isTupadApplication && $needsFitnessCertificate) {
+                $_SESSION["app_success"] .= " If approved, bring a fitness-to-work certificate.";
             }
             
             $p_id = (int)$_POST['program_id'];
@@ -414,16 +624,45 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
             $pn_res = $pn_stmt->get_result()->fetch_assoc();
             if($pn_res) $p_name = $pn_res['program_name'];
 
+            if ($isSpesApplication) {
+                $receiptEmail = trim((string)($user_data['email'] ?? ''));
+                if ($receiptEmail !== '' && strpos(strtolower($receiptEmail), 'no email') === false) {
+                    $safeApplicantName = htmlspecialchars($first_name ?: $user_display_name, ENT_QUOTES, 'UTF-8');
+                    $safeProgramName = htmlspecialchars($p_name, ENT_QUOTES, 'UTF-8');
+                    $receiptBody = "<p>Dear <strong>{$safeApplicantName}</strong>,</p><p>PESO Vinzons has received your application for <strong>{$safeProgramName}</strong>. Its current status is <strong>Pending Review</strong>.</p><p>No office visit is required at this stage. If you qualify for the next step, PESO Vinzons will send the examination schedule and documentary requirements by email or account notification.</p>";
+                    sendBENEPESOEmail($receiptEmail, "SPES Application Received: {$p_name}", 'Your SPES application is pending review', $receiptBody);
+                }
+            } elseif ($isMsmeApplication) {
+                $receiptEmail = trim((string)($user_data['email'] ?? ''));
+                if ($receiptEmail === '') $receiptEmail = trim((string)($_POST['business_email'] ?? ''));
+                if (filter_var($receiptEmail, FILTER_VALIDATE_EMAIL)) {
+                    $safeApplicantName = htmlspecialchars($first_name ?: $user_display_name, ENT_QUOTES, 'UTF-8');
+                    $safeProgramName = htmlspecialchars($p_name, ENT_QUOTES, 'UTF-8');
+                    $receiptBody = "<p>Dear <strong>{$safeApplicantName}</strong>,</p><p>PESO Vinzons has received your application for <strong>{$safeProgramName}</strong>. Its current status is <strong>Pending Review</strong>.</p><p>The office will verify the submitted business information. Please wait for an official email or account update before taking further action.</p>";
+                    sendBENEPESOEmail($receiptEmail, "MSME Application Received: {$p_name}", 'Your MSME application is pending review', $receiptBody);
+                }
+            } elseif ($isTupadApplication) {
+                $receiptEmail = trim((string)($user_data['email'] ?? ''));
+                if (filter_var($receiptEmail, FILTER_VALIDATE_EMAIL)) {
+                    $safeApplicantName = htmlspecialchars($first_name ?: $user_display_name, ENT_QUOTES, 'UTF-8');
+                    $safeProgramName = htmlspecialchars($p_name, ENT_QUOTES, 'UTF-8');
+                    $receiptBody = "<p>Dear <strong>{$safeApplicantName}</strong>,</p><p>PESO Vinzons has received your application for <strong>{$safeProgramName}</strong>. Its current status is <strong>Pending Review</strong>.</p><p>Do not submit physical documents while the application is pending. If approved, PESO Vinzons will advise you when to visit the office and which original documents and photocopies to bring for verification.</p>";
+                    sendBENEPESOEmail($receiptEmail, "TUPAD Application Received: {$p_name}", 'Your TUPAD application is pending review', $receiptBody);
+                }
+            }
+
             $log_desc = "Successfully applied for " . $p_name . ".";
             $l_stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, 'Registered User', 'Programs', 'APPLY', ?, ?, NOW())");
             $l_stmt->bind_param("sss", $user_display_name, $p_name, $log_desc);
             $l_stmt->execute();
 
         } else {
+            $conn->rollback();
             $_SESSION["app_error"] = "Error saving application. Please try again.";
         }
         $stmt->close();
     } else {
+        $conn->rollback();
         $_SESSION["app_error"] = "Database configuration error. Please contact the administrator.";
     }
     header("Location: programs.php");
@@ -537,9 +776,10 @@ if ($barangay_summary_result) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="home.css?v=10">
-    <link rel="stylesheet" href="programs.css?v=21">
-    <link rel="stylesheet" href="frontend_polish.css?v=1">
+    <link rel="stylesheet" href="home.css?v=14">
+    <link rel="stylesheet" href="programs.css?v=22">
+<link rel="stylesheet" href="frontend_polish.css?v=5">
+    <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
     <script src="frontend_polish.js?v=1" defer></script>
 </head>
 <body>
@@ -554,7 +794,7 @@ if ($barangay_summary_result) {
       </div>
     </a>
 
-    <button class="menu-button" id="menuButton" type="button" aria-label="Toggle menu">
+    <button class="menu-button" id="menuButton" type="button" aria-label="Toggle menu" aria-controls="menuArea" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
 
@@ -566,7 +806,10 @@ if ($barangay_summary_result) {
       <?php if($is_logged_in): ?>
       <div class="account-area" id="accountWrap">
         <button class="account-button" id="accountButton" type="button">
-          <span class="account-icon"><?php echo htmlspecialchars($first_char); ?></span>
+          <span class="account-icon">
+            <?php echo htmlspecialchars($first_char); ?>
+            <?php if ($user_profile_src !== ''): ?><img src="<?php echo h($user_profile_src); ?>" alt="" onerror="this.remove()"><?php endif; ?>
+          </span>
           <span class="account-text"><?php echo htmlspecialchars($user_display_name); ?></span>
           <span class="account-arrow">▾</span>
         </button>
@@ -575,7 +818,13 @@ if ($barangay_summary_result) {
           <a href="profile.php">My Profile</a>
           <a href="verification.php">Verification</a>
           <div class="dropdown-line"></div>
-          <a class="logout-link" href="logout.php?role=user">Logout</a>
+          <form class="logout-form" action="logout.php" method="POST">
+            <?= auth_csrf_input() ?><input type="hidden" name="role" value="user">
+            <button class="logout-link" type="submit">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M15 4h3a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3h-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Log out</span>
+            </button>
+          </form>
         </div>
       </div>
       <?php else: ?>
@@ -774,6 +1023,7 @@ if ($barangay_summary_result) {
       <div class="footer-head">Links</div>
       <a href="home.php">Home</a>
       <a href="programs.php">Programs</a>
+      <a href="about.php">About</a>
       <a href="verification.php">Verification</a>
       <a href="profile.php">Profile</a>
       <a href="privacy_notice.php">Privacy Notice</a>
@@ -798,7 +1048,7 @@ if ($barangay_summary_result) {
         <div style="margin-bottom: 15px; color: #2e7d32; display: flex; justify-content: center;">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
         </div>
-        <h2 style="color:#1a6d41; margin-bottom:10px; font-weight:800;">Success!</h2>
+        <h2 style="color:#1a6d41; margin-bottom:10px; font-weight:800;">Application Submitted</h2>
         <p style="font-size:14px; color:#555; margin-bottom:25px; font-weight:500;"><?php echo $success_message; ?></p>
         <button class="btn-primary" style="width:100%; box-shadow:none;" onclick="closeModal('submissionSuccessModal')">Continue</button>
     </div>
@@ -833,7 +1083,7 @@ if ($barangay_summary_result) {
 <div class="modal" id="alertModal">
     <div class="modal-content alert-box">
         <button class="modal-close" onclick="closeModal('alertModal')">✕</button>
-        <h2 style="color:#a32222; margin-bottom:10px;">Notice</h2>
+        <h2 id="alertTitle" style="color:#a32222; margin-bottom:10px;">Notice</h2>
         <p id="alertMessage" style="font-size:14px; color:#555; margin-bottom:20px;"></p>
         <button class="btn-primary" style="background:#eee; color:#333; width:auto; box-shadow:none;" onclick="closeModal('alertModal')">Okay</button>
     </div>
@@ -964,6 +1214,7 @@ if ($barangay_summary_result) {
         </div>
 
         <form method="POST" action="programs.php" id="multiStepForm">
+            <?= auth_csrf_input() ?>
             <input type="hidden" name="action" value="submit_application">
             <input type="hidden" name="program_id" id="hiddenProgramId">
 
@@ -973,8 +1224,8 @@ if ($barangay_summary_result) {
                     <div class="span-2 section-title">Basic Information</div>
                     <div class="form-group"><label>First Name</label><input type="text" value="<?php echo h($user_data['first_name']??''); ?>" readonly required></div>
                     <div class="form-group"><label>Last Name</label><input type="text" value="<?php echo h($user_data['last_name']??''); ?>" readonly required></div>
-                    <div class="form-group span-2"><label>Full Address</label><input type="text" value="<?php echo h($full_address); ?>" readonly required></div>
-                    <div class="form-group span-2"><label>Contact No.</label><input type="text" value="<?php echo h($user_data['contact_no']??''); ?>" readonly required></div>
+                    <div class="form-group"><label>Full Address</label><input type="text" value="<?php echo h($full_address); ?>" readonly required></div>
+                    <div class="form-group"><label>Contact No.</label><input type="text" value="<?php echo h($user_data['contact_no']??''); ?>" readonly required></div>
                 </div>
                 <div class="form-actions single-btn">
                     <button type="button" class="btn-primary" onclick="nextStep(1)">Next Step</button>
@@ -1018,13 +1269,30 @@ if ($barangay_summary_result) {
                             <select name="dependent_relationship" class="not-required" onchange="toggleOther(this, 'other_dependent_relationship')"><option value="">--Select--</option><?php render_beneficiary_options('dependent_relationship'); ?></select><input type="text" name="other_dependent_relationship" id="other_dependent_relationship" class="not-required" style="display:none;margin-top:5px" placeholder="Specify relationship">
                         </div>
                         <div class="form-group span-2"><label>Skills Training Needed</label><select name="skills_training_needed" class="not-required" onchange="toggleOther(this, 'other_skills_training_needed')"><option value="">None / Not specified</option><?php render_beneficiary_options('skills_training'); ?></select><input type="text" name="other_skills_training_needed" id="other_skills_training_needed" class="not-required" style="display:none;margin-top:5px" placeholder="Specify training needed"></div>
+                        <div class="span-2 section-title">Fitness Declaration</div>
+                        <div class="form-group"><label>Are you currently pregnant?</label><select name="tupad_is_pregnant" id="tupad_is_pregnant" onchange="toggleTupadFitnessCertificate()"><option value="">--Select--</option><option value="Yes">Yes</option><option value="No">No</option><option value="Not Applicable">Not applicable</option></select></div>
+                        <div class="form-group"><label>Are you a Person with Disability (PWD)?</label><select name="tupad_is_pwd" id="tupad_is_pwd" onchange="toggleTupadFitnessCertificate()"><option value="">--Select--</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
+                        <div class="form-group tupad-fitness-field"><label>Do you have a condition or work limitation requiring accommodation?</label><select name="tupad_has_work_limitation" id="tupad_has_work_limitation" onchange="toggleTupadFitnessCertificate()"><option value="">--Select--</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
+                        <div class="form-group tupad-fitness-field"><label>Are you able and willing to perform assigned work, with reasonable accommodation if needed?</label><select name="tupad_capable_of_work" id="tupad_capable_of_work" onchange="toggleTupadFitnessCertificate()"><option value="">--Select--</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
+                        <div class="form-group span-2"><small id="tupad_fitness_notice">Pregnant applicants are not eligible for TUPAD. PWD applicants, including applicants with speech impairment, may apply as long as they are capable of working.</small></div>
                     </div>
-                    <label class="privacy-acknowledgment">
-                        <input type="checkbox" name="privacy_acknowledgment" value="1">
-                        <span>I have read and understood the <a href="privacy_notice.php" target="_blank" rel="noopener">Privacy Notice</a> and understand how my information will be processed for this program application.</span>
-                    </label>
                     <div class="form-actions">
                         <button type="button" class="btn-secondary" onclick="prevStep(3)">Back</button>
+                        <button type="button" class="btn-primary" onclick="nextStep(3)">Next Step</button>
+                    </div>
+                </div>
+                <div class="form-step" id="tupad-step-4">
+                    <div class="form-grid">
+                        <div class="span-2 section-title">Applicant Confirmation</div>
+                        <div class="form-group span-2"><small>Review and confirm your declaration before submitting. Your application will remain pending until PESO completes its review.</small></div>
+                    </div>
+                    <label class="privacy-acknowledgment"><input type="checkbox" name="tupad_certified_truthful" value="1"><span>I certify that my TUPAD information is true and complete and consent to PESO/DOLE validation for this application.</span></label>
+                    <label class="privacy-acknowledgment">
+                        <input type="checkbox" name="privacy_acknowledgment" value="1">
+                        <span>I have read and understood the <button type="button" class="privacy-notice-link" onclick="openApplicationPrivacyNotice()">Privacy Notice</button> and understand how my information will be processed for this program application.</span>
+                    </label>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="prevStep(4)">Back</button>
                         <button type="submit" class="btn-primary">Submit Application</button>
                     </div>
                 </div>
@@ -1035,13 +1303,14 @@ if ($barangay_summary_result) {
                 <div class="form-step" id="spes-step-2">
                     <div class="form-grid">
                         <div class="span-2 section-title">Additional Details</div>
-                        <div class="form-group"><label>GSIS Beneficiary / Policy No. (If applicable)</label><input type="text" name="gsis_beneficiary" class="not-required" placeholder="Optional"></div>
-                        <div class="form-group"><label>Relationship to GSIS Beneficiary</label><input type="text" name="gsis_relationship" class="not-required" placeholder="Optional"></div>
-                        <div class="form-group"><label>Place of Birth</label><input type="text" name="place_of_birth"></div>
-                        <div class="form-group"><label>Citizenship</label><input type="text" name="citizenship" value="Filipino"></div>
-                        <div class="form-group span-2"><label>Social Media URLs (Optional)</label><input type="text" name="social_urls" class="not-required" placeholder="Facebook, LinkedIn..."></div>
-                        <div class="form-group"><label>Email</label><input type="email" value="<?php echo h($user_data['email']??''); ?>" readonly></div>
-                        <div class="form-group"><label>Date of Birth</label><input type="text" value="<?php echo h($user_data['birthdate']??''); ?>" readonly></div>
+                        <div class="form-group" style="order:1;"><label>GSIS Beneficiary Name / Policy No. (If applicable)</label><input type="text" name="gsis_beneficiary" class="not-required" placeholder="Leave blank if not applicable" oninput="toggleSpesGsisRelationship(this)"></div>
+                        <div class="form-group" id="spes_citizenship_wrap" style="order:2;"><label>Citizenship</label><input type="text" name="citizenship" value="Filipino"></div>
+                        <div class="form-group" id="spes_gsis_relationship_wrap" hidden style="display:none;order:2;"><label>Relationship to GSIS Beneficiary</label><select name="gsis_relationship" class="not-required" onchange="toggleSpesGsisOther(this)"><option value="">--Select relationship--</option><option value="Father">Father</option><option value="Mother">Mother</option><option value="Guardian">Guardian</option><option value="Spouse">Spouse</option><option value="Others">Others</option></select><input type="text" name="other_gsis_relationship" id="other_gsis_relationship" class="not-required" style="display:none;margin-top:5px" placeholder="Specify relationship"></div>
+                        <?php $spesBirthMunicipality = trim((string)($user_data['municipality'] ?? '')) ?: 'Vinzons'; $spesBirthProvince = trim((string)($user_data['district'] ?? '')) ?: 'Camarines Norte'; ?>
+                        <div class="form-group" style="order:3;"><label>Place of Birth</label><input type="text" name="place_of_birth" id="spes_place_of_birth"><label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;font-weight:500;"><input type="checkbox" class="not-required" onchange="toggleSpesBirthplace(this)" data-birthplace="<?php echo h($spesBirthMunicipality . ', ' . $spesBirthProvince); ?>" style="width:auto;"> Same as my registered municipality and province</label></div>
+                        <div class="form-group" style="order:4;"><label>Social Media URLs (Optional)</label><input type="text" name="social_urls" class="not-required" placeholder="Facebook, LinkedIn..."></div>
+                        <div class="form-group" style="order:6;"><label>Email</label><input type="email" value="<?php echo h($user_data['email']??''); ?>" readonly></div>
+                        <div class="form-group" style="order:6;"><label>Date of Birth</label><input type="text" value="<?php echo h($user_data['birthdate']??''); ?>" readonly></div>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn-secondary" onclick="prevStep(2)">Back</button>
@@ -1052,10 +1321,11 @@ if ($barangay_summary_result) {
                 <div class="form-step" id="spes-step-3">
                     <div class="form-grid">
                         <div class="span-2 section-title">Applicant Status</div>
-                        <div class="form-group"><label>Civil Status</label><input type="text" value="<?php echo h($user_data['civil_status']??''); ?>" readonly></div>
+                        <div class="form-group"><label>Civil Status</label><select name="owner_civil_status" required><option value="Single" <?php if(($user_data['civil_status']??'')==='Single') echo 'selected'; ?>>Single</option><option value="Married" <?php if(($user_data['civil_status']??'')==='Married') echo 'selected'; ?>>Married</option><option value="Widowed" <?php if(($user_data['civil_status']??'')==='Widowed') echo 'selected'; ?>>Widowed</option><option value="Legally Separated" <?php if(($user_data['civil_status']??'')==='Legally Separated') echo 'selected'; ?>>Separated</option></select></div>
                         <div class="form-group"><label>Sex</label><input type="text" value="<?php echo h($user_data['sex']??''); ?>" readonly></div>
+                        <div class="form-group span-2"><label>Are you currently pregnant?</label><select name="spes_is_pregnant" id="spes_is_pregnant" onchange="validateSpesPregnancy(this)"><option value="">--Select--</option><option value="Yes">Yes</option><option value="No">No</option><option value="Not Applicable">Not applicable</option></select><small id="spesPregnancyNotice" style="display:none;color:#a32222;font-weight:600;margin-top:7px;">Pregnant applicants are not eligible for SPES.</small></div>
                         <div class="form-group span-2"><label>Student Status</label>
-                            <select name="spes_type">
+                            <select name="spes_type" id="spes_type" onchange="validateSpesYearLevel(document.querySelector('[name=&quot;tert_year_level&quot;]'))">
                                 <option value="">--Select--</option>
                                 <option value="Student">Student</option>
                                 <option value="ALS student">ALS student</option>
@@ -1121,7 +1391,7 @@ if ($barangay_summary_result) {
                         <div class="span-2 section-title">Educational History</div>
                         
                         <!-- Elementary -->
-                        <div class="form-group span-2"><label>Elementary School Name</label><input type="text" name="elem_school"></div>
+                        <div class="form-group"><label>Elementary School Name</label><input type="text" name="elem_school"></div>
                         <div class="form-group"><label>Degree/Honors</label><input type="text" name="elem_degree" class="not-required" placeholder="Put N/A if none"></div>
                         <div class="form-group">
                             <label>Highest Year Level</label>
@@ -1136,11 +1406,11 @@ if ($barangay_summary_result) {
                                 <option value="Graduated">Graduated</option>
                             </select>
                         </div>
-                        <div class="form-group span-2"><label>Inclusive Dates of Attendance</label><input type="text" name="elem_date_attendance" placeholder="e.g. 2010-2016" oninput="this.value = this.value.replace(/[^0-9\s-]/g, '')"></div>
+                        <div class="form-group"><label>Inclusive Dates of Attendance</label><input type="text" name="elem_date_attendance" placeholder="e.g. 2010-2016" oninput="this.value = this.value.replace(/[^0-9\s-]/g, '')"></div>
                         <div class="span-2 divider-line"></div>
                         
                         <!-- Secondary (JHS & SHS combined) -->
-                        <div class="form-group span-2"><label>Secondary / Senior High School Name</label><input type="text" name="sec_school"></div>
+                        <div class="form-group"><label>Secondary / Senior High School Name</label><input type="text" name="sec_school"></div>
                         <div class="form-group">
                             <label>Track / Strand</label>
                             <select name="sec_degree" class="not-required" onchange="toggleOther(this, 'sec_degree_other')">
@@ -1167,11 +1437,11 @@ if ($barangay_summary_result) {
                                 <option value="Graduated">Graduated</option>
                             </select>
                         </div>
-                        <div class="form-group span-2"><label>Inclusive Dates of Attendance</label><input type="text" name="sec_date_attendance" placeholder="e.g. 2016-2022" oninput="this.value = this.value.replace(/[^0-9\s-]/g, '')"></div>
+                        <div class="form-group"><label>Inclusive Dates of Attendance</label><input type="text" name="sec_date_attendance" placeholder="e.g. 2016-2022" oninput="this.value = this.value.replace(/[^0-9\s-]/g, '')"></div>
                         <div class="span-2 divider-line"></div>
                         
                         <!-- Tertiary -->
-                        <div class="form-group span-2"><label>Tertiary School Name (Put N/A if none)</label><input type="text" name="tert_school" class="not-required" placeholder="Put N/A if none"></div>
+                        <div class="form-group"><label>Tertiary School Name (Put N/A if none)</label><input type="text" name="tert_school" class="not-required" placeholder="Put N/A if none"></div>
                         <div class="form-group">
                             <label>Course / Degree</label>
                             <select name="tert_course" class="not-required" onchange="toggleOther(this, 'tert_course_other')">
@@ -1186,8 +1456,8 @@ if ($barangay_summary_result) {
                             <input type="text" name="other_tert_course" id="tert_course_other" style="display:none; margin-top:5px;" class="not-required" placeholder="Specify Course">
                         </div>
                         <div class="form-group">
-                            <label>Highest Year Level</label>
-                            <select name="tert_year_level" class="not-required">
+                            <label>Current College Year Level</label>
+                            <select name="tert_year_level" class="not-required" data-eligibility-check onchange="validateSpesYearLevel(this)">
                                 <option value="N/A">N/A</option>
                                 <option value="1st Year">1st Year</option>
                                 <option value="2nd Year">2nd Year</option>
@@ -1196,12 +1466,13 @@ if ($barangay_summary_result) {
                                 <option value="5th Year">5th Year</option>
                                 <option value="Graduated">Graduated</option>
                             </select>
+                            <small id="spesFourthYearNotice" style="display:none;color:#a32222;font-weight:600;margin-top:7px;">Fourth-year college students are not eligible for this PESO Vinzons SPES batch.</small>
                         </div>
-                        <div class="form-group span-2"><label>Inclusive Dates of Attendance</label><input type="text" name="tert_date_attendance" class="not-required" placeholder="e.g. 2022-2026" oninput="this.value = this.value.replace(/[^0-9\s-]/g, '')"></div>
+                        <div class="form-group"><label>Inclusive Dates of Attendance</label><input type="text" name="tert_date_attendance" class="not-required" placeholder="e.g. 2022-2026" oninput="this.value = this.value.replace(/[^0-9\s-]/g, '')"></div>
                         <div class="span-2 divider-line"></div>
                         
                         <!-- Tech-Voc -->
-                        <div class="form-group span-2"><label>Tech-Voc School Name (Put N/A if none)</label><input type="text" name="tv_school" class="not-required" placeholder="Put N/A if none"></div>
+                        <div class="form-group"><label>Tech-Voc School Name (Put N/A if none)</label><input type="text" name="tv_school" class="not-required" placeholder="Put N/A if none"></div>
                         <div class="form-group">
                             <label>Tech-Voc Course</label>
                             <select name="tv_course" class="not-required" onchange="toggleOther(this, 'tv_course_other')">
@@ -1214,7 +1485,7 @@ if ($barangay_summary_result) {
                             <input type="text" name="other_tv_course" id="tv_course_other" style="display:none; margin-top:5px;" class="not-required" placeholder="Specify Course">
                         </div>
                         <div class="form-group"><label>Hours/Level Completed</label><input type="text" name="tv_year_level" class="not-required" placeholder="e.g. N/A or 300 Hrs"></div>
-                        <div class="form-group span-2"><label>Date of Attendance</label><input type="text" name="tv_date_attendance" class="not-required" placeholder="e.g. 2023 or N/A"></div>
+                        <div class="form-group"><label>Date of Attendance</label><input type="text" name="tv_date_attendance" class="not-required" placeholder="e.g. 2023 or N/A"></div>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn-secondary" onclick="prevStep(5)">Back</button>
@@ -1252,12 +1523,24 @@ if ($barangay_summary_result) {
                             <button type="button" class="btn-add-row" onclick="addSpesRow()">+ Add History</button>
                         </div>
                     </div>
-                    <label class="privacy-acknowledgment">
-                        <input type="checkbox" name="privacy_acknowledgment" value="1">
-                        <span>I have read and understood the <a href="privacy_notice.php" target="_blank" rel="noopener">Privacy Notice</a> and understand how my information will be processed for this program application.</span>
-                    </label>
                     <div class="form-actions">
                         <button type="button" class="btn-secondary" onclick="prevStep(6)">Back</button>
+                        <button type="button" class="btn-primary" onclick="nextStep(6)">Next Step</button>
+                    </div>
+                </div>
+
+                <div class="form-step" id="spes-step-7">
+                    <div class="form-grid">
+                        <div class="span-2 section-title">Applicant Confirmation</div>
+                        <div class="form-group span-2"><small>Review and confirm your SPES information before submitting. Your application will remain pending until PESO completes its review and provides the next instructions.</small></div>
+                    </div>
+                    <label class="privacy-acknowledgment"><input type="checkbox" name="spes_certified_truthful" value="1"><span>I certify that my SPES information is true and complete and consent to PESO/DOLE validation for this application.</span></label>
+                    <label class="privacy-acknowledgment">
+                        <input type="checkbox" name="privacy_acknowledgment" value="1">
+                        <span>I have read and understood the <button type="button" class="privacy-notice-link" onclick="openApplicationPrivacyNotice()">Privacy Notice</button> and understand how my information will be processed for this program application.</span>
+                    </label>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="prevStep(7)">Back</button>
                         <button type="submit" class="btn-primary">Submit Application</button>
                     </div>
                 </div>
@@ -1268,8 +1551,8 @@ if ($barangay_summary_result) {
                 <div class="form-step" id="msme-step-2">
                     <div class="form-grid">
                         <div class="span-2 section-title">Business Profile</div>
-                        <div class="form-group span-2"><label>Business/Trade Name</label><input type="text" name="business_name"></div>
-                        <div class="form-group span-2"><label>Type of Ownership</label><select name="ownership_type" onchange="toggleOther(this, 'other_ownership_type')"><option value="">--Select--</option><?php render_beneficiary_options('ownership_type'); ?></select><input type="text" name="other_ownership_type" id="other_ownership_type" class="not-required" style="display:none;margin-top:5px" placeholder="Specify ownership type"></div>
+                        <div class="form-group"><label>Business/Trade Name</label><input type="text" name="business_name"></div>
+                        <div class="form-group"><label>Type of Ownership</label><select name="ownership_type"><option value="">--Select--</option><?php render_beneficiary_options('ownership_type'); ?></select></div>
                         <div class="form-group span-2">
                             <label>Nature of Business (Check all that apply)</label>
                             <div class="checkbox-grid">
@@ -1304,13 +1587,13 @@ if ($barangay_summary_result) {
                             <button type="button" class="btn-add-row" onclick="addProductRow()">+ Add Product</button>
                         </div>
 
-                        <div class="form-group"><label>Year Started</label><input type="text" name="year_started" placeholder="YYYY" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div>
+                        <div class="form-group"><label>Year Started</label><select name="year_started"><option value="">--Select year--</option><?php for ($year = (int)date('Y'); $year >= 1900; $year--): ?><option value="<?php echo $year; ?>"><?php echo $year; ?></option><?php endfor; ?></select></div>
                         <div class="form-group"><label>Business Permit No.</label><input type="text" name="business_permit_no"></div>
                         <div class="form-group"><label>Permit Valid Until</label><input type="date" name="permit_valid_until"></div>
                         <div class="form-group"><label>DTI Reg No.</label><input type="text" name="dti_no"></div>
                         <div class="form-group"><label>TIN</label><input type="text" name="tin_no" oninput="this.value = this.value.replace(/[^0-9-]/g, '')"></div>
-                        <div class="form-group"><label>Contact Details (Landline, Email)</label><input type="text" name="contact_details"></div>
-                        <div class="form-group span-2"><label>Website / Social Media (Optional)</label><input type="text" name="business_social_media" class="not-required" placeholder="Website or Facebook page"></div>
+                        <div class="form-group"><label>Business Email</label><input type="email" name="business_email" placeholder="business@example.com"></div>
+                        <div class="form-group span-2"><label>Website / Social Media (Optional)</label><input type="text" name="business_social_media" class="not-required" data-text-input="true" autocomplete="url" placeholder="Website or Facebook page"></div>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn-secondary" onclick="prevStep(2)">Back</button>
@@ -1322,7 +1605,7 @@ if ($barangay_summary_result) {
                     <div class="form-grid">
                         <div class="span-2 section-title">Owner Info</div>
                         <div class="form-group span-2" style="font-size: 13px; color: var(--text-muted); margin-bottom: -5px;"><i>Note: These fields are pre-filled with your profile data, but you may edit them if applying on behalf of the business owner.</i></div>
-                        <div class="form-group span-2"><label>Full Name</label><input type="text" name="owner_full_name" value="<?php echo h($full_name); ?>"></div>
+                        <div class="form-group"><label>Full Name</label><input type="text" name="owner_full_name" value="<?php echo h($full_name); ?>"></div>
                         <div class="form-group"><label>Sex</label>
                             <select name="owner_sex">
                                 <option value="Male" <?php if(($user_data['sex']??'')=='Male') echo 'selected'; ?>>Male</option>
@@ -1330,18 +1613,17 @@ if ($barangay_summary_result) {
                             </select>
                         </div>
                         <div class="form-group"><label>Contact No.</label><input type="text" name="owner_contact_no" value="<?php echo h($user_data['contact_no']??''); ?>" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div>
-                        <div class="form-group"><label>Date of Birth</label><input type="date" name="owner_birthdate" value="<?php echo h($user_data['birthdate']??''); ?>"></div>
-                        <div class="form-group"><label>Age</label><input type="text" name="owner_age" value="<?php echo $userAge; ?>" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div>
+                        <div class="form-group"><label>Date of Birth</label><input type="date" name="owner_birthdate" id="msme_owner_birthdate" value="<?php echo h($user_data['birthdate']??''); ?>" onchange="syncMsmeOwnerAge()"></div>
+                        <div class="form-group"><label>Age</label><input type="text" name="owner_age" id="msme_owner_age" value="<?php echo $userAge; ?>" readonly></div>
                         <div class="form-group"><label>Civil Status</label>
                             <select name="owner_civil_status">
                                 <option value="Single" <?php if(($user_data['civil_status']??'')=='Single') echo 'selected'; ?>>Single</option>
                                 <option value="Married" <?php if(($user_data['civil_status']??'')=='Married') echo 'selected'; ?>>Married</option>
                                 <option value="Widowed" <?php if(in_array(($user_data['civil_status']??''), ['Widowed', 'Widow/er'], true)) echo 'selected'; ?>>Widowed</option>
-                                <option value="Legally Separated" <?php if(in_array(($user_data['civil_status']??''), ['Legally Separated', 'Separated'], true)) echo 'selected'; ?>>Legally Separated</option>
+                                <option value="Legally Separated" <?php if(($user_data['civil_status']??'')==='Legally Separated') echo 'selected'; ?>>Separated</option>
                             </select>
                         </div>
-                        <div class="form-group span-2"><label>Full Address</label><input type="text" name="owner_full_address" value="<?php echo h($full_address); ?>"></div>
-                        <div class="form-group span-2">
+                        <div class="form-group">
                             <label>Educational Attainment</label>
                             <select name="educational_attainment" onchange="toggleOther(this, 'msme_edu_other')">
                                 <option value="">--Select--</option>
@@ -1354,6 +1636,7 @@ if ($barangay_summary_result) {
                             </select>
                             <input type="text" name="other_educational_attainment" id="msme_edu_other" style="display:none; margin-top:5px;" class="not-required" placeholder="Specify Educational Attainment">
                         </div>
+                        <div class="form-group"><label>Full Address</label><input type="text" name="owner_full_address" value="<?php echo h($full_address); ?>"></div>
                         <div class="form-group span-2"><label>Work Experience</label><textarea name="work_experience" rows="3"></textarea></div>
                     </div>
                     <div class="form-actions">
@@ -1374,7 +1657,7 @@ if ($barangay_summary_result) {
                                 <label><input type="checkbox" name="assets_owned[]" value="Vehicles"> Vehicles</label>
                                 <label><input type="checkbox" name="assets_owned[]" value="Others" onchange="document.getElementById('asset_other').style.display=this.checked?'block':'none'"> Others</label>
                             </div>
-                            <input type="text" name="assets_owned[]" id="asset_other" style="display:none; margin-top:10px;" placeholder="Specify other assets" class="not-required">
+                            <input type="text" name="assets_owned[]" id="asset_other" data-text-input="true" style="display:none; margin-top:10px;" placeholder="Specify other assets" class="not-required">
                         </div>
                         <div class="form-group span-2">
                             <label>Utility Needs (Check all that apply)</label>
@@ -1385,7 +1668,7 @@ if ($barangay_summary_result) {
                                 <label><input type="checkbox" name="utility_needs[]" value="Internet/Data"> Internet/Data</label>
                                 <label><input type="checkbox" name="utility_needs[]" value="Others" onchange="document.getElementById('util_other').style.display=this.checked?'block':'none'"> Others</label>
                             </div>
-                            <input type="text" name="utility_needs[]" id="util_other" style="display:none; margin-top:10px;" placeholder="Specify other utilities" class="not-required">
+                            <input type="text" name="utility_needs[]" id="util_other" data-text-input="true" style="display:none; margin-top:10px;" placeholder="Specify other utilities" class="not-required">
                         </div>
                     </div>
                     <div class="form-actions">
@@ -1428,7 +1711,7 @@ if ($barangay_summary_result) {
                                 <label><input type="checkbox" name="source_of_capital[]" value="Government Assistance"> Govt Assistance</label>
                                 <label><input type="checkbox" name="source_of_capital[]" value="Others" onchange="document.getElementById('cap_other').style.display=this.checked?'block':'none'"> Others</label>
                             </div>
-                            <input type="text" name="source_of_capital[]" id="cap_other" style="display:none; margin-top:10px;" placeholder="Specify other source" class="not-required">
+                            <input type="text" name="source_of_capital[]" id="cap_other" data-text-input="true" style="display:none; margin-top:10px;" placeholder="Specify other source" class="not-required">
                         </div>
                         <div class="form-group span-2"><label>Business Size</label>
                             <select name="business_size">
@@ -1547,17 +1830,39 @@ if ($barangay_summary_result) {
                             <input type="text" name="challenges_encountered[]" id="chal_other" style="display:none; margin-top:10px;" placeholder="Specify other challenges" class="not-required">
                         </div>
                     </div>
-                    <label class="privacy-acknowledgment">
-                        <input type="checkbox" name="privacy_acknowledgment" value="1">
-                        <span>I have read and understood the <a href="privacy_notice.php" target="_blank" rel="noopener">Privacy Notice</a> and understand how my information will be processed for this program application.</span>
-                    </label>
                     <div class="form-actions">
                         <button type="button" class="btn-secondary" onclick="prevStep(8)">Back</button>
+                        <button type="button" class="btn-primary" onclick="nextStep(8)">Next Step</button>
+                    </div>
+                </div>
+
+                <div class="form-step msme-confirmation-step" id="msme-step-9">
+                    <div class="form-grid">
+                        <div class="span-2 section-title">Applicant Confirmation</div>
+                        <div class="form-group span-2"><small>Review your MSME information before submitting. Your application will remain pending until PESO Vinzons completes its assessment.</small></div>
+                    </div>
+                    <label class="privacy-acknowledgment"><input type="checkbox" name="msme_certified_truthful" value="1"><span>I certify that the MSME and business information I provided is true and complete and consent to PESO validation.</span></label>
+                    <label class="privacy-acknowledgment">
+                        <input type="checkbox" name="privacy_acknowledgment" value="1">
+                        <span>I have read and understood the <button type="button" class="privacy-notice-link" onclick="openApplicationPrivacyNotice()">Privacy Notice</button> and understand how my information will be processed for this program application.</span>
+                    </label>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="prevStep(9)">Back</button>
                         <button type="submit" class="btn-primary">Submit Application</button>
                     </div>
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<div class="modal" id="applicationPrivacyModal" role="dialog" aria-modal="true" aria-labelledby="applicationPrivacyTitle" aria-hidden="true">
+    <div class="modal-content application-privacy-dialog">
+        <button type="button" class="modal-close" onclick="closeApplicationPrivacyNotice()" aria-label="Close privacy notice">✕</button>
+        <h2 id="applicationPrivacyTitle">Privacy Notice</h2>
+        <p>Review how PESO Vinzons processes and protects your application information.</p>
+        <iframe src="privacy_notice.php?embedded=1" title="PESO Vinzons Privacy Notice"></iframe>
+        <div class="application-privacy-actions"><button type="button" class="btn-primary" onclick="closeApplicationPrivacyNotice()">Return to Application</button></div>
     </div>
 </div>
 
@@ -1568,7 +1873,12 @@ if ($barangay_summary_result) {
     window.addEventListener('click', () => { if(accountDropdown && accountDropdown.classList.contains('show')) accountDropdown.classList.remove('show'); });
     const menuButton = document.getElementById('menuButton');
     const menuArea = document.getElementById('menuArea');
-    if(menuButton) { menuButton.addEventListener('click', () => { menuArea.classList.toggle('show'); }); }
+    if(menuButton && menuArea) {
+        menuButton.addEventListener('click', () => {
+            const isOpen = menuArea.classList.toggle('open');
+            menuButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+    }
 
     function filterPrograms() {
         let input = document.getElementById('searchInput');
@@ -1608,8 +1918,52 @@ if ($barangay_summary_result) {
 
     let activeProgramId = 0, activeProgramName = "", currentFormType = "tupad", totalSteps = 3;
     
-    function closeModal(id) { 
-        document.getElementById(id).classList.remove('show'); 
+    let lastModalTrigger = null;
+    document.addEventListener('click', event => {
+        if (event.target.closest('[onclick*="Modal"], [data-modal-target], .program-card')) {
+            lastModalTrigger = event.target.closest('button, a, .program-card');
+        }
+    }, true);
+
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.setAttribute('aria-hidden', modal.classList.contains('show') ? 'false' : 'true');
+        new MutationObserver(() => {
+            modal.setAttribute('aria-hidden', modal.classList.contains('show') ? 'false' : 'true');
+        }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+    });
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        if (lastModalTrigger && document.contains(lastModalTrigger)) lastModalTrigger.focus();
+    }
+
+    function showProfessionalNotice(message, title = 'Information Required') {
+        const modal = document.getElementById('alertModal');
+        const titleElement = document.getElementById('alertTitle');
+        const messageElement = document.getElementById('alertMessage');
+        if (!modal || !messageElement) return;
+        if (titleElement) titleElement.textContent = title;
+        messageElement.textContent = message;
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        modal.querySelector('.btn-primary')?.focus();
+    }
+
+    function openApplicationPrivacyNotice() {
+        const modal = document.getElementById('applicationPrivacyModal');
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        modal.querySelector('.modal-close')?.focus();
+    }
+
+    function closeApplicationPrivacyNotice() {
+        const modal = document.getElementById('applicationPrivacyModal');
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.querySelector('.form-step.active .privacy-notice-link')?.focus();
     }
     
     function toggleOther(selectObj, otherId) {
@@ -1649,7 +2003,7 @@ if ($barangay_summary_result) {
 
     function addProductRow() {
         let table = document.getElementById('productsTable').getElementsByTagName('tbody')[0];
-        if(table.rows.length >= 10) return alert("Maximum 10 products allowed.");
+        if(table.rows.length >= 10) { showProfessionalNotice('You may add up to 10 products or services only.', 'Product Limit Reached'); return; }
         let newRow = table.insertRow();
         newRow.innerHTML = `<td><input type="text" name="prod_name[]" placeholder="Item Name" required></td>
                             <td><input type="text" name="prod_price[]" placeholder="0.00" oninput="this.value = this.value.replace(/[^0-9.]/g, '')" required></td>
@@ -1658,7 +2012,7 @@ if ($barangay_summary_result) {
 
     function addSpesRow() {
         let table = document.getElementById('spesTable').getElementsByTagName('tbody')[0];
-        if(table.rows.length >= 4) return alert("Maximum 4 histories allowed.");
+        if(table.rows.length >= 4) { showProfessionalNotice('You may add up to four SPES history records only.', 'History Limit Reached'); return; }
         let newRow = table.insertRow();
         newRow.innerHTML = `<td><input type="text" name="spes_hist_avail[]" class="not-required" placeholder="e.g. 1st"></td>
                             <td><input type="text" name="spes_hist_est[]" class="not-required" placeholder="Office/LGU"></td>
@@ -1701,7 +2055,9 @@ if ($barangay_summary_result) {
         document.getElementById('detStart').innerText = startDate;
         document.getElementById('detEnd').innerText = endDate;
         document.getElementById('detVenue').innerText = venue;
-        document.getElementById('detReqs').innerHTML = reqs.replace(/\n/g, '<br>');
+        const requirementsTarget = document.getElementById('detReqs');
+        requirementsTarget.textContent = reqs;
+        requirementsTarget.style.whiteSpace = 'pre-line';
         const eligibilityTarget = document.getElementById('detEligibility');
         if (eligibilityTarget) eligibilityTarget.innerText = eligibility;
         
@@ -1734,7 +2090,16 @@ if ($barangay_summary_result) {
         
         footer.appendChild(btn);
         document.getElementById('programDetailsModal').classList.add('show');
-        fetch(`programs.php?action=log_view&type=details&prog_name=${encodeURIComponent(title)}`);
+        fetch('programs.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'},
+            body: new URLSearchParams({
+                action: 'log_view',
+                type: 'details',
+                prog_name: title,
+                csrf_token: <?= json_encode(auth_csrf_token()) ?>
+            })
+        }).catch(() => {});
     }
 
     function viewStatus(status, availment, reason, reqs, venue, title) {
@@ -1746,16 +2111,32 @@ if ($barangay_summary_result) {
         modalIcon.className = "modal-icon";
         modalIcon.style.background = "";
         modalIcon.style.color = "";
+        const safeTitle = escapeHtml(title || 'this program');
+        const programKey = String(title || '').toUpperCase();
+        const safeReason = escapeHtml(reason || 'No reason was provided.');
+        const safeAvailment = escapeHtml((availment || 'approved').toUpperCase());
 
         if (status === 'approved') {
-            if (availment === 'ongoing') {
+            if (availment === 'exam passed') {
+                modalIcon.className = "modal-icon icon-success";
+                modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+                modalTitle.innerText = "Examination Passed";
+                modalTitle.style.color = "var(--green)";
+                modalBody.innerHTML = `<div style="text-align:center;"><h3 style="color:var(--green-dark);font-size:17px;margin-bottom:10px;font-weight:800;">You passed the SPES examination</h3><p style="font-size:14px;color:#444;line-height:1.6;">Please wait for your official assignment, start schedule, and further instructions from PESO Vinzons.</p></div>`;
+            } else if (availment === 'exam failed') {
+                modalIcon.className = "modal-icon icon-danger";
+                modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>`;
+                modalTitle.innerText = "Examination Result";
+                modalTitle.style.color = "#c0392b";
+                modalBody.innerHTML = `<div style="text-align:center;"><h3 style="color:#c0392b;font-size:17px;margin-bottom:10px;font-weight:800;">Exam Not Passed</h3><p style="font-size:14px;color:#444;line-height:1.6;">You will not proceed to placement for the current SPES application. You may contact PESO Vinzons for clarification or information about future application opportunities.</p></div>`;
+            } else if (availment === 'ongoing') {
                 modalIcon.className = "modal-icon icon-success";
                 modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
                 modalTitle.innerText = "Congratulations!";
                 modalTitle.style.color = "var(--green)";
                 modalBody.innerHTML = `
                     <div style="text-align:center; padding: 10px 0;">
-                        <h3 style="color:var(--green-dark); font-size:18px; margin-bottom:10px; font-weight: 800;">You are now a ${title} Beneficiary!</h3>
+                        <h3 style="color:var(--green-dark); font-size:18px; margin-bottom:10px; font-weight: 800;">You are now a ${safeTitle} Beneficiary!</h3>
                         <p style="font-size: 14.5px; color: #444; line-height: 1.6;">Your application has been completely finalized by DOLE. Your work and program status is now officially <strong style="color:var(--green);">Ongoing</strong>.</p>
                     </div>
                 `;
@@ -1764,12 +2145,12 @@ if ($barangay_summary_result) {
                 modalIcon.style.background = "#e0f2fe";
                 modalIcon.style.color = "#0284c7";
                 modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
-                modalTitle.innerText = "Documents Received";
+                modalTitle.innerText = "Documents Submitted";
                 modalTitle.style.color = "#0284c7";
                 modalBody.innerHTML = `
                     <div style="text-align:center; padding: 10px 0;">
-                        <h3 style="color:#0284c7; font-size:17px; margin-bottom:10px; font-weight: 800;">Requirements in Process</h3>
-                        <p style="font-size: 14.5px; color: #444; line-height: 1.6;">We have successfully received your physical documents for <b>${title}</b>. They are currently being verified and forwarded.</p>
+                        <h3 style="color:#0284c7; font-size:17px; margin-bottom:10px; font-weight: 800;">Documents Under Verification</h3>
+                        <p style="font-size: 14.5px; color: #444; line-height: 1.6;">Your physical documents for <b>${safeTitle}</b> have been submitted to PESO and are now under verification.</p>
                     </div>
                 `;
             } else if (availment === 'not yet availed') {
@@ -1777,12 +2158,15 @@ if ($barangay_summary_result) {
                 modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
                 modalTitle.innerText = "LGU Approved!";
                 modalTitle.style.color = "var(--green)";
-                modalBody.innerHTML = `
-                    <div style="text-align:center;">
-                        <h3 style="color:#27ae60; font-size:16px; margin-bottom:10px; font-weight:800;">Action Required: Submit Documents</h3>
-                        <p style="font-size: 14px; color: #444;">Your application for <b>${title}</b> has been <strong>Approved</strong> by the LGU! To finalize your slot, please bring your physical requirements.</p>
-                    </div>
-                `;
+                if (programKey.includes('TUPAD')) {
+                    modalBody.innerHTML = `<div style="text-align:center;"><h3 style="color:#27ae60; font-size:16px; margin-bottom:10px; font-weight:800;">Next Step: Submit Documents</h3><p style="font-size:14px;color:#444;">Your application for <b>${safeTitle}</b> has been <strong>approved</strong>. Please bring the physical requirements identified by PESO for verification.</p></div>`;
+                } else if (programKey.includes('SPES')) {
+                    modalBody.innerHTML = `<div style="text-align:center;"><h3 style="color:#27ae60; font-size:16px; margin-bottom:10px; font-weight:800;">Awaiting Examination Schedule</h3><p style="font-size:14px;color:#444;">Your application for <b>${safeTitle}</b> has been <strong>approved</strong>. PESO Vinzons will send the examination schedule and any required instructions.</p></div>`;
+                } else if (programKey.includes('MSME')) {
+                    modalBody.innerHTML = `<div style="text-align:center;"><h3 style="color:#27ae60; font-size:16px; margin-bottom:10px; font-weight:800;">Profiling Record Approved</h3><p style="font-size:14px;color:#444;">Your profiling record for <b>${safeTitle}</b> has been approved. PESO Vinzons will contact you if another verification step or office action is needed.</p></div>`;
+                } else {
+                    modalBody.innerHTML = `<div style="text-align:center;"><h3 style="color:#27ae60; font-size:16px; margin-bottom:10px; font-weight:800;">Approved – Awaiting Next Step</h3><p style="font-size:14px;color:#444;">Your application for <b>${safeTitle}</b> has been approved. Please wait for the official schedule or instructions from PESO Vinzons.</p></div>`;
+                }
             } else {
                 modalIcon.className = "modal-icon icon-success";
                 modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
@@ -1791,7 +2175,7 @@ if ($barangay_summary_result) {
                 modalBody.innerHTML = `
                     <div style="text-align:center;">
                         <h3 style="color:#27ae60; font-size:16px; margin-bottom:10px; font-weight:800;">LGU Approved</h3>
-                        <p style="font-size: 14px; color: #444;">Your application for <b>${title}</b> has been approved. Tracking status: <strong>${availment.toUpperCase()}</strong>.</p>
+                        <p style="font-size: 14px; color: #444;">Your application for <b>${safeTitle}</b> has been approved. Tracking status: <strong>${safeAvailment}</strong>.</p>
                     </div>
                 `;
             }
@@ -1802,10 +2186,10 @@ if ($barangay_summary_result) {
             modalTitle.innerText = "Application Rejected";
             modalTitle.style.color = "#e74c3c";
             modalBody.innerHTML = `
-                <p style="text-align:center;">Unfortunately, your application for <b>${title}</b> was not approved.</p>
+                    <p style="text-align:center;">Unfortunately, your application for <b>${safeTitle}</b> was not approved.</p>
                 <div class="reason-box" style="background: rgba(231, 76, 60, 0.05); border: 1px solid rgba(231, 76, 60, 0.2); padding: 15px; border-radius: 12px; margin-top: 15px;">
                     <h4 style="color: #c0392b; margin-bottom: 5px;">Reason given by Admin:</h4>
-                    <p style="margin:0;">${reason}</p>
+                    <p style="margin:0; white-space:pre-line;">${safeReason}</p>
                 </div>
             `;
         } 
@@ -1815,7 +2199,7 @@ if ($barangay_summary_result) {
             modalTitle.innerText = "Application Pending";
             modalTitle.style.color = "#f39c12";
             modalBody.innerHTML = `
-                <p style="text-align:center;">Your application for <b>${title}</b> is currently under review by the PESO admin team. Please check back later.</p>
+                <p style="text-align:center;">Your application for <b>${safeTitle}</b> is currently under review by the PESO admin team. Please check back later.</p>
             `;
         }
 
@@ -1825,7 +2209,7 @@ if ($barangay_summary_result) {
     function checkEligibility(programId, title, desc, startDate, endDate) {
         document.getElementById('eligibilityProgName').innerText = title;
         document.getElementById('eligibilityProgDesc').innerText = desc;
-        document.getElementById('eligibilityProgDates').innerHTML = "<strong>Program Duration:</strong> " + startDate + " to " + endDate;
+        document.getElementById('eligibilityProgDates').textContent = "Program Duration: " + startDate + " to " + endDate;
 
         fetch(`programs.php?action=check_eligibility&program_id=` + programId)
             .then(response => response.json())
@@ -1837,7 +2221,11 @@ if ($barangay_summary_result) {
                 } else {
                     document.getElementById('successEligibleModal').classList.add('show');
                 }
-            }).catch(error => console.error('Fetch Error:', error));
+            }).catch(error => {
+                console.error('Fetch Error:', error);
+                closeModal('programDetailsModal');
+                showProfessionalNotice('Eligibility could not be checked right now. Please check your connection and try again.', 'Unable to Check Eligibility');
+            });
     }
 
     // FLOW 2: Archive Program Details
@@ -1895,6 +2283,88 @@ if ($barangay_summary_result) {
         document.getElementById('archiveModal').classList.add('show');
     }
 
+    function toggleTupadFitnessCertificate() {
+        const pregnant = document.getElementById('tupad_is_pregnant')?.value === 'Yes';
+        const pwd = document.getElementById('tupad_is_pwd')?.value === 'Yes';
+        const limitation = document.getElementById('tupad_has_work_limitation')?.value === 'Yes';
+        const capableSelect = document.getElementById('tupad_capable_of_work');
+        const capable = capableSelect?.value || '';
+        const notice = document.getElementById('tupad_fitness_notice');
+        if (!notice) return;
+        document.getElementById('tupad_is_pregnant')?.setCustomValidity(pregnant ? 'Pregnant applicants are not eligible for TUPAD.' : '');
+        capableSelect?.setCustomValidity(capable === 'No' ? 'To qualify for TUPAD, select Yes only if you are able and willing to perform assigned work. Selecting Yes for PWD is allowed.' : '');
+        notice.textContent = pregnant
+            ? 'Pregnant applicants are not eligible for TUPAD.'
+            : capable === 'No'
+                ? 'PWD status is allowed, but every applicant must be able and willing to perform assigned work with reasonable accommodation if needed.'
+            : (pwd || limitation)
+                ? 'PWD applicants may apply when capable of working. If approved, bring a fitness-to-work certificate so PESO can arrange safe work or reasonable accommodation.'
+                : 'PWD applicants, including applicants with speech impairment, may apply as long as they are capable of working.';
+    }
+
+    function validateSpesPregnancy(select) {
+        if (!select) return;
+        const blocked = select.value === 'Yes';
+        select.setCustomValidity(blocked ? 'Pregnant applicants are not eligible for SPES.' : '');
+        const notice = document.getElementById('spesPregnancyNotice');
+        if (notice) notice.style.display = blocked ? 'block' : 'none';
+        if (blocked) select.reportValidity();
+    }
+
+    function validateSpesYearLevel(select) {
+        if (!select) return;
+        const isStudent = (document.getElementById('spes_type')?.value || '').trim().toLowerCase() === 'student';
+        const blocked = isStudent && select.value.trim().toLowerCase() === '4th year';
+        const notice = document.getElementById('spesFourthYearNotice');
+        select.setCustomValidity(blocked ? 'Fourth-year college students are not eligible for this PESO Vinzons SPES batch.' : '');
+        if (notice) notice.style.display = blocked ? 'block' : 'none';
+        if (blocked) select.reportValidity();
+    }
+
+    function toggleSpesBirthplace(checkbox) {
+        const input = document.getElementById('spes_place_of_birth');
+        if (!input) return;
+        const registeredPlace = checkbox.dataset.birthplace || 'Vinzons, Camarines Norte';
+        if (checkbox.checked) {
+            input.value = registeredPlace;
+            input.readOnly = true;
+        } else {
+            input.readOnly = false;
+            if (input.value === registeredPlace) input.value = '';
+            input.focus();
+        }
+    }
+
+    function toggleSpesGsisRelationship(input) {
+        const wrapper = document.getElementById('spes_gsis_relationship_wrap');
+        const relationship = wrapper?.querySelector('select[name="gsis_relationship"]');
+        const other = document.getElementById('other_gsis_relationship');
+        const citizenship = document.getElementById('spes_citizenship_wrap');
+        if (!wrapper || !relationship) return;
+        const hasGsisBeneficiary = input.value.trim() !== '';
+        wrapper.hidden = !hasGsisBeneficiary;
+        wrapper.style.display = hasGsisBeneficiary ? '' : 'none';
+        if (citizenship) citizenship.style.order = hasGsisBeneficiary ? '5' : '2';
+        relationship.required = hasGsisBeneficiary;
+        if (!hasGsisBeneficiary) {
+            relationship.value = '';
+            relationship.removeAttribute('required');
+            if (other) {
+                other.value = '';
+                other.style.display = 'none';
+                other.removeAttribute('required');
+            }
+        }
+    }
+
+    function toggleSpesGsisOther(select) {
+        toggleOther(select, 'other_gsis_relationship');
+        const other = document.getElementById('other_gsis_relationship');
+        if (!other) return;
+        if (select.value === 'Others') other.setAttribute('required', 'required');
+        else other.removeAttribute('required');
+    }
+
     function buildWizardNav(stepsArray) {
         let navHtml = '';
         totalSteps = stepsArray.length;
@@ -1919,11 +2389,11 @@ if ($barangay_summary_result) {
         else currentFormType = 'tupad';
 
         if(currentFormType === 'msme') {
-            buildWizardNav(["Basic Info", "Business Profile", "Owner Info", "Operations", "Human Resources", "Financials", "Gov Assistance", "Challenges"]);
+            buildWizardNav(["Basic Info", "Business Profile", "Owner Info", "Operations", "Human Resources", "Financials", "Gov Assistance", "Challenges", "Confirmation"]);
         } else if (currentFormType === 'spes') {
-            buildWizardNav(["Basic Info", "Other Details", "Status", "Family", "Education", "History"]);
+            buildWizardNav(["Basic Info", "Other Details", "Status", "Family", "Education", "History", "Confirmation"]);
         } else {
-            buildWizardNav(["Basic Info", "Specifics", "Dependents"]);
+            buildWizardNav(["Basic Info", "Specifics", "Dependents & Fitness", "Confirmation"]);
         }
 
         document.getElementById(currentFormType + 'Wrapper').style.display = 'block';
@@ -1941,6 +2411,12 @@ if ($barangay_summary_result) {
         });
         const privacyAcknowledgment = document.querySelector(`#${currentFormType}Wrapper input[name="privacy_acknowledgment"]`);
         if (privacyAcknowledgment) privacyAcknowledgment.setAttribute('required', 'required');
+        const truthfulCertification = document.querySelector(`#${currentFormType}Wrapper input[name="tupad_certified_truthful"]`);
+        if (truthfulCertification) truthfulCertification.setAttribute('required', 'required');
+        const spesTruthfulCertification = document.querySelector(`#${currentFormType}Wrapper input[name="spes_certified_truthful"]`);
+        if (spesTruthfulCertification) spesTruthfulCertification.setAttribute('required', 'required');
+        const msmeTruthfulCertification = document.querySelector(`#${currentFormType}Wrapper input[name="msme_certified_truthful"]`);
+        if (msmeTruthfulCertification) msmeTruthfulCertification.setAttribute('required', 'required');
 
         document.getElementById('applicationModal').classList.add('show');
     }
@@ -1956,11 +2432,32 @@ if ($barangay_summary_result) {
             let ind = document.getElementById(`ind-step-${i}`);
             if(ind) ind.classList.add('active');
         }
+
+        // Keep the current wizard step visible on narrow screens in both directions.
+        const wizardNav = document.getElementById('wizardNav');
+        const currentIndicator = document.getElementById(`ind-step-${step}`);
+        if (wizardNav && currentIndicator) {
+            window.requestAnimationFrame(() => {
+                const centeredPosition = currentIndicator.offsetLeft
+                    - ((wizardNav.clientWidth - currentIndicator.offsetWidth) / 2);
+                const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                wizardNav.scrollTo({
+                    left: Math.max(0, centeredPosition),
+                    behavior: reducedMotion ? 'auto' : 'smooth'
+                });
+            });
+        }
     }
 
     function nextStep(currentStep) {
         let currentContainer = currentStep === 1 ? document.getElementById('step-1') : document.getElementById(`${currentFormType}-step-${currentStep}`);
-        let inputs = currentContainer.querySelectorAll('[required]');
+        if (currentFormType === 'msme' && currentStep === 2) {
+            const selectedNature = currentContainer.querySelector('input[name="business_nature_arr[]"]:checked');
+            if (!selectedNature) { showProfessionalNotice('Please select at least one nature of business before continuing.'); return; }
+            const product = [...currentContainer.querySelectorAll('input[name="prod_name[]"]')].find(input => input.value.trim() !== '');
+            if (!product) { showProfessionalNotice('Please provide at least one primary product or service before continuing.'); return; }
+        }
+        let inputs = currentContainer.querySelectorAll('[required], [data-eligibility-check]');
         let isValid = true;
         inputs.forEach(input => { 
             if (!input.checkValidity()) { 
@@ -1971,6 +2468,31 @@ if ($barangay_summary_result) {
         if (isValid) showStep(currentStep + 1);
     }
     function prevStep(currentStep) { showStep(currentStep - 1); }
+
+    function syncMsmeOwnerAge() {
+        const birthdate = document.getElementById('msme_owner_birthdate');
+        const ageField = document.getElementById('msme_owner_age');
+        if (!birthdate || !ageField || !birthdate.value) { if (ageField) ageField.value = ''; return; }
+        const dob = new Date(birthdate.value + 'T00:00:00');
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const monthDifference = today.getMonth() - dob.getMonth();
+        if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < dob.getDate())) age--;
+        ageField.value = Number.isFinite(age) && age >= 0 ? age : '';
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, character => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+        })[character]);
+    }
+
+    document.getElementById('multiStepForm')?.addEventListener('submit', function () {
+        const submitButton = this.querySelector('button[type="submit"]');
+        if (!submitButton) return;
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting Application...';
+    });
 </script>
 </body>
 </html>

@@ -1,13 +1,19 @@
 <?php
 require_once __DIR__ . '/auth.php';
+auth_enable_csrf_form_injection();
 require "db.php";
 require_once "beneficiary_choices.php";
 require_once "email_helper.php"; // ADDED: Required for sending emails
 require_once "report_columns.php";
 require_once "beneficiary_import_helper.php";
+require_once "beneficiary_duplicate_helper.php";
+require_once "spes_schema_helper.php";
 require_once "tupad_category_helper.php";
 require_once "tupad_household_helper.php";
+require_once "tupad_document_helper.php";
 ensure_tupad_category_schema($conn);
+ensure_tupad_document_schema($conn);
+ensureSpesParentStatusCapacity($conn);
 
 if (file_exists("functions.php")) {
     require_once "functions.php";
@@ -71,8 +77,9 @@ function approval_badge(string $status): string {
 function availment_badge(string $status): string {
   $s = strtolower(trim($status));
   if ($s === "ongoing") return "pill success";
+  if ($s === "exam passed") return "pill success";
   if ($s === "completed") return "pill neutral";
-  if ($s === "cancelled") return "pill danger";
+  if ($s === "cancelled" || $s === "exam failed") return "pill danger";
   if ($s === "requirements received") return "pill warning"; 
   if ($s === "not yet availed") return "pill warning";
   return "pill neutral";
@@ -81,11 +88,34 @@ function availment_badge(string $status): string {
 function normalize_availment_status($status): string {
   $map = [
     'not yet availed' => 'Not Yet Availed', 'requirements received' => 'Requirements Received',
-    'requirements recieved' => 'Requirements Received', 'orientation' => 'Orientation',
+    'requirements recieved' => 'Requirements Received', 'orientation' => 'Orientation', 'examination' => 'Examination',
+    'exam passed' => 'Exam Passed', 'exam failed' => 'Exam Failed',
     'ongoing' => 'Ongoing', 'salary distribution' => 'Salary Distribution',
     'completed' => 'Completed', 'not qualified' => 'Not Qualified', 'cancelled' => 'Cancelled'
   ];
   return $map[strtolower(trim((string)$status))] ?? 'Not Yet Availed';
+}
+
+function availment_display_label(string $status): string {
+  $normalized = normalize_availment_status($status);
+  if ($normalized === 'Not Yet Availed') return 'Approved – Awaiting Next Step';
+  if ($normalized === 'Requirements Received') return 'Documents Submitted';
+  if ($normalized === 'Exam Failed') return 'Exam Not Passed';
+  return $normalized;
+}
+
+function beneficiary_matches_bulk_scope(mysqli $conn, int $beneficiaryId, string $programName, int $programId): bool {
+  if ($beneficiaryId <= 0 || $programName === '') return false;
+  $sql = "SELECT 1 FROM beneficiaries b JOIN programs p ON p.program_id=b.program_id WHERE b.beneficiary_id=? AND p.program_name=?";
+  if ($programId > 0) $sql .= " AND b.program_id=?";
+  $sql .= " LIMIT 1";
+  $stmt = $conn->prepare($sql);
+  if ($programId > 0) $stmt->bind_param('isi', $beneficiaryId, $programName, $programId);
+  else $stmt->bind_param('is', $beneficiaryId, $programName);
+  $stmt->execute();
+  $matches = (bool)$stmt->get_result()->fetch_row();
+  $stmt->close();
+  return $matches;
 }
 
 function ensure_availment_status_schema(mysqli $conn): void {
@@ -93,10 +123,10 @@ function ensure_availment_status_schema(mysqli $conn): void {
   if (!$res || !($row = $res->fetch_assoc())) return;
   $type = strtolower((string)($row['Type'] ?? ''));
   if (strpos($type, 'enum(') !== 0) return;
-  if (strpos($type, "'orientation'") !== false && strpos($type, "'salary distribution'") !== false && strpos($type, "'not qualified'") !== false) return;
+  if (strpos($type, "'orientation'") !== false && strpos($type, "'examination'") !== false && strpos($type, "'exam passed'") !== false && strpos($type, "'exam failed'") !== false && strpos($type, "'salary distribution'") !== false && strpos($type, "'not qualified'") !== false) return;
   $null = strtoupper((string)($row['Null'] ?? 'YES')) === 'NO' ? 'NOT NULL' : 'NULL';
   $default = $row['Default'] !== null ? " DEFAULT '" . $conn->real_escape_string((string)$row['Default']) . "'" : '';
-  $conn->query("ALTER TABLE beneficiaries MODIFY availment_status ENUM('Not Yet Availed','Requirements Received','Orientation','Ongoing','Salary Distribution','Completed','Not Qualified','Cancelled') $null$default");
+  $conn->query("ALTER TABLE beneficiaries MODIFY availment_status ENUM('Not Yet Availed','Requirements Received','Orientation','Examination','Exam Passed','Exam Failed','Ongoing','Salary Distribution','Completed','Not Qualified','Cancelled') $null$default");
 }
 
 function ensure_application_source_schema(mysqli $conn): void {
@@ -163,6 +193,7 @@ $barangays = [
    POST ACTIONS (STAFF)
 ========================= */
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+  auth_require_csrf();
   $action = $_POST["action"] ?? "";
   $program_name_post = trim($_POST["program_name"] ?? "");
 
@@ -172,30 +203,39 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $bulkMessage = trim($_POST['status_message'] ?? '');
       $bulkDate = trim($_POST['schedule_date'] ?? '');
       $bulkPlace = trim($_POST['schedule_place'] ?? '');
-      $needsBulkDate = in_array($bulkStatus, ['Orientation','Salary Distribution','Completed'], true);
-      $needsBulkPlace = in_array($bulkStatus, ['Orientation','Salary Distribution'], true);
+      $bulkProgramId = (int)($_POST['program_id'] ?? 0);
+      $needsBulkDate = in_array($bulkStatus, ['Orientation','Examination','Salary Distribution','Completed'], true);
+      $needsBulkPlace = in_array($bulkStatus, ['Orientation','Examination','Salary Distribution'], true);
       $needsBulkMessage = in_array($bulkStatus, ['Not Qualified', 'Cancelled'], true);
       if (!$selectedIds || ($needsBulkMessage && $bulkMessage === '') || ($needsBulkDate && $bulkDate === '') || ($needsBulkPlace && $bulkPlace === '')) {
           $_SESSION['show_error_modal'] = true;
           $_SESSION['error_modal_message'] = 'Select beneficiaries and complete the reason, date, or venue required for this status.';
       } else {
-          $updated = $sent = $failed = 0;
-          $dateAvailed = in_array($bulkStatus, ['Orientation','Ongoing','Salary Distribution'], true) && $bulkDate !== '' ? $bulkDate : null;
+          $updated = $sent = $failed = $blocked = $outOfScope = 0;
+          $dateAvailed = in_array($bulkStatus, ['Orientation','Examination','Ongoing','Salary Distribution'], true) && $bulkDate !== '' ? $bulkDate : null;
           $dateCompleted = $bulkStatus === 'Completed' && $bulkDate !== '' ? $bulkDate : null;
           $lastAvailed = $dateAvailed ? $dateAvailed . ' 00:00:00' : null;
           $stmt = $conn->prepare("UPDATE beneficiaries SET availment_status=?, date_availed=COALESCE(?,date_availed), date_completed=COALESCE(?,date_completed), last_availed_at=COALESCE(?,last_availed_at), updated_at=NOW() WHERE beneficiary_id=?");
           foreach ($selectedIds as $selectedId) {
+              if (!beneficiary_matches_bulk_scope($conn, $selectedId, $program_name_post, $bulkProgramId)) {
+                  $outOfScope++;
+                  continue;
+              }
+              if (in_array($bulkStatus, ['Ongoing', 'Salary Distribution', 'Completed'], true)
+                  && !tupad_can_start_work($conn, $selectedId)) {
+                  $blocked++;
+                  continue;
+              }
               $stmt->bind_param('ssssi', $bulkStatus, $dateAvailed, $dateCompleted, $lastAvailed, $selectedId);
               if ($stmt->execute() && $stmt->affected_rows >= 0) {
                   $updated++;
-                  $emailError = null;
-                  if (sendBENEPESOStatusEmail($conn, $selectedId, $bulkStatus, $emailError, $bulkMessage, $bulkDate, $bulkPlace)) $sent++; else $failed++;
+                  if (queueBENEPESOStatusEmail($conn, $selectedId, $bulkStatus, $bulkMessage, $bulkDate, $bulkPlace)) $sent++; else $failed++;
               }
           }
           $stmt->close();
           if (function_exists('logActivity')) logActivity($conn, $peso_staff_id, 'Beneficiaries', 'Bulk Status Update', 'Beneficiary Records', "Staff updated $updated beneficiaries to $bulkStatus");
           $_SESSION['show_success_modal'] = true;
-          $_SESSION['success_modal_message'] = "$updated beneficiaries updated to $bulkStatus. $sent email(s) sent" . ($failed ? "; $failed email(s) could not be delivered." : ".");
+          $_SESSION['success_modal_message'] = "$updated beneficiaries updated to $bulkStatus. $sent email notification(s) will be sent automatically" . ($failed ? "; $failed email notification(s) could not be scheduled" : "") . ($blocked ? "; $blocked TUPAD applicant(s) were not updated because their required documents are not verified" : "") . ($outOfScope ? "; $outOfScope record(s) outside the selected program or batch were skipped" : "") . ".";
           $_SESSION['modal_icon'] = "✓";
       }
       header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
@@ -207,6 +247,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $beneficiary_id = (int)($_POST["beneficiary_id"] ?? 0);
       $availment_status = normalize_availment_status($_POST["availment_status"] ?? "Not Yet Availed");
       $status_message = trim($_POST["status_message"] ?? "");
+      $needs_resubmission = $availment_status === 'Requirements Received' && isset($_POST['needs_resubmission']);
       $schedule_place = trim($_POST["schedule_place"] ?? "");
       $date_availed = trim($_POST["date_availed"] ?? "");
       $date_completed = trim($_POST["date_completed"] ?? "");
@@ -216,6 +257,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $last_availed_at = (!empty($date_availed)) ? $date_availed . " 00:00:00" : null;
 
       if ($beneficiary_id > 0) {
+          $needs_schedule = in_array($availment_status, ['Orientation', 'Examination', 'Salary Distribution'], true);
+          $needs_completion_date = $availment_status === 'Completed';
+          if (($needs_schedule && (empty($date_availed) || $schedule_place === '')) || ($needs_completion_date && empty($date_completed))) {
+              $_SESSION["show_error_modal"] = true;
+              $_SESSION["error_modal_message"] = "Complete the required schedule date and venue for this status.";
+              header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+              exit();
+          }
+          if (in_array($availment_status, ['Ongoing', 'Salary Distribution', 'Completed'], true)
+              && !tupad_can_start_work($conn, $beneficiary_id)) {
+              $_SESSION["show_error_modal"] = true;
+              $_SESSION["error_modal_message"] = "Verify the required TUPAD documents before moving this beneficiary to the selected status.";
+              header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+              exit();
+          }
+          if ($needs_resubmission && $status_message === '') {
+              $_SESSION["show_error_modal"] = true;
+              $_SESSION["error_modal_message"] = "Provide the reason and instructions for document resubmission.";
+              header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+              exit();
+          }
           $stmt = $conn->prepare("UPDATE beneficiaries SET availment_status = ?, date_availed = ?, date_completed = ?, last_availed_at = ?, updated_at = NOW() WHERE beneficiary_id = ?");
           $stmt->bind_param("ssssi", $availment_status, $date_availed_val, $date_completed_val, $last_availed_at, $beneficiary_id);
           if ($stmt->execute()) {
@@ -227,13 +289,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
               $email_attempted = true;
               $email_error = null;
-              $email_sent = sendBENEPESOStatusEmail($conn, $beneficiary_id, $availment_status, $email_error, $status_message, $date_availed, $schedule_place);
+              $email_status = $needs_resubmission ? 'Requirements Resubmission' : $availment_status;
+              $email_sent = sendBENEPESOStatusEmail($conn, $beneficiary_id, $email_status, $email_error, $status_message, $date_availed, $schedule_place);
 
               $_SESSION["show_success_modal"] = true;
               if (!$email_sent) {
-                  $_SESSION["success_modal_message"] = "DOLE availment status updated to $availment_status, but the email notification could not be sent: " . ($email_error ?: "Unknown mail error.");
+                  $_SESSION["success_modal_message"] = "DOLE availment status updated to $availment_status, but the notification could not be sent: " . ($email_error ?: "Unknown delivery error.");
               } else {
-                  $_SESSION["success_modal_message"] = "DOLE availment status updated to $availment_status successfully and email sent.";
+                  $_SESSION["success_modal_message"] = "DOLE availment status updated to $availment_status successfully and notification sent.";
               }
               $_SESSION["modal_icon"] = "✓";
           }
@@ -249,7 +312,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $program_id = (int)($_POST["program_id"] ?? 0); 
       
       function processArrayField($post_key) {
-          return isset($_POST[$post_key]) && is_array($_POST[$post_key]) ? implode(', ', array_map('trim', $_POST[$post_key])) : trim($_POST[$post_key] ?? "");
+          if (!isset($_POST[$post_key]) || !is_array($_POST[$post_key])) return trim($_POST[$post_key] ?? "");
+          $values = array_values(array_filter(array_map(static fn($value) => trim((string)$value), $_POST[$post_key]), static fn($value) => $value !== ''));
+          if (count($values) > 1) $values = array_values(array_filter($values, static fn($value) => !in_array(strtolower($value), ['other', 'others'], true)));
+          return implode(', ', $values);
       }
 
       $first_name = trim($_POST["first_name"] ?? "");
@@ -261,7 +327,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $sex = trim($_POST["owner_sex"] ?? $_POST["sex"] ?? ""); 
       $civil_status = trim($_POST["owner_civil_status"] ?? $_POST["civil_status"] ?? "");
       if ($civil_status === 'Widow/er') $civil_status = 'Widowed';
-      if ($civil_status === 'Separated') $civil_status = 'Legally Separated';
+      if (!in_array($civil_status, ['Single', 'Married', 'Widowed', 'Legally Separated'], true)) $civil_status = '';
       $contact_no = trim($_POST["contact_no"] ?? "");
       $email = trim($_POST["email"] ?? "");
       $street = trim($_POST["street_purok_zone"] ?? "");
@@ -372,12 +438,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $ownership_type = choice_or_other($_POST, 'ownership_type');
       
       $business_nature = processArrayField('business_nature_arr');
-      if (strpos($business_nature, 'Others') !== false && !empty($_POST['other_business_nature'])) {
-          $business_nature = str_replace('Others', trim($_POST['other_business_nature']), $business_nature);
+      if (in_array('Others', (array)($_POST['business_nature_arr'] ?? []), true) && trim((string)($_POST['other_business_nature'] ?? '')) !== '') {
+          $standardNature = trim(str_replace('Others', '', $business_nature), " ,");
+          $business_nature = implode(', ', array_filter([$standardNature, trim((string)$_POST['other_business_nature'])]));
       }
 
-      $prod_names = $_POST['prod_name'] ?? [];
-      $prod_prices = $_POST['prod_price'] ?? [];
+      $prod_names = array_slice((array)($_POST['prod_name'] ?? []), 0, 10);
+      $prod_prices = array_slice((array)($_POST['prod_price'] ?? []), 0, 10);
       $products_arr = [];
       foreach($prod_names as $idx => $pname) {
           if(!empty(trim($pname))) {
@@ -480,18 +547,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               $_SESSION["show_error_modal"] = true;
               $_SESSION["error_modal_message"] = $householdCheck['message'];
           } else {
-          $checkSql = "SELECT beneficiary_id FROM beneficiaries WHERE program_id = ? AND LOWER(TRIM(full_name)) = LOWER(TRIM(?))";
-          if ($bid > 0) $checkSql .= " AND beneficiary_id != $bid";
-
-          $checkStmt = $conn->prepare($checkSql);
-          $checkStmt->bind_param("is", $program_id, $full_name);
-          $checkStmt->execute();
-          $exists = $checkStmt->get_result()->num_rows > 0;
-          $checkStmt->close();
-
-          if ($exists) {
+          $duplicate = find_beneficiary_duplicate($conn, $program_id, $bid, $full_name, $birthdate_val, $contact_no, $id_number);
+          if ($duplicate) {
               $_SESSION["show_error_modal"] = true;
-              $_SESSION["error_modal_message"] = "Beneficiary '$full_name' already exists.";
+              $_SESSION["error_modal_message"] = beneficiary_duplicate_message($duplicate);
           } else {
               if ($action === "admin_add_beneficiary") {
               $source_val = "PESO Staff";
@@ -604,7 +663,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                               if (sendBENEPESOStatusEmail($conn, $bid, $availment_status, $email_error)) {
                                   $_SESSION["success_modal_message"] .= " Email notification sent.";
                               } else {
-                                  $_SESSION["success_modal_message"] .= " Status changed, but email could not be sent: " . ($email_error ?: "Unknown mail error.");
+                                  $_SESSION["success_modal_message"] .= " Status changed, but one or more notifications could not be sent: " . ($email_error ?: "Unknown delivery error.");
                               }
                           }
                       } else {
@@ -858,7 +917,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   }
 
                   if ($savedBeneficiaryId > 0) {
-                      if (in_array($batch_availment, ['Orientation', 'Salary Distribution'], true) && $batch_schedule_date !== '') {
+                      if (in_array($batch_availment, ['Orientation', 'Examination', 'Salary Distribution'], true) && $batch_schedule_date !== '') {
                           $scheduleStmt = $conn->prepare("UPDATE beneficiaries SET date_availed = ?, last_availed_at = ? WHERE beneficiary_id = ?");
                           if ($scheduleStmt) {
                               $batch_last_availed = $batch_schedule_date . ' 00:00:00';
@@ -867,12 +926,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                               $scheduleStmt->close();
                           }
                       }
-                      $emailError = null;
-                      if (sendBENEPESOStatusEmail($conn, $savedBeneficiaryId, $batch_availment, $emailError, $batch_message, $batch_schedule_date, $batch_schedule_place)) {
+                      if (queueBENEPESOStatusEmail($conn, $savedBeneficiaryId, $batch_availment, $batch_message, $batch_schedule_date, $batch_schedule_place)) {
                           $emailSentCount++;
                       } else {
                           $emailFailedCount++;
-                          $emailFailureReason = trim((string)($emailError ?: 'Unknown email delivery error.'));
+                          $emailFailureReason = 'The notification could not be added to the delivery queue.';
                           $emailFailureReasons[$emailFailureReason] = ($emailFailureReasons[$emailFailureReason] ?? 0) + 1;
                           error_log("BENEPESO bulk import email not sent for beneficiary_id={$savedBeneficiaryId}: " . $emailFailureReason);
                       }
@@ -880,7 +938,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               }
               $checkStmt->close();
 
-              $emailSummary = " Status emails: $emailSentCount sent, $emailFailedCount not sent.";
+              $emailSummary = " Status emails: $emailSentCount will be sent automatically, $emailFailedCount could not be scheduled.";
 
               if ($failedCount > 0) {
                   $_SESSION["show_error_modal"] = true;
@@ -925,6 +983,7 @@ $search = trim($_GET["search"] ?? "");
 $sort = trim($_GET["sort"] ?? "newest");
 $approvalFilter = trim($_GET["approval"] ?? "All");
 $availmentFilter = trim($_GET["availment"] ?? "All");
+if (stripos($selectedProgramName, 'SPES') === false && in_array($availmentFilter, ['Examination', 'Exam Passed', 'Exam Failed'], true)) $availmentFilter = 'All';
 $selectedNature = trim($_GET["business_nature"] ?? "All");
 
 /* =========================
@@ -938,9 +997,18 @@ if (stripos($selectedProgramName, 'MSME') !== false) {
         $bnStmt->bind_param("s", $selectedProgramName);
         $bnStmt->execute();
         $bnRes = $bnStmt->get_result();
+        $businessNatureMap = [];
         while($bnRow = $bnRes->fetch_assoc()) {
-            $businessNatures[] = $bnRow['business_nature'];
+            foreach (preg_split('/[,;\r\n]+/', (string)$bnRow['business_nature']) as $nature) {
+                $nature = trim($nature);
+                if ($nature === '') continue;
+                $key = strtolower((string)preg_replace('/\s+/', ' ', $nature));
+                if (!isset($businessNatureMap[$key])) $businessNatureMap[$key] = $nature;
+            }
         }
+        $businessNatures = array_values($businessNatureMap);
+        natcasesort($businessNatures);
+        $businessNatures = array_values($businessNatures);
         $bnStmt->close();
     }
 }
@@ -992,7 +1060,7 @@ if ($selectedProgramName !== "") {
   if ($availmentFilter !== "All") { $whereParts[] = "b.availment_status = ?"; $params[] = $availmentFilter; $types .= "s"; }
   
   if (stripos($selectedProgramName, 'MSME') !== false && $selectedNature !== "All") {
-      $whereParts[] = "b.business_nature = ?";
+      $whereParts[] = "FIND_IN_SET(?, REPLACE(REPLACE(REPLACE(b.business_nature, ';', ','), ', ', ','), ' ,', ',')) > 0";
       $params[] = $selectedNature;
       $types .= "s";
   }
@@ -1009,7 +1077,7 @@ if ($selectedProgramName !== "") {
   $totalPages = max(1, ceil($totalRecords / $limit));
   $orderBy = "b.created_at DESC, b.beneficiary_id DESC";
   
-  $sqlList = "SELECT b.*, p.program_code,
+  $sqlList = "SELECT b.*, p.program_code, u.profile_pic AS user_profile_pic,
       CASE WHEN b.user_id IS NOT NULL THEN 'Online Applicant'
            WHEN b.application_source = 'Admin' THEN 'Administrator'
            WHEN b.application_source = 'PESO Staff' THEN COALESCE(NULLIF(TRIM(CONCAT(s.first_name, ' ', s.last_name)), ''), 'PESO Staff')
@@ -1018,6 +1086,7 @@ if ($selectedProgramName !== "") {
            ELSE 'Legacy Record' END AS added_by_name
       FROM beneficiaries b JOIN programs p ON b.program_id = p.program_id
       LEFT JOIN peso_staff s ON b.created_by = s.staff_id
+      LEFT JOIN users u ON b.user_id = u.user_id
       WHERE " . implode(" AND ", $whereParts) . " ORDER BY $orderBy LIMIT ? OFFSET ?";
   $paramsPaginated = $params;
   $typesPaginated = $types;
@@ -1061,7 +1130,7 @@ if ($selectedProgramName !== "") {
   <title>BENEPESO | Staff Beneficiaries</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <link rel="stylesheet" href="peso_staff_beneficiaries.css?v=20260820-dependent-modal-polish">
+  <link rel="stylesheet" href="peso_staff_beneficiaries.css?v=20260910-status-report-ui">
   <link rel="stylesheet" href="shared_sidebar.css">
   <style>
       /* Temporary Inline Styles to enforce the A4 Preview Look */
@@ -1069,10 +1138,11 @@ if ($selectedProgramName !== "") {
       .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #ccc; padding: 6px 3px; font-size: 9px; white-space: normal; overflow-wrap: anywhere; }
       .spreadsheet-table thead th { background: #e6f4ed; color: #0d2618; position: sticky; top: 0; z-index: 10; font-weight: 700;}
   </style>
-  <link rel="stylesheet" href="frontend_polish.css?v=2">
-  <script src="frontend_polish.js?v=1" defer></script>
+<link rel="stylesheet" href="frontend_polish.css?v=7">
+  <link rel="stylesheet" href="peso_staff_responsive.css?v=22">
+<script src="frontend_polish.js?v=3" defer></script>
 </head>
-<body>
+<body class="peso-staff-beneficiaries-page">
   <div class="page-wrap">
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
@@ -1105,14 +1175,14 @@ if ($selectedProgramName !== "") {
       <a href="peso_staff_program.php" class="nav-item"><i class="ph-fill ph-briefcase"></i> Program</a>
       <a href="peso_staff_beneficiaries.php" class="nav-item active"><i class="ph-fill ph-users"></i> Beneficiaries</a>
       <a href="peso_staff_activity_log.php" class="nav-item"><i class="ph-fill ph-clock-counter-clockwise"></i> Activity Log</a>
-      <a href="logout.php?role=peso_staff" class="nav-item logout-item"><i class="ph-bold ph-sign-out"></i> Logout</a>
+      <form method="POST" action="logout.php" class="sidebar-logout-form"><?php echo auth_csrf_input(); ?><input type="hidden" name="role" value="peso_staff"><button type="submit" class="nav-item logout-item"><i class="ph-bold ph-sign-out"></i> Logout</button></form>
     </nav>
   </aside>
 
   <main class="main-area">
     <header class="top-area animate-fade-in">
       <div class="top-left">
-        <button class="menu-toggle" id="menuToggle" type="button"><span></span><span></span><span></span></button>
+        <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
         <?php if ($selectedProgramName !== ""): ?>
             <nav class="breadcrumb">
                 <a href="peso_staff_beneficiaries.php"><i class="ph-fill ph-users" style="font-size: 1rem; margin-right: 6px;"></i> Beneficiaries</a>
@@ -1143,39 +1213,39 @@ if ($selectedProgramName !== "") {
       <section class="stats-grid animate-fade-in" style="animation-delay: 0.1s;">
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">TOTAL BENEFICIARIES</div>
+                <div class="stat-label">BENEFICIARIES</div>
                 <div class="stat-icon-sm" style="color: var(--green); background: var(--green-light);"><i class="ph-fill ph-users-three"></i></div>
             </div>
             <div class="stat-value"><?php echo (int)$globalTotalBeneficiaries; ?></div>
-            <div class="stat-trend trend-up"><i class="ph-bold ph-trend-up"></i> System Tracked</div>
-            <div class="stat-note">Total recorded beneficiaries across the system.</div>
+            <div class="stat-trend trend-up"><i class="ph-bold ph-users-three"></i> All records</div>
+            <div class="stat-note">Beneficiary records in BENEPESO.</div>
         </div>
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">APPROVED</div>
+                <div class="stat-label">APPROVED APPLICATIONS</div>
                 <div class="stat-icon-sm" style="color:#1a6d41; background:#e6f6ec;"><i class="ph-fill ph-check-circle"></i></div>
             </div>
             <div class="stat-value"><?php echo (int)$globalApprovedBeneficiaries; ?></div>
-            <div class="stat-trend trend-up"><i class="ph-bold ph-check"></i> Verified</div>
-            <div class="stat-note">Fully approved beneficiary applications.</div>
+            <div class="stat-trend trend-up"><i class="ph-bold ph-check"></i> Approved</div>
+            <div class="stat-note">Applications approved by PESO.</div>
         </div>
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">NEED APPROVAL</div>
+                <div class="stat-label">PENDING REVIEW</div>
                 <div class="stat-icon-sm" style="color:#b06900; background:#fff2e0;"><i class="ph-fill ph-clock-countdown"></i></div>
             </div>
             <div class="stat-value"><?php echo (int)$globalPendingBeneficiaries; ?></div>
-            <div class="stat-trend trend-warning"><i class="ph-bold ph-warning-circle"></i> Action Required</div>
-            <div class="stat-note">Applications awaiting administrative review.</div>
+            <div class="stat-trend trend-warning"><i class="ph-bold ph-clock"></i> For review</div>
+            <div class="stat-note">Applications waiting for review.</div>
         </div>
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">ONGOING AVAILED</div>
+                <div class="stat-label">ACTIVE BENEFICIARIES</div>
                 <div class="stat-icon-sm" style="color:#2a5a8a; background:#e8eff4;"><i class="ph-fill ph-play-circle"></i></div>
             </div>
             <div class="stat-value"><?php echo (int)$globalOngoingAvailments; ?></div>
-            <div class="stat-trend trend-neutral"><i class="ph-bold ph-arrows-clockwise"></i> Operational</div>
-            <div class="stat-note">Beneficiaries currently active in programs.</div>
+            <div class="stat-trend trend-neutral"><i class="ph-bold ph-play"></i> In progress</div>
+            <div class="stat-note">Beneficiaries currently receiving program support.</div>
         </div>
       </section>
 
@@ -1227,7 +1297,7 @@ if ($selectedProgramName !== "") {
           </div>
         </div>
 
-        <form method="GET" class="filter-container" id="filterForm">
+        <form method="GET" class="filter-container records-filter-container" id="filterForm">
             <input type="hidden" name="program_name" value="<?php echo h($selectedProgramName); ?>">
             <input type="hidden" name="approval" value="<?php echo h($approvalFilter); ?>">
             <input type="hidden" name="page" value="1">
@@ -1256,6 +1326,9 @@ if ($selectedProgramName !== "") {
               <option value="Not Yet Availed" <?php echo $availmentFilter === 'Not Yet Availed' ? 'selected' : ''; ?>>Not Yet Availed</option>
               <option value="Requirements Received" <?php echo $availmentFilter === 'Requirements Received' ? 'selected' : ''; ?>>Requirements Received</option>
               <option value="Orientation" <?php echo $availmentFilter === 'Orientation' ? 'selected' : ''; ?>>Orientation</option>
+              <option value="Examination" <?php echo $availmentFilter === 'Examination' ? 'selected' : ''; ?>>Examination (Face-to-Face)</option>
+              <option value="Exam Passed" <?php echo $availmentFilter === 'Exam Passed' ? 'selected' : ''; ?>>Exam Passed</option>
+              <option value="Exam Failed" <?php echo $availmentFilter === 'Exam Failed' ? 'selected' : ''; ?>>Exam Not Passed</option>
               <option value="Ongoing" <?php echo $availmentFilter === 'Ongoing' ? 'selected' : ''; ?>>Ongoing</option>
               <option value="Salary Distribution" <?php echo $availmentFilter === 'Salary Distribution' ? 'selected' : ''; ?>>Salary Distribution</option>
               <option value="Completed" <?php echo $availmentFilter === 'Completed' ? 'selected' : ''; ?>>Completed</option>
@@ -1271,6 +1344,13 @@ if ($selectedProgramName !== "") {
             </select>
             <?php endif; ?>
         </form>
+
+        <?php if ($beneficiaries): ?>
+        <label class="mobile-select-all-control">
+          <input type="checkbox" id="mobileSelectAllBeneficiaries" aria-label="Select all visible beneficiaries">
+          <span>Select all visible beneficiaries</span>
+        </label>
+        <?php endif; ?>
 
         <?php if (!$beneficiaries): ?>
           <div class="empty-state">
@@ -1299,6 +1379,9 @@ if ($selectedProgramName !== "") {
                           $bProgId = (int)$beneficiary["program_id"];
                           $beneficiaryApproval = $beneficiary["approval_status"] ?? "Pending";
                           $availmentStatus = $beneficiary["availment_status"] ?? "Not Yet Availed";
+                          $availmentDisplay = $beneficiaryApproval === 'Pending'
+                              ? 'Pending Review'
+                              : ($beneficiaryApproval === 'Rejected' ? 'Application Not Approved' : availment_display_label($availmentStatus));
                           $addedBy = trim($beneficiary["added_by_name"] ?? "Online Applicant"); 
                           
                           $dispName = trim($beneficiary["full_name"] ?? "");
@@ -1316,6 +1399,9 @@ if ($selectedProgramName !== "") {
                           $bData['availment'] = $availmentStatus;
                           $bData['approval'] = $beneficiaryApproval;
                           $bData['id'] = $bId;
+                          $profileFilename = basename((string)($beneficiary['user_profile_pic'] ?? ''));
+                          $profileImage = $profileFilename !== '' && $profileFilename !== 'default_user.png' && is_file('uploads/' . $profileFilename) ? 'uploads/' . $profileFilename : '';
+                          $bData['profile_image'] = $profileImage;
 
                           $profileData = json_encode($bData, JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS);
                       ?>
@@ -1323,7 +1409,12 @@ if ($selectedProgramName !== "") {
                           <td style="text-align: center; font-weight: 700; color: var(--muted); font-size: 13px;" onclick="event.stopPropagation();"><label class="bulk-row-check"><input type="checkbox" class="beneficiary-select" value="<?php echo $bId; ?>" aria-label="Select <?php echo h($dispName); ?>"><span><?php echo $counter++; ?></span></label></td>
                           <td>
                               <div style="display: flex; align-items: center; gap: 12px;">
-                                  <div class="avatar-circle" style="width: 40px; height: 40px; font-size: 15px;"><?php echo h($initial); ?></div>
+                                  <div class="avatar-circle beneficiary-table-avatar" style="width: 40px; height: 40px; font-size: 15px;">
+                                      <span><?php echo h($initial); ?></span>
+                                      <?php if ($profileImage !== ''): ?>
+                                          <img src="<?php echo h($profileImage); ?>" alt="<?php echo h($dispName); ?> profile photo" loading="lazy" onerror="this.remove()">
+                                      <?php endif; ?>
+                                  </div>
                                   <div>
                                       <div style="font-weight: 800; color: var(--green-dark); font-size: 13.5px; text-transform: uppercase;"><?php echo h($dispName); ?></div>
                                       <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px;">Added <?php echo format_date_value($beneficiary["created_at"]); ?></div>
@@ -1336,11 +1427,11 @@ if ($selectedProgramName !== "") {
                           <td><div style="font-weight: 700; color: var(--muted); font-size: 12.5px;"><?php echo h($beneficiary["program_code"] ?? "—"); ?></div></td>
                           <td style="text-align: center;">
                               <span class="<?php echo h(availment_badge($availmentStatus)); ?>">
-                                  <span class="pill-dot" style="background:currentColor;"></span> <?php echo h($availmentStatus); ?>
+                                  <span class="pill-dot" style="background:currentColor;"></span> <?php echo h($availmentDisplay); ?>
                               </span>
                           </td>
                           <td style="text-align: center;" onclick="event.stopPropagation();">
-                              <div class="action-menu-wrap" style="justify-content: center;">
+                               <div class="action-menu-wrap" style="justify-content: center;">
                                   <?php if ($beneficiaryApproval === 'Approved'): ?>
                                       <button type="button" class="beneficiary-availment-button" onclick="openQuickStatusModal(<?php echo $bId; ?>, '<?php echo addslashes($availmentStatus); ?>', '<?php echo addslashes($beneficiary['date_availed'] ?? ''); ?>', '<?php echo addslashes($beneficiary['date_completed'] ?? ''); ?>')" title="Update availment">
                                           <i class="ph-bold ph-timer" aria-hidden="true"></i>
@@ -1381,11 +1472,12 @@ if ($selectedProgramName !== "") {
     <form method="POST" class="modal-form" id="bulkStatusForm">
       <input type="hidden" name="action" value="bulk_status_update">
       <input type="hidden" name="program_name" value="<?php echo h($selectedProgramName); ?>">
+      <input type="hidden" name="program_id" value="<?php echo (int)$selectedProgramId; ?>">
       <div id="bulkSelectedInputs"></div>
       <div class="form-grid">
         <div class="form-group span-2"><label>New Availment Status *</label>
           <select name="availment_status" id="bulkAvailmentStatus" required>
-            <option value="Requirements Received">Requirements Received</option><option value="Orientation">Orientation</option><option value="Ongoing">Ongoing</option><option value="Salary Distribution">Salary Distribution</option><option value="Completed">Completed</option><option value="Not Qualified">Not Qualified</option><option value="Cancelled">Cancelled</option>
+            <option value="Requirements Received">Documents Submitted</option><option value="Orientation">Orientation</option><option value="Examination">Examination Scheduled (Face-to-Face)</option><option value="Exam Passed">Exam Passed</option><option value="Exam Failed">Exam Not Passed</option><option value="Ongoing">Ongoing</option><option value="Salary Distribution">Salary Distribution</option><option value="Completed">Completed</option><option value="Not Qualified">Not Qualified</option><option value="Cancelled">Cancelled</option>
           </select>
         </div>
         <div class="form-group span-2 bulk-message-field" hidden><label>Reason for this status *</label><textarea name="status_message" rows="4" placeholder="Explain why the beneficiaries are not qualified or why their availment was cancelled."></textarea></div>
@@ -1468,7 +1560,7 @@ if ($selectedProgramName !== "") {
                   <div class="form-group"><label>Avg Monthly Income</label><input type="text" name="avg_monthly_income" id="avg_monthly_income" placeholder="e.g. 5000" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required></div>
                   <div class="form-group"><label>Interested in Wage Employment?</label><select name="interested_in_employment" id="interested_in_employment" required><option value="No">No</option><option value="Yes">Yes</option></select></div>
                   <div class="form-group"><label>Sex</label><select name="sex" id="sex" required><option value="">-- Select --</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
-                  <div class="form-group"><label>Civil Status</label><select name="civil_status" id="civil_status" required><option value="">-- Select --</option><option value="Single">Single</option><option value="Married">Married</option><option value="Widowed">Widowed</option><option value="Legally Separated">Legally Separated</option></select></div>
+                  <div class="form-group"><label>Civil Status</label><select name="civil_status" id="civil_status" required><option value="">-- Select --</option><option value="Single">Single</option><option value="Married">Married</option><option value="Widowed">Widowed</option><option value="Legally Separated">Separated</option></select></div>
                   <div class="form-group"><label>Date of Birth</label><input type="date" name="birthdate" id="birthdateInput" required></div>
                   <div class="form-group"><label>Age</label><input type="number" name="age" id="ageOutput" readonly style="background:#f4f8f5;" required></div>
               </div>
@@ -1496,6 +1588,9 @@ if ($selectedProgramName !== "") {
                           <option value="Not Yet Availed">Not Yet Availed</option>
                           <option value="Requirements Received">Requirements Received</option>
                           <option value="Orientation">Orientation</option>
+                          <option value="Examination">Examination (Face-to-Face)</option>
+                          <option value="Exam Passed">Exam Passed</option>
+                          <option value="Exam Failed">Exam Not Passed</option>
                           <option value="Ongoing">Ongoing</option>
                           <option value="Salary Distribution">Salary Distribution</option>
                           <option value="Completed">Completed</option>
@@ -1511,7 +1606,7 @@ if ($selectedProgramName !== "") {
                       </select>
                       <small style="color:var(--muted); font-size:11px;">* Admin will update automatically.</small>
                   </div>
-                  <div id="date_fields_wrapper" style="display: none; grid-column: 1 / -1; width: 100%;">
+                  <div class="date-fields-wrapper" style="display: none; grid-column: 1 / -1; width: 100%;">
                       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                           <div class="form-group" style="margin:0;"><label>Date Availed</label><input type="date" name="date_availed" id="date_availed"></div>
                           <div class="form-group" style="margin:0;"><label>Date Completed</label><input type="date" name="date_completed" id="date_completed"></div>
@@ -1528,16 +1623,16 @@ if ($selectedProgramName !== "") {
                   <div class="form-group"><label>Relationship to GSIS Beneficiary</label><input type="text" name="gsis_relationship" id="gsis_relationship" class="not-required" placeholder="Optional"></div>
                   <div class="form-group"><label>Place of Birth</label><input type="text" name="place_of_birth" id="place_of_birth" required></div>
                   <div class="form-group"><label>Citizenship</label><input type="text" name="citizenship" id="citizenship" value="Filipino" required></div>
-                  <div class="form-group span-2"><label>Social Media URLs (Optional)</label><input type="text" name="social_urls" id="social_urls" class="not-required" placeholder="Facebook, LinkedIn..."></div>
+                  <div class="form-group"><label>Social Media URLs (Optional)</label><input type="text" name="social_urls" id="social_urls" class="not-required" placeholder="Facebook, LinkedIn..."></div>
                   <div class="form-group"><label>Email</label><input type="email" name="email" id="email" required></div>
                   <div class="form-group"><label>Date of Birth</label><input type="date" name="birthdate" id="birthdateInput" required></div>
-                  <div class="form-group span-2"><label>Age</label><input type="number" name="age" id="ageOutput" readonly style="background:#f4f8f5;" required></div>
+                  <div class="form-group"><label>Age</label><input type="number" name="age" id="ageOutput" readonly style="background:#f4f8f5;" required></div>
               </div>
           </div>
           <div class="form-step" id="spes-step-3">
               <div class="form-grid-2">
                   <div class="span-2 section-title"><i class="ph-fill ph-check-square-offset"></i> Applicant Status</div>
-                  <div class="form-group"><label>Civil Status</label><select name="civil_status" id="civil_status" required><option value="">-- Select --</option><option value="Single">Single</option><option value="Married">Married</option><option value="Widowed">Widowed</option><option value="Legally Separated">Legally Separated</option></select></div>
+                  <div class="form-group"><label>Civil Status</label><select name="civil_status" id="civil_status" required><option value="">-- Select --</option><option value="Single">Single</option><option value="Married">Married</option><option value="Widowed">Widowed</option><option value="Legally Separated">Separated</option></select></div>
                   <div class="form-group"><label>Sex</label><select name="sex" id="sex" required><option value="">-- Select --</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
                   <div class="form-group span-2"><label>Student Status</label>
                       <select name="spes_type" id="spes_type" required>
@@ -1681,8 +1776,8 @@ if ($selectedProgramName !== "") {
                   <div class="form-group span-2"><label>Other Related Information / Requests / Interventions from DOLE</label><textarea name="spes_other_info" id="spes_other_info" rows="3" class="not-required" placeholder="Leave blank if none"></textarea></div>
 
                   <h4 class="form-section-title span-2" style="margin-top:10px;">Current Record Availment Data</h4>
-                  <div class="form-group span-2"><label>Availment Status *</label><select name="availment_status" id="availment_status_input" required><option value="Not Yet Availed">Not Yet Availed</option><option value="Requirements Received">Requirements Received</option><option value="Orientation">Orientation</option><option value="Ongoing">Ongoing</option><option value="Salary Distribution">Salary Distribution</option><option value="Completed">Completed</option><option value="Not Qualified">Not Qualified</option></select></div>
-                  <div id="date_fields_wrapper" style="display: none; grid-column: 1 / -1; width: 100%;">
+                  <div class="form-group span-2"><label>Availment Status *</label><select name="availment_status" id="availment_status_input" required><option value="Not Yet Availed">Not Yet Availed</option><option value="Requirements Received">Documents Submitted</option><option value="Orientation">Orientation</option><option value="Examination">Examination Scheduled (Face-to-Face)</option><option value="Exam Passed">Exam Passed</option><option value="Exam Failed">Exam Not Passed</option><option value="Ongoing">Ongoing</option><option value="Salary Distribution">Salary Distribution</option><option value="Completed">Completed</option><option value="Not Qualified">Not Qualified</option></select></div>
+                  <div class="date-fields-wrapper" style="display: none; grid-column: 1 / -1; width: 100%;">
                       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                           <div class="form-group" style="margin:0;"><label>Date Received / Started</label><input type="date" name="date_availed" id="date_availed"></div>
                           <div class="form-group" style="margin:0;"><label>Date Completed</label><input type="date" name="date_completed" id="date_completed"></div>
@@ -1695,8 +1790,8 @@ if ($selectedProgramName !== "") {
           <div class="form-step" id="msme-step-2">
               <div class="form-grid-2">
                   <div class="span-2 section-title"><i class="ph-fill ph-storefront"></i> Business Profile</div>
-                  <div class="form-group span-2"><label>Business/Trade Name</label><input type="text" name="business_name" id="business_name" required></div>
-                  <div class="form-group span-2"><label>Type of Ownership</label><select name="ownership_type" id="ownership_type" onchange="toggleOther(this, 'other_ownership_type')" required><option value="">--Select--</option><?php render_beneficiary_options('ownership_type'); ?></select><input type="text" name="other_ownership_type" id="other_ownership_type" class="not-required" style="display:none;margin-top:5px" placeholder="Specify ownership type"></div>
+                  <div class="form-group"><label>Business/Trade Name</label><input type="text" name="business_name" id="business_name" required></div>
+                  <div class="form-group"><label>Type of Ownership</label><select name="ownership_type" id="ownership_type" required><option value="">--Select--</option><?php render_beneficiary_options('ownership_type'); ?></select></div>
                   <div class="form-group span-2">
                       <label>Nature of Business (Check all that apply)</label>
                       <div class="checkbox-grid">
@@ -1726,7 +1821,7 @@ if ($selectedProgramName !== "") {
                                       <div class="product-row-flex">
                                           <input type="text" name="prod_name[]" placeholder="Item Name" required>
                                           <input type="text" name="prod_price[]" placeholder="0.00" oninput="this.value = this.value.replace(/[^0-9.]/g, '')" required>
-                                          <button type="button" class="btn-remove-row" onclick="removeRow(this)">✕</button>
+                                          <button type="button" class="btn-remove-row" onclick="removeRow(this)" aria-label="Remove row" title="Remove row"><i class="ph-bold ph-trash"></i></button>
                                       </div>
                                   </td>
                               </tr>
@@ -1735,13 +1830,13 @@ if ($selectedProgramName !== "") {
                       <button type="button" class="btn-add-row" onclick="addProductRow()">+ Add Product</button>
                   </div>
 
-                  <div class="form-group"><label>Year Started</label><input type="text" name="year_started" id="year_started" placeholder="YYYY" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required></div>
+                  <div class="form-group"><label>Year Started</label><select name="year_started" id="year_started" required><option value="">--Select year--</option><?php for ($year = (int)date('Y'); $year >= 1900; $year--): ?><option value="<?php echo $year; ?>"><?php echo $year; ?></option><?php endfor; ?></select></div>
                   <div class="form-group"><label>Business Permit No.</label><input type="text" name="business_permit_no" id="business_permit_no" required></div>
                   <div class="form-group"><label>Permit Valid Until</label><input type="date" name="permit_valid_until" id="permit_validity" required></div>
                   <div class="form-group"><label>DTI Reg No.</label><input type="text" name="dti_no" id="dti_no" required></div>
                   <div class="form-group"><label>TIN</label><input type="text" name="tin_no" id="tin_no" oninput="this.value = this.value.replace(/[^0-9-]/g, '')" required></div>
-                  <div class="form-group"><label>Contact Details (Landline, Email)</label><input type="text" name="contact_details" id="business_email" required></div>
-                  <div class="form-group span-2"><label>Website / Social Media (Optional)</label><input type="text" name="business_social_media" id="business_social_media" class="not-required" placeholder="Website or Facebook page"></div>
+                  <div class="form-group"><label>Business Email</label><input type="email" name="business_email" id="business_email" required></div>
+                  <div class="form-group span-2"><label>Website / Social Media (Optional)</label><input type="text" name="business_social_media" id="business_social_media" class="not-required" data-text-input="true" autocomplete="url" placeholder="Website or Facebook page"></div>
               </div>
           </div>
           <div class="form-step" id="msme-step-3">
@@ -1762,7 +1857,7 @@ if ($selectedProgramName !== "") {
                           <option value="Single">Single</option>
                           <option value="Married">Married</option>
                           <option value="Widowed">Widowed</option>
-                          <option value="Legally Separated">Legally Separated</option>
+                          <option value="Legally Separated">Separated</option>
                       </select>
                   </div>
                   <div class="form-group span-2">
@@ -1793,7 +1888,7 @@ if ($selectedProgramName !== "") {
                           <label><input type="checkbox" name="assets_owned[]" value="Vehicles"> Vehicles</label>
                           <label><input type="checkbox" name="assets_owned[]" value="Others" onchange="document.getElementById('asset_other').style.display=this.checked?'block':'none'"> Others</label>
                       </div>
-                      <input type="text" name="assets_owned[]" id="asset_other" style="display:none; margin-top:10px;" placeholder="Specify other assets" class="not-required">
+                      <input type="text" name="assets_owned[]" id="asset_other" data-text-input="true" style="display:none; margin-top:10px;" placeholder="Specify other assets" class="not-required">
                   </div>
                   <div class="form-group span-2">
                       <label>Utility Needs (Check all that apply)</label>
@@ -1804,10 +1899,8 @@ if ($selectedProgramName !== "") {
                           <label><input type="checkbox" name="utility_needs[]" value="Internet/Data"> Internet/Data</label>
                           <label><input type="checkbox" name="utility_needs[]" value="Others" onchange="document.getElementById('util_other').style.display=this.checked?'block':'none'"> Others</label>
                       </div>
-                      <input type="text" name="utility_needs[]" id="util_other" style="display:none; margin-top:10px;" placeholder="Specify other utilities" class="not-required">
+                      <input type="text" name="utility_needs[]" id="util_other" data-text-input="true" style="display:none; margin-top:10px;" placeholder="Specify other utilities" class="not-required">
                   </div>
-                  <div class="form-group"><label>Night Market Stall No. (Optional)</label><input type="text" name="nm_stall_no" id="nm_stall_no" class="not-required"></div>
-                  <div class="form-group"><label>Night Market Date Started (Optional)</label><input type="date" name="nm_date_started" id="nm_date_started" class="not-required"></div>
               </div>
           </div>
           <div class="form-step" id="msme-step-5">
@@ -1839,7 +1932,7 @@ if ($selectedProgramName !== "") {
                           <label><input type="checkbox" name="source_of_capital[]" value="Government Assistance"> Govt Assistance</label>
                           <label><input type="checkbox" name="source_of_capital[]" value="Others" onchange="document.getElementById('cap_other').style.display=this.checked?'block':'none'"> Others</label>
                       </div>
-                      <input type="text" name="source_of_capital[]" id="cap_other" style="display:none; margin-top:10px;" placeholder="Specify other source" class="not-required">
+                      <input type="text" name="source_of_capital[]" id="cap_other" data-text-input="true" style="display:none; margin-top:10px;" placeholder="Specify other source" class="not-required">
                   </div>
                   <div class="form-group span-2"><label>Business Size</label>
                       <select name="business_size" required>
@@ -1953,6 +2046,9 @@ if ($selectedProgramName !== "") {
                           <option value="Not Yet Availed">Not Yet Availed</option>
           <option value="Requirements Received">Requirements Received</option>
           <option value="Orientation">Orientation</option>
+          <option value="Examination">Examination (Face-to-Face)</option>
+          <option value="Exam Passed">Exam Passed</option>
+          <option value="Exam Failed">Exam Not Passed</option>
           <option value="Ongoing">Ongoing</option>
           <option value="Salary Distribution">Salary Distribution</option>
           <option value="Completed">Completed</option>
@@ -1968,7 +2064,7 @@ if ($selectedProgramName !== "") {
                       </select>
                       <small style="color:var(--muted); font-size:11px;">* Staff cannot modify approval status.</small>
                   </div>
-                  <div id="date_fields_wrapper" style="display: none; grid-column: 1 / -1; width: 100%;">
+                  <div class="date-fields-wrapper" style="display: none; grid-column: 1 / -1; width: 100%;">
                       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                           <div class="form-group" style="margin:0;"><label>Date Availed</label><input type="date" name="date_availed" id="date_availed"></div>
                           <div class="form-group" style="margin:0;"><label>Date Completed</label><input type="date" name="date_completed" id="date_completed"></div>
@@ -2008,8 +2104,8 @@ if ($selectedProgramName !== "") {
   <div class="modal-dialog modal-dialog-sm" style="animation: modalSlideUp 0.3s ease-out; overflow: hidden !important;">
     <div class="modal-head-sm">
       <div>
-        <div class="modal-title" style="font-size: 22px;">Update Availment</div>
-        <div class="modal-sub">Update DOLE Availment tracking.</div>
+        <div class="modal-title" style="font-size: 22px;">Update Program Status</div>
+        <div class="modal-sub">Record the current stage and notify the beneficiary.</div>
       </div>
       <button type="button" class="modal-close-icon" style="position: absolute; right: 24px; top: 24px;" data-close-quick><i class="ph-bold ph-x"></i></button>
     </div>
@@ -2021,16 +2117,20 @@ if ($selectedProgramName !== "") {
           <input type="hidden" name="program_name" value="<?php echo h($selectedProgramName); ?>">
 
           <div class="form-group">
-            <label>DOLE Availment Status *</label>
+            <label>Program Progress Status *</label>
             <select name="availment_status" id="quick_availment_status" required onchange="toggleQuickDateFields()">
-              <option value="Not Yet Availed">Not Yet Availed</option>
-              <option value="Requirements Received">Requirements Received</option>
+              <option value="Not Yet Availed">Approved – Awaiting Next Step</option>
+              <option value="Requirements Received">Documents Submitted</option>
               <option value="Orientation">Orientation</option>
+              <option value="Examination">Examination Scheduled (Face-to-Face)</option>
+              <option value="Exam Passed">Exam Passed</option>
+              <option value="Exam Failed">Exam Not Passed</option>
               <option value="Ongoing">Ongoing</option>
               <option value="Salary Distribution">Salary Distribution</option>
               <option value="Completed">Completed</option>
               <option value="Not Qualified">Not Qualified</option>
             </select>
+            <small class="status-field-help">Only stages applicable to this program are shown.</small>
           </div>
 
           <div class="form-group" id="quick_place_container" style="display: none;">
@@ -2038,10 +2138,16 @@ if ($selectedProgramName !== "") {
             <input type="text" name="schedule_place" id="quick_schedule_place" placeholder="Enter venue or distribution place">
           </div>
 
+      <div class="form-group" id="quick_resubmission_container" style="display:none;">
+        <label class="resubmission-option" for="quick_needs_resubmission">
+          <input type="checkbox" name="needs_resubmission" id="quick_needs_resubmission" value="1" onchange="toggleQuickDateFields()">
+          <span class="resubmission-copy"><strong>Request document resubmission</strong><small>Use when requirements are incorrect, incomplete, expired, or unreadable.</small></span>
+        </label>
+      </div>
       <div class="form-group" id="quick_message_container" style="display:none;">
         <label>Reason for this status *</label>
         <textarea name="status_message" id="quick_status_message" rows="3" placeholder="Explain why the applicant is not qualified or why the availment was cancelled."></textarea>
-          </div>
+      </div>
 
           <div id="quick_date_fields_wrapper" style="display: none;">
             <div class="form-row-2">
@@ -2058,7 +2164,7 @@ if ($selectedProgramName !== "") {
 
           <div class="modal-actions-sm">
             <button type="button" class="btn-light" data-close-quick>Cancel</button>
-            <button type="submit" class="btn-main"><i class="ph-bold ph-check" style="margin-right:6px;"></i> Save Status</button>
+            <button type="submit" class="btn-main"><i class="ph-bold ph-check" style="margin-right:6px;"></i> Save &amp; Notify</button>
           </div>
         </form>
     </div>
@@ -2096,6 +2202,9 @@ if ($selectedProgramName !== "") {
           <option value="Not Yet Availed">New Beneficiaries (Not Yet Availed)</option>
           <option value="Requirements Received">Requirements Received</option>
           <option value="Orientation">Orientation</option>
+          <option value="Examination">Examination (Face-to-Face)</option>
+          <option value="Exam Passed">Exam Passed</option>
+          <option value="Exam Failed">Exam Not Passed</option>
           <option value="Ongoing">Ongoing Beneficiaries</option>
           <option value="Salary Distribution">Salary Distribution</option>
           <option value="Completed">Old/Completed Beneficiaries</option>
@@ -2116,9 +2225,9 @@ if ($selectedProgramName !== "") {
       <div class="form-group">
         <label>Upload File *</label>
         <div class="file-upload-box-dashed">
-            <input type="file" name="csv_file" accept=".csv,.xlsx" required style="width:100%; padding:15px;">
+            <input type="file" name="csv_file" id="bulkFileInput" accept=".csv,.xlsx" required style="width:100%; padding:15px;">
             <div style="font-size: 32px; color: var(--green); margin-bottom: 8px;"><i class="ph-fill ph-file-text"></i></div>
-            <div class="file-help-text">Select an Excel (.xlsx) or CSV (.csv) file</div>
+            <div class="file-help-text" id="bulkFileName">Select an Excel (.xlsx) or CSV (.csv) file</div>
         </div>
       </div>
 
@@ -2132,7 +2241,7 @@ if ($selectedProgramName !== "") {
 
 <script>
 function toggleBatchScheduleFields(select) {
-  const needsSchedule = select.value === 'Orientation' || select.value === 'Salary Distribution';
+  const needsSchedule = select.value === 'Orientation' || select.value === 'Examination' || select.value === 'Salary Distribution';
   const needsMessage = select.value === 'Not Qualified' || select.value === 'Cancelled';
   const fields = document.getElementById('batch_schedule_fields');
   const dateInput = document.getElementById('batch_schedule_date');
@@ -2145,7 +2254,7 @@ function toggleBatchScheduleFields(select) {
   messageContainer.style.display = needsMessage ? 'block' : 'none';
   messageInput.required = needsMessage;
   if (!needsMessage) messageInput.value = '';
-  document.getElementById('batch_schedule_date_label').textContent = select.value === 'Orientation' ? 'Orientation Date *' : 'Distribution Date *';
+  document.getElementById('batch_schedule_date_label').textContent = select.value === 'Orientation' ? 'Orientation Date *' : (select.value === 'Examination' ? 'Examination Date *' : 'Distribution Date *');
 }
 </script>
 
@@ -2153,9 +2262,9 @@ function toggleBatchScheduleFields(select) {
   <div class="modal-backdrop" data-close-report></div>
   <div class="modal-dialog split-layout" style="position: relative; overflow: hidden !important;">
     
-    <button type="button" data-close-report style="position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border-radius: 50%; background: #fee2e2; border: none; color: #dc2626; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"><i class="ph-bold ph-x" style="font-size: 16px;"></i></button>
+    <button type="button" class="modal-close-icon report-close-button" data-close-report aria-label="Close generate report"><i class="ph-bold ph-x"></i></button>
 
-    <div class="report-controls"> 
+    <div class="report-controls" id="reportFiltersPanel">
         <div style="margin-bottom: 24px; flex-shrink: 0;">
             <div class="modal-title">Generate Report</div>
             <div class="modal-sub">Filter, print, or export the beneficiary list for <?php echo h($selectedProgramName); ?>.</div>
@@ -2188,6 +2297,9 @@ function toggleBatchScheduleFields(select) {
                         <option value="Not Yet Availed">New (Not Availed)</option>
                         <option value="Requirements Received">Requirements Received</option>
                         <option value="Orientation">Orientation</option>
+                        <option value="Examination">Examination (Face-to-Face)</option>
+                        <option value="Exam Passed">Exam Passed</option>
+                        <option value="Exam Failed">Exam Not Passed</option>
                         <option value="Ongoing">Ongoing</option>
                         <option value="Salary Distribution">Salary Distribution</option>
                         <option value="Completed">Old / Completed</option>
@@ -2239,11 +2351,17 @@ function toggleBatchScheduleFields(select) {
     </div>
 
     <div class="report-preview">
+        <button type="button" class="report-filter-toggle" aria-controls="reportFiltersPanel" aria-expanded="false"><i class="ph-bold ph-funnel"></i><span>Filters</span></button>
         <div class="spreadsheet-container">
             <div class="preview-header">
                 <img class="official-report-header" src="assets/peso_official_report_header.png?v=20260820-compact" alt="PESO Vinzons official letterhead">
                 <h2><?php echo h($reportProgramTitle); ?></h2>
                 <p id="preview_subtitle_top">Municipality of Vinzons</p>
+            </div>
+            <div class="report-column-pagination" aria-label="Report column navigation">
+                <button type="button" data-report-column-page="previous"><i class="ph-bold ph-caret-left"></i> Previous columns</button>
+                <span class="report-column-page-status">Columns 1–8</span>
+                <button type="button" data-report-column-page="next">Next columns <i class="ph-bold ph-caret-right"></i></button>
             </div>
             <div class="scrollable-table-wrap">
                 <table class="spreadsheet-table" id="preview_main_table">
@@ -2274,7 +2392,7 @@ function toggleBatchScheduleFields(select) {
     </div>
 
     <div class="id-card-right" style="flex: 1; padding: 32px; background: #fff; position: relative;">
-       <button type="button" data-close-profile style="position: absolute; top: 16px; right: 16px; background: #f9fafb; border: 1px solid #eaecf0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #667085;"><i class="ph-bold ph-x"></i></button>
+       <button type="button" class="profile-close-button" data-close-profile aria-label="Close beneficiary profile" style="position: absolute; top: 16px; right: 16px; background: #f9fafb; border: 1px solid #eaecf0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #667085;"><i class="ph-bold ph-x"></i></button>
 
        <div class="id-card-right-inner">
            <div class="id-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px; border-bottom: 2px solid #1f7a54; padding-bottom: 12px; width: fit-content; min-width: 250px;">
@@ -2332,22 +2450,6 @@ function toggleBatchScheduleFields(select) {
                  </div>
               </div>
 
-              <div class="info-card" id="pm_stall_container" style="display:none;">
-                 <div class="info-icon"><i class="ph-fill ph-storefront"></i></div>
-                 <div class="info-text">
-                    <label>NIGHT MARKET STALL NO.</label>
-                    <div class="detail-value" id="pm_stall"></div>
-                 </div>
-              </div>
-
-              <div class="info-card" id="pm_date_container" style="display:none;">
-                 <div class="info-icon"><i class="ph-fill ph-calendar-plus"></i></div>
-                 <div class="info-text">
-                    <label id="pm_dynamic_date_label">NIGHT MARKET DATE STARTED</label>
-                    <div class="detail-value" id="pm_nm_start"></div>
-                 </div>
-              </div>
-
               <div class="info-card" id="pm_utility_container" style="grid-column: 1 / -1; display:none;">
                  <div class="info-icon"><i class="ph-fill ph-lightning"></i></div>
                  <div class="info-text">
@@ -2397,13 +2499,13 @@ function toggleBatchScheduleFields(select) {
         </div>
         <div class="import-summary-stat">
           <strong><?php echo number_format((int)$importSummary['emails_sent']); ?></strong>
-          <span>Status emails sent</span>
+          <span>Status emails scheduled</span>
         </div>
       </div>
       <div class="import-summary-note">
         <span><i class="ph ph-info"></i> New records are pending approval. Saved records use the availment status <strong><?php echo h($importSummary['status']); ?></strong>.</span>
         <?php if ((int)$importSummary['emails_failed'] > 0): ?>
-          <span class="import-summary-warning"><?php echo number_format((int)$importSummary['emails_failed']); ?> email notification(s) could not be sent.</span>
+          <span class="import-summary-warning"><?php echo number_format((int)$importSummary['emails_failed']); ?> email notification(s) could not be scheduled.</span>
           <div class="import-summary-reasons">
             <strong>Reason:</strong>
             <?php foreach (($importSummary['email_failure_reasons'] ?? []) as $reason => $count): ?>
@@ -2435,6 +2537,19 @@ function toggleBatchScheduleFields(select) {
   </div>
 </div>
 
+<div class="modal" id="beneficiaryNoticeModal" aria-hidden="true">
+  <div class="modal-backdrop" data-close-beneficiary-notice></div>
+  <div class="success-dialog" role="dialog" aria-modal="true" aria-labelledby="beneficiaryNoticeTitle">
+    <div class="warning-icon" style="background:#eef7f2;color:#1f7a54;"><i class="ph-bold ph-info"></i></div>
+    <div class="success-title" id="beneficiaryNoticeTitle">Notice</div>
+    <div class="modal-text" id="beneficiaryNoticeMessage"></div>
+    <div class="modal-actions-flex" style="margin-top:24px;">
+      <button type="button" class="btn-light" id="beneficiaryNoticeCancel" data-close-beneficiary-notice>Close</button>
+      <button type="button" class="btn-main" id="beneficiaryNoticeConfirm" hidden>Continue</button>
+    </div>
+  </div>
+</div>
+
 <?php endif; ?>
 
 <script>
@@ -2444,7 +2559,27 @@ function toggleBatchScheduleFields(select) {
     
     let previewData = [];
     let currentPreviewPage = 1;
-    const previewItemsPerPage = 20;
+    const previewItemsPerPage = 10;
+
+    function showBeneficiaryNotice(title, message, onConfirm = null) {
+      const modal = document.getElementById('beneficiaryNoticeModal');
+      document.getElementById('beneficiaryNoticeTitle').textContent = title;
+      document.getElementById('beneficiaryNoticeMessage').textContent = message;
+      const confirmButton = document.getElementById('beneficiaryNoticeConfirm');
+      const cancelButton = document.getElementById('beneficiaryNoticeCancel');
+      confirmButton.hidden = typeof onConfirm !== 'function';
+      cancelButton.textContent = onConfirm ? 'Cancel' : 'Okay';
+      confirmButton.onclick = onConfirm ? () => { closeBeneficiaryNotice(); onConfirm(); } : null;
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+      (onConfirm ? confirmButton : cancelButton).focus();
+    }
+    function closeBeneficiaryNotice() {
+      const modal = document.getElementById('beneficiaryNoticeModal');
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    document.querySelectorAll('[data-close-beneficiary-notice]').forEach(button => button.addEventListener('click', closeBeneficiaryNotice));
 </script>
 
 <script>
@@ -2502,13 +2637,13 @@ function toggleBatchScheduleFields(select) {
   function addProductRow() {
       let table = document.getElementById('productsTable')?.getElementsByTagName('tbody')[0];
       if(!table) return;
-      if(table.rows.length >= 10) return alert("Maximum 10 products allowed.");
+      if(table.rows.length >= 10) { showBeneficiaryNotice('Product Limit Reached', 'You may add up to 10 products or services only.'); return; }
       let newRow = table.insertRow();
       newRow.innerHTML = `<td style="padding: 0;" colspan="3">
                               <div class="product-row-flex">
                                   <input type="text" name="prod_name[]" placeholder="Item Name" required>
                                   <input type="text" name="prod_price[]" placeholder="0.00" oninput="this.value = this.value.replace(/[^0-9.]/g, '')" required>
-                                  <button type="button" class="btn-remove-row" onclick="removeRow(this)">✕</button>
+                                  <button type="button" class="btn-remove-row" onclick="removeRow(this)" aria-label="Remove row" title="Remove row"><i class="ph-bold ph-trash"></i></button>
                               </div>
                           </td>`;
   }
@@ -2543,7 +2678,7 @@ function toggleBatchScheduleFields(select) {
           row.innerHTML = `<td style="padding: 0;" colspan="3"><div class="product-row-flex">
                               <input type="text" name="prod_name[]" placeholder="Item Name" required>
                               <input type="text" name="prod_price[]" placeholder="0.00" inputmode="decimal" oninput="this.value = this.value.replace(/[^0-9.]/g, '')" required>
-                              <button type="button" class="btn-remove-row" onclick="removeRow(this)">×</button>
+                              <button type="button" class="btn-remove-row" onclick="removeRow(this)" aria-label="Remove row" title="Remove row"><i class="ph-bold ph-trash"></i></button>
                            </div></td>`;
           row.querySelector('[name="prod_name[]"]').value = name;
           row.querySelector('[name="prod_price[]"]').value = prices[index] || '';
@@ -2574,13 +2709,13 @@ function toggleBatchScheduleFields(select) {
   function addSpesRow() {
       let table = document.getElementById('spesTable')?.getElementsByTagName('tbody')[0];
       if(!table) return;
-      if(table.rows.length >= 4) return alert("Maximum 4 histories allowed.");
+      if(table.rows.length >= 4) { showBeneficiaryNotice('History Limit Reached', 'You may add up to four SPES history records only.'); return; }
       let newRow = table.insertRow();
       newRow.innerHTML = `<td><input type="text" name="spes_hist_avail[]" class="not-required" placeholder="e.g. 1st"></td>
                           <td><input type="text" name="spes_hist_est[]" class="not-required" placeholder="Office/LGU"></td>
                           <td><input type="text" name="spes_hist_year[]" class="not-required" placeholder="YYYY" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></td>
                           <td><input type="text" name="spes_hist_id[]" class="not-required" placeholder="ID Number"></td>
-                          <td class="action-cell"><button type="button" class="btn-remove-row" onclick="removeRow(this)">✕</button></td>`;
+                          <td class="action-cell"><button type="button" class="btn-remove-row" onclick="removeRow(this)" aria-label="Remove row" title="Remove row"><i class="ph-bold ph-trash"></i></button></td>`;
   }
 
   function removeRow(btn) {
@@ -2630,7 +2765,17 @@ function toggleBatchScheduleFields(select) {
               if (el) el.textContent = text || '—';
           };
 
-          safeSetText('pm_avatar', data.initial);
+          const profileAvatar = document.getElementById('pm_avatar');
+          if (profileAvatar) {
+              profileAvatar.textContent = data.initial || '?';
+              if (data.profile_image) {
+                  const image = document.createElement('img');
+                  image.src = data.profile_image;
+                  image.alt = `${data.name || 'Beneficiary'} profile photo`;
+                  image.onload = () => { profileAvatar.textContent = ''; profileAvatar.appendChild(image); };
+                  image.onerror = () => { profileAvatar.textContent = data.initial || '?'; };
+              }
+          }
           safeSetText('pm_name', data.name);
           safeSetText('pm_program_header', data.program); 
           safeSetText('pm_added_by', data.added_by); 
@@ -2683,10 +2828,10 @@ function toggleBatchScheduleFields(select) {
               labelText = "NATURE OF BUSINESS";
               
               if(busContainer) { busContainer.style.display = 'block'; safeSetText('pm_business_name', data.business_name || 'N/A'); }
-              if(stallContainer) { stallContainer.style.display = 'block'; safeSetText('pm_stall', data.nm_stall_no || '—'); }
-              if(dateContainer) { dateContainer.style.display = 'block'; safeSetText('pm_dynamic_date_label', 'NIGHT MARKET DATE STARTED'); safeSetText('pm_nm_start', data.nm_date_started || '—'); }
+              if(stallContainer) stallContainer.style.display = 'none';
+              if(dateContainer) dateContainer.style.display = 'none';
               if(utilityContainer) { utilityContainer.style.display = 'block'; safeSetText('pm_utility', data.utility_needs || '—'); }
-              if(assetsContainer) { assetsContainer.style.display = 'block'; safeSetText('pm_assets', data.business_assets || '—'); }
+              if(assetsContainer) { assetsContainer.style.display = 'block'; safeSetText('pm_assets', data.assets_owned || '—'); }
           }
           
           safeSetText('pm_dynamic_label', labelText);
@@ -2706,7 +2851,12 @@ function toggleBatchScheduleFields(select) {
 
           const badgeContainer = document.getElementById('pm_availment_badge');
           if (badgeContainer) {
-              badgeContainer.innerHTML = `<span class="${getAvail(data.availment)}"><span class="pill-dot" style="background:currentColor;"></span> ${data.availment}</span>`;
+              let displayedAvailment = data.availment;
+              if (data.approval === 'Pending') displayedAvailment = 'Pending Review';
+              else if (data.approval === 'Rejected') displayedAvailment = 'Application Not Approved';
+              else if (data.availment === 'Not Yet Availed') displayedAvailment = 'Approved - Awaiting Next Step';
+              else if (data.availment === 'Requirements Received') displayedAvailment = 'Documents Submitted';
+              badgeContainer.innerHTML = `<span class="${getAvail(data.availment)}"><span class="pill-dot" style="background:currentColor;"></span> ${displayedAvailment}</span>`;
           }
 
           window.currentProfileData = data;
@@ -2806,7 +2956,7 @@ function toggleBatchScheduleFields(select) {
       const availmentSelects = document.querySelectorAll('select[name="availment_status"]');
       availmentSelects.forEach((availmentSelect) => {
           const scope = availmentSelect.closest('.form-step') || availmentSelect.closest('form');
-          const wrapper = scope ? scope.querySelector('[id="date_fields_wrapper"]') : null;
+          const wrapper = scope ? scope.querySelector('.date-fields-wrapper') : null;
           if (availmentSelect && wrapper) {
               const val = availmentSelect.value;
               const group1 = wrapper.children[0].children[0];
@@ -2919,7 +3069,7 @@ function toggleBatchScheduleFields(select) {
               ['4th Availment', [data.spes_history_4_year, data.spes_history_4_id && `ID: ${data.spes_history_4_id}`].filter(hasValue).join(' · ')]
           ]],
           ['SPES Qualification Review', 'ph-shield-check', [
-              ['Age Requirement', data.age ? ((Number(data.age) >= 15 && Number(data.age) <= 30) ? `Meets requirement (${data.age} years old)` : `Does not meet requirement (${data.age} years old; required 15–30)`) : 'For verification'],
+              ['Age Requirement', data.age ? ((Number(data.age) >= 18 && Number(data.age) <= 30) ? `Meets requirement (${data.age} years old)` : `Does not meet requirement (${data.age} years old; required 18–30)`) : 'For verification'],
               ['Reported Family Income', data.avg_monthly_income],
               ['Income Qualification', 'Verify combined annual income against the latest Region V poverty threshold for a family of six.'],
               ['Supporting Evidence', 'Validate the latest ITR, BIR tax-exemption certification, Certificate of Indigence, or Certificate of Low Income.']
@@ -3070,6 +3220,7 @@ function toggleBatchScheduleFields(select) {
       document.getElementById('quick_date_completed').value = dateCompleted || '';
       document.getElementById('quick_schedule_place').value = '';
       document.getElementById('quick_status_message').value = '';
+      document.getElementById('quick_needs_resubmission').checked = false;
       toggleQuickDateFields(); // Run instantly to load matching dynamic layout
       const quickModal = document.getElementById('quickStatusModal');
       quickModal.classList.add('show');
@@ -3090,6 +3241,8 @@ function toggleBatchScheduleFields(select) {
       const placeInput = document.getElementById('quick_schedule_place');
       const messageGroup = document.getElementById('quick_message_container');
       const messageInput = document.getElementById('quick_status_message');
+      const resubmissionGroup = document.getElementById('quick_resubmission_container');
+      const resubmissionInput = document.getElementById('quick_needs_resubmission');
 
       // Reset
       wrapper.style.display = 'none';
@@ -3099,17 +3252,22 @@ function toggleBatchScheduleFields(select) {
       input2.removeAttribute('required');
       placeGroup.style.display = 'none';
       placeInput.removeAttribute('required');
-      const needsMessage = status === 'Not Qualified' || status === 'Cancelled';
+      const isRequirements = status === 'Requirements Received';
+      resubmissionGroup.style.display = isRequirements ? 'block' : 'none';
+      if (!isRequirements) resubmissionInput.checked = false;
+      const needsMessage = status === 'Not Qualified' || status === 'Cancelled' || (isRequirements && resubmissionInput.checked);
       messageGroup.style.display = needsMessage ? 'block' : 'none';
       messageInput.required = needsMessage;
+      messageGroup.querySelector('label').textContent = isRequirements && resubmissionInput.checked ? 'Reason and resubmission instructions *' : 'Reason for this status *';
+      messageInput.placeholder = isRequirements && resubmissionInput.checked ? 'Explain what is incorrect or missing and what documents must be resubmitted.' : 'Explain why the applicant is not qualified or why the availment was cancelled.';
       if (!needsMessage) messageInput.value = '';
       dateRow.style.gridTemplateColumns = 'minmax(0, 1fr) minmax(0, 1fr)';
 
-      if (status === 'Orientation' || status === 'Salary Distribution') {
+      if (status === 'Orientation' || status === 'Examination' || status === 'Salary Distribution') {
           wrapper.style.display = 'block';
           dateRow.style.gridTemplateColumns = 'minmax(0, 1fr)';
           group1.style.display = 'block';
-          label1.textContent = status === 'Orientation' ? 'Orientation Date *' : 'Distribution Date *';
+          label1.textContent = status === 'Orientation' ? 'Orientation Date *' : (status === 'Examination' ? 'Examination Date *' : 'Distribution Date *');
           input1.setAttribute('required', 'required');
           placeGroup.style.display = 'block';
           placeInput.setAttribute('required', 'required');
@@ -3278,8 +3436,6 @@ function toggleBatchScheduleFields(select) {
       if(document.getElementById('business_social_media')) document.getElementById('business_social_media').value = data.business_social_media || '';
       setSelectOrOther('educational_attainment', data.educational_attainment);
       if(document.getElementById('work_experience')) document.getElementById('work_experience').value = data.work_experience || '';
-      if(document.getElementById('nm_stall_no')) document.getElementById('nm_stall_no').value = data.nm_stall_no || '';
-      if(document.getElementById('nm_date_started')) document.getElementById('nm_date_started').value = data.nm_date_started || '';
       ['hr_male','hr_female','hr_total','emp_regular','emp_seasonal','emp_contractual','emp_family','hr_skills','business_size','initial_capital','current_capital','daily_earnings','availed_before'].forEach(name => populateNamedField(name, data[name]));
       populateCheckboxGroup('business_nature_arr', data.business_nature);
       populateCheckboxGroup('assets_owned', data.assets_owned);
@@ -3348,6 +3504,16 @@ function toggleBatchScheduleFields(select) {
       
       document.querySelectorAll('#openBulkUploadModal, #openBulkUploadModal2').forEach(btn => { if(btn) btn.addEventListener('click', () => bulkModal.classList.add('show')); });
       document.querySelectorAll('[data-close-bulk]').forEach(btn => btn.addEventListener('click', () => bulkModal.classList.remove('show')));
+
+      // Keep legacy database values stable while presenting clear workflow labels.
+      document.querySelectorAll('option[value="Not Yet Availed"]').forEach(option => {
+          option.textContent = option.textContent.includes('New Beneficiaries')
+              ? 'New Beneficiaries (Initial Stage)'
+              : 'Approved – Awaiting Next Step';
+      });
+      document.querySelectorAll('option[value="Requirements Received"]').forEach(option => {
+          option.textContent = 'Documents Submitted';
+      });
       
       const fileInput = document.getElementById('bulkFileInput');
       const fileNameDisplay = document.getElementById('bulkFileName');
@@ -3364,13 +3530,23 @@ function toggleBatchScheduleFields(select) {
       }
 
       const openReportBtn = document.getElementById('openReportModal');
+      const reportFilterToggle = document.querySelector('#generateReportModal .report-filter-toggle');
       if(openReportBtn) {
           openReportBtn.addEventListener('click', () => {
               reportModal.classList.add('show');
+              reportModal.classList.remove('filters-open');
+              reportFilterToggle?.setAttribute('aria-expanded', 'false');
               updateReportPreview(); 
           });
       }
-      document.querySelectorAll('[data-close-report]').forEach(btn => btn.addEventListener('click', () => reportModal.classList.remove('show')));
+      reportFilterToggle?.addEventListener('click', () => {
+          const open = reportModal.classList.toggle('filters-open');
+          reportFilterToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      document.querySelectorAll('[data-close-report]').forEach(btn => btn.addEventListener('click', () => {
+          reportModal.classList.remove('show', 'filters-open');
+          reportFilterToggle?.setAttribute('aria-expanded', 'false');
+      }));
 
       const reportBrgySelect = document.getElementById('report_brgy_select');
       const reportAvailSelect = document.getElementById('report_avail_select');
@@ -3380,6 +3556,75 @@ function toggleBatchScheduleFields(select) {
       const reportColumnInputs = Array.from(document.querySelectorAll('.report-column-list input[type="checkbox"]'));
       const reportColumnCount = document.querySelector('.report-column-count');
       const reportColumnDefinitions = <?php echo json_encode(getReportColumnDefinitions($selectedProgramName), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+      const getReportColumnsPerPage = () => window.innerWidth <= 520 ? 2 : (window.innerWidth <= 900 ? 4 : 8);
+      let currentReportColumnPage = 1;
+      let showAllReportColumns = false;
+
+      const reportMultiValueKeys = ['primary_products','product_price','business_nature','assets_owned','utility_needs','source_of_capital','mode_of_payment','distribution_channels','assistance_availed','past_programs','programs_needed','challenges_encountered','special_skills','parents_status','ownership_type','hr_skills','skills_training_needed','type_of_beneficiary','employment_type','spes_history'];
+
+      function uniqueReportListItems(value) {
+          let source = value;
+          if (!Array.isArray(source)) {
+              const raw = String(source || '').trim();
+              try {
+                  const decoded = JSON.parse(raw);
+                  if (Array.isArray(decoded)) source = decoded;
+              } catch (error) {}
+          }
+          const flattened = (Array.isArray(source) ? source.flat(Infinity) : String(source || '').split(/[,;\r\n]+/));
+          const seen = new Set();
+          return flattened.map(item => String(item ?? '').trim()).filter(item => {
+              const key = item.replace(/\s+/g, ' ').toLowerCase();
+              if (!key || seen.has(key)) return false;
+              seen.add(key);
+              return true;
+          });
+      }
+
+      function formatReportList(items) {
+          const values = Array.isArray(items) ? items.filter(Boolean) : uniqueReportListItems(items);
+          return values.length <= 1 ? (values[0] || '') : values.map(item => `• ${item}`).join('\n');
+      }
+
+      function formatStructuredReportValue(value) {
+          const raw = String(value ?? '').trim();
+          if (!raw) return '';
+          try {
+              const decoded = JSON.parse(raw);
+              if (Array.isArray(decoded)) return formatReportList(uniqueReportListItems(decoded));
+          } catch (error) {}
+          if (/[;\r\n]/.test(raw)) {
+              const items = raw.split(/[;\r\n]+/).map(item => item.trim()).filter(Boolean);
+              return formatReportList([...new Map(items.map(item => [item.replace(/\s+/g, ' ').toLowerCase(), item])).values()]);
+          }
+          return raw;
+      }
+
+      function formatSpesHistory(row) {
+          let history = row.spes_history;
+          for (let attempt = 0; attempt < 2 && typeof history === 'string'; attempt++) {
+              try { history = JSON.parse(history); } catch (error) { break; }
+          }
+          let entries = [];
+          if (Array.isArray(history)) {
+              entries = history.map(entry => {
+                  if (!entry || typeof entry !== 'object') return '';
+                  const establishment = String(entry.establishment ?? entry[1] ?? '').trim();
+                  const year = String(entry.year ?? entry[2] ?? '').trim();
+                  const id = String(entry.id ?? entry[3] ?? '').trim();
+                  return [establishment, year ? `Year: ${year}` : '', id ? `SPES ID: ${id}` : ''].filter(Boolean).join(' | ');
+              }).filter(Boolean);
+          }
+          if (!entries.length) {
+              entries = [1,2,3,4].map(number => {
+                  const establishment = String(row[`spes_history_${number}_establishment`] || '').trim();
+                  const year = String(row[`spes_history_${number}_year`] || '').trim();
+                  const id = String(row[`spes_history_${number}_id`] || '').trim();
+                  return [establishment, year ? `Year: ${year}` : '', id ? `SPES ID: ${id}` : ''].filter(Boolean).join(' | ');
+              }).filter(Boolean);
+          }
+          return entries.length ? entries.map(entry => `• ${entry}`).join('\n') : (typeof history === 'string' ? history : '');
+      }
 
       function reportProductParts(row) {
           let names = [];
@@ -3400,13 +3645,30 @@ function toggleBatchScheduleFields(select) {
               });
           }
           if (String(row.product_price || '').trim()) prices = String(row.product_price).split(',').map(price => price.trim());
-          return { names: names.join(', '), prices: prices.filter(Boolean).join(', ') };
+          const groups = new Map();
+          names.forEach((name, index) => {
+              const cleanName = String(name || '').trim();
+              if (!cleanName) return;
+              const groupKey = cleanName.replace(/\s+/g, ' ').toLowerCase();
+              if (!groups.has(groupKey)) groups.set(groupKey, { name: cleanName, prices: [] });
+              const price = String(prices[index] || '').trim();
+              const group = groups.get(groupKey);
+              if (price && !group.prices.includes(price)) group.prices.push(price);
+          });
+          const grouped = Array.from(groups.values());
+          return {
+              names: formatReportList(grouped.map(group => group.name)),
+              prices: formatReportList(grouped.map(group => group.prices.length ? group.prices.join(' / ') : '—'))
+          };
       }
 
       function reportCellValue(row, key) {
           const products = (key === 'primary_products' || key === 'product_price') ? reportProductParts(row) : null;
           if (key === 'primary_products') return products.names;
           if (key === 'product_price') return products.prices;
+          if (key === 'spes_history') return formatSpesHistory(row);
+          if (key === 'employment_type') return formatReportList(uniqueReportListItems(row.employment_type || [row.emp_regular ? 'Regular' : '', row.emp_seasonal ? 'Seasonal' : '', row.emp_contractual ? 'Contractual' : '', row.emp_family ? 'Family' : ''].filter(Boolean)));
+          if (reportMultiValueKeys.includes(key)) return formatReportList(uniqueReportListItems(row[key]));
           if (key === 'owner_name') return row.full_name || [row.first_name, row.middle_name, row.last_name, row.ext_name].filter(Boolean).join(' ');
           if (key === 'owner_contact') return row.contact_no || '';
           if (key === 'complete_address') return row.address || [row.street_purok_zone, row.barangay, 'Vinzons, Camarines Norte'].filter(Boolean).join(' ');
@@ -3416,16 +3678,14 @@ function toggleBatchScheduleFields(select) {
           if (key === 'parent_name') return row.father_name || row.mother_name || row.gsis_beneficiary_name || '';
           if (key === 'parent_occupation') return row.father_occupation || row.mother_occupation || '';
           if (key === 'hr_total') return row.hr_total || ((parseInt(row.hr_male) || 0) + (parseInt(row.hr_female) || 0)) || '';
-          if (key === 'employment_type') return row.employment_type || [row.emp_regular ? 'Regular' : '', row.emp_seasonal ? 'Seasonal' : '', row.emp_contractual ? 'Contractual' : '', row.emp_family ? 'Family' : ''].filter(Boolean).join(', ');
           if (key === 'current_capital') return row.current_capital || row.initial_capital || '';
           if (key === 'remarks') return row.approval_note || row.remarks || '';
           if (key === 'approval_status') return String(row.approval_status || '').toUpperCase() === 'APPROVED' ? 'QUALIFIED' : (String(row.approval_status || '').toUpperCase() === 'REJECTED' ? 'DISQUALIFIED' : row.approval_status || '');
-          if (key === 'spes_history' && !row.spes_history) return [1,2,3,4].map(number => [row[`spes_history_${number}_year`], row[`spes_history_${number}_id`]].filter(Boolean).join(' / ')).filter(Boolean).join('; ');
           if (['dti_assistance','dole_assistance','lgu_assistance','tesda_training'].includes(key) && !row[key]) return String(row.assistance_availed || '').toUpperCase().includes(key.split('_')[0].toUpperCase()) ? 'Yes' : '';
           if (key === 'financial_assistance' && !row[key]) return String(row.programs_needed || '').toLowerCase().includes('financ') ? 'Needed' : '';
           if (key === 'livelihood_assistance' && !row[key]) return String(row.assistance_availed || '').toLowerCase().includes('livelihood') ? 'Yes' : '';
           if (key === 'business_training' && !row[key]) return String(row.past_programs || '').toLowerCase().includes('training') ? 'Yes' : '';
-          return row[key] ?? '';
+          return formatStructuredReportValue(row[key] ?? '');
       }
 
       function escapeReportValue(value) {
@@ -3443,13 +3703,26 @@ function toggleBatchScheduleFields(select) {
       if (reportPrintButton) reportPrintButton.addEventListener('click', printFilteredReport);
       reportColumnInputs.forEach(input => input.addEventListener('change', () => {
           if (!reportColumnInputs.some(column => column.checked)) input.checked = true;
+          currentReportColumnPage = 1;
           updateReportPreview();
       }));
       document.querySelectorAll('[data-report-columns]').forEach(button => button.addEventListener('click', () => {
           const selectAll = button.dataset.reportColumns === 'all';
           reportColumnInputs.forEach(input => { input.checked = selectAll || input.dataset.default === '1'; });
+          currentReportColumnPage = 1;
           updateReportPreview();
       }));
+      document.querySelectorAll('[data-report-column-page]').forEach(button => button.addEventListener('click', () => {
+          const selectedCount = reportColumnInputs.filter(input => input.checked).length;
+          const reportColumnsPerPage = getReportColumnsPerPage();
+          const totalPages = Math.max(1, Math.ceil(selectedCount / reportColumnsPerPage));
+          const direction = button.dataset.reportColumnPage === 'next' ? 1 : -1;
+          currentReportColumnPage = Math.min(totalPages, Math.max(1, currentReportColumnPage + direction));
+          applyReportColumnVisibility();
+      }));
+      window.addEventListener('resize', () => {
+          if (reportModal?.classList.contains('show')) applyReportColumnVisibility();
+      });
 
       function applyReportColumnVisibility() {
           const table = document.getElementById('preview_main_table');
@@ -3461,12 +3734,18 @@ function toggleBatchScheduleFields(select) {
               thead.innerHTML = `<tr><th>No.</th>${labels.map(label => `<th>${label}</th>`).join('')}</tr>`;
           }
 
-          const visibleIndexes = new Set([0]);
-          reportColumnInputs.forEach(input => { if (input.checked) visibleIndexes.add(Number(input.dataset.columnIndex)); });
-          const cellFontSize = visibleIndexes.size <= 14 ? '10px' : (visibleIndexes.size <= 22 ? '9px' : '8px');
+          const selectedIndexes = reportColumnInputs.filter(input => input.checked).map(input => Number(input.dataset.columnIndex));
+          const reportColumnsPerPage = getReportColumnsPerPage();
+          const totalColumnPages = Math.max(1, Math.ceil(selectedIndexes.length / reportColumnsPerPage));
+          currentReportColumnPage = Math.min(totalColumnPages, Math.max(1, currentReportColumnPage));
+          const columnStart = (currentReportColumnPage - 1) * reportColumnsPerPage;
+          const pageIndexes = showAllReportColumns ? selectedIndexes : selectedIndexes.slice(columnStart, columnStart + reportColumnsPerPage);
+          const visibleIndexes = new Set([0, ...pageIndexes]);
+          const cellFontSize = showAllReportColumns ? (visibleIndexes.size > 22 ? '5.5px' : '7px') : '9px';
           const headerLabels = Array.from(thead.rows[0]?.cells || []).map(cell => cell.textContent.trim());
           table.classList.remove('report-detail-view');
-          table.style.minWidth = visibleIndexes.size <= 8 ? '100%' : `${Math.max(1100, visibleIndexes.size * 125)}px`;
+          table.style.width = '100%';
+          table.style.minWidth = '0';
           table.querySelectorAll('tr').forEach(row => {
               if (row.cells.length === 1 && row.cells[0].hasAttribute('colspan')) {
                   row.cells[0].colSpan = visibleIndexes.size;
@@ -3479,7 +3758,16 @@ function toggleBatchScheduleFields(select) {
                   if (row.parentElement?.tagName === 'TBODY') cell.dataset.label = headerLabels[index] || '';
               });
           });
-          if (reportColumnCount) reportColumnCount.textContent = `${visibleIndexes.size - 1} selected`;
+          if (reportColumnCount) reportColumnCount.textContent = `${selectedIndexes.length} selected`;
+          const pageStatus = document.querySelector('.report-column-page-status');
+          if (pageStatus) {
+              const firstVisible = selectedIndexes.length ? columnStart + 1 : 0;
+              const lastVisible = Math.min(columnStart + reportColumnsPerPage, selectedIndexes.length);
+              pageStatus.textContent = showAllReportColumns ? `All ${selectedIndexes.length} columns` : `Columns ${firstVisible}–${lastVisible} of ${selectedIndexes.length}`;
+          }
+          document.querySelectorAll('[data-report-column-page]').forEach(button => {
+              button.disabled = showAllReportColumns || (button.dataset.reportColumnPage === 'previous' ? currentReportColumnPage <= 1 : currentReportColumnPage >= totalColumnPages);
+          });
       }
 
       function updateReportPreview() {
@@ -3491,7 +3779,7 @@ function toggleBatchScheduleFields(select) {
           const subtitleParts = [];
           if (selectedBatchId !== '0' && reportBatchSelect) subtitleParts.push(`Batch: ${reportBatchSelect.options[reportBatchSelect.selectedIndex].text}`);
           subtitleParts.push(selectedBrgy === 'All' || selectedBrgy === '' ? 'Municipality of Vinzons' : `Barangay ${selectedBrgy}, Vinzons`);
-          if (selectedAvail !== 'All') subtitleParts.push(`Availment: ${selectedAvail}`);
+          if (selectedAvail !== 'All') subtitleParts.push(`Availment: ${selectedAvail === 'Not Yet Availed' ? 'Approved – Awaiting Next Step' : (selectedAvail === 'Requirements Received' ? 'Documents Submitted' : selectedAvail)}`);
           if (selectedNature !== 'All') subtitleParts.push(`Vendor Type: ${selectedNature}`);
           const subtitleText = subtitleParts.join(' | ');
           const subTitle = document.getElementById('preview_subtitle_top');
@@ -3508,7 +3796,7 @@ function toggleBatchScheduleFields(select) {
                       <th rowspan="2">No.</th>
                       <th colspan="13">I. BUSINESS PROFILE</th>
                       <th colspan="9">II. OWNER/ENTREPRENEUR INFORMATION</th>
-                      <th colspan="4">III. BUSINESS OPERATIONS</th>
+                      <th colspan="2">III. BUSINESS OPERATIONS</th>
                       <th colspan="5">IV. HUMAN RESOURCES</th>
                       <th colspan="7">V. FINANCIAL INFORMATION</th>
                       <th colspan="7">VI. GOVERNMENT ASSISTANCE</th>
@@ -3516,7 +3804,7 @@ function toggleBatchScheduleFields(select) {
                   <tr>
                       <th>Business/Trade Name</th><th>Type of Ownership</th><th>Nature of Business</th><th>Primary Products Offered</th><th>Product Price</th><th>Year Business Started</th><th>Business Permit No.</th><th>Valid Until</th><th>DTI Registration No.</th><th>Tax Identification No. (TIN)</th><th>Landline/Mobile Number</th><th>Email</th><th>Website/Social Media</th>
                       <th>Full Name</th><th>Contact Number</th><th>Sex</th><th>Date of Birth</th><th>Age</th><th>Civil Status</th><th>Complete Address</th><th>Educational Attainment</th><th>Work Experience</th>
-                      <th>Stall/Booth No.</th><th>Date Started</th><th>Business Assets Owned</th><th>Utility Needs</th>
+                      <th>Business Assets Owned</th><th>Utility Needs</th>
                       <th>Number of Workers</th><th>Male Employees</th><th>Female Employees</th><th>Employment Type</th><th>Skills Needed</th>
                       <th>Estimated Daily Sales</th><th>Estimated Monthly Sales</th><th>Estimated Capital</th><th>Source of Capital</th><th>Average Monthly Expenses</th><th>Banking Access</th><th>Existing Loans/Credit</th>
                       <th>DTI Assistance</th><th>DOLE Assistance</th><th>LGU Assistance</th><th>TESDA Training</th><th>Financial Assistance</th><th>Livelihood Assistance</th><th>Business Training</th>
@@ -3586,7 +3874,8 @@ function toggleBatchScheduleFields(select) {
                   let matchBrgy = selectedBrgy === 'All' || b.barangay === selectedBrgy;
                   let matchAvail = selectedAvail === 'All' || b.availment_status === selectedAvail;
                   let matchBatch = selectedBatchId === '0' || b.program_id == selectedBatchId;
-                  let matchNature = selectedNature === 'All' || b.business_nature === selectedNature;
+                  let matchNature = selectedNature === 'All' || uniqueReportListItems(b.business_nature)
+                      .some(nature => nature.toLowerCase() === selectedNature.toLowerCase());
                   return matchBrgy && matchAvail && matchBatch && matchNature;
               });
 
@@ -3640,7 +3929,12 @@ function toggleBatchScheduleFields(select) {
           pageData.forEach((b, i) => {
               let globalIndex = startIndex + i + 1;
               if (reportColumnDefinitions.length) {
-                  tbody.innerHTML += `<tr><td style="text-align:center;">${globalIndex}</td>${reportColumnDefinitions.map(column => `<td>${escapeReportValue(reportCellValue(b, column.key))}</td>`).join('')}</tr>`;
+                  tbody.innerHTML += `<tr><td style="text-align:center;">${globalIndex}</td>${reportColumnDefinitions.map(column => {
+                      const value = escapeReportValue(reportCellValue(b, column.key));
+                      const title = value.replace(/\n/g, ' | ').replace(/"/g, '&quot;');
+                      const cellClass = reportMultiValueKeys.includes(column.key) || value.includes('\n') ? 'report-multivalue' : '';
+                      return `<td class="${cellClass}" title="${title}">${value}</td>`;
+                  }).join('')}</tr>`;
               } else if (currentProgramName.toUpperCase().includes('MSME')) {
                   let ownerName = `${b.first_name || ''} ${b.middle_name || ''} ${b.last_name || ''}`.trim();
                   let address = `${b.street_purok_zone || ''} ${b.barangay || ''} Vinzons, CN`.trim();
@@ -3686,9 +3980,7 @@ function toggleBatchScheduleFields(select) {
                       <td>${address}</td>
                       <td>${b.educational_attainment || ''}</td>
                       <td>${b.work_experience || ''}</td>
-                      <td>${b.nm_stall_no || ''}</td>
-                      <td>${b.nm_date_started || ''}</td>
-                      <td>${b.business_assets || ''}</td>
+                      <td>${b.assets_owned || ''}</td>
                       <td>${b.utility_needs || ''}</td>
                       <td>${totalHR}</td>
                       <td>${b.hr_male || ''}</td>
@@ -3820,7 +4112,7 @@ function toggleBatchScheduleFields(select) {
       function printFilteredReport() {
           updateReportPreview();
           if (previewData.length === 0) {
-              alert('No records match the selected report filters.');
+              showBeneficiaryNotice('No Records Found', 'No records match the selected report filters.');
               return;
           }
 
@@ -3830,21 +4122,24 @@ function toggleBatchScheduleFields(select) {
           const totalPages = Math.ceil(previewData.length / previewItemsPerPage);
           const printRows = [];
 
+          showAllReportColumns = true;
           for (let page = 1; page <= totalPages; page++) {
               currentPreviewPage = page;
               renderPreviewPage();
               tbody.querySelectorAll('tr').forEach(row => printRows.push(row.cloneNode(true)));
           }
+          const printHead = thead.cloneNode(true);
+          showAllReportColumns = false;
           currentPreviewPage = originalPage;
           renderPreviewPage();
 
           const printWindow = window.open('', '_blank', 'width=1400,height=900');
           if (!printWindow) {
-              alert('Please allow pop-ups to print this report.');
+              showBeneficiaryNotice('Print Window Blocked', 'Please allow pop-ups for BENEPESO, then try printing the report again.');
               return;
           }
 
-          const printColumnCount = Array.from(thead.rows[0]?.cells || []).filter(cell => cell.style.display !== 'none').length;
+          const printColumnCount = Array.from(printHead.rows[0]?.cells || []).filter(cell => cell.style.display !== 'none').length;
           const printFontSize = printColumnCount > 30 ? '4.5pt' : (printColumnCount > 20 ? '5.5pt' : '7pt');
           const officialHeaderUrl = new URL('assets/peso_official_report_header.png?v=20260820-compact', window.location.href).href;
           printWindow.document.write(`<!DOCTYPE html><html><head><title>Beneficiary Report</title><style>
@@ -3866,7 +4161,7 @@ function toggleBatchScheduleFields(select) {
           printWindow.document.close();
           printWindow.document.getElementById('print_report_title').textContent = currentReportTitle;
           printWindow.document.getElementById('print_report_subtitle').textContent = document.getElementById('preview_subtitle_top')?.textContent || '';
-          printWindow.document.getElementById('print_report_head').replaceWith(printWindow.document.importNode(thead, true));
+          printWindow.document.getElementById('print_report_head').replaceWith(printWindow.document.importNode(printHead, true));
           const printBody = printWindow.document.getElementById('print_report_body');
           printRows.forEach(row => printBody.appendChild(printWindow.document.importNode(row, true)));
           const printHeader = printWindow.document.getElementById('print_official_header');
@@ -3897,12 +4192,27 @@ function toggleBatchScheduleFields(select) {
       const sideArea = document.getElementById('sideArea');
       const sidebarOverlay = document.getElementById('sidebarOverlay');
 
-      function openSidebar() { sideArea.classList.add('open'); sidebarOverlay.classList.add('show'); }
-      function closeSidebar() { sideArea.classList.remove('open'); sidebarOverlay.classList.remove('show'); }
+      function openSidebar() {
+          sideArea.classList.add('open');
+          sidebarOverlay.classList.add('show');
+          document.body.classList.add('sidebar-open');
+          if (menuToggle) {
+              menuToggle.setAttribute('aria-expanded', 'true');
+          }
+      }
+      function closeSidebar() {
+          sideArea.classList.remove('open');
+          sidebarOverlay.classList.remove('show');
+          document.body.classList.remove('sidebar-open');
+          if (menuToggle) {
+              menuToggle.setAttribute('aria-expanded', 'false');
+          }
+      }
 
       if (menuToggle) menuToggle.addEventListener('click', openSidebar);
       if (sideClose) sideClose.addEventListener('click', closeSidebar);
       if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
+      window.addEventListener('resize', () => { if (window.innerWidth > 992 && sideArea.classList.contains('open')) closeSidebar(); });
       
       const searchInput = document.getElementById('liveSearchInput');
       if(searchInput) {
@@ -3925,6 +4235,7 @@ function toggleBatchScheduleFields(select) {
 (() => {
   const boxes = [...document.querySelectorAll('.beneficiary-select')];
   const selectAll = document.getElementById('selectAllBeneficiaries');
+  const mobileSelectAll = document.getElementById('mobileSelectAllBeneficiaries');
   const bar = document.getElementById('bulkSelectionBar');
   const count = document.getElementById('bulkSelectedCount');
   const modal = document.getElementById('bulkStatusActionModal');
@@ -3936,13 +4247,19 @@ function toggleBatchScheduleFields(select) {
     count.textContent = chosen.length;
     document.querySelectorAll('.bulk-modal-count').forEach(el => el.textContent = chosen.length);
     bar.hidden = chosen.length === 0;
+    document.body.classList.toggle('has-bulk-selection', chosen.length > 0);
     if (selectAll) {
       selectAll.checked = boxes.length > 0 && chosen.length === boxes.length;
       selectAll.indeterminate = chosen.length > 0 && chosen.length < boxes.length;
     }
+    if (mobileSelectAll) {
+      mobileSelectAll.checked = boxes.length > 0 && chosen.length === boxes.length;
+      mobileSelectAll.indeterminate = chosen.length > 0 && chosen.length < boxes.length;
+    }
     boxes.forEach(box => box.closest('tr')?.classList.toggle('is-selected', box.checked));
   };
   selectAll?.addEventListener('change', () => { boxes.forEach(box => box.checked = selectAll.checked); sync(); });
+  mobileSelectAll?.addEventListener('change', () => { boxes.forEach(box => box.checked = mobileSelectAll.checked); sync(); });
   boxes.forEach(box => box.addEventListener('change', sync));
   document.getElementById('clearBulkSelection')?.addEventListener('click', () => { boxes.forEach(box => box.checked = false); sync(); });
   document.getElementById('openBulkStatusModal')?.addEventListener('click', () => {
@@ -3954,8 +4271,8 @@ function toggleBatchScheduleFields(select) {
   const close = () => { modal.classList.remove('show'); modal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; };
   document.querySelectorAll('[data-close-bulk-status]').forEach(el => el.addEventListener('click', close));
   const toggleSchedule = () => {
-    const needsDate = ['Orientation','Salary Distribution','Completed'].includes(status.value);
-    const needsPlace = ['Orientation','Salary Distribution'].includes(status.value);
+    const needsDate = ['Orientation','Examination','Salary Distribution','Completed'].includes(status.value);
+    const needsPlace = ['Orientation','Examination','Salary Distribution'].includes(status.value);
     document.querySelectorAll('.bulk-schedule-field').forEach((field, index) => {
       field.hidden = index === 0 ? !needsDate : !needsPlace;
       const control = field.querySelector('input'); if (control) control.required = index === 0 ? needsDate : needsPlace;
@@ -3967,8 +4284,15 @@ function toggleBatchScheduleFields(select) {
     if (messageInput) { messageInput.required = needsMessage; if (!needsMessage) messageInput.value = ''; }
   };
   status?.addEventListener('change', toggleSchedule); toggleSchedule(); sync();
+  let bulkStatusConfirmed = false;
   document.getElementById('bulkStatusForm')?.addEventListener('submit', event => {
-    if (!confirm('Update ' + selected().length + ' selected beneficiaries and send their email notifications?')) event.preventDefault();
+    if (bulkStatusConfirmed) return;
+    event.preventDefault();
+    const form = event.currentTarget;
+    showBeneficiaryNotice('Confirm Status Update', 'Update ' + selected().length + ' selected beneficiaries and send their phone-first notifications?', () => {
+      bulkStatusConfirmed = true;
+      form.requestSubmit();
+    });
   });
 
   if (window.matchMedia('(pointer: coarse)').matches) {
@@ -4013,6 +4337,26 @@ function toggleBatchScheduleFields(select) {
 })();
 </script>
 <script src="spes_form_modal.js?v=20260813-profile-transition-fix"></script>
-<script src="msme_form_modal.js?v=20260820y"></script>
+<script src="msme_form_modal.js?v=20260906e"></script>
+<script>
+(() => {
+  const program = <?php echo json_encode(strtoupper($selectedProgramName)); ?>;
+  const isSpes = program.includes('SPES');
+  const isTupad = program.includes('TUPAD');
+  if (!isSpes) {
+    document.querySelectorAll('select option[value="Examination"], select option[value="Exam Passed"], select option[value="Exam Failed"]').forEach(option => option.remove());
+  }
+  const allowed = isSpes
+    ? ['Not Yet Availed','Requirements Received','Orientation','Examination','Exam Passed','Exam Failed','Ongoing','Completed','Not Qualified']
+    : (isTupad
+      ? ['Not Yet Availed','Requirements Received','Orientation','Ongoing','Salary Distribution','Completed','Not Qualified']
+      : ['Not Yet Availed','Requirements Received','Ongoing','Completed','Not Qualified']);
+  document.querySelectorAll('#quick_availment_status option').forEach(option => {
+    if (!allowed.includes(option.value)) option.remove();
+  });
+})();
+</script>
+<script>
+</script>
 </body>
 </html>

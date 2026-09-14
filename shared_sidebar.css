@@ -112,6 +112,8 @@
   overflow: hidden;
   background: #fff !important;
 }
+.sidebar-logout-form { width: 100%; margin: auto 0 0; padding: 0; }
+.sidebar-logout-form .logout-item { appearance: none; cursor: pointer; font-family: inherit; }
 .nav-item {
   box-sizing: border-box !important;
   width: 100%;

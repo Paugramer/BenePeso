@@ -63,7 +63,9 @@ function outputNativeXlsxReport(string $programName, array $columns, array $rows
         $style = $rowIndex % 2 === 0 ? 4 : 5;
         $cells = xlsxInlineCell('A' . $excelRow, (string)($rowIndex + 1), $style);
         foreach ($columns as $columnIndex => $column) {
-            $cells .= xlsxInlineCell(xlsxColumnName($columnIndex + 2) . $excelRow, getReportCellValue($row, $column['key']), $style);
+            $cellValue = getReportCellValue($row, $column['key']);
+            $cellStyle = strpos($cellValue, "\n") !== false ? ($rowIndex % 2 === 0 ? 6 : 7) : $style;
+            $cells .= xlsxInlineCell(xlsxColumnName($columnIndex + 2) . $excelRow, $cellValue, $cellStyle);
         }
         $sheetRows[] = '<row r="' . $excelRow . '">' . $cells . '</row>';
     }
@@ -101,13 +103,15 @@ function outputNativeXlsxReport(string $programName, array $columns, array $rows
     <border><left style="thin"><color rgb="FFB8C8BF"/></left><right style="thin"><color rgb="FFB8C8BF"/></right><top style="thin"><color rgb="FFB8C8BF"/></top><bottom style="thin"><color rgb="FFB8C8BF"/></bottom><diagonal/></border>
   </borders>
   <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-  <cellXfs count="6">
+  <cellXfs count="8">
     <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
     <xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
     <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
     <xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
     <xf numFmtId="49" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
     <xf numFmtId="49" fontId="0" fillId="4" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="49" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf>
+    <xf numFmtId="49" fontId="0" fillId="4" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf>
   </cellXfs>
   <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
 </styleSheet>';

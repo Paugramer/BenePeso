@@ -232,12 +232,13 @@ if ($stmt) {
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   
-  <link rel="stylesheet" href="peso_staff_activity_log.css?v=<?php echo time(); ?>">
+  <link rel="stylesheet" href="peso_staff_activity_log.css?v=20260905">
   <link rel="stylesheet" href="shared_sidebar.css">
   <link rel="stylesheet" href="activity_filter_polish.css?v=1">
   <script src="activity_filter_polish.js?v=1" defer></script>
-  <link rel="stylesheet" href="frontend_polish.css?v=1">
-  <script src="frontend_polish.js?v=1" defer></script>
+<link rel="stylesheet" href="frontend_polish.css?v=7">
+<link rel="stylesheet" href="peso_staff_responsive.css?v=23">
+<script src="frontend_polish.js?v=3" defer></script>
 </head>
 <body>
 
@@ -279,9 +280,9 @@ if ($stmt) {
       <a href="peso_staff_activity_log.php" class="nav-item active" onclick="window.location.href='peso_staff_activity_log.php'; return false;">
         <i class="ph ph-clock-counter-clockwise"></i> Activity Log
       </a>
-      <a href="logout.php?role=peso_staff" class="nav-item logout-item">
+      <form method="POST" action="logout.php" class="sidebar-logout-form"><?php echo auth_csrf_input(); ?><input type="hidden" name="role" value="peso_staff"><button type="submit" class="nav-item logout-item">
         <i class="ph ph-sign-out"></i> Logout
-      </a>
+      </button></form>
     </nav>
   </aside>
 
@@ -316,7 +317,7 @@ if ($stmt) {
           <div class="stat-icon"><i class="ph-fill ph-stack"></i></div>
         </div>
         <div class="stat-value"><?php echo (int)$totalLogs; ?></div>
-        <div class="stat-note">All recorded activities</div>
+        <div class="stat-note">All activity recorded for your account.</div>
       </div>
 
       <div class="stat-card animation-slide-up" style="animation-delay: 0.3s;">
@@ -325,7 +326,7 @@ if ($stmt) {
           <div class="stat-icon"><i class="ph-fill ph-clock"></i></div>
         </div>
         <div class="stat-value"><?php echo (int)$todayLogs; ?></div>
-        <div class="stat-note">Actions made today</div>
+        <div class="stat-note">Actions recorded today.</div>
       </div>
 
       <div class="stat-card animation-slide-up" style="animation-delay: 0.4s;">
@@ -334,7 +335,7 @@ if ($stmt) {
           <div class="stat-icon"><i class="ph-fill ph-briefcase"></i></div>
         </div>
         <div class="stat-value"><?php echo (int)$programLogs; ?></div>
-        <div class="stat-note">Program-related actions</div>
+        <div class="stat-note">Actions involving programs.</div>
       </div>
     </section>
 

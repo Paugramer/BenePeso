@@ -198,6 +198,9 @@ body::before{
   color: #fff;
   font-weight: 800;
   font-size: 14px;
+  position: relative;
+  overflow: hidden;
+  flex: 0 0 34px;
 }
 
 .account-text{
@@ -244,9 +247,6 @@ body::before{
   transition: 0.2s;
 }
 .account-dropdown a:hover{ background: var(--green-light); color: var(--green); padding-left: 18px; }
-
-.logout-link{ color: #d93025 !important; }
-.logout-link:hover { background: #fdf2f2 !important; color: #b91c1c !important; }
 
 .dropdown-line{ height: 1px; background: var(--line); margin: 8px 0; }
 
@@ -372,7 +372,20 @@ body::before{
   gap: 12px;
 }
 .stat-icon {
-    font-size: 16px;
+    width: 22px;
+    height: 22px;
+    color: var(--green);
+    flex: 0 0 22px;
+}
+.stat-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 .stat-title{ font-weight: 900; color: var(--text); font-size: 15px; }
 .stat-sub{ font-size: 12.5px; color: var(--muted); font-weight: 500; margin-top: 2px;}
@@ -1016,6 +1029,18 @@ body::before,
   font-size: 14px;
 }
 
+.account-button .account-icon > img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px;
+  max-width: 34px;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+}
+
 .stat-sub {
   font-size: 11.5px;
 }
@@ -1077,7 +1102,17 @@ body::before,
 }
 
 .quick-title {
-  font-size: 20px;
+  color: var(--green);
+}
+.quick-icon svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .quick-tag,
@@ -1109,16 +1144,10 @@ body::before,
   background: var(--home-green-soft);
 }
 
-.quick-link:nth-child(2) .quick-icon {
-  background: #edf4df;
-}
-
-.quick-link:nth-child(3) .quick-icon {
-  background: #edf3f7;
-}
-
+.quick-link:nth-child(2) .quick-icon,
+.quick-link:nth-child(3) .quick-icon,
 .quick-link:nth-child(4) .quick-icon {
-  background: #f7eee5;
+  background: var(--home-green-soft);
 }
 
 .quick-note {
@@ -1568,4 +1597,54 @@ body::before,
 
 .info-text {
   margin-inline: auto;
+}
+.logout-form {
+  margin: 0;
+  width: 100%;
+}
+
+.logout-form .logout-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #fee2e2;
+  border-radius: 12px;
+  background: #fff7f7;
+  color: #c92a2a;
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+.logout-form .logout-link svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  stroke: currentColor;
+}
+
+.logout-form .logout-link:hover {
+  background: #feecec;
+  border-color: #fecaca;
+  color: #a91d1d;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(185, 28, 28, .10);
+}
+
+.logout-form .logout-link:focus-visible {
+  outline: 3px solid rgba(220, 38, 38, .18);
+  outline-offset: 2px;
+}
+
+.logout-form .logout-link:active {
+  transform: translateY(0);
+  box-shadow: none;
 }

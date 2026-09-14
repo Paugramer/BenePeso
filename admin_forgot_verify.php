@@ -1,4 +1,10 @@
 <?php
+// Legacy endpoint retained only as a safe compatibility redirect.
+// Administrator recovery is handled by the unified, attempt-limited flow.
+require_once __DIR__ . '/auth_session.php';
+header('Location: login.php', true, 303);
+exit();
+
 session_start();
 require "db.php";
 

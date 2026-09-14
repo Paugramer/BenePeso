@@ -1,17 +1,18 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require "db.php";
 
 // Check if user is logged in to show the account dropdown
 $is_logged_in = isset($_SESSION["user_id"]);
 $user_display_name = "User";
 $first_char = "U";
+$user_profile_src = '';
 
 if ($is_logged_in) {
     $user_id = (int)$_SESSION["user_id"];
     
     // Fetching individual name components
-    $stmt = $conn->prepare("SELECT first_name, middle_name, last_name, ext_name FROM users WHERE user_id=? LIMIT 1");
+    $stmt = $conn->prepare("SELECT first_name, middle_name, last_name, ext_name, profile_pic FROM users WHERE user_id=? LIMIT 1");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -33,6 +34,10 @@ if ($is_logged_in) {
         if (!empty($fn)) {
             $first_char = strtoupper(substr($fn, 0, 1));
         }
+        $profile_filename = basename((string)($row['profile_pic'] ?? ''));
+        if ($profile_filename !== '' && is_file(__DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $profile_filename)) {
+            $user_profile_src = 'uploads/' . rawurlencode($profile_filename);
+        }
     }
 }
 
@@ -51,7 +56,11 @@ try {
     }
 
     // Count active approved programs
-    $p_query = $conn->query("SELECT COUNT(*) as total FROM programs WHERE approval_status = 'Approved'");
+    $p_query = $conn->query("SELECT COUNT(*) as total FROM programs
+        WHERE approval_status = 'Approved'
+          AND LOWER(COALESCE(status, '')) <> 'completed'
+          AND (end_date IS NULL OR end_date = '' OR end_date >= CURDATE())
+          AND (start_date IS NULL OR end_date IS NULL OR end_date = '' OR end_date >= start_date)");
     if ($p_query) {
         $total_programs = (int)$p_query->fetch_assoc()['total'];
     }
@@ -77,9 +86,10 @@ try {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="home.css?v=10">
-    <link rel="stylesheet" href="about.css?v=10">
-    <link rel="stylesheet" href="frontend_polish.css?v=1">
+    <link rel="stylesheet" href="home.css?v=14">
+    <link rel="stylesheet" href="about.css?v=11">
+    <link rel="stylesheet" href="frontend_polish.css?v=5">
+    <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
     <script src="frontend_polish.js?v=1" defer></script>
 </head>
 <body>
@@ -94,7 +104,7 @@ try {
       </div>
     </a>
 
-    <button class="menu-button" id="menuButton" type="button" aria-label="Toggle menu">
+    <button class="menu-button" id="menuButton" type="button" aria-label="Toggle menu" aria-controls="menuArea" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
 
@@ -106,7 +116,10 @@ try {
       <div class="account-area" id="accountWrap">
         <?php if($is_logged_in): ?>
             <button class="account-button" id="accountButton" type="button">
-            <span class="account-icon"><?php echo htmlspecialchars($first_char); ?></span>
+            <span class="account-icon">
+                <?php echo htmlspecialchars($first_char); ?>
+                <?php if ($user_profile_src !== ''): ?><img src="<?php echo htmlspecialchars($user_profile_src); ?>" alt="" onerror="this.remove()"><?php endif; ?>
+            </span>
             <span class="account-text"><?php echo htmlspecialchars($user_display_name); ?></span>
             <span class="account-arrow">▾</span>
             </button>
@@ -115,7 +128,13 @@ try {
             <a href="profile.php">My Profile</a>
             <a href="verification.php">Verification</a>
             <div class="dropdown-line"></div>
-            <a class="logout-link" href="logout.php?role=user">Logout</a>
+            <form class="logout-form" action="logout.php" method="POST">
+                <?= auth_csrf_input() ?><input type="hidden" name="role" value="user">
+                <button class="logout-link" type="submit">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M15 4h3a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3h-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span>Log out</span>
+                </button>
+            </form>
             </div>
         <?php else: ?>
             <a class="btn-login-nav" href="login.php">Login</a>
@@ -234,7 +253,7 @@ try {
             <div class="leadership-grid">
                 <button type="button" class="team-card interactive-card" onclick="openManagerModal()" aria-haspopup="dialog" aria-controls="managerModal">
                     <div class="team-avatar">
-                        <img src="img/rigor.jpg" alt="Rigor S. Brilliantes" onerror="this.src='img/default_user.png'">
+                        <img src="img/rigor.jpg" alt="Rigor S. Brilliantes" onerror="this.onerror=null;this.src='img/default_user.svg'">
                     </div>
                     <h3>Rigor S. Brilliantes</h3>
                     <span class="team-role">PESO Manager, Vinzons</span>
@@ -324,7 +343,7 @@ try {
         <button type="button" class="modal-close" onclick="closeManagerModal()" aria-label="Close manager profile">✕</button>
         <div class="manager-modal-header">
             <div class="manager-modal-avatar">
-                <img src="img/rigor.jpg" alt="Rigor S. Brilliantes" onerror="this.src='img/default_user.png'">
+                <img src="img/rigor.jpg" alt="Rigor S. Brilliantes" onerror="this.onerror=null;this.src='img/default_user.svg'">
             </div>
         </div>
         <div class="manager-modal-body">
@@ -355,6 +374,7 @@ try {
       <div class="footer-head">Links</div>
       <a href="home.php">Home</a>
       <a href="programs.php">Programs</a>
+      <a href="about.php">About</a>
       <a href="verification.php">Verification</a>
       <a href="profile.php">Profile</a>
       <a href="privacy_notice.php">Privacy Notice</a>
@@ -396,7 +416,8 @@ try {
         const menuArea = document.getElementById('menuArea');
         if(menuBtn && menuArea) {
             menuBtn.addEventListener('click', function() {
-                menuArea.classList.toggle('open');
+                const isOpen = menuArea.classList.toggle('open');
+                menuBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             });
         }
 

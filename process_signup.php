@@ -1,7 +1,13 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require "db.php";
 require_once "privacy_helper.php";
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: signup.php');
+    exit();
+}
+auth_require_csrf();
 
 $first_name     = trim($_POST["first_name"] ?? "");
 $middle_name    = trim($_POST["middle_name"] ?? "");
@@ -31,6 +37,7 @@ $valid_barangays = [
     "Napilihan", "Pinagtigasan", "Barangay I (Pob.)", "Barangay II (Pob.)",
     "Barangay III (Pob.)", "Sabang", "Santo Domingo", "Singi", "Sula"
 ];
+$valid_civil_statuses = ['Single', 'Married', 'Widowed', 'Legally Separated'];
 
 if ($first_name === "" || $last_name === "" || $birthdate === "" || $sex === "" || 
     $civil_status === "" || $contact_no === "" || $street_purok === "" || 
@@ -41,24 +48,49 @@ if ($first_name === "" || $last_name === "" || $birthdate === "" || $sex === "" 
     exit();
 }
 
-$profile_pic_name = "default_user.png"; 
-if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === 0) {
-    $target_dir = "uploads/";
-    
-    if (!is_dir($target_dir)) {
-        mkdir($target_dir, 0777, true);
-    }
+if (!in_array($civil_status, $valid_civil_statuses, true)) {
+    $_SESSION["flash"] = "Please select a valid civil status.";
+    $_SESSION["form_data"] = $_POST;
+    header("Location: signup.php");
+    exit();
+}
 
+$birth_date_object = DateTimeImmutable::createFromFormat('!Y-m-d', $birthdate, new DateTimeZone('Asia/Manila'));
+$birthdate_errors = DateTimeImmutable::getLastErrors();
+$valid_birthdate = $birth_date_object instanceof DateTimeImmutable
+    && ($birthdate_errors === false || ($birthdate_errors['warning_count'] === 0 && $birthdate_errors['error_count'] === 0))
+    && $birth_date_object->format('Y-m-d') === $birthdate;
+$today = new DateTimeImmutable('today', new DateTimeZone('Asia/Manila'));
+$age = $valid_birthdate ? $birth_date_object->diff($today)->y : -1;
+
+if (!$valid_birthdate || $birth_date_object > $today || $age < 18) {
+    $_SESSION['flash'] = 'You must be at least 18 years old to create a BENEPESO account. Please check your birthdate.';
+    $_SESSION['show_age_notice'] = true;
+    $_SESSION['form_data'] = $_POST;
+    header('Location: signup.php');
+    exit();
+}
+
+$profile_pic_name = "";
+$profile_upload = null;
+if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === 0) {
     $file_ext = strtolower(pathinfo($_FILES["profile_pic"]["name"], PATHINFO_EXTENSION));
     $allowed_exts = ["jpg", "jpeg", "png", "webp"];
+    $allowed_mimes = ['image/jpeg', 'image/png', 'image/webp'];
+    $detected_mime = (new finfo(FILEINFO_MIME_TYPE))->file($_FILES['profile_pic']['tmp_name']);
 
-    if (in_array($file_ext, $allowed_exts)) {
-        $new_filename = uniqid("IMG_", true) . "." . $file_ext;
-        $target_file = $target_dir . $new_filename;
-
-        if (move_uploaded_file($_FILES["profile_pic"]["tmp_name"], $target_file)) {
-            $profile_pic_name = $new_filename;
-        }
+    if ($_FILES['profile_pic']['size'] <= 5 * 1024 * 1024
+        && in_array($file_ext, $allowed_exts, true)
+        && in_array($detected_mime, $allowed_mimes, true)) {
+        $profile_upload = [
+            'tmp_name' => $_FILES['profile_pic']['tmp_name'],
+            'extension' => $file_ext,
+        ];
+    } else {
+        $_SESSION['flash'] = 'Profile picture must be a valid JPG, PNG, or WebP image up to 5 MB.';
+        $_SESSION['form_data'] = $_POST;
+        header('Location: signup.php');
+        exit();
     }
 }
 
@@ -147,36 +179,80 @@ if ($check_contact) {
     $check_contact->close();
 }
 
+// Prevent a second beneficiary account even when different contact details are used.
+$check_identity = $conn->prepare(
+    "SELECT user_id FROM users
+     WHERE LOWER(TRIM(first_name)) = LOWER(TRIM(?))
+       AND LOWER(TRIM(last_name)) = LOWER(TRIM(?))
+       AND birthdate = ? LIMIT 1"
+);
+if ($check_identity) {
+    $check_identity->bind_param("sss", $first_name, $last_name, $birthdate);
+    $check_identity->execute();
+    if ($check_identity->get_result()->num_rows > 0) {
+        $_SESSION["flash"] = "An account with the same name and birthdate already exists. Please sign in, recover the existing account, or contact PESO Vinzons for assistance.";
+        $_SESSION["form_data"] = $_POST;
+        $check_identity->close();
+        header("Location: signup.php");
+        exit();
+    }
+    $check_identity->close();
+}
+
+// Store the image only after all account fields and uniqueness checks have passed.
+$uploaded_profile_path = null;
+if ($profile_upload !== null) {
+    $target_dir = __DIR__ . DIRECTORY_SEPARATOR . 'uploads';
+    if (!is_dir($target_dir) && !mkdir($target_dir, 0755, true) && !is_dir($target_dir)) {
+        $_SESSION['flash'] = 'Profile picture storage is unavailable. Please try again.';
+        $_SESSION['form_data'] = $_POST;
+        header('Location: signup.php');
+        exit();
+    }
+
+    $profile_pic_name = 'IMG_' . bin2hex(random_bytes(12)) . '.' . $profile_upload['extension'];
+    $uploaded_profile_path = $target_dir . DIRECTORY_SEPARATOR . $profile_pic_name;
+    if (!move_uploaded_file($profile_upload['tmp_name'], $uploaded_profile_path)) {
+        $_SESSION['flash'] = 'Profile picture could not be saved. Please try again.';
+        $_SESSION['form_data'] = $_POST;
+        header('Location: signup.php');
+        exit();
+    }
+}
+
 $hash = password_hash($password, PASSWORD_DEFAULT);
 $municipality = "Vinzons";
+$email_db = $email;
 
 $stmt = $conn->prepare("
     INSERT INTO users (
         first_name, middle_name, last_name, ext_name, 
-        birthdate, sex, civil_status, contact_no, 
+        birthdate, age, sex, civil_status, contact_no, 
         street_purok_zone, barangay, municipality, district, 
         email, profile_pic, password_hash
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ");
 
 if (!$stmt) {
+    if ($uploaded_profile_path !== null && is_file($uploaded_profile_path)) unlink($uploaded_profile_path);
     $_SESSION["flash"] = "Database error: " . $conn->error;
     $_SESSION["form_data"] = $_POST; 
     header("Location: signup.php");
     exit();
 }
 
-$stmt->bind_param("sssssssssssssss", 
+$stmt->bind_param("ssssssssssssssss", 
     $first_name, $middle_name, $last_name, $ext_name,
-    $birthdate, $sex, $civil_status, $contact_no,
+    $birthdate, $age, $sex, $civil_status, $contact_no,
     $street_purok, $barangay, $municipality, $district,
-    $email, $profile_pic_name, $hash
+    $email_db, $profile_pic_name, $hash
 );
 
 if ($stmt->execute()) {
     $new_user_id = (int)$stmt->insert_id;
     if (!record_privacy_acknowledgment($conn, $new_user_id, 'account_registration')) {
         $conn->query("DELETE FROM users WHERE user_id = " . $new_user_id);
+        if ($uploaded_profile_path !== null && is_file($uploaded_profile_path)) unlink($uploaded_profile_path);
         $_SESSION["flash"] = "Registration could not be completed. Please try again.";
         $_SESSION["form_data"] = $_POST;
         header("Location: signup.php");
@@ -187,6 +263,7 @@ if ($stmt->execute()) {
     exit();
 }
 
+if ($uploaded_profile_path !== null && is_file($uploaded_profile_path)) unlink($uploaded_profile_path);
 $_SESSION["flash"] = "System error during registration.";
 $_SESSION["form_data"] = $_POST; 
 header("Location: signup.php");

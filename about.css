@@ -915,6 +915,9 @@ body {
 
     .page-wrap .about-hero-custom .welcome-left {
         margin: 0;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
     }
 
     .page-wrap .about-hero-custom .welcome-badge {
@@ -972,6 +975,15 @@ body {
         grid-column: 2;
         grid-row: auto;
         justify-content: flex-start;
+    }
+}
+
+@media (max-width: 600px) {
+    .page-wrap .about-hero-custom .welcome-title,
+    .page-wrap .about-hero-custom .welcome-text,
+    .page-wrap .about-hero-custom .welcome-badge {
+        max-width: 100%;
+        overflow-wrap: anywhere;
     }
 }
 

@@ -49,9 +49,9 @@ function sendBENEPESOEmail($to_email, $subject, $headline, $body_content, &$erro
         $mail->Hostname = "gmail.com";
 
         // Sender and Recipient
-        $mail->setFrom($smtp_username, "BENEPESO");
+        $mail->setFrom($smtp_username, "PESO Vinzons");
         $mail->Sender = $smtp_username;
-        $mail->addReplyTo($smtp_username, "BENEPESO Support");
+        $mail->addReplyTo($smtp_username, "PESO Vinzons");
         $mail->addAddress($to_email);
 
         // Content Setup
@@ -63,7 +63,7 @@ function sendBENEPESOEmail($to_email, $subject, $headline, $body_content, &$erro
             gmdate('YmdHis'),
             bin2hex(random_bytes(8))
         );
-        $mail->XMailer = "BENEPESO Notification Service";
+        $mail->XMailer = "PESO Vinzons Notification Service";
         $mail->Subject = $subject;
         
         $current_year = date("Y");
@@ -75,8 +75,8 @@ function sendBENEPESOEmail($to_email, $subject, $headline, $body_content, &$erro
                 
                 <!-- Header -->
                 <div style='background-color: #1f7a54; padding: 30px; text-align: center;'>
-                    <h1 style='color: #ffffff; margin: 0; font-size: 26px; letter-spacing: 1px; font-weight: 800;'>BENEPESO</h1>
-                    <p style='color: #e6f4ed; margin: 5px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;'>System Notification</p>
+                    <h1 style='color: #ffffff; margin: 0; font-size: 26px; letter-spacing: 1px; font-weight: 800;'>PESO Vinzons</h1>
+                    <p style='color: #e6f4ed; margin: 5px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;'>Official Applicant Notice</p>
                 </div>
                 
                 <!-- Body Content -->
@@ -90,7 +90,7 @@ function sendBENEPESOEmail($to_email, $subject, $headline, $body_content, &$erro
                 <!-- Footer -->
                 <div style='background-color: #f9fbf9; padding: 25px; text-align: center; border-top: 1px solid #dbe6df;'>
                     <p style='color: #9ab0a3; font-size: 12px; margin: 0; line-height: 1.5;'>
-                        © {$current_year} BENEPESO • Public Employment Service Office<br>Municipality of Vinzons, Camarines Norte
+                        © {$current_year} PESO Vinzons<br>Public Employment Service Office • Municipality of Vinzons, Camarines Norte
                     </p>
                 </div>
                 
@@ -118,6 +118,31 @@ function sendBENEPESOEmail($to_email, $subject, $headline, $body_content, &$erro
     return false;
 }
 
+function queueBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $status, string $custom_message = '', string $schedule_date = '', string $schedule_place = '', string $last_error = ''): bool {
+    $conn->query("CREATE TABLE IF NOT EXISTS notification_outbox (
+        notification_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        dedupe_key CHAR(64) NOT NULL UNIQUE,
+        beneficiary_id INT NOT NULL,
+        status_name VARCHAR(80) NOT NULL,
+        custom_message TEXT NULL,
+        schedule_date VARCHAR(20) NULL,
+        schedule_place VARCHAR(255) NULL,
+        attempts INT NOT NULL DEFAULT 0,
+        last_error VARCHAR(500) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_notification_outbox_created (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+    $dedupe = hash('sha256', implode('|', [$beneficiary_id, $status, $custom_message, $schedule_date, $schedule_place]));
+    $stmt = $conn->prepare("INSERT INTO notification_outbox (dedupe_key,beneficiary_id,status_name,custom_message,schedule_date,schedule_place,last_error) VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE last_error=VALUES(last_error), updated_at=NOW()");
+    if (!$stmt) return false;
+    $last_error = substr($last_error, 0, 500);
+    $stmt->bind_param('sisssss', $dedupe, $beneficiary_id, $status, $custom_message, $schedule_date, $schedule_place, $last_error);
+    $queued = $stmt->execute();
+    $stmt->close();
+    return $queued;
+}
+
 /**
  * Sends an availment status notification using the beneficiary's current database record.
  */
@@ -126,7 +151,7 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
     $stmt = $conn->prepare(
         "SELECT COALESCE(NULLIF(TRIM(b.email), ''), NULLIF(TRIM(b.business_email), '')) AS email,
                 COALESCE(NULLIF(TRIM(b.first_name), ''), NULLIF(TRIM(b.full_name), ''), 'Applicant') AS first_name,
-                COALESCE(p.program_name, 'BENEPESO Program') AS program_name
+                COALESCE(p.program_name, 'PESO Vinzons Program') AS program_name
          FROM beneficiaries b
          LEFT JOIN programs p ON p.program_id = b.program_id
          WHERE b.beneficiary_id = ?
@@ -134,7 +159,7 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
     );
 
     if (!$stmt) {
-        $error_message = "Unable to prepare the applicant email lookup.";
+        $error_message = "Unable to prepare the applicant contact lookup.";
         error_log("BENEPESO Status Email Error: " . $error_message);
         return false;
     }
@@ -151,46 +176,56 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
     }
 
     $email = trim((string)($applicant['email'] ?? ''));
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error_message = "The applicant has no valid email address.";
-        error_log("BENEPESO Status Email Error: beneficiary_id={$beneficiary_id}; {$error_message}");
-        return false;
-    }
-
     $safe_name = htmlspecialchars((string)($applicant['first_name'] ?: 'Applicant'), ENT_QUOTES, 'UTF-8');
     $safe_program = htmlspecialchars((string)$applicant['program_name'], ENT_QUOTES, 'UTF-8');
     $safe_status = htmlspecialchars(trim($status), ENT_QUOTES, 'UTF-8');
     $safe_custom_message = nl2br(htmlspecialchars(trim($custom_message), ENT_QUOTES, 'UTF-8'));
-    $safe_schedule_date = htmlspecialchars(trim($schedule_date), ENT_QUOTES, 'UTF-8');
+    $schedule_date_text = trim($schedule_date);
+    $parsed_schedule_date = DateTime::createFromFormat('!Y-m-d', $schedule_date_text);
+    if ($parsed_schedule_date && $parsed_schedule_date->format('Y-m-d') === $schedule_date_text) {
+        $schedule_date_text = $parsed_schedule_date->format('F j, Y');
+    }
+    $safe_schedule_date = htmlspecialchars($schedule_date_text, ENT_QUOTES, 'UTF-8');
     $safe_schedule_place = htmlspecialchars(trim($schedule_place), ENT_QUOTES, 'UTF-8');
     $normalized_status = strtolower(trim($status));
+    $program_key = strtoupper((string)$applicant['program_name']);
 
     switch ($normalized_status) {
+        case 'requirements resubmission':
+            $subject = $applicant['program_name'] . " Document Resubmission Required";
+            $headline = "Please resubmit your requirements";
+            $message = "
+                <p>PESO Vinzons reviewed the requirements you submitted for <strong>{$safe_program}</strong>, but one or more documents must be corrected or replaced.</p>
+                <p><strong>Reason and instructions:</strong><br>{$safe_custom_message}</p>
+                <p>Please bring the corrected requirements to the PESO Vinzons office. Your application will remain under document review until the replacement requirements are received.</p>
+            ";
+            break;
+
         case 'requirements received':
         case 'requirements recieved':
-            $subject = $applicant['program_name'] . " Documents Received";
-            $headline = "We received your requirements";
+            $subject = $applicant['program_name'] . " Documents Submitted";
+            $headline = "Documents submitted";
             $message = "
-                <p>Your submitted requirements for the <strong>{$safe_program}</strong> program have been received by the PESO office.</p>
-                <p>Our team will review and verify your documents. Please keep your registered contact number available in case additional information is needed.</p>
+                <p>Your document submission for <strong>{$safe_program}</strong> has been recorded by PESO Vinzons.</p>
+                <p>Your documents are now under verification. Please keep your registered contact number active in case the office needs additional information.</p>
             ";
             break;
 
         case 'ongoing':
-            $subject = $applicant['program_name'] . " Participation Is Now Ongoing";
-            $headline = "Your program participation has started";
+            $subject = $applicant['program_name'] . " Participation Update";
+            $headline = "Program participation started";
             $message = "
-                <p>Your participation in the <strong>{$safe_program}</strong> program is now officially <strong>Ongoing</strong>.</p>
-                <p>Please follow the schedule and instructions provided by the PESO office. Attend all required activities and keep any documents issued during the program.</p>
+                <p>Your participation in <strong>{$safe_program}</strong> is now recorded as <strong>Ongoing</strong>.</p>
+                <p>Please follow the schedule and instructions issued by PESO Vinzons and keep all program-related documents for your records.</p>
             ";
             break;
 
         case 'completed':
-            $subject = $applicant['program_name'] . " Successfully Completed";
-            $headline = "Your program has been completed";
+            $subject = $applicant['program_name'] . " Completion Notice";
+            $headline = "Program completion recorded";
             $message = "
-                <p>Your participation in the <strong>{$safe_program}</strong> program has been recorded as <strong>Completed</strong>.</p>
-                <p>Thank you for participating. Please keep your program records and monitor your BENEPESO account for any final announcements or follow-up instructions.</p>
+                <p>Your participation in <strong>{$safe_program}</strong> has been recorded as <strong>Completed</strong>.</p>
+                <p>Thank you for participating. Please retain your program documents and monitor your account for any final notice from PESO Vinzons.</p>
             ";
             break;
 
@@ -199,7 +234,36 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
             $headline = "Your orientation has been scheduled";
             $message = "
                 <p>Your orientation for the <strong>{$safe_program}</strong> program is scheduled on <strong>{$safe_schedule_date}</strong> at <strong>{$safe_schedule_place}</strong>.</p>
-                <p>Please arrive on time and bring any documents requested by the PESO office.</p>
+                <p>Please arrive on time and bring the documents specified by PESO Vinzons. If you cannot attend, contact the office before the scheduled date.</p>
+            ";
+            break;
+
+        case 'examination':
+            $subject = $applicant['program_name'] . " Face-to-Face Examination Schedule";
+            $headline = "Your face-to-face examination has been scheduled";
+            $message = "
+                <p>Your examination for the <strong>{$safe_program}</strong> program will be conducted <strong>face-to-face</strong>.</p>
+                <p><strong>Date:</strong> {$safe_schedule_date}<br><strong>Venue:</strong> {$safe_schedule_place}</p>
+                <p>Please arrive at least 15 minutes early and bring a valid ID, a pen, and any documents requested by the PESO office. The examination must be taken in person at the stated venue.</p>
+                <p>If you cannot attend, contact the PESO Vinzons office before the examination date. Do not reply to this automated email.</p>
+            ";
+            break;
+
+        case 'exam passed':
+            $subject = $applicant['program_name'] . " Examination Result - Passed";
+            $headline = "You passed the SPES examination";
+            $message = "
+                <p>Your examination result for <strong>{$safe_program}</strong> has been recorded as <strong>Passed</strong>.</p>
+                <p>Please wait for your official assignment, start schedule, and any further instructions from PESO Vinzons. Keep your registered contact details active.</p>
+            ";
+            break;
+
+        case 'exam failed':
+            $subject = $applicant['program_name'] . " Examination Result";
+            $headline = "Your SPES examination result is available";
+            $message = "
+                <p>Your examination result for <strong>{$safe_program}</strong> has been recorded as <strong>Not Passed</strong>.</p>
+                <p>This means you will not proceed to placement for the current application. You may contact PESO Vinzons if you need clarification about the result or future application opportunities.</p>
             ";
             break;
 
@@ -208,7 +272,7 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
             $headline = "Salary distribution announcement";
             $message = "
                 <p>The salary distribution for the <strong>{$safe_program}</strong> program is scheduled on <strong>{$safe_schedule_date}</strong> at <strong>{$safe_schedule_place}</strong>.</p>
-                <p>Please bring a valid ID and follow the instructions provided by the PESO office.</p>
+                <p>Please bring a valid ID and any other documents specified by PESO Vinzons. Follow the instructions provided at the distribution venue.</p>
             ";
             break;
 
@@ -216,8 +280,8 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
             $subject = $applicant['program_name'] . " Qualification Update";
             $headline = "Application not qualified";
             $message = "
-                <p>After evaluation, your application for the <strong>{$safe_program}</strong> program has been marked as <strong>Not Qualified</strong>.</p>
-                <p>Please contact the PESO office if you need clarification about this decision.</p>
+                <p>After review, your application for <strong>{$safe_program}</strong> has been recorded as <strong>Not Qualified</strong>.</p>
+                <p>You may contact PESO Vinzons if you need clarification regarding the result.</p>
             ";
             break;
 
@@ -226,17 +290,22 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
             $headline = "Your program participation was cancelled";
             $message = "
                 <p>Your participation in the <strong>{$safe_program}</strong> program has been marked as <strong>Cancelled</strong>.</p>
-                <p>If you believe this was recorded incorrectly or need further clarification, please contact the PESO office as soon as possible.</p>
+                <p>If you believe this status was recorded incorrectly, please contact PESO Vinzons promptly.</p>
             ";
             break;
 
         case 'not yet availed':
-            $subject = $applicant['program_name'] . " Next Steps Pending";
-            $headline = "Please wait for your program schedule";
-            $message = "
-                <p>Your availment for the <strong>{$safe_program}</strong> program has not started yet.</p>
-                <p>Please keep your registered contact details active and wait for the official schedule or further instructions from the PESO office.</p>
-            ";
+            $subject = $applicant['program_name'] . " - Approved, Next Step Pending";
+            $headline = "Approved - awaiting the next step";
+            if (strpos($program_key, 'TUPAD') !== false) {
+                $message = "<p>Your application for <strong>{$safe_program}</strong> is approved.</p><p>Your next step is in-person document submission and verification at PESO Vinzons. Follow the document instructions issued by the office before deployment.</p>";
+            } elseif (strpos($program_key, 'SPES') !== false) {
+                $message = "<p>Your application for <strong>{$safe_program}</strong> is approved.</p><p>Please wait for the official examination schedule and instructions from PESO Vinzons. Keep your registered contact details active.</p>";
+            } elseif (strpos($program_key, 'MSME') !== false) {
+                $message = "<p>Your profiling record for <strong>{$safe_program}</strong> is approved.</p><p>PESO Vinzons will contact you if another verification step or office action is required. Keep your registered contact details active.</p>";
+            } else {
+                $message = "<p>Your application for <strong>{$safe_program}</strong> is approved.</p><p>Please wait for the official schedule or next-step instructions from PESO Vinzons.</p>";
+            }
             break;
 
         default:
@@ -244,17 +313,29 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
             $headline = "Your application status has changed";
             $message = "
                 <p>Your status for the <strong>{$safe_program}</strong> program has been updated to <strong>{$safe_status}</strong>.</p>
-                <p>Please log in to your BENEPESO account or contact the PESO office if you require further information.</p>
+                <p>Please log in to your account or contact PESO Vinzons if you require further information.</p>
             ";
             break;
     }
 
     if ($safe_custom_message !== '') {
-        $message .= "<p><strong>Message from PESO:</strong><br>{$safe_custom_message}</p>";
+        $message .= "<p><strong>Additional instructions from PESO Vinzons:</strong><br>{$safe_custom_message}</p>";
     }
 
     $body = "<p>Dear {$safe_name},</p>" . $message;
 
-    return sendBENEPESOEmail($email, $subject, $headline, $body, $error_message);
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error_message = 'The applicant has no valid email address.';
+        error_log("BENEPESO Status Email Error: beneficiary_id={$beneficiary_id}; {$error_message}");
+        // A missing/invalid address is permanent until the record is corrected;
+        // retrying it every minute cannot succeed and only creates dead queue jobs.
+        return false;
+    }
+
+    $sent = sendBENEPESOEmail($email, $subject, $headline, $body, $error_message);
+    if (!$sent) {
+        queueBENEPESOStatusEmail($conn, $beneficiary_id, $status, $custom_message, $schedule_date, $schedule_place, (string)$error_message);
+    }
+    return $sent;
 }
 ?>

@@ -1,9 +1,9 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require_once 'db.php';
 
-const SPES_FORM_2_PDF = 'C:\\Users\\paulo\\Documents\\SPES FORM 2 - APPLICATION FORM.pdf';
-const SPES_FORM_2A_PDF = 'C:\\Users\\paulo\\Documents\\SPES FORM 2-A  - OATH  OF UNDERTAKING.pdf';
+const SPES_FORM_2_PDF = __DIR__ . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'forms' . DIRECTORY_SEPARATOR . 'SPES Form 2 - Application Form.pdf';
+const SPES_FORM_2A_PDF = __DIR__ . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'forms' . DIRECTORY_SEPARATOR . 'SPES Form 2-A - Oath of Undertaking.pdf';
 
 function spes_error(string $message, int $status = 400): void {
     http_response_code($status);

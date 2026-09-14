@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require "db.php";
 
 if (!isset($_SESSION["user_id"])) {
@@ -23,6 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: profile.php");
     exit();
 }
+auth_require_csrf();
 
 $user_id       = (int)$_SESSION["user_id"];
 $first_name    = clean_profile_value($_POST['first_name'] ?? '');
@@ -100,9 +101,22 @@ if ($email_in_use) {
     return_to_profile('Update Failed: That email address is already registered to another account.');
 }
 
+$contact_stmt = $conn->prepare('SELECT user_id FROM users WHERE contact_no = ? AND user_id <> ? LIMIT 1');
+if (!$contact_stmt) {
+    return_to_profile('System Error: Could not verify the contact number at this time.');
+}
+$contact_stmt->bind_param('si', $contact_no, $user_id);
+$contact_stmt->execute();
+$contact_in_use = $contact_stmt->get_result()->num_rows > 0;
+$contact_stmt->close();
+if ($contact_in_use) {
+    return_to_profile('Update Failed: That contact number is already registered to another account.');
+}
+
 $conn->begin_transaction();
 
 try {
+    $email_db = $email;
     $update_query = "
         UPDATE users
         SET first_name = ?, middle_name = ?, last_name = ?, ext_name = ?,
@@ -127,7 +141,7 @@ try {
         $contact_no,
         $street,
         $barangay,
-        $email,
+        $email_db,
         $user_id
     );
     if (!$stmt->execute()) {
@@ -136,11 +150,11 @@ try {
     $stmt->close();
 
     if (strcasecmp($old_email, $email) !== 0) {
-        $beneficiary_stmt = $conn->prepare('UPDATE beneficiaries SET email = ? WHERE email = ?');
+        $beneficiary_stmt = $conn->prepare('UPDATE beneficiaries SET email = ? WHERE user_id = ?');
         if (!$beneficiary_stmt) {
             throw new RuntimeException('Unable to prepare linked record update.');
         }
-        $beneficiary_stmt->bind_param('ss', $email, $old_email);
+        $beneficiary_stmt->bind_param('si', $email_db, $user_id);
         if (!$beneficiary_stmt->execute()) {
             throw new RuntimeException('Unable to update linked records.');
         }

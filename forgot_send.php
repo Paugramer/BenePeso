@@ -1,6 +1,18 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require "db.php";
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: login.php'); exit(); }
+auth_require_csrf();
+
+$lastResetRequest = (int)($_SESSION['fp_last_request'] ?? 0);
+if ($lastResetRequest > time() - 60) {
+  $_SESSION['fp_msg'] = 'Please wait one minute before requesting another code.';
+  header('Location: login.php');
+  exit();
+}
+$_SESSION['fp_last_request'] = time();
+$_SESSION['fp_attempts'] = 0;
 
 require "PHPMailer/src/PHPMailer.php";
 require "PHPMailer/src/SMTP.php";
@@ -71,8 +83,9 @@ $table = "users";
 if ($user_role === "peso_staff") $table = "peso_staff";
 if ($user_role === "admin") $table = "admins";
 
+$stored_code = password_hash($code, PASSWORD_DEFAULT);
 $up = $conn->prepare("UPDATE $table SET reset_code=?, reset_expire=? WHERE email=?");
-$up->bind_param("sss", $code, $expire, $email);
+$up->bind_param("sss", $stored_code, $expire, $email);
 $up->execute();
 
 $mail = new PHPMailer(true);
@@ -88,25 +101,25 @@ try{
   $mail->SMTPSecure = "tls";
   $mail->Port = 587;
 
-  $mail->setFrom($smtp_username, "BENEPESO");
+  $mail->setFrom($smtp_username, "PESO Vinzons");
   $mail->addAddress($email);
 
   $mail->isHTML(true);
-  $mail->Subject = "BENEPESO Password Reset Code";
+  $mail->Subject = "PESO Vinzons Account Recovery Code";
   
   $mail->Body = "
   <div style='font-family: Arial, sans-serif; background-color: #f4f8f5; padding: 40px 20px; color: #163524;'>
       <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #dbe6df;'>
           
           <div style='background-color: #1f7a54; padding: 30px; text-align: center;'>
-              <h1 style='color: #ffffff; margin: 0; font-size: 26px; letter-spacing: 1px; font-weight: 800;'>BENEPESO</h1>
-              <p style='color: #e6f4ed; margin: 5px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;'>Security Alert</p>
+              <h1 style='color: #ffffff; margin: 0; font-size: 26px; letter-spacing: 1px; font-weight: 800;'>PESO Vinzons</h1>
+              <p style='color: #e6f4ed; margin: 5px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;'>Account Recovery</p>
           </div>
           
           <div style='padding: 40px 30px; text-align: center;'>
-              <h2 style='margin-top: 0; color: #145339; font-size: 22px; font-weight: 800;'>Password Reset Request</h2>
+              <h2 style='margin-top: 0; color: #145339; font-size: 22px; font-weight: 800;'>Your verification code</h2>
               <p style='color: #66786f; font-size: 15px; line-height: 1.6; margin-bottom: 30px;'>
-                  We received a request to reset the password for your account associated with <b>{$email}</b>. Here is your verification code:
+                  A password reset was requested for the PESO Vinzons account registered to <b>{$email}</b>. Enter this code on the account recovery page:
               </p>
               
               <div style='margin: 0 auto; padding: 20px; background-color: #f9fbf9; border: 2px dashed #1f7a54; border-radius: 12px; width: fit-content;'>
@@ -114,20 +127,20 @@ try{
               </div>
               
               <p style='color: #66786f; font-size: 14px; margin-top: 30px; line-height: 1.6;'>
-                  This code will expire in <b>10 minutes</b>. For your security, do not share this code with anyone. If you did not request this reset, please ignore this email.
+                  This code expires in <b>10 minutes</b> and may be used only once. Do not share it. If you did not request a password reset, you may disregard this message; your password will remain unchanged.
               </p>
           </div>
           
           <div style='background-color: #f9fbf9; padding: 25px; text-align: center; border-top: 1px solid #dbe6df;'>
               <p style='color: #9ab0a3; font-size: 12px; margin: 0; line-height: 1.5;'>
-                  © " . date("Y") . " BENEPESO • Public Employment Service Office<br>Municipality of Vinzons, Camarines Norte
+                  © " . date("Y") . " PESO Vinzons<br>Public Employment Service Office • Municipality of Vinzons, Camarines Norte
               </p>
           </div>
           
       </div>
   </div>";
 
-  $mail->AltBody = "Your BENEPESO verification code is: $code\n\nThis code will expire in 10 minutes. Do not share this code with anyone.";
+  $mail->AltBody = "Your PESO Vinzons account recovery code is: $code\n\nThis code expires in 10 minutes and may be used only once. Do not share it. If you did not request a password reset, disregard this message.";
 
   $mail->send();
 
@@ -137,8 +150,9 @@ try{
   exit();
 
 }catch(Exception $e){
-  $_SESSION["fp_step"] = "code";
-  $_SESSION["fp_msg"] = "Email sending failed. Error: " . $mail->ErrorInfo;
+  $_SESSION["fp_step"] = "email";
+  $_SESSION["fp_msg"] = "The recovery email could not be sent. Please contact PESO support or try again later.";
+  error_log('BENEPESO password reset email failed: ' . $mail->ErrorInfo);
   header("Location: login.php");
   exit();
 }

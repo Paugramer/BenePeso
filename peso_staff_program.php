@@ -1,9 +1,11 @@
 <?php
 require_once __DIR__ . '/auth.php';
+auth_enable_csrf_form_injection();
 require "db.php";
 require_once "batch_code_helper.php";
 require_once "program_eligibility_helper.php";
 require_once "tupad_category_helper.php";
+require_once "program_status_helper.php";
 ensure_program_eligibility_schema($conn);
 ensure_tupad_category_schema($conn);
 
@@ -24,6 +26,7 @@ if (!function_exists('time_ago')) {
 }
 
 check_user_role("peso_staff");
+sync_program_statuses($conn);
 
 $staff_id = (int)$_SESSION["staff_id"];
 
@@ -64,44 +67,14 @@ $active_program = isset($_GET['program']) ? trim($_GET['program']) : null;
 $tupadCategoryOptions = available_tupad_categories($conn);
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    auth_require_csrf();
     $action = $_POST["action"] ?? "";
 
     if ($action === "add_category") {
-        $title = trim($_POST["program_name"] ?? "");
-        $desc = trim($_POST["description"] ?? "");
-        $elig = trim($_POST["eligibility"] ?? "");
-        $req = trim($_POST["requirements"] ?? "");
-        [$eligibleSex, $minimumAge, $maximumAge, $onePerHousehold] = clean_eligibility_rules($_POST);
-        $new_image_path = null;
-        
-        if (!empty($_FILES["image_path"]["name"]) && $_FILES["image_path"]["error"] === 0) {
-            $file = $_FILES["image_path"];
-            $allowed = ["image/jpeg" => "jpg", "image/png" => "png", "image/webp" => "webp"];
-            $finfo = new finfo(FILEINFO_MIME_TYPE);
-            $mime = $finfo->file($file["tmp_name"]);
-            if (isset($allowed[$mime])) {
-                $dir = __DIR__ . "/uploads/programs/";
-                if (!is_dir($dir)) mkdir($dir, 0777, true);
-                $filename = "prog_" . time() . "_" . bin2hex(random_bytes(4)) . "." . $allowed[$mime];
-                if (move_uploaded_file($file["tmp_name"], $dir . $filename)) { $new_image_path = "uploads/programs/" . $filename; }
-            }
-        }
-        $stmt = $conn->prepare("INSERT INTO program_categories (program_name, description, eligibility, requirements, image_path, eligible_sex, minimum_age, maximum_age, one_per_household) VALUES (?,?,?,?,?,?,?,?,?)");
-        $stmt->bind_param("ssssssiii", $title, $desc, $elig, $req, $new_image_path, $eligibleSex, $minimumAge, $maximumAge, $onePerHousehold);
-        if ($stmt->execute()) { 
-            
-            $log_desc = "Created a new Master Program Category: " . $title;
-            $log_stmt = $conn->prepare("INSERT INTO activity_logs (staff_id, actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, ?, 'PESO Staff', 'Programs', 'CREATE', ?, ?, NOW())");
-            if ($log_stmt) {
-                // FIXED: Changed "issss" to "isss" to match the 4 variables
-                $log_stmt->bind_param("isss", $staff_id, $staff_name, $title, $log_desc);
-                $log_stmt->execute();
-                $log_stmt->close();
-            }
-
-            $_SESSION["flash"] = "New Program Category added successfully."; 
-        }
+        $_SESSION["flash"] = "Only administrators can create master program categories. Staff may submit new batches from the approved program list.";
+        $_SESSION["flash_type"] = "error";
         header("Location: peso_staff_program.php"); exit();
+
     }
 
     if ($action === "add_batch") {
@@ -113,6 +86,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $tupadCategory = submitted_tupad_category($_POST, $title);
         [$batchEligibleSex, $batchMinimumAge, $batchMaximumAge, $batchOnePerHousehold] = clean_eligibility_rules($_POST);
 
+        if ($title === '' || $slots <= 0) {
+            $_SESSION["flash"] = "Select a valid program and enter at least one slot.";
+            $_SESSION["flash_type"] = "error";
+            header("Location: peso_staff_program.php"); exit();
+        }
         if (!valid_batch_date_range($start_date, $end_date)) {
             $_SESSION["flash"] = "The end date must be the same as or later than the start date.";
             $_SESSION["flash_type"] = "error";
@@ -120,7 +98,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
         
         $catRes = $conn->query("SELECT description, eligibility, requirements, image_path, eligible_sex, minimum_age, maximum_age, one_per_household FROM program_categories WHERE program_name = '".$conn->real_escape_string($title)."'");
-        $catData = $catRes->fetch_assoc();
+        $catData = $catRes ? $catRes->fetch_assoc() : null;
+        if (!$catData) {
+            $_SESSION["flash"] = "The selected program category no longer exists.";
+            $_SESSION["flash_type"] = "error";
+            header("Location: peso_staff_program.php"); exit();
+        }
         
         $batchYear = batch_year_from_date($start_date);
         if (!acquire_batch_code_lock($conn, $batchYear)) {
@@ -168,8 +151,6 @@ if ($search !== "") {
     $s = $conn->real_escape_string($search);
     $whereParts[] = "(program_code LIKE '%$s%' OR program_name LIKE '%$s%')";
 }
-$whereStr = implode(" AND ", $whereParts);
-
 $programTemplates = [];
 $templateResult = $conn->query("SELECT program_name, description, eligibility, requirements, eligible_sex, minimum_age, maximum_age, one_per_household FROM program_categories ORDER BY program_name");
 if ($templateResult) while ($template = $templateResult->fetch_assoc()) $programTemplates[] = $template;
@@ -183,6 +164,7 @@ if ($active_program && stripos($active_program, 'TUPAD') !== false && $tupadCate
     $categorySafe = $conn->real_escape_string($tupadCategoryFilter);
     $whereParts[] = "COALESCE(NULLIF(TRIM(tupad_category), ''), 'Regular TUPAD') = '$categorySafe'";
 }
+$whereStr = implode(" AND ", $whereParts);
 
 if ($active_program) {
     $statRes = $conn->query("SELECT approval_status, status FROM programs WHERE program_name = '".$conn->real_escape_string($active_program)."'");
@@ -193,15 +175,15 @@ if ($active_program) {
         if($r['approval_status'] === 'Pending') $stats['pending']++;
         if(in_array($r['status'], ['Ongoing','Active']) && $r['approval_status'] === 'Approved') $stats['ongoing']++;
     }
-    $card1 = ["label" => "Total Batches", "val" => $stats['total'], "note" => "All batches for this program"];
-    $card2 = ["label" => "Approved", "val" => $stats['approved'], "note" => "Approved by administrator"];
-    $card3 = ["label" => "Pending Review", "val" => $stats['pending'], "note" => "Awaiting admin approval"];
-    $card4 = ["label" => "Ongoing Batches", "val" => $stats['ongoing'], "note" => "Currently active and running"];
+    $card1 = ["label" => "Total Batches", "val" => $stats['total'], "note" => "Batches in this program"];
+    $card2 = ["label" => "Approved", "val" => $stats['approved'], "note" => "Approved by the administrator"];
+    $card3 = ["label" => "Pending Review", "val" => $stats['pending'], "note" => "Waiting for admin approval"];
+    $card4 = ["label" => "Ongoing Batches", "val" => $stats['ongoing'], "note" => "Batches currently in progress"];
 } else {
-    $card1 = ["label" => "Total Programs", "val" => $conn->query("SELECT COUNT(*) as c FROM program_categories")->fetch_assoc()['c'] ?? 0, "note" => "All recorded categories"];
-    $card2 = ["label" => "Total Batches", "val" => $conn->query("SELECT COUNT(*) as c FROM programs")->fetch_assoc()['c'] ?? 0, "note" => "Across all programs"];
-    $card3 = ["label" => "Pending Review", "val" => $conn->query("SELECT COUNT(*) as c FROM programs WHERE approval_status='Pending'")->fetch_assoc()['c'] ?? 0, "note" => "Requires admin attention"];
-    $card4 = ["label" => "Ongoing Batches", "val" => $conn->query("SELECT COUNT(*) as c FROM programs WHERE status IN ('Ongoing','Active') AND approval_status='Approved'")->fetch_assoc()['c'] ?? 0, "note" => "Currently running programs"];
+    $card1 = ["label" => "Total Programs", "val" => $conn->query("SELECT COUNT(*) as c FROM program_categories")->fetch_assoc()['c'] ?? 0, "note" => "Program categories"];
+    $card2 = ["label" => "Total Batches", "val" => $conn->query("SELECT COUNT(*) as c FROM programs")->fetch_assoc()['c'] ?? 0, "note" => "Batches in all programs"];
+    $card3 = ["label" => "Pending Review", "val" => $conn->query("SELECT COUNT(*) as c FROM programs WHERE approval_status='Pending'")->fetch_assoc()['c'] ?? 0, "note" => "Waiting for admin approval"];
+    $card4 = ["label" => "Ongoing Batches", "val" => $conn->query("SELECT COUNT(*) as c FROM programs WHERE status IN ('Ongoing','Active') AND approval_status='Approved'")->fetch_assoc()['c'] ?? 0, "note" => "Programs currently in progress"];
 }
 ?>
 <!DOCTYPE html>
@@ -213,12 +195,13 @@ if ($active_program) {
     <title>BENEPESO | PESO Staff Programs</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="peso_staff_program.css">
+    <link rel="stylesheet" href="peso_staff_program.css?v=20260905-card-responsive">
     <link rel="stylesheet" href="shared_sidebar.css">
     <link rel="stylesheet" href="program_filter_polish.css?v=2">
     <script src="program_filter_polish.js?v=1" defer></script>
-    <link rel="stylesheet" href="frontend_polish.css?v=1">
-    <script src="frontend_polish.js?v=1" defer></script>
+<link rel="stylesheet" href="frontend_polish.css?v=7">
+<link rel="stylesheet" href="peso_staff_responsive.css?v=23">
+<script src="frontend_polish.js?v=3" defer></script>
 </head>
 <body>
 <div class="page-wrap">
@@ -252,7 +235,7 @@ if ($active_program) {
             <a href="peso_staff_program.php" class="nav-item active"><i class="ph ph-briefcase"></i> Program</a>
             <a href="peso_staff_beneficiaries.php" class="nav-item"><i class="ph ph-users"></i> Beneficiaries</a>
             <a href="peso_staff_activity_log.php" class="nav-item"><i class="ph ph-clock-counter-clockwise"></i> Activity Log</a>
-            <a href="logout.php?role=peso_staff" class="nav-item logout-item"><i class="ph ph-sign-out"></i> Logout</a>
+            <form method="POST" action="logout.php" class="sidebar-logout-form"><?php echo auth_csrf_input(); ?><input type="hidden" name="role" value="peso_staff"><button type="submit" class="nav-item logout-item"><i class="ph ph-sign-out"></i> Logout</button></form>
         </nav>
     </aside>
 
@@ -283,13 +266,11 @@ if ($active_program) {
             </div>
             <div class="top-actions">
                 <?php if($active_program): ?>
-                    <button class="btn-main" onclick="document.getElementById('addBatchModal').classList.add('show');">
+                    <button type="button" class="btn-main" onclick="document.getElementById('addBatchModal').classList.add('show');">
                         <i class="ph ph-plus-circle" style="font-size: 1.2rem; margin-right: 6px;"></i> Add New Batch
                     </button>
                 <?php else: ?>
-                    <button class="btn-main" onclick="document.getElementById('addProgModal').classList.add('show');">
-                        <i class="ph ph-plus-circle" style="font-size: 1.2rem; margin-right: 6px;"></i> Add Program
-                    </button>
+                    <span class="top-sub">Master programs are managed by administrators.</span>
                 <?php endif; ?>
                 <div class="top-chip">
                     <img src="<?php echo e($pic_path); ?>" alt="" class="chip-img" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<?php echo urlencode($staff_name); ?>&background=2f6b4f&color=fff';">
@@ -315,7 +296,7 @@ if ($active_program) {
                 <div class="stat-value"><?php echo $c['val']; ?></div>
                 <div class="stat-note">
                     <?php if($c['label']==='Pending Review' && $c['val'] > 0): ?>
-                        <span style="color:#b06900; font-weight:700;"><i class="ph-bold ph-warning-circle"></i> Action Required</span>
+                        <span style="color:#b06900; font-weight:700;"><i class="ph-bold ph-clock"></i> For review</span>
                     <?php else: ?>
                         <?php echo $c['note']; ?>
                     <?php endif; ?>
@@ -377,13 +358,6 @@ if ($active_program) {
                 $res = $conn->query($sql);
             ?>
                 <div class="program-grid">
-                    <article class="program-card-shell add-program-card" onclick="document.getElementById('addProgModal').classList.add('show');">
-                        <div class="add-card-content">
-                            <div class="add-icon"><i class="ph ph-plus"></i></div>
-                            <h3>Add Program</h3>
-                            <p style="color:var(--muted); font-size:12px; margin-top:4px;">Define a new category</p>
-                        </div>
-                    </article>
                     <?php if($res): while ($dir = $res->fetch_assoc()): if ($tabFilter !== 'All' && $dir['batch_count'] == 0) continue; ?>
                     <article class="program-card-shell">
                         <a href="?program=<?php echo urlencode($dir['program_name']); ?>" style="display:block; text-decoration:none; color:inherit;">
@@ -440,7 +414,7 @@ if ($active_program) {
                 $orderByClause = ($sort === 'oldest') ? "created_at ASC" : "created_at DESC";
 
                 $sql = "SELECT p.*, 
-                        (SELECT COUNT(*) FROM beneficiaries b WHERE b.program_id = p.program_id) as beneficiary_count,
+                        (SELECT COUNT(*) FROM beneficiaries b WHERE b.program_id = p.program_id AND b.approval_status = 'Approved') as beneficiary_count,
                         (SELECT CONCAT(first_name, ' ', last_name) FROM peso_staff WHERE staff_id = p.created_by) as staff_creator
                         FROM programs p 
                         WHERE $batchWhereStr 
@@ -453,7 +427,7 @@ if ($active_program) {
                             <tr>
                                 <th>Batch Details</th>
                                 <th>Capacity Details</th>
-                                <th>Schedule & Metadata</th>
+                                <th>Schedule & Details</th>
                                 <th class="col-status">STATUS</th>
                                 <th class="col-action">ACTION</th>
                             </tr>
@@ -461,19 +435,16 @@ if ($active_program) {
                         <tbody>
                             <?php if($res && $res->num_rows > 0): while($b = $res->fetch_assoc()): 
                                 
-                                if ($b['slots'] > 0 && $b['beneficiary_count'] >= $b['slots'] && $b['status'] !== 'Completed') {
-                                    $b['status'] = 'Completed';
-                                    if(isset($b['program_id'])){
-                                        $conn->query("UPDATE programs SET status = 'Completed' WHERE program_id = " . (int)$b['program_id']);
-                                    }
-                                }
-                                
                                 $pct = $b['slots'] > 0 ? min(100, round(($b['beneficiary_count'] / $b['slots']) * 100)) : 0;
                                 
                                 if ($b['approval_status'] === 'Pending') {
                                     $display_status = 'Pending Approval';
                                     $status_class = 'pill warning';
                                     $dot_class = 'pending';
+                                } elseif ((int)$b['slots'] > 0 && (int)$b['beneficiary_count'] >= (int)$b['slots'] && $b['status'] !== 'Completed') {
+                                    $display_status = 'Full';
+                                    $status_class = 'pill neutral';
+                                    $dot_class = 'completed';
                                 } else {
                                     $display_status = $b['status'];
                                     $status_str = strtolower($b['status']);
@@ -522,7 +493,7 @@ if ($active_program) {
                                 </td>
                                 <td>
                                     <div style="font-size: 13px; font-weight: 600; margin-bottom: 6px; white-space: nowrap;">
-                                        <span style="color:var(--green-dark); font-weight:800; font-size:14px;"><?php echo (int)$b['beneficiary_count']; ?></span> / <?php echo e($b['slots']); ?> Applied
+                                        <span style="color:var(--green-dark); font-weight:800; font-size:14px;"><?php echo (int)$b['beneficiary_count']; ?></span> / <?php echo e($b['slots']); ?> Approved
                                     </div>
                                     <div class="slim-progress">
                                         <div class="slim-fill <?php echo $pct >= 100 ? 'full' : ($pct >= 80 ? 'warning' : 'safe'); ?>" style="width: <?php echo $pct; ?>%;"></div>
@@ -558,7 +529,7 @@ if ($active_program) {
                                         <?php endif; ?>
 
                                         <div class="dropdown-wrapper">
-                                            <button class="btn-icon" onclick="toggleDropdown(this)" title="More Options">
+                                            <button type="button" class="btn-icon" onclick="toggleDropdown(this)" title="More Options">
                                                 <i class="ph-bold ph-dots-three-vertical"></i>
                                             </button>
                                             <div class="dropdown-menu">
@@ -607,7 +578,7 @@ if ($active_program) {
     <div class="modal-dialog landscape-modal">
         <div class="modal-head">
             <div><div class="modal-title">New Program</div><div class="modal-sub">Create a new program category.</div></div>
-            <button class="modal-close" data-close-modal="addProgModal"><i class="ph ph-x"></i></button>
+            <button type="button" class="modal-close" data-close-modal="addProgModal"><i class="ph ph-x"></i></button>
         </div>
         <form method="POST" enctype="multipart/form-data" class="modal-form">
             <input type="hidden" name="action" value="add_category">
@@ -658,7 +629,7 @@ if ($active_program) {
     <div class="modal-dialog landscape-modal" style="max-width: 700px;">
         <div class="modal-head">
             <div><div class="modal-title">Add Batch</div><div class="modal-sub">Schedule a rollout for <?php echo e($active_program); ?></div></div>
-            <button class="modal-close" data-close-modal="addBatchModal"><i class="ph ph-x"></i></button>
+            <button type="button" class="modal-close" data-close-modal="addBatchModal"><i class="ph ph-x"></i></button>
         </div>
         <form method="POST" class="modal-form">
             <input type="hidden" name="action" value="add_batch">
@@ -692,7 +663,7 @@ if ($active_program) {
     <div class="modal-dialog" style="max-width: 500px;">
         <div class="modal-head">
             <div><div class="modal-title">Batch Details</div><div class="modal-sub">Complete scheduling and capacity info.</div></div>
-            <button class="modal-close" data-close-modal="viewBatchModal"><i class="ph ph-x"></i></button>
+            <button type="button" class="modal-close" data-close-modal="viewBatchModal"><i class="ph ph-x"></i></button>
         </div>
         <div class="modal-form">
             <div class="form-grid" style="gap: 12px; padding-bottom: 24px;">

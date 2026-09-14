@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
 require "db.php";
 
 if (!isset($_SESSION["user_id"])) {
@@ -11,9 +11,10 @@ $user_id = (int)$_SESSION["user_id"];
 $user_display_name = "User";
 $first_char = "U";
 $user_barangay = "";
+$user_profile_src = '';
 
 // 1. Fetch Logged-in User's Data 
-$stmt = $conn->prepare("SELECT first_name, middle_name, last_name, ext_name, barangay FROM users WHERE user_id=? LIMIT 1");
+$stmt = $conn->prepare("SELECT first_name, middle_name, last_name, ext_name, barangay, profile_pic FROM users WHERE user_id=? LIMIT 1");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $res = $stmt->get_result();
@@ -29,6 +30,10 @@ if ($res && $res->num_rows === 1) {
     $full_name = $fn . ($mn ? " " . substr($mn, 0, 1) . "." : "") . " " . $ln . ($ex ? " " . $ex : "");
     $user_display_name = !empty(trim($full_name)) ? $full_name : "User";
     $first_char = !empty($fn) ? strtoupper(substr($fn, 0, 1)) : "U";
+    $profile_filename = basename((string)($user_data['profile_pic'] ?? ''));
+    if ($profile_filename !== '' && is_file(__DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $profile_filename)) {
+        $user_profile_src = 'uploads/' . rawurlencode($profile_filename);
+    }
 }
 
 // 2. Fetch all Programs for the Dropdown Filter
@@ -45,9 +50,17 @@ $total_results = 0;
 $search_result = null;
 $search_query = "";
 $filter_program = isset($_GET['program_filter']) ? $_GET['program_filter'] : "";
+$search_ready = false;
+$search_too_short = false;
 
-if (isset($_GET['search']) || !empty($filter_program)) {
+if (isset($_GET['search'])) {
     $search_query = trim($_GET['search'] ?? "");
+    $search_ready = mb_strlen($search_query) >= 3;
+    $search_too_short = $search_query !== '' && !$search_ready;
+}
+
+// A program filter alone must never reveal a barangay-wide beneficiary list.
+if ($search_ready) {
     $search_param = "%$search_query%";
     
     // Base WHERE clause - restricts search strictly to the user's barangay for privacy
@@ -108,9 +121,10 @@ if (isset($_GET['search']) || !empty($filter_program)) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="home.css?v=10" />
+    <link rel="stylesheet" href="home.css?v=14" />
     <link rel="stylesheet" href="verification.css?v=4" />
-    <link rel="stylesheet" href="frontend_polish.css?v=1">
+    <link rel="stylesheet" href="frontend_polish.css?v=5">
+    <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
     <script src="frontend_polish.js?v=1" defer></script>
 </head>
 <body>
@@ -129,7 +143,7 @@ if (isset($_GET['search']) || !empty($filter_program)) {
       </div>
     </a>
 
-    <button class="menu-button" id="menuButton" type="button" aria-label="Toggle menu">
+    <button class="menu-button" id="menuButton" type="button" aria-label="Toggle menu" aria-controls="menuArea" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
 
@@ -140,7 +154,10 @@ if (isset($_GET['search']) || !empty($filter_program)) {
 
       <div class="account-area" id="accountWrap">
         <button class="account-button active" id="accountButton" type="button">
-          <span class="account-icon"><?php echo htmlspecialchars($first_char); ?></span>
+          <span class="account-icon">
+              <?php echo htmlspecialchars($first_char); ?>
+              <?php if ($user_profile_src !== ''): ?><img src="<?php echo htmlspecialchars($user_profile_src); ?>" alt="" onerror="this.remove()"><?php endif; ?>
+          </span>
           <span class="account-text"><?php echo htmlspecialchars($user_display_name); ?></span>
           <span class="account-arrow">▾</span>
         </button>
@@ -149,7 +166,13 @@ if (isset($_GET['search']) || !empty($filter_program)) {
           <a href="profile.php">My Profile</a>
           <a href="verification.php">Verification</a>
           <div class="dropdown-line"></div>
-          <a class="logout-link" href="logout.php?role=user">Logout</a>
+          <form class="logout-form" action="logout.php" method="POST">
+            <?= auth_csrf_input() ?><input type="hidden" name="role" value="user">
+            <button class="logout-link" type="submit">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M15 4h3a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3h-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Log out</span>
+            </button>
+          </form>
         </div>
       </div>
     </nav>
@@ -288,7 +311,15 @@ if (isset($_GET['search']) || !empty($filter_program)) {
                 </div>
             <?php endif; ?>
             
-        <?php elseif (isset($_GET['search']) || !empty($filter_program)): ?>
+        <?php elseif ($search_too_short): ?>
+            <div class="v-no-results">
+                <div class="v-no-results-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+                <h3>Enter More Details</h3>
+                <p>Type at least 3 characters of the resident's name, or enter their complete email address or contact number.</p>
+            </div>
+        <?php elseif ($search_ready): ?>
             <div class="v-no-results">
                 <div class="v-no-results-icon">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -302,7 +333,7 @@ if (isset($_GET['search']) || !empty($filter_program)) {
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
                 </div>
                 <h3>Ready to Verify</h3>
-                <p>Use the search bar above to look up beneficiaries in your barangay.</p>
+                <p>Enter at least 3 characters to look up a beneficiary in your barangay. A program filter alone will not display resident records.</p>
             </div>
         <?php endif; ?>
     </section>
@@ -322,6 +353,7 @@ if (isset($_GET['search']) || !empty($filter_program)) {
       <div class="footer-head">Links</div>
       <a href="home.php">Home</a>
       <a href="programs.php">Programs</a>
+      <a href="about.php">About</a>
       <a href="verification.php">Verification</a>
       <a href="profile.php">Profile</a>
       <a href="privacy_notice.php">Privacy Notice</a>
@@ -362,7 +394,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuArea = document.getElementById('menuArea');
     if(menuBtn && menuArea) {
         menuBtn.addEventListener('click', function() {
-            menuArea.classList.toggle('open');
+            const isOpen = menuArea.classList.toggle('open');
+            menuBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         });
     }
 

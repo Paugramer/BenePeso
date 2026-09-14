@@ -253,6 +253,7 @@ select.form-input:not(.editing) { background-image: none; }
 .status-pill.pending { background: #fef9e7; color: #d35400; border: 1px solid #fdebd0; }
 .status-pill.approved { background: #e8f8f5; color: #27ae60; border: 1px solid #d1f2eb; }
 .status-pill.rejected { background: #fdedec; color: #c0392b; border: 1px solid #fadbd8; }
+.status-pill.completed { background: #e8f1ff; color: #245a9b; border: 1px solid #cbdcf4; }
 
 .btn-check-status {
     background: var(--bg); color: var(--green); border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 13px; transition: 0.3s; pointer-events: none;
@@ -604,7 +605,14 @@ body::before {
     .profile-main { padding: 26px 22px; }
     .profile-tabs-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .content-header { align-items: flex-start; }
-    .btn-edit { width: 100%; justify-content: center; }
+    .content-header .btn-edit {
+        width: auto;
+        min-width: 148px;
+        max-width: 100%;
+        align-self: flex-start;
+        justify-content: center;
+        padding-inline: 16px;
+    }
 }
 
 @media (max-width: 600px) {
@@ -816,6 +824,10 @@ body::before {
     background: #a64b4b;
 }
 
+#my-programs .status-card-horizontal[data-status="completed"]::before {
+    background: #3f72af;
+}
+
 #my-programs .status-card-horizontal:hover {
     border-color: #b8d5c4;
     box-shadow: 0 12px 28px rgba(17, 42, 30, 0.09);
@@ -927,6 +939,12 @@ body::before {
     border-color: #ebcaca;
     background: #fff0f0;
     color: #9f4141;
+}
+
+#my-programs .status-pill.completed {
+    background: #e8f1ff;
+    color: #245a9b;
+    border-color: #cbdcf4;
 }
 
 #my-programs .btn-check-status {
@@ -1048,6 +1066,15 @@ body::before {
     top: 16px;
     right: 16px;
     z-index: 2;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1;
 }
 
 .status-modal .modal-icon {
@@ -1230,6 +1257,29 @@ body::before {
 .status-modal[data-status="rejected"] .status-note {
     border-left-color: #a64b4b;
     background: #fff3f3;
+}
+
+@media (max-width: 760px) {
+    #my-programs .status-card-horizontal {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 18px;
+        padding: 17px 16px;
+    }
+
+    #my-programs .card-left {
+        align-items: flex-start;
+    }
+
+    #my-programs .card-right {
+        width: 100%;
+        align-items: flex-end;
+        justify-content: space-between;
+    }
+
+    #my-programs .status-summary {
+        align-items: flex-start;
+    }
 }
 
 @media (max-width: 600px) {

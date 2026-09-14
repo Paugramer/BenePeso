@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth_session.php';
+auth_enable_csrf_form_injection();
 require "db.php";
 
 if (!isset($_SESSION["admin_id"])) {
@@ -9,6 +10,7 @@ if (!isset($_SESSION["admin_id"])) {
 
 $admin_id = (int)$_SESSION["admin_id"];
 $admin_name = $_SESSION["admin_name"] ?? "Administrator";
+$admin_display_name = "PESO VINZONS";
 $admin_pic = "default_avatar.png";
 $pic_path = "uploads/admin_pics/" . $admin_pic;
 if (!file_exists($pic_path) || empty($admin_pic)) { $pic_path = "img/default_avatar.png"; }
@@ -31,17 +33,18 @@ function navClass($fileName){
 }
 
 function getDisplayName($row) {
-    if (!empty($row['full_name'])) return e($row['full_name']);
+    if (!empty($row['full_name'])) return (string)$row['full_name'];
     $first = $row['first_name'] ?? '';
     $last = $row['last_name'] ?? '';
     $combined = trim("$first $last");
-    return !empty($combined) ? e($combined) : 'Unknown User';
+    return !empty($combined) ? $combined : 'Unknown User';
 }
 
 function getProfileImage($filename, $type) {
     if (empty($filename) || $filename === 'default_avatar.png') return '';
-    $folder = ($type === 'staff') ? 'uploads/staff_pics/' : 'uploads/user_pics/';
-    return $folder . $filename;
+    $folder = ($type === 'staff') ? 'uploads/staff_pics/' : 'uploads/';
+    $path = $folder . basename((string)$filename);
+    return is_file($path) ? $path : '';
 }
 
 function build_query(array $overrides = []): string {
@@ -51,6 +54,7 @@ function build_query(array $overrides = []): string {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    auth_require_csrf();
     $action = $_POST['action'] ?? '';
 
     if ($action === 'ban_account') {
@@ -163,13 +167,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $lname = trim($_POST['last_name']);
         $email = trim($_POST['email']);
         $new_pass = trim($_POST['new_password'] ?? '');
+        $confirm_pass = trim($_POST['confirm_password'] ?? '');
+
+        if ($new_pass !== '' && ($new_pass !== $confirm_pass || strlen($new_pass) < 8)) {
+            $_SESSION["flash"] = $new_pass !== $confirm_pass
+                ? "The new password and confirmation do not match."
+                : "The new password must be at least 8 characters long.";
+            $_SESSION["flash_type"] = "warning";
+            header("Location: admin_accounts.php?view=" . urlencode($view));
+            exit();
+        }
         
         $pic_param = null;
         if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === 0) {
             $allowed = ['jpg', 'jpeg', 'png'];
+            $allowed_mimes = ['image/jpeg', 'image/png'];
             $filename = $_FILES['profile_pic']['name'];
             $ext_file = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-            if (in_array($ext_file, $allowed)) {
+            $detected_mime = (new finfo(FILEINFO_MIME_TYPE))->file($_FILES['profile_pic']['tmp_name']);
+            if ($_FILES['profile_pic']['size'] <= 5 * 1024 * 1024
+                && in_array($ext_file, $allowed, true)
+                && in_array($detected_mime, $allowed_mimes, true)) {
                 $new_name = uniqid("staff_") . "." . $ext_file;
                 $dest_dir = "uploads/staff_pics/";
                 if (!is_dir($dest_dir)) mkdir($dest_dir, 0777, true);
@@ -281,11 +299,12 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="admin_accounts.css">
     <link rel="stylesheet" href="shared_sidebar.css">
-    <link rel="stylesheet" href="admin_accounts_polish.css">
-    <link rel="stylesheet" href="frontend_polish.css?v=1">
-    <script src="frontend_polish.js?v=1" defer></script>
+    <link rel="stylesheet" href="admin_accounts_polish.css?v=6">
+<link rel="stylesheet" href="frontend_polish.css?v=7">
+<link rel="stylesheet" href="admin_responsive.css?v=17">
+<script src="frontend_polish.js?v=3" defer></script>
 </head>
-<body>
+<body class="admin-accounts-page accounts-view-<?= e($view) ?>">
 
 <div class="page-wrap">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -306,10 +325,10 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
 
     <div class="side-user">
       <div class="user-pic-wrap">
-        <img src="<?php echo e($pic_path ?? ''); ?>" alt="Admin" class="user-img-side" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<?php echo urlencode($admin_name); ?>&background=1f7a54&color=fff';">
+        <img src="<?php echo e($pic_path ?? ''); ?>" alt="Admin" class="user-img-side" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<?php echo urlencode($admin_display_name); ?>&background=1f7a54&color=fff';">
       </div>
       <div>
-        <div class="user-name"><?php echo e($admin_name); ?></div>
+        <div class="user-name"><?php echo e($admin_display_name); ?></div>
         <div class="user-role">Administrator</div>
       </div>
     </div>
@@ -320,14 +339,14 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
         <a href="admin_beneficiaries.php" class="<?php echo navClass('admin_beneficiaries.php'); ?>"><i class="ph ph-users"></i> Beneficiaries</a>
         <a href="admin_accounts.php" class="<?php echo navClass('admin_accounts.php'); ?>"><i class="ph ph-user-circle-gear"></i> Manage Accounts</a>
         <a href="admin_activity_log.php" class="<?php echo navClass('admin_activity_log.php'); ?>"><i class="ph ph-clock-counter-clockwise"></i> System Logs</a>
-        <a href="logout.php?role=admin" class="nav-item logout-item"><i class="ph ph-sign-out"></i> Logout</a>
+        <form method="POST" action="logout.php" class="sidebar-logout-form"><?php echo auth_csrf_input(); ?><input type="hidden" name="role" value="admin"><button type="submit" class="nav-item logout-item"><i class="ph ph-sign-out"></i> Logout</button></form>
     </nav>
 </aside>
 <main class="main-area">
 
 <header class="top-area animate-fade-in">
     <div class="top-left">
-        <button class="menu-toggle" id="menuToggle" aria-label="Open menu">
+        <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false" aria-controls="sideArea">
             <span></span><span></span><span></span>
         </button>
         <div class="top-title">
@@ -339,8 +358,8 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
 
     <div class="top-actions">
         <div class="top-chip">
-            <img src="<?php echo e($pic_path ?? ''); ?>" alt="" class="chip-img" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<?php echo urlencode($admin_name); ?>&background=1f7a54&color=fff';">
-            Administrator
+            <img src="<?php echo e($pic_path ?? ''); ?>" alt="" class="chip-img" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<?php echo urlencode($admin_display_name); ?>&background=1f7a54&color=fff';">
+            <?php echo e($admin_display_name); ?>
         </div>
     </div>
 </header>
@@ -352,8 +371,8 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
             <div class="stat-icon" style="color: #64748b; background: #f1f5f9;"><i class="ph-fill ph-database"></i></div>
         </div>
         <div class="stat-value"><?= (int)$globalTotal ?></div>
-        <div class="stat-trend trend-neutral"><i class="ph-bold ph-folder-notch"></i> System Tracked</div>
-        <div class="stat-note">System-wide records combined</div>
+        <div class="stat-trend trend-neutral"><i class="ph-bold ph-folder-notch"></i> All accounts</div>
+        <div class="stat-note">Staff and beneficiary accounts.</div>
     </div>
     
     <div class="stat-card animate-fade-in" style="animation-delay: 0.2s;">
@@ -362,8 +381,8 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
             <div class="stat-icon"><i class="ph-fill ph-user-circle-gear"></i></div>
         </div>
         <div class="stat-value"><?= (int)$globalStaff ?></div>
-        <div class="stat-trend trend-up"><i class="ph-bold ph-trend-up"></i> Active Personnel</div>
-        <div class="stat-note">Administrative accounts created</div>
+        <div class="stat-trend trend-up"><i class="ph-bold ph-user-check"></i> Staff accounts</div>
+        <div class="stat-note">Administrator and PESO staff accounts.</div>
     </div>
     
     <div class="stat-card animate-fade-in" style="animation-delay: 0.3s;">
@@ -372,8 +391,8 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
             <div class="stat-icon" style="color: #0f766e; background: #ccfbf1;"><i class="ph-fill ph-users-three"></i></div>
         </div>
         <div class="stat-value"><?= (int)$globalUsers ?></div>
-        <div class="stat-trend trend-up"><i class="ph-bold ph-check-circle"></i> Verified Users</div>
-        <div class="stat-note">Verified Beneficiaries in database</div>
+        <div class="stat-trend trend-up"><i class="ph-bold ph-check-circle"></i> Verified users</div>
+        <div class="stat-note">Verified beneficiary accounts.</div>
     </div>
 </section>
 
@@ -531,7 +550,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
                                 $status = $row['status'] ?? 'Active';
                                 $isBanned = strcasecmp($status, 'Banned') === 0;
 
-                                $imgSrc = getProfileImage($row['profile_picture'] ?? '', 'user');
+                                $imgSrc = getProfileImage($row['profile_pic'] ?? '', 'user');
                                 $encodedName = urlencode($displayName);
                                 $fallbackAvatar = "https://ui-avatars.com/api/?name={$encodedName}&background=e6f4ed&color=1f7a54&bold=true";
                     ?>
@@ -704,7 +723,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
 <div class="modal" id="idCardModal" aria-hidden="true">
   <div class="modal-backdrop" onclick="closeProfileCard()"></div>
   <div class="modal-dialog id-card-dialog" style="padding: 0;">
-    <button type="button" class="modal-close-icon" onclick="closeProfileCard()" style="position: absolute; top: 16px; right: 16px; z-index: 10;">
+    <button type="button" class="modal-close-icon" onclick="closeProfileCard()" aria-label="Close account profile" style="position: absolute; top: 16px; right: 16px; z-index: 10;">
         <i class="ph-bold ph-x"></i>
     </button>
 
@@ -771,13 +790,13 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
                         </div>
                         
                         <div class="form-group" style="margin-bottom: 16px;">
-                            <label>Old Password</label>
-                            <input type="password" name="old_password" id="edit_old_password" placeholder="Enter current password" autocomplete="new-password">
+                            <label>New Password</label>
+                            <input type="password" name="new_password" id="edit_new_password" placeholder="At least 8 characters" minlength="8" autocomplete="new-password">
                         </div>
                         
                         <div class="form-group">
-                            <label>New Password</label>
-                            <input type="password" name="new_password" id="edit_new_password" placeholder="Enter new password" autocomplete="new-password">
+                            <label>Confirm New Password</label>
+                            <input type="password" name="confirm_password" id="edit_confirm_password" placeholder="Retype the new password" minlength="8" autocomplete="new-password">
                         </div>
                         
                         <p style="font-size: 11px; color: var(--muted); margin-top: 14px; font-weight: 500; line-height: 1.4;">Leave password fields blank if you do not wish to change the system credentials.</p>
@@ -963,8 +982,8 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
         document.getElementById('edit_fname').value = data.fname;
         document.getElementById('edit_lname').value = data.lname;
         document.getElementById('edit_email').value = data.email;
-        document.getElementById('edit_old_password').value = '';
         document.getElementById('edit_new_password').value = '';
+        document.getElementById('edit_confirm_password').value = '';
         
         document.getElementById('edit_header_name').textContent = data.fname + " " + data.lname;
         const imgSource = data.img && data.img.trim() !== '' ? data.img : data.fallback;
@@ -982,9 +1001,21 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
         const sideClose = document.getElementById('sideClose');
         const overlay = document.getElementById('sidebarOverlay');
 
-        if(menuToggle) menuToggle.addEventListener('click', () => { sideArea.classList.add('open'); overlay.classList.add('show'); });
-        if(sideClose) sideClose.addEventListener('click', () => { sideArea.classList.remove('open'); overlay.classList.remove('show'); });
-        if(overlay) overlay.addEventListener('click', () => { sideArea.classList.remove('open'); overlay.classList.remove('show'); });
+        const setSidebarOpen = (open) => {
+            if (!sideArea || !overlay || !menuToggle) return;
+            sideArea.classList.toggle('open', open);
+            overlay.classList.toggle('show', open);
+            document.body.classList.toggle('sidebar-open', open);
+            menuToggle.setAttribute('aria-expanded', String(open));
+            menuToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+        };
+
+        if(menuToggle) menuToggle.addEventListener('click', () => setSidebarOpen(!sideArea.classList.contains('open')));
+        if(sideClose) sideClose.addEventListener('click', () => setSidebarOpen(false));
+        if(overlay) overlay.addEventListener('click', () => setSidebarOpen(false));
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && sideArea && sideArea.classList.contains('open')) setSidebarOpen(false);
+        });
 
         const searchInput = document.getElementById('liveSearchInput');
         if(searchInput) {
