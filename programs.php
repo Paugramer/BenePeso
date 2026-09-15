@@ -777,10 +777,10 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=14">
-    <link rel="stylesheet" href="programs.css?v=22">
-<link rel="stylesheet" href="frontend_polish.css?v=9">
+    <link rel="stylesheet" href="programs.css?v=24">
+<link rel="stylesheet" href="frontend_polish.css?v=12">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-    <script src="frontend_polish.js?v=5" defer></script>
+    <script src="frontend_polish.js?v=8" defer></script>
 </head>
 <body>
 
@@ -1901,6 +1901,19 @@ if ($barangay_summary_result) {
         });
     }
 
+    function updateProgramGridBalance() {
+        const grid = document.getElementById('programGrid');
+        if (!grid) return;
+        const cards = Array.from(grid.querySelectorAll('.program-card:not(.program-batch-duplicate)'));
+        cards.forEach(card => card.classList.remove('bp-grid-last-desktop', 'bp-grid-last-pair'));
+        if (grid.classList.contains('list-view')) return;
+        const visibleCards = cards.filter(card => !card.hidden && card.style.display !== 'none');
+        const last = visibleCards[visibleCards.length - 1];
+        if (!last) return;
+        if (visibleCards.length % 3 === 1) last.classList.add('bp-grid-last-desktop');
+        if (visibleCards.length % 2 === 1) last.classList.add('bp-grid-last-pair');
+    }
+
     function filterPrograms() {
         let input = document.getElementById('searchInput');
         let filter = input.value.toLowerCase();
@@ -1935,6 +1948,7 @@ if ($barangay_summary_result) {
         if (noMatchMsg) {
             noMatchMsg.style.display = hasMatch ? "none" : "block";
         }
+        updateProgramGridBalance();
     }
 
     let activeProgramId = 0, activeProgramName = "", currentFormType = "tupad", totalSteps = 3;
@@ -1988,6 +2002,8 @@ if ($barangay_summary_result) {
             const actionButton = representative.querySelector('.program-btn, .btn-check-status');
             if (actionButton) actionButton.textContent = 'Choose Batch';
         });
+
+        updateProgramGridBalance();
 
         initializeArchivePagination();
 

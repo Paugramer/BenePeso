@@ -33,8 +33,8 @@ if ($res && $res->num_rows === 1) {
     }
 }
 
-// 2. Fetch all Programs for the Dropdown Filter
-$programs_list = $conn->query("SELECT program_id, program_name FROM programs WHERE approval_status = 'Approved'");
+// 2. Fetch approved batches for a clear Program > Batch filter.
+$programs_list = $conn->query("SELECT program_id, program_name, program_code, start_date, end_date FROM programs WHERE approval_status = 'Approved' ORDER BY program_name ASC, start_date DESC, program_id DESC");
 
 // 3. Setup Pagination Variables
 $results_per_page = 5;
@@ -89,7 +89,7 @@ if ($search_ready) {
     $total_pages = ceil($total_results / $results_per_page);
 
     // --- B. Fetch the limited data for current page ---
-    $sql = "SELECT b.*, p.program_name FROM beneficiaries b JOIN programs p ON b.program_id = p.program_id " . $where_clause . " ORDER BY b.created_at DESC LIMIT ?, ?";
+    $sql = "SELECT b.*, p.program_name, p.program_code FROM beneficiaries b JOIN programs p ON b.program_id = p.program_id " . $where_clause . " ORDER BY b.created_at DESC LIMIT ?, ?";
     $stmt = $conn->prepare($sql);
     
     if (!empty($search_query) && !empty($filter_program)) {
@@ -112,19 +112,19 @@ if ($search_ready) {
     <link rel="icon" type="image/png" href="img/pesologo.png">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Verification | BENEPESO</title>
+    <title>BENEPESO | Verification</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=14" />
-    <link rel="stylesheet" href="verification.css?v=4" />
-    <link rel="stylesheet" href="frontend_polish.css?v=9">
+    <link rel="stylesheet" href="verification.css?v=8" />
+    <link rel="stylesheet" href="frontend_polish.css?v=12">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-    <script src="frontend_polish.js?v=5" defer></script>
+    <script src="frontend_polish.js?v=8" defer></script>
 </head>
-<body>
+<body class="verification-page">
 
 <div class="bg-orb orb-1"></div>
 <div class="bg-orb orb-2"></div>
@@ -193,30 +193,55 @@ if ($search_ready) {
                 </p>
 
                 <form id="searchForm" action="verification.php" method="GET" class="v-search-box">
+                    <div class="v-search-intro">
+                        <span class="v-search-intro-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.5 2.8 7.6 7 9 4.2-1.4 7-4.5 7-9V6l-7-3Z"></path><path d="m9 12 2 2 4-4"></path></svg></span>
+                        <div><strong>Find a beneficiary record</strong><small>Select the exact batch, then enter at least three characters of the resident's name.</small></div>
+                    </div>
                     <div class="v-input-wrapper">
-                        <select name="program_filter" id="programFilter" class="v-select">
+                        <label class="v-search-field v-program-field" for="programFilter">
+                            <span class="v-search-field-label">Program and batch</span>
+                            <select name="program_filter" id="programFilter" class="v-select">
                             <option value="">All Programs</option>
                             <?php if ($programs_list): ?>
+                                <?php $program_group = null; ?>
                                 <?php while($p_row = $programs_list->fetch_assoc()): ?>
-                                    <option value="<?= $p_row['program_id'] ?>" <?= ($filter_program == $p_row['program_id']) ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($p_row['program_name']) ?>
+                                    <?php if ($program_group !== $p_row['program_name']): ?>
+                                        <?php if ($program_group !== null): ?></optgroup><?php endif; ?>
+                                        <?php $program_group = $p_row['program_name']; ?>
+                                        <optgroup label="<?= htmlspecialchars($program_group) ?>">
+                                    <?php endif; ?>
+                                    <?php
+                                    $batch_code = trim((string)($p_row['program_code'] ?? '')) ?: 'Batch ' . (int)$p_row['program_id'];
+                                    $batch_period = '';
+                                    if (!empty($p_row['start_date'])) {
+                                        $batch_period = ' - ' . date('M Y', strtotime((string)$p_row['start_date']));
+                                    }
+                                    ?>
+                                    <option value="<?= (int)$p_row['program_id'] ?>" <?= ((string)$filter_program === (string)$p_row['program_id']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars('Batch ' . $batch_code . $batch_period) ?>
                                     </option>
                                 <?php endwhile; ?>
+                                <?php if ($program_group !== null): ?></optgroup><?php endif; ?>
                             <?php endif; ?>
-                        </select>
-                        <div class="v-divider"></div>
-                        <input type="text" name="search" id="searchInput" class="v-input" placeholder="Search resident by name..." value="<?= htmlspecialchars($search_query) ?>" autocomplete="off">
-                        <button type="submit" class="v-btn" aria-label="Search beneficiary records">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        </button>
+                            </select>
+                        </label>
+                        <label class="v-search-field v-resident-field" for="searchInput">
+                            <span class="v-search-field-label">Resident name</span>
+                            <span class="v-search-entry">
+                                <svg class="v-search-entry-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+                                <input type="text" name="search" id="searchInput" class="v-input" placeholder="Enter a resident's name" value="<?= htmlspecialchars($search_query) ?>" autocomplete="off">
+                                <button type="submit" class="v-btn" aria-label="Verify beneficiary record">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                    <span>Verify</span>
+                                </button>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="privacy-disclaimer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        <span>Only limited application status is displayed, following local data privacy guidelines.</span>
                     </div>
                 </form>
-                
-                <!-- PROFESSIONAL PRIVACY DISCLAIMER -->
-                <div class="privacy-disclaimer">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    <span>Data displayed is limited to application status for verification purposes in accordance with local data privacy guidelines.</span>
-                </div>
             </div>
         </div>
     </section>
@@ -235,6 +260,7 @@ if ($search_ready) {
                         <div class="v-card-left">
                             <div class="v-tags">
                                 <span class="v-tag"><?= htmlspecialchars($row['program_name']) ?></span>
+                                <span class="v-tag v-tag-batch">Batch: <?= htmlspecialchars($row['program_code'] ?: ('#' . $row['program_id'])) ?></span>
                                 <span class="v-pill <?= strtolower(str_replace(' ', '-', $row['approval_status'] ?? 'pending')) ?>">
                                     <?= htmlspecialchars($row['approval_status'] ?? 'Pending') ?>
                                 </span>
@@ -327,10 +353,16 @@ if ($search_ready) {
         <?php else: ?>
             <div class="v-empty-state">
                 <div class="v-empty-icon pulse-animation">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 2.8 7.6 7 9 4.2-1.4 7-4.5 7-9V6l-7-3Z"></path><circle cx="11" cy="11" r="3"></circle><path d="m13.5 13.5 2 2"></path></svg>
                 </div>
-                <h3>Ready to Verify</h3>
-                <p>Enter at least 3 characters to look up a beneficiary in your barangay. A program filter alone will not display resident records.</p>
+                <span class="v-empty-kicker">Secure barangay lookup</span>
+                <h3>Start a private verification</h3>
+                <p>Resident records remain hidden until a specific name is entered.</p>
+                <div class="v-empty-guide" aria-label="How to verify a record">
+                    <span><i>1</i><b>Choose a batch</b></span>
+                    <span><i>2</i><b>Enter 3+ characters</b></span>
+                    <span><i>3</i><b>Review limited status</b></span>
+                </div>
             </div>
         <?php endif; ?>
     </section>

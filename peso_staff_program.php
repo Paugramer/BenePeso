@@ -199,9 +199,9 @@ if ($active_program) {
     <link rel="stylesheet" href="shared_sidebar.css">
     <link rel="stylesheet" href="program_filter_polish.css?v=2">
     <script src="program_filter_polish.js?v=1" defer></script>
-<link rel="stylesheet" href="frontend_polish.css?v=7">
+<link rel="stylesheet" href="frontend_polish.css?v=11">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=23">
-<script src="frontend_polish.js?v=3" defer></script>
+<script src="frontend_polish.js?v=7" defer></script>
 </head>
 <body>
 <div class="page-wrap">

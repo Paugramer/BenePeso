@@ -1175,9 +1175,9 @@ if ($selectedProgramName !== "") {
       .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #ccc; padding: 6px 3px; font-size: 9px; white-space: normal; overflow-wrap: anywhere; }
       .spreadsheet-table thead th { background: #e6f4ed; color: #0d2618; position: sticky; top: 0; z-index: 10; font-weight: 700;}
   </style>
-<link rel="stylesheet" href="frontend_polish.css?v=9">
-  <link rel="stylesheet" href="peso_staff_responsive.css?v=22">
-<script src="frontend_polish.js?v=5" defer></script>
+<link rel="stylesheet" href="frontend_polish.css?v=13">
+  <link rel="stylesheet" href="peso_staff_responsive.css?v=24">
+<script src="frontend_polish.js?v=7" defer></script>
 </head>
 <body class="peso-staff-beneficiaries-page">
   <div class="page-wrap">
@@ -1514,7 +1514,7 @@ if ($selectedProgramName !== "") {
       <div class="form-grid">
         <div class="form-group span-2"><label>New Availment Status *</label>
           <select name="availment_status" id="bulkAvailmentStatus" required>
-            <option value="Requirements Received">Documents Submitted</option><option value="Orientation">Orientation</option><option value="Examination">Examination Scheduled (Face-to-Face)</option><option value="Exam Passed">Exam Passed</option><option value="Exam Failed">Exam Not Passed</option><option value="Ongoing">Ongoing</option><option value="Salary Distribution">Salary Distribution</option><option value="Completed">Completed</option><option value="Not Qualified">Not Qualified</option><option value="Cancelled">Cancelled</option>
+            <option value="Requirements Received">Documents Submitted</option><option value="Examination">Examination Scheduled (Face-to-Face)</option><option value="Exam Passed">Exam Passed</option><option value="Exam Failed">Exam Not Passed</option><option value="Orientation">Orientation</option><option value="Ongoing">Ongoing</option><option value="Salary Distribution">Salary Distribution</option><option value="Completed">Completed</option><option value="Not Qualified">Not Qualified</option><option value="Cancelled">Cancelled</option>
           </select>
         </div>
         <div class="form-group span-2 bulk-message-field" hidden><label>Reason for this status *</label><textarea name="status_message" rows="4" placeholder="Explain why the beneficiaries are not qualified or why their availment was cancelled."></textarea></div>
@@ -1813,7 +1813,7 @@ if ($selectedProgramName !== "") {
                   <div class="form-group span-2"><label>Other Related Information / Requests / Interventions from DOLE</label><textarea name="spes_other_info" id="spes_other_info" rows="3" class="not-required" placeholder="Leave blank if none"></textarea></div>
 
                   <h4 class="form-section-title span-2" style="margin-top:10px;">Current Record Availment Data</h4>
-                  <div class="form-group span-2"><label>Availment Status *</label><select name="availment_status" id="availment_status_input" required><option value="Not Yet Availed">Not Yet Availed</option><option value="Requirements Received">Documents Submitted</option><option value="Orientation">Orientation</option><option value="Examination">Examination Scheduled (Face-to-Face)</option><option value="Exam Passed">Exam Passed</option><option value="Exam Failed">Exam Not Passed</option><option value="Ongoing">Ongoing</option><option value="Salary Distribution">Salary Distribution</option><option value="Completed">Completed</option><option value="Not Qualified">Not Qualified</option></select></div>
+                  <div class="form-group span-2"><label>Availment Status *</label><select name="availment_status" id="availment_status_input" required><option value="Not Yet Availed">Not Yet Availed</option><option value="Requirements Received">Documents Submitted</option><option value="Examination">Examination Scheduled (Face-to-Face)</option><option value="Exam Passed">Exam Passed</option><option value="Exam Failed">Exam Not Passed</option><option value="Orientation">Orientation</option><option value="Ongoing">Ongoing</option><option value="Salary Distribution">Salary Distribution</option><option value="Completed">Completed</option><option value="Not Qualified">Not Qualified</option></select></div>
                   <div class="date-fields-wrapper" style="display: none; grid-column: 1 / -1; width: 100%;">
                       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                           <div class="form-group" style="margin:0;"><label>Date Received / Started</label><input type="date" name="date_availed" id="date_availed"></div>
@@ -2302,15 +2302,15 @@ function toggleBatchScheduleFields(select) {
     <button type="button" class="modal-close-icon report-close-button" data-close-report aria-label="Close generate report"><i class="ph-bold ph-x"></i></button>
 
     <div class="report-controls" id="reportFiltersPanel">
-        <div style="margin-bottom: 24px; flex-shrink: 0;">
-            <div class="modal-title">Generate Report</div>
-            <div class="modal-sub">Filter, print, or export the beneficiary list for <?php echo h($selectedProgramName); ?>.</div>
+        <div class="report-controls-heading">
+            <div class="report-title-row"><span class="report-title-icon" aria-hidden="true"><i class="ph-bold ph-file-text"></i></span><div><div class="modal-title">Generate Report</div><div class="report-program-label"><?php echo h($selectedProgramName); ?> beneficiary records</div></div></div>
+            <div class="modal-sub">Choose filters and columns, then print the preview or export an editable workbook.</div>
         </div>
         
         <form method="GET" action="export_report.php" target="_blank" class="report-form">
             <input type="hidden" name="program_name" value="<?php echo h($selectedProgramName); ?>">
             
-            <div style="flex: 1; overflow-y: auto; padding-right: 8px; display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px;">
+            <div class="report-filter-list" style="flex: 1; overflow-y: auto; padding-right: 8px; display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px;">
                 <div class="form-group" style="margin:0;">
                     <label>Select Batch Filter</label>
                     <select name="program_id" id="report_batch_select">
@@ -2374,9 +2374,8 @@ function toggleBatchScheduleFields(select) {
 
                 <div class="form-group" style="margin:0;">
                     <label>Export Format</label>
-                    <select name="export_format">
-                        <option value="xlsx">Editable Excel Workbook (.xlsx)</option>
-                    </select>
+                    <input type="hidden" name="export_format" value="xlsx">
+                    <div class="report-format-card"><span class="report-format-icon" aria-hidden="true"><i class="ph-bold ph-file-xls"></i></span><span><strong>Excel Workbook</strong><small>Editable .xlsx data file</small></span><i class="ph-bold ph-check-circle report-format-check" aria-hidden="true"></i></div>
                 </div>
             </div>
 
@@ -2394,6 +2393,15 @@ function toggleBatchScheduleFields(select) {
                 <img class="official-report-header" src="assets/peso_official_report_header.png?v=20260820-compact" alt="PESO Vinzons official letterhead">
                 <h2><?php echo h($reportProgramTitle); ?></h2>
                 <p id="preview_subtitle_top">Municipality of Vinzons</p>
+            </div>
+            <div class="report-view-toolbar" aria-label="Report preview controls">
+                <span class="report-view-label"><i class="ph-bold ph-magnifying-glass"></i><span>Preview size</span></span>
+                <div class="report-zoom-controls">
+                    <button type="button" data-report-zoom="out" aria-label="Zoom report out" title="Zoom out"><i class="ph-bold ph-minus"></i></button>
+                    <output class="report-zoom-value" aria-live="polite">100%</output>
+                    <button type="button" data-report-zoom="in" aria-label="Zoom report in" title="Zoom in"><i class="ph-bold ph-plus"></i></button>
+                    <button type="button" class="report-fit-button" data-report-zoom="fit"><i class="ph-bold ph-arrows-in-line-horizontal"></i><span>Fit width</span></button>
+                </div>
             </div>
             <div class="report-column-pagination" aria-label="Report column navigation">
                 <button type="button" data-report-column-page="previous"><i class="ph-bold ph-caret-left"></i> Previous columns</button>
@@ -3590,12 +3598,35 @@ function toggleBatchScheduleFields(select) {
       const reportBatchSelect = document.getElementById('report_batch_select');
       const reportNatureSelect = document.getElementById('report_nature_select');
       const reportPrintButton = document.getElementById('report_print_button');
+      const reportPreviewTable = document.getElementById('preview_main_table');
+      const reportTableViewport = document.querySelector('#generateReportModal .scrollable-table-wrap');
+      const reportZoomValue = document.querySelector('#generateReportModal .report-zoom-value');
+      const reportZoomButtons = Array.from(document.querySelectorAll('#generateReportModal [data-report-zoom]'));
       const reportColumnInputs = Array.from(document.querySelectorAll('.report-column-list input[type="checkbox"]'));
       const reportColumnCount = document.querySelector('.report-column-count');
       const reportColumnDefinitions = <?php echo json_encode(getReportColumnDefinitions($selectedProgramName), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
       const getReportColumnsPerPage = () => window.innerWidth <= 520 ? 2 : (window.innerWidth <= 900 ? 4 : 8);
       let currentReportColumnPage = 1;
       let showAllReportColumns = false;
+      let reportZoom = 1;
+
+      function setReportZoom(nextZoom) {
+          reportZoom = Math.min(1.5, Math.max(0.65, Math.round(nextZoom * 10) / 10));
+          if (reportPreviewTable) reportPreviewTable.style.zoom = String(reportZoom);
+          if (reportZoomValue) reportZoomValue.value = `${Math.round(reportZoom * 100)}%`;
+          reportZoomButtons.forEach(button => {
+              button.disabled = (button.dataset.reportZoom === 'out' && reportZoom <= 0.65)
+                  || (button.dataset.reportZoom === 'in' && reportZoom >= 1.5);
+              button.classList.toggle('is-active', button.dataset.reportZoom === 'fit' && reportZoom === 1);
+          });
+          if (reportZoom === 1 && reportTableViewport) reportTableViewport.scrollLeft = 0;
+      }
+
+      reportZoomButtons.forEach(button => button.addEventListener('click', () => {
+          const action = button.dataset.reportZoom;
+          setReportZoom(action === 'in' ? reportZoom + 0.1 : (action === 'out' ? reportZoom - 0.1 : 1));
+      }));
+      setReportZoom(1);
 
       const reportMultiValueKeys = ['primary_products','product_price','business_nature','assets_owned','utility_needs','source_of_capital','mode_of_payment','distribution_channels','assistance_availed','past_programs','programs_needed','challenges_encountered','special_skills','parents_status','ownership_type','hr_skills','skills_training_needed','type_of_beneficiary','employment_type','spes_history'];
 

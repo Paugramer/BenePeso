@@ -83,12 +83,12 @@ try {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="home.css?v=14" />
-<link rel="stylesheet" href="frontend_polish.css?v=9">
-    <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-    <script src="frontend_polish.js?v=5" defer></script>
+    <link rel="stylesheet" href="home.css?v=15" />
+<link rel="stylesheet" href="frontend_polish.css?v=12">
+    <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
+    <script src="frontend_polish.js?v=8" defer></script>
 </head>
-<body>
+<body class="home-page">
 
 <div class="bg-orb orb-1"></div>
 <div class="bg-orb orb-2"></div>
@@ -190,25 +190,52 @@ try {
 
         <div class="welcome-right stagger-2">
             <div class="hero-graphic">
-                <div class="graphic-card">
-                    <div class="graphic-avatar">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <div class="bp-service-orbit" role="img" aria-label="BENEPESO digital service connects beneficiary profiling, eligibility verification, and PESO programs">
+                    <div class="bp-orbit-ring bp-orbit-ring-outer" aria-hidden="true"><i></i></div>
+                    <div class="bp-orbit-ring bp-orbit-ring-inner" aria-hidden="true"></div>
+
+                    <div class="bp-orbit-core">
+                        <span class="bp-orbit-seal"><img src="img/pesologo.png" alt="" onerror="this.style.display='none'"></span>
+                        <span class="bp-orbit-eyebrow">Official PESO Vinzons portal</span>
+                        <strong>BENEPESO</strong>
+                        <small>One secure service path</small>
+                        <span class="bp-orbit-live"><i></i> System ready</span>
                     </div>
-                    <div class="graphic-lines">
-                        <div class="line line-long"></div>
-                        <div class="line line-medium"></div>
+
+                    <div class="bp-orbit-node bp-orbit-profile">
+                        <span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21a7 7 0 0 1 14 0"></path></svg></span>
+                        <div><small>01</small><strong>Profile</strong></div>
                     </div>
-                    <div class="graphic-btn">VERIFIED</div>
-                </div>
-                <div class="floating-bubble bubble-1">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-                <div class="floating-bubble bubble-2">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#bdc3c7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <div class="bp-orbit-node bp-orbit-verify">
+                        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 2.8 7.6 7 9 4.2-1.4 7-4.5 7-9V6l-7-3Z"></path><path d="m9 12 2 2 4-4"></path></svg></span>
+                        <div><small>02</small><strong>Eligibility</strong></div>
+                    </div>
+                    <div class="bp-orbit-node bp-orbit-program">
+                        <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"></path></svg></span>
+                        <div><small>03</small><strong>Program</strong></div>
+                    </div>
                 </div>
             </div>
         </div>
 
+    </div>
+</section>
+
+<section class="bp-service-snapshot-shell content-wrap" id="beneficiaryServiceSnapshot" aria-live="polite" hidden>
+    <div class="bp-service-snapshot bp-service-snapshot-v2">
+        <div class="bp-service-snapshot-mark" aria-hidden="true">
+            <span class="bp-snapshot-pulse"></span>
+            <svg viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 7.9 7.5 9.5 4.4-1.6 7.5-4.9 7.5-9.5V6L12 3Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+        </div>
+        <div class="bp-service-snapshot-copy">
+            <span class="bp-service-snapshot-kicker"><i aria-hidden="true"></i>Your BENEPESO action plan</span>
+            <h2>Checking your latest application...</h2>
+            <p>Please wait while your current service status is prepared.</p>
+        </div>
+        <div class="bp-snapshot-controls">
+            <span class="bp-service-snapshot-status"><i aria-hidden="true"></i><span>Current update</span></span>
+            <a class="bp-service-snapshot-action" href="profile.php#my-programs"><span>View program progress</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></a>
+        </div>
     </div>
 </section>
 
@@ -328,8 +355,8 @@ try {
     <div class="content-wrap">
         <div class="area-head">
             <div>
-                <h2 class="area-title">Why BENEPESO?</h2>
-                <p class="area-sub">Designed for faster processing and less paperwork.</p>
+                <h2 class="area-title">Before You Apply</h2>
+                <p class="area-sub">Three practical steps help PESO review your application without unnecessary delays.</p>
             </div>
         </div>
 
@@ -337,32 +364,33 @@ try {
             <div class="info-card reveal" style="transition-delay: 0.1s;">
                 <div class="info-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-                        <path d="m9 12 2 2 4-4" />
+                        <rect x="4" y="3" width="16" height="18" rx="2" />
+                        <circle cx="9" cy="9" r="2" />
+                        <path d="M7 15c.8-1.4 2.2-2 4-2M14 8h3M14 12h3M14 16h3" />
                     </svg>
                 </div>
-                <div class="info-title">Secure Access</div>
-                <div class="info-text">Safe login and verification features for your data protection.</div>
+                <div class="info-title">Review Your Profile</div>
+                <div class="info-text">Keep your name, address, contact number, and registered email complete and current.</div>
             </div>
             <div class="info-card reveal" style="transition-delay: 0.2s;">
                 <div class="info-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                        <path d="M9 5h11M9 12h11M9 19h11" />
+                        <path d="m4 5 1 1 2-2M4 12l1 1 2-2M4 19l1 1 2-2" />
                     </svg>
                 </div>
-                <div class="info-title">Faster Verification</div>
-                <div class="info-text">Quickly check eligibility and participation status.</div>
+                <div class="info-title">Check Program Rules</div>
+                <div class="info-text">Read the age, residency, household, and program-specific eligibility requirements before submitting.</div>
             </div>
             <div class="info-card reveal" style="transition-delay: 0.3s;">
                 <div class="info-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                        <path d="M14 2v6h6" />
-                        <path d="m9 15 2 2 4-4" />
+                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z" />
+                        <path d="M10 21h4" />
                     </svg>
                 </div>
-                <div class="info-title">Less Paperwork</div>
-                <div class="info-text">Digital profiling helps reduce manual forms.</div>
+                <div class="info-title">Follow Official Updates</div>
+                <div class="info-text">Use your program progress page for the latest recorded step and keep your email active for PESO instructions.</div>
             </div>
         </div>
     </div>

@@ -551,6 +551,12 @@ body { min-width: 0; }
   .program-list { gap: 24px; }
 }
 
+/* The redesigned homepage service illustration has its own compact layout. */
+@media (max-width: 1024px) {
+  .home-page .welcome-right { display: block !important; min-width: 0; }
+  .home-page .hero-graphic { display: flex !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   :where(.modal.show, .modal-overlay.show, .modal-bg, .modal-content, .modal-box, .modal-landscape, .menu-area.open) {
     animation: none !important;

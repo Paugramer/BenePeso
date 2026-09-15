@@ -48,11 +48,12 @@
             '<circle class="bp-loader-profile-head" cx="75" cy="70" r="17"/>' +
             '<path class="bp-loader-profile-body" d="M47 120c3-22 14-32 28-32s25 10 28 32"/>' +
             '<path class="bp-loader-info bp-loader-info-one" d="M121 63h48"/>' +
-            '<path class="bp-loader-info bp-loader-info-two" d="M121 84h36"/>' +
-            '<path class="bp-loader-info bp-loader-info-three" d="M121 105h45"/>' +
-            '<path class="bp-loader-scan" d="M37 92h146"/>' +
-          '</svg>' +
-          '<span class="bp-loader-check"><svg viewBox="0 0 48 48" focusable="false"><circle cx="24" cy="24" r="20"/><path d="m14 24 7 7 14-15"/></svg></span>' +
+             '<path class="bp-loader-info bp-loader-info-two" d="M121 84h36"/>' +
+             '<path class="bp-loader-info bp-loader-info-three" d="M121 105h45"/>' +
+             '<path class="bp-loader-scan" d="M37 92h146"/>' +
+             '<circle class="bp-loader-approval-ring" cx="172" cy="124" r="20"/>' +
+             '<path class="bp-loader-approval-check" d="m162 124 7 7 13-15"/>' +
+           '</svg>' +
         '</div>' +
         '<div class="bp-loader-brand"><strong>BENEPESO</strong><span>Profiling &bull; Eligibility &bull; Verification</span></div>' +
         '<p>Preparing your services</p>' +
@@ -158,6 +159,234 @@
         status.textContent = 'Copy this contact detail: ' + copyValue;
       }
     });
+  }
+
+  function initializeBeneficiaryUpdates() {
+    const accountArea = document.querySelector('.topbar .account-area');
+    const accountButton = document.getElementById('accountButton');
+    const snapshot = document.getElementById('beneficiaryServiceSnapshot');
+    if (!accountArea || !accountButton) return;
+
+    const updateCenter = document.createElement('div');
+    updateCenter.className = 'bp-update-center';
+    updateCenter.innerHTML =
+      '<button class="bp-update-button" type="button" aria-label="Open service updates" aria-expanded="false" aria-controls="bpUpdatePanel">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg>' +
+        '<span class="bp-update-badge" hidden>0</span>' +
+      '</button>' +
+      '<section class="bp-update-panel" id="bpUpdatePanel" aria-label="Your BENEPESO service updates" hidden>' +
+        '<header><div><span>BENEPESO Updates</span><strong>Applications &amp; new programs</strong></div><button type="button" class="bp-update-read">Mark all read</button></header>' +
+        '<div class="bp-update-list"><div class="bp-update-empty">Checking your latest application updates...</div></div>' +
+        '<a class="bp-update-footer" href="profile.php#my-programs">View complete program progress <span aria-hidden="true">&rarr;</span></a>' +
+      '</section>';
+    accountArea.parentNode.insertBefore(updateCenter, accountArea);
+
+    const button = updateCenter.querySelector('.bp-update-button');
+    const badge = updateCenter.querySelector('.bp-update-badge');
+    const panel = updateCenter.querySelector('.bp-update-panel');
+    const list = updateCenter.querySelector('.bp-update-list');
+    const markRead = updateCenter.querySelector('.bp-update-read');
+    const storageKey = 'benepeso-read-service-updates';
+    let items = [];
+    let readIds = [];
+
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      readIds = Array.isArray(saved) ? saved.slice(0, 80) : [];
+    } catch (error) {
+      readIds = [];
+    }
+
+    const saveReadState = () => {
+      try { localStorage.setItem(storageKey, JSON.stringify(readIds.slice(-80))); } catch (error) { /* Storage is optional. */ }
+    };
+
+    const updateBadge = () => {
+      const unread = items.filter(item => !readIds.includes(item.id)).length;
+      badge.textContent = unread > 9 ? '9+' : String(unread);
+      badge.hidden = unread === 0;
+      button.setAttribute('aria-label', unread ? `Open service updates, ${unread} unread` : 'Open service updates');
+      markRead.hidden = unread === 0;
+    };
+
+    const readableDate = value => {
+      const parsed = new Date(String(value || '').replace(' ', 'T'));
+      return Number.isNaN(parsed.getTime()) ? '' : parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    const renderUpdates = () => {
+      list.replaceChildren();
+      if (!items.length) {
+        const empty = document.createElement('div');
+        empty.className = 'bp-update-empty';
+        empty.innerHTML = '<strong>No application updates yet</strong><span>Your approval and program notices will appear here.</span>';
+        list.appendChild(empty);
+        updateBadge();
+        return;
+      }
+
+      items.forEach(item => {
+        const row = document.createElement('a');
+        row.className = `bp-update-item is-${item.tone || 'info'}` + (readIds.includes(item.id) ? '' : ' is-unread');
+        row.href = item.href || 'profile.php#my-programs';
+        row.innerHTML = '<span class="bp-update-dot" aria-hidden="true"></span><span class="bp-update-item-copy"><small></small><strong></strong><span></span><time></time></span>';
+        row.querySelector('small').textContent = [item.program, item.batch].filter(Boolean).join(' / ');
+        row.querySelector('strong').textContent = item.headline || 'Service update';
+        row.querySelector('.bp-update-item-copy > span').textContent = item.message || '';
+        row.querySelector('time').textContent = readableDate(item.updated_at);
+        row.addEventListener('click', () => {
+          if (!readIds.includes(item.id)) readIds.push(item.id);
+          saveReadState();
+        });
+        list.appendChild(row);
+      });
+      updateBadge();
+    };
+
+    const renderSnapshot = summary => {
+      if (!snapshot) return;
+      snapshot.hidden = false;
+      const title = snapshot.querySelector('h2');
+      const copy = snapshot.querySelector('p');
+      const action = snapshot.querySelector('.bp-service-snapshot-action');
+      const status = snapshot.querySelector('.bp-service-snapshot-status span');
+      if (!summary) {
+        title.textContent = 'You have no program application yet';
+        copy.textContent = 'Browse current PESO opportunities and choose the program that fits your needs.';
+        if (status) status.textContent = 'Ready to apply';
+        action.href = 'programs.php';
+        action.firstChild.textContent = 'Explore programs ';
+        return;
+      }
+      snapshot.dataset.tone = summary.tone || 'info';
+      title.textContent = `${summary.program}: ${summary.headline}`;
+      copy.textContent = summary.next_action || summary.message || 'Open your program progress for complete details.';
+      if (status) status.textContent = summary.availment || summary.approval || 'Current update';
+    };
+
+    button.addEventListener('click', () => {
+      const opening = panel.hidden;
+      panel.hidden = !opening;
+      button.setAttribute('aria-expanded', opening ? 'true' : 'false');
+      if (opening) window.setTimeout(() => panel.querySelector('a, button')?.focus(), 10);
+    });
+
+    markRead.addEventListener('click', () => {
+      readIds = Array.from(new Set(readIds.concat(items.map(item => item.id))));
+      saveReadState();
+      renderUpdates();
+    });
+
+    document.addEventListener('click', event => {
+      if (!updateCenter.contains(event.target)) {
+        panel.hidden = true;
+        button.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !panel.hidden) {
+        panel.hidden = true;
+        button.setAttribute('aria-expanded', 'false');
+        button.focus();
+      }
+    });
+
+    fetch('beneficiary_updates_api.php', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(response => response.ok ? response.json() : Promise.reject(new Error('Updates unavailable')))
+      .then(data => {
+        items = Array.isArray(data.items) ? data.items : [];
+        renderUpdates();
+        renderSnapshot(data.summary || null);
+      })
+      .catch(() => {
+        list.innerHTML = '<div class="bp-update-empty"><strong>Updates are temporarily unavailable</strong><span>You can still review applications from My Profile.</span></div>';
+        renderSnapshot(null);
+      });
+  }
+
+  function initializeProgramSuggestions() {
+    const input = document.querySelector('#programGrid') ? document.getElementById('searchInput') : null;
+    const searchContainer = input?.closest('.search-container');
+    if (!input || !searchContainer) return;
+
+    const suggestions = Array.from(document.querySelectorAll('#programGrid .program-card:not(.program-batch-duplicate)'))
+      .flatMap(card => [card.dataset.title, card.dataset.category && card.dataset.category !== 'regular tupad' ? card.dataset.category : ''])
+      .map(value => String(value || '').trim())
+      .filter(Boolean)
+      .filter((value, index, values) => values.findIndex(candidate => candidate.toLowerCase() === value.toLowerCase()) === index);
+    if (!suggestions.length) return;
+
+    const panel = document.createElement('div');
+    panel.className = 'bp-program-suggestions';
+    panel.id = 'bpProgramSuggestions';
+    panel.setAttribute('role', 'listbox');
+    panel.hidden = true;
+    searchContainer.appendChild(panel);
+    input.setAttribute('role', 'combobox');
+    input.setAttribute('aria-autocomplete', 'list');
+    input.setAttribute('aria-controls', panel.id);
+    input.setAttribute('aria-expanded', 'false');
+
+    const close = () => {
+      panel.hidden = true;
+      input.setAttribute('aria-expanded', 'false');
+    };
+    const render = () => {
+      const query = input.value.trim().toLowerCase();
+      const matches = suggestions.filter(value => !query || value.toLowerCase().includes(query)).slice(0, 5);
+      panel.replaceChildren();
+      matches.forEach(value => {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.setAttribute('role', 'option');
+        option.innerHTML = '<span aria-hidden="true">&#128269;</span><strong></strong><small>Show matching open batches</small>';
+        option.querySelector('strong').textContent = value;
+        option.addEventListener('click', () => {
+          input.value = value;
+          close();
+          if (typeof window.filterPrograms === 'function') window.filterPrograms();
+          input.focus();
+        });
+        option.addEventListener('keydown', event => {
+          const options = Array.from(panel.querySelectorAll('button'));
+          const index = options.indexOf(option);
+          if (event.key === 'ArrowDown' && options[index + 1]) { event.preventDefault(); options[index + 1].focus(); }
+          if (event.key === 'ArrowUp') { event.preventDefault(); (options[index - 1] || input).focus(); }
+          if (event.key === 'Escape') { close(); input.focus(); }
+        });
+        panel.appendChild(option);
+      });
+      panel.hidden = !matches.length;
+      input.setAttribute('aria-expanded', matches.length ? 'true' : 'false');
+    };
+    input.addEventListener('focus', render);
+    input.addEventListener('input', render);
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Escape') close();
+      if (event.key === 'ArrowDown' && !panel.hidden) {
+        event.preventDefault();
+        panel.querySelector('button')?.focus();
+      }
+    });
+    document.addEventListener('click', event => { if (!searchContainer.contains(event.target)) close(); });
+  }
+
+  function initializeBackToTop() {
+    if (document.getElementById('bpBackToTop')) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.id = 'bpBackToTop';
+    button.className = 'bp-back-to-top';
+    button.setAttribute('aria-label', 'Back to top');
+    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 14 6-6 6 6"></path></svg><span>Top</span>';
+    document.body.appendChild(button);
+    const update = () => button.classList.toggle('show', window.scrollY > 650);
+    button.addEventListener('click', () => window.scrollTo({
+      top: 0,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+    }));
+    window.addEventListener('scroll', update, { passive: true });
+    update();
   }
 
   /* Contextual feedback for actions that submit data or change authentication state. */
@@ -456,6 +685,9 @@
   function initialize() {
     document.documentElement.classList.add('bp-ui-ready');
     initializeFooterContactModal();
+    initializeBeneficiaryUpdates();
+    initializeProgramSuggestions();
+    initializeBackToTop();
     prepareDialogs();
     labelIconButtons();
     improveImages();

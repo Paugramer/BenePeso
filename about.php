@@ -88,9 +88,9 @@ try {
     
     <link rel="stylesheet" href="home.css?v=14">
     <link rel="stylesheet" href="about.css?v=11">
-    <link rel="stylesheet" href="frontend_polish.css?v=9">
+    <link rel="stylesheet" href="frontend_polish.css?v=12">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-    <script src="frontend_polish.js?v=5" defer></script>
+    <script src="frontend_polish.js?v=8" defer></script>
 </head>
 <body data-disable-page-loader>
 

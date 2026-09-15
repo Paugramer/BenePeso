@@ -1047,6 +1047,9 @@ body::before {
 
 .status-modal .status-modal-dialog {
     max-width: 520px !important;
+    max-height: calc(100dvh - 36px);
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     padding: 0 !important;
     overflow: hidden;
     border-radius: 8px !important;
@@ -1124,6 +1127,8 @@ body::before {
 #statusModalBody.status-modal-body {
     margin: 0;
     padding: 24px 28px 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     text-align: left;
 }
 
@@ -1315,7 +1320,6 @@ body::before {
 
     .status-modal .status-modal-dialog {
         max-height: calc(100dvh - 24px);
-        overflow-y: auto;
     }
 
     .status-modal-header {

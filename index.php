@@ -106,9 +106,9 @@ function format_date($date_str) {
     <link rel="stylesheet" href="home.css?v=10">
     
     <link rel="stylesheet" href="index.css?v=15">
-    <link rel="stylesheet" href="frontend_polish.css?v=9">
+    <link rel="stylesheet" href="frontend_polish.css?v=12">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-    <script src="frontend_polish.js?v=5" defer></script>
+    <script src="frontend_polish.js?v=8" defer></script>
 </head>
 <body>
 

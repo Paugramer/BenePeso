@@ -80,9 +80,9 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css?v=20" />
-  <link rel="stylesheet" href="frontend_polish.css?v=1">
+  <link rel="stylesheet" href="frontend_polish.css?v=11">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <script src="frontend_polish.js?v=1" defer></script>
+  <script src="frontend_polish.js?v=7" defer></script>
 </head>
 <body class="auth-page auth-login">
 

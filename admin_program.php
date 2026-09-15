@@ -319,9 +319,9 @@ if ($active_program) {
     <link rel="stylesheet" href="shared_sidebar.css">
     <link rel="stylesheet" href="program_filter_polish.css?v=2">
     <script src="program_filter_polish.js?v=1" defer></script>
-<link rel="stylesheet" href="frontend_polish.css?v=7">
+<link rel="stylesheet" href="frontend_polish.css?v=11">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
-<script src="frontend_polish.js?v=3" defer></script>
+<script src="frontend_polish.js?v=7" defer></script>
 </head>
 <body>
 <div class="page-wrap">
@@ -549,7 +549,21 @@ if ($active_program) {
 
                 $sql = "SELECT p.*, 
                         (SELECT COUNT(*) FROM beneficiaries b WHERE b.program_id = p.program_id AND b.approval_status = 'Approved') as beneficiary_count,
-                        (SELECT CONCAT(first_name, ' ', last_name) FROM peso_staff WHERE staff_id = p.created_by) as staff_creator
+                        (SELECT NULLIF(TRIM(al.actor_name), '')
+                           FROM activity_logs al
+                          WHERE al.actor_role = 'PESO Staff'
+                            AND al.module_name = 'Programs'
+                            AND al.action_type = 'CREATE'
+                            AND al.staff_id = p.created_by
+                            AND (
+                                al.description LIKE CONCAT('%Code: ', p.program_code, '%')
+                                OR (
+                                    al.target_name = p.program_name
+                                    AND ABS(TIMESTAMPDIFF(SECOND, al.created_at, p.created_at)) <= 5
+                                )
+                            )
+                          ORDER BY al.created_at ASC
+                          LIMIT 1) as staff_creator
                         FROM programs p 
                         WHERE $batchWhereStr 
                         ORDER BY $orderByClause LIMIT $limit OFFSET $offset";

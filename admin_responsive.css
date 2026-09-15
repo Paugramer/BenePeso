@@ -1,7 +1,7 @@
 /* Admin-only responsive entry point.
    Reuses the verified management-panel responsive system, then adds the
    account-management dialog adjustments that exist only in Admin. */
-@import url("peso_staff_responsive.css?v=23");
+@import url("peso_staff_responsive.css?v=24");
 
 @media (max-width: 760px) {
   /* Manage Accounts: responsive controls without nested horizontal scrollers. */
@@ -440,6 +440,88 @@
     overscroll-behavior-inline: contain;
     scrollbar-width: thin;
   }
+}
+
+/* Generate Report uses the full phone viewport; filters open as a drawer. */
+@media (max-width: 900px) {
+  #generateReportModal {
+    align-items: stretch !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  #generateReportModal .split-layout {
+    position: relative !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    flex-direction: row !important;
+    overflow: hidden !important;
+    border-radius: 0 !important;
+  }
+
+  #generateReportModal .report-controls {
+    position: absolute !important;
+    z-index: 40 !important;
+    inset: 0 auto 0 0 !important;
+    width: min(320px, 86vw) !important;
+    height: 100dvh !important;
+    flex: none !important;
+    padding: 18px 14px 12px !important;
+    overflow: hidden !important;
+    border-right: 1px solid #dce8e1 !important;
+    border-bottom: 0 !important;
+    box-shadow: 8px 0 28px rgba(10, 44, 29, .18) !important;
+    transform: translateX(-102%);
+    transition: transform .24s ease;
+  }
+
+  #generateReportModal.filters-open .report-controls { transform: translateX(0); }
+  #generateReportModal .report-controls-heading { margin-bottom: 10px !important; padding-right: 30px; }
+  #generateReportModal .report-controls .modal-title { font-size: 15px !important; }
+  #generateReportModal .report-controls .modal-sub { font-size: 10px !important; }
+  #generateReportModal .report-form { height: 100% !important; min-height: 0 !important; overflow: hidden !important; }
+  #generateReportModal .report-filter-list { min-height: 0 !important; overflow-y: auto !important; gap: 8px !important; }
+
+  #generateReportModal .report-preview {
+    width: 100% !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    flex: 1 1 100% !important;
+    padding: 4px !important;
+  }
+
+  #generateReportModal .spreadsheet-container { width: 100% !important; height: 100% !important; min-height: 0 !important; }
+  #generateReportModal .report-filter-toggle {
+    position: absolute;
+    z-index: 50;
+    top: 8px;
+    left: 8px;
+    min-height: 38px;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 12px;
+    border: 1px solid #b9d2c4;
+    border-radius: 10px;
+    color: #174f37;
+    background: #fff;
+    font-weight: 800;
+    box-shadow: 0 4px 14px rgba(10, 44, 29, .12);
+    transition: left .24s ease;
+  }
+
+  #generateReportModal.filters-open .report-filter-toggle { left: calc(min(320px, 86vw) - 52px); width: 42px; padding: 0; }
+  #generateReportModal.filters-open .report-filter-toggle span { display: none; }
+  #generateReportModal .scrollable-table-wrap { flex: 1 1 auto !important; min-height: 0 !important; max-height: none !important; overflow: auto !important; }
+  #generateReportModal .modern-pagination-controls { min-height: 48px; padding: 6px !important; }
+  #generateReportModal .report-column-pagination { grid-template-columns: 34px minmax(0, 1fr) 34px; padding-inline: 5px; }
+  #generateReportModal .report-column-pagination button { min-width: 0; padding: 4px; font-size: 0; }
+  #generateReportModal .report-column-pagination button i { margin: 0; font-size: 12px; }
+  #generateReportModal .split-layout > button[data-close-report] { position: absolute !important; z-index: 51; top: 7px !important; right: 7px !important; margin: 0 !important; }
 }
 
 @media (max-width: 480px) {

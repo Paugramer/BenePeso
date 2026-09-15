@@ -225,11 +225,11 @@ while ($row = $activity_logs_result->fetch_assoc()) {
             .log-premium-right { text-align: left; align-items: flex-start; }
         }
     </style>
-    <link rel="stylesheet" href="profile.css?v=12">
+    <link rel="stylesheet" href="profile.css?v=13">
     <link rel="stylesheet" href="spes_form_modal.css?v=20260904c">
-<link rel="stylesheet" href="frontend_polish.css?v=9">
+<link rel="stylesheet" href="frontend_polish.css?v=12">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-    <script src="frontend_polish.js?v=5" defer></script>
+    <script src="frontend_polish.js?v=8" defer></script>
 </head>
 <body>
 
@@ -685,6 +685,7 @@ function switchTab(evt, tabName) {
     }
     document.getElementById(tabName).classList.add("active");
     evt.currentTarget.classList.add("active");
+    if (history.replaceState) history.replaceState(null, '', '#' + tabName);
 }
 
 function toggleEdit() {
@@ -840,6 +841,113 @@ function formatRequirements(requirements) {
     `).join('');
 }
 
+function buildProgramProgress(item) {
+    const approval = String(item.approval_status || 'Pending').toLowerCase();
+    const availment = String(item.availment_status || 'Not Yet Availed').toLowerCase();
+    const program = String(item.program_name || '').trim().toUpperCase();
+    let activeStep = 1;
+    let outcome = '';
+
+    let steps = [
+        ['Submitted', 'Application received'],
+        ['Eligibility', 'Office review'],
+        ['Requirements', 'Document submission'],
+        ['Program activity', 'Official schedule'],
+        ['Completion', 'Final program record'],
+    ];
+    let statusStages = {
+        'not yet availed': 3,
+        'requirements received': 3,
+        'orientation': 4,
+        'examination': 4,
+        'exam passed': 4,
+        'exam failed': 4,
+        'ongoing': 4,
+        'salary distribution': 4,
+        'completed': 5,
+    };
+
+    if (program.includes('SPES')) {
+        steps = [
+            ['Submitted', 'Application received'],
+            ['Eligibility', 'Office review'],
+            ['Requirements', 'Documents recorded'],
+            ['Examination', 'Assessment result'],
+            ['Orientation', 'Program briefing'],
+            ['Employment', 'Placement and work period'],
+            ['Completion', 'Final SPES record'],
+        ];
+        statusStages = {
+            'not yet availed': 3,
+            'requirements received': 3,
+            'examination': 4,
+            'exam failed': 4,
+            'exam passed': 5,
+            'orientation': 5,
+            'ongoing': 6,
+            'salary distribution': 6,
+            'completed': 7,
+        };
+    } else if (program.includes('TUPAD')) {
+        steps = [
+            ['Submitted', 'Application received'],
+            ['Eligibility', 'Office review'],
+            ['Requirements', 'Documents recorded'],
+            ['Orientation', 'Safety and work briefing'],
+            ['Work assignment', 'Community work period'],
+            ['Payout', 'Salary distribution'],
+            ['Completion', 'Final TUPAD record'],
+        ];
+        statusStages = {
+            'not yet availed': 3,
+            'requirements received': 3,
+            'orientation': 4,
+            'ongoing': 5,
+            'salary distribution': 6,
+            'completed': 7,
+        };
+    } else if (program.includes('MSME')) {
+        steps = [
+            ['Submitted', 'Business profile received'],
+            ['Eligibility', 'Office review'],
+            ['Profiling', 'Business information'],
+            ['Validation', 'Profile assessment'],
+            ['Assistance', 'Referral or support'],
+            ['Completion', 'Final MSME record'],
+        ];
+        statusStages = {
+            'not yet availed': 3,
+            'requirements received': 3,
+            'orientation': 4,
+            'examination': 4,
+            'ongoing': 5,
+            'salary distribution': 5,
+            'completed': 6,
+        };
+    }
+
+    if (approval === 'rejected') {
+        activeStep = 2;
+        outcome = 'not-approved';
+    } else if (approval === 'approved') {
+        activeStep = statusStages[availment] || 3;
+        if (['exam failed', 'not qualified', 'cancelled'].includes(availment)) {
+            outcome = 'not-approved';
+        }
+    }
+
+    steps[1][1] = approval === 'pending' ? 'Currently being reviewed' : (approval === 'rejected' ? 'Review not approved' : 'Review completed');
+
+    return `<div class="bp-service-journey" aria-label="${escapeHtml(item.program_name)} program progress">
+        <div class="bp-service-journey-heading"><span>${escapeHtml(item.program_name)} Program Progress</span><strong>${escapeHtml(item.availment_status || item.approval_status || 'Pending')}</strong></div>
+        <ol style="--bp-progress-steps:${steps.length}">${steps.map((step, index) => {
+            const number = index + 1;
+            const state = number < activeStep ? 'is-complete' : (number === activeStep ? (outcome || 'is-current') : 'is-upcoming');
+            return `<li class="${state}"><span class="bp-journey-marker">${number < activeStep ? '&#10003;' : number}</span><div><strong>${step[0]}</strong><small>${escapeHtml(step[1])}</small></div></li>`;
+        }).join('')}</ol>
+    </div>`;
+}
+
 function renderPrograms() {
     const container = document.getElementById('availedProgramsContainer');
     const controls = document.getElementById('progPaginationControls');
@@ -867,7 +975,7 @@ function renderPrograms() {
             ? `<button type="button" class="btn-spes-form" onclick="event.stopPropagation(); openMsmeForm(${encodeURIComponent(item.beneficiary_id)})">MSME Form</button>`
             : '';
         const html = `
-            <div class="status-card-horizontal" 
+            <div class="status-card-horizontal bp-has-journey"
                  data-status="${statusKey}"
                  data-title="${safeTitle}"
                  data-reason="${safeReason}"
@@ -898,6 +1006,7 @@ function renderPrograms() {
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
                     </button>
                 </div>
+                ${buildProgramProgress(item)}
             </div>
         `;
         container.innerHTML += html;
@@ -986,6 +1095,15 @@ function changeLogPage(direction) {
 document.addEventListener('DOMContentLoaded', function() {
     renderPrograms();
     renderLogs();
+    if (window.location.hash === '#my-programs') {
+        const target = document.getElementById('my-programs');
+        const trigger = Array.from(document.querySelectorAll('.tab-link')).find(button => button.textContent.includes('Availed Programs'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.querySelectorAll('.tab-link').forEach(button => button.classList.remove('active'));
+        target?.classList.add('active');
+        trigger?.classList.add('active');
+        window.setTimeout(() => target?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+    }
 });
 
 function handleCardClick(element) {
