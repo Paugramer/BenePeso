@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/auth.php';
 require "db.php";
+require_once __DIR__ . '/auth_rate_limit.php';
 
 check_user_role('user');
 
@@ -49,24 +50,65 @@ $search_query = "";
 $filter_program = isset($_GET['program_filter']) ? $_GET['program_filter'] : "";
 $search_ready = false;
 $search_too_short = false;
+$batch_required = false;
+$rate_limited = false;
 
 if (isset($_GET['search'])) {
     $search_query = trim($_GET['search'] ?? "");
-    $search_ready = mb_strlen($search_query) >= 3;
+    $valid_program_filter = ctype_digit((string)$filter_program) && (int)$filter_program > 0;
+    $batch_required = $search_query !== '' && !$valid_program_filter;
+    $search_ready = mb_strlen($search_query) >= 5 && $valid_program_filter;
     $search_too_short = $search_query !== '' && !$search_ready;
+}
+
+if ($search_ready) {
+    $lookup_window_seconds = 300;
+    $lookup_limit = 30;
+    $lookup_now = time();
+    $lookup_attempts = array_values(array_filter(
+        $_SESSION['beneficiary_lookup_attempts'] ?? [],
+        static fn($timestamp) => is_int($timestamp) && $timestamp > ($lookup_now - $lookup_window_seconds)
+    ));
+
+    if (count($lookup_attempts) >= $lookup_limit) {
+        $rate_limited = true;
+        $search_ready = false;
+    } else {
+        $lookup_attempts[] = $lookup_now;
+    }
+    $_SESSION['beneficiary_lookup_attempts'] = $lookup_attempts;
+
+    if ($search_ready) {
+        $lookupIp = auth_request_ip();
+        $accountKey = (string)$user_id;
+        $persistentRetryAfter = max(
+            auth_rate_limit_retry_after('beneficiary-lookup-account', $accountKey, 30, 300, 300),
+            auth_rate_limit_retry_after('beneficiary-lookup-ip', $lookupIp, 100, 300, 300)
+        );
+        if ($persistentRetryAfter > 0) {
+            $rate_limited = true;
+            $search_ready = false;
+        } else {
+            $persistentRetryAfter = max(
+                auth_rate_limit_hit('beneficiary-lookup-account', $accountKey, 30, 300, 300),
+                auth_rate_limit_hit('beneficiary-lookup-ip', $lookupIp, 100, 300, 300)
+            );
+            if ($persistentRetryAfter > 0) {
+                $rate_limited = true;
+                $search_ready = false;
+            }
+        }
+    }
 }
 
 // A program filter alone must never reveal a barangay-wide beneficiary list.
 if ($search_ready) {
-    $search_param = "%$search_query%";
+    $search_param = $search_query;
     
     // Base WHERE clause - restricts search strictly to the user's barangay for privacy
-    $where_clause = "WHERE b.barangay = ?";
+    $where_clause = "WHERE b.barangay = ? AND p.approval_status = 'Approved'";
     
-    if (!empty($search_query)) {
-        // Users can search BY contact number if they know it, but it will NOT be displayed back to them.
-        $where_clause .= " AND (b.full_name LIKE ? OR b.email = ? OR b.contact_no = ?)";
-    }
+    if (!empty($search_query)) $where_clause .= " AND LOWER(TRIM(b.full_name)) = LOWER(TRIM(?))";
     if (!empty($filter_program)) {
         $where_clause .= " AND b.program_id = ?";
     }
@@ -76,9 +118,9 @@ if ($search_ready) {
     $count_stmt = $conn->prepare($count_sql);
     
     if (!empty($search_query) && !empty($filter_program)) {
-        $count_stmt->bind_param("ssssi", $user_barangay, $search_param, $search_query, $search_query, $filter_program);
+        $count_stmt->bind_param("ssi", $user_barangay, $search_param, $filter_program);
     } elseif (!empty($search_query)) {
-        $count_stmt->bind_param("ssss", $user_barangay, $search_param, $search_query, $search_query);
+        $count_stmt->bind_param("ss", $user_barangay, $search_param);
     } elseif (!empty($filter_program)) {
         $count_stmt->bind_param("si", $user_barangay, $filter_program);
     } else {
@@ -89,13 +131,17 @@ if ($search_ready) {
     $total_pages = ceil($total_results / $results_per_page);
 
     // --- B. Fetch the limited data for current page ---
-    $sql = "SELECT b.*, p.program_name, p.program_code FROM beneficiaries b JOIN programs p ON b.program_id = p.program_id " . $where_clause . " ORDER BY b.created_at DESC LIMIT ?, ?";
+    $sql = "SELECT b.program_id, b.first_name, b.last_name, b.full_name, b.barangay,
+                   b.approval_status, b.availment_status, b.created_at, b.updated_at,
+                   p.program_name, p.program_code
+              FROM beneficiaries b
+              JOIN programs p ON b.program_id = p.program_id " . $where_clause . " ORDER BY b.created_at DESC LIMIT ?, ?";
     $stmt = $conn->prepare($sql);
     
     if (!empty($search_query) && !empty($filter_program)) {
-        $stmt->bind_param("ssssiii", $user_barangay, $search_param, $search_query, $search_query, $filter_program, $offset, $results_per_page);
+        $stmt->bind_param("ssiii", $user_barangay, $search_param, $filter_program, $offset, $results_per_page);
     } elseif (!empty($search_query)) {
-        $stmt->bind_param("ssssii", $user_barangay, $search_param, $search_query, $search_query, $offset, $results_per_page);
+        $stmt->bind_param("ssii", $user_barangay, $search_param, $offset, $results_per_page);
     } elseif (!empty($filter_program)) {
         $stmt->bind_param("siii", $user_barangay, $filter_program, $offset, $results_per_page);
     } else {
@@ -118,11 +164,14 @@ if ($search_ready) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="home.css?v=14" />
+    <link rel="stylesheet" href="home.css?v=16" />
     <link rel="stylesheet" href="verification.css?v=8" />
-    <link rel="stylesheet" href="frontend_polish.css?v=12">
-    <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-    <script src="frontend_polish.js?v=8" defer></script>
+    <link rel="stylesheet" href="frontend_polish.css?v=13">
+    <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
+    <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
+    <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
+    <script src="frontend_polish.js?v=9" defer></script>
+    <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body class="verification-page">
 
@@ -189,19 +238,24 @@ if ($search_ready) {
                     Record <span class="welcome-highlight">Verification</span>
                 </h1>
                 <p class="welcome-text centered-text">
-                    Securely verify the application status of residents within your barangay. Filter by program or search directly by name.
+                    Confirm whether an exact beneficiary name appears in a specific approved PESO program batch. This lookup does not determine program eligibility or replace official PESO confirmation.
                 </p>
+
+                <div class="verification-route-choice" aria-label="Choose how to check an application">
+                    <a href="profile.php#my-programs"><strong>Checking your own application?</strong><span>Open My Applications for complete private details.</span></a>
+                    <div><strong>Verifying another record?</strong><span>Continue below using the exact batch and resident name.</span></div>
+                </div>
 
                 <form id="searchForm" action="verification.php" method="GET" class="v-search-box">
                     <div class="v-search-intro">
                         <span class="v-search-intro-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.5 2.8 7.6 7 9 4.2-1.4 7-4.5 7-9V6l-7-3Z"></path><path d="m9 12 2 2 4-4"></path></svg></span>
-                        <div><strong>Find a beneficiary record</strong><small>Select the exact batch, then enter at least three characters of the resident's name.</small></div>
+                        <div><strong>Find a beneficiary record</strong><small>Select the exact batch, then enter the resident's complete registered name.</small></div>
                     </div>
                     <div class="v-input-wrapper">
                         <label class="v-search-field v-program-field" for="programFilter">
                             <span class="v-search-field-label">Program and batch</span>
-                            <select name="program_filter" id="programFilter" class="v-select">
-                            <option value="">All Programs</option>
+                            <select name="program_filter" id="programFilter" class="v-select" required aria-describedby="verificationUseNotice">
+                            <option value="">Select an exact batch</option>
                             <?php if ($programs_list): ?>
                                 <?php $program_group = null; ?>
                                 <?php while($p_row = $programs_list->fetch_assoc()): ?>
@@ -229,7 +283,7 @@ if ($search_ready) {
                             <span class="v-search-field-label">Resident name</span>
                             <span class="v-search-entry">
                                 <svg class="v-search-entry-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
-                                <input type="text" name="search" id="searchInput" class="v-input" placeholder="Enter a resident's name" value="<?= htmlspecialchars($search_query) ?>" autocomplete="off">
+                                <input type="text" name="search" id="searchInput" class="v-input" placeholder="Enter complete registered name" value="<?= htmlspecialchars($search_query) ?>" autocomplete="off" minlength="5" required>
                                 <button type="submit" class="v-btn" aria-label="Verify beneficiary record">
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                                     <span>Verify</span>
@@ -237,9 +291,9 @@ if ($search_ready) {
                             </span>
                         </label>
                     </div>
-                    <div class="privacy-disclaimer">
+                    <div class="privacy-disclaimer" id="verificationUseNotice">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                        <span>Only limited application status is displayed, following local data privacy guidelines.</span>
+                        <span>Use this service only for a legitimate beneficiary-status inquiry. Results are intentionally limited; do not copy or redistribute another resident's information.</span>
                     </div>
                 </form>
             </div>
@@ -251,7 +305,7 @@ if ($search_ready) {
         <?php if ($search_result && $search_result->num_rows > 0): ?>
             <div class="results-header">
                 <h3>Verification Results</h3>
-                <p>Showing <?= ($offset + 1) ?> - <?= min($offset + $results_per_page, $total_results) ?> of <?= $total_results ?> match(es) found in Barangay <?= htmlspecialchars($user_barangay) ?>.</p>
+                <p>Limited matching records from the selected batch and your registered barangay are shown below.</p>
             </div>
             
             <div class="results-list">
@@ -273,12 +327,13 @@ if ($search_ready) {
     
     if (!empty($lName)) {
         // Get the first letter of the last name, then replace the rest with asterisks
-        $maskedLastName = substr($lName, 0, 1) . str_repeat('*', strlen($lName) - 1);
+        $lastNameLength = mb_strlen($lName, 'UTF-8');
+        $maskedLastName = mb_substr($lName, 0, 1, 'UTF-8') . str_repeat('*', max(0, $lastNameLength - 1));
         $secureName = $fName . ' ' . $maskedLastName;
     } else {
         // Fallback if they only have one name string: mask half of the string
-        $len = strlen($fName);
-        $secureName = substr($fName, 0, ceil($len/2)) . str_repeat('*', floor($len/2));
+        $len = mb_strlen($fName, 'UTF-8');
+        $secureName = mb_substr($fName, 0, (int)ceil($len / 2), 'UTF-8') . str_repeat('*', (int)floor($len / 2));
     }
 ?>
 <h3 class="v-name" title="Name partially hidden for Data Privacy compliance">
@@ -299,10 +354,33 @@ if ($search_ready) {
                                 <span class="v-val <?= strtolower(str_replace(' ', '-', $row['availment_status'] ?? '')) ?>"><?= htmlspecialchars($row['availment_status'] ?? 'Processing') ?></span>
                             </div>
                             <div class="v-info">
-                                <span class="v-label">Applied On</span>
-                                <span class="v-val date-val"><?= date("M d, Y", strtotime($row['created_at'])) ?></span>
+                                <span class="v-label">Record Updated</span>
+                                <span class="v-val date-val"><?= date("M d, Y", strtotime($row['updated_at'] ?: $row['created_at'])) ?></span>
                             </div>
                         </div>
+                        <?php
+                        $approvalKey = strtolower(trim((string)($row['approval_status'] ?? 'pending')));
+                        $availmentKey = strtolower(trim((string)($row['availment_status'] ?? 'not yet availed')));
+                        $resultNextAction = 'Wait for PESO to complete the application review.';
+                        if ($approvalKey === 'rejected') $resultNextAction = 'The applicant may contact PESO for clarification about the recorded decision.';
+                        elseif ($approvalKey === 'approved') {
+                            $resultActions = [
+                                'not yet availed' => 'Review the official requirements and wait for the document-submission instruction.',
+                                'requirements received' => 'Submitted documents are recorded; wait for PESO validation and the next schedule.',
+                                'orientation' => 'Follow the official orientation schedule issued to the applicant.',
+                                'examination' => 'Follow the official examination schedule issued to the applicant.',
+                                'exam passed' => 'Wait for the official placement or orientation instruction.',
+                                'exam failed' => 'The applicant may contact PESO for clarification about the examination result.',
+                                'ongoing' => 'Continue following the official program activity schedule.',
+                                'salary distribution' => 'Follow the official distribution schedule and identification instructions.',
+                                'completed' => 'No further action is required unless the record needs correction.',
+                                'not qualified' => 'The applicant may contact PESO for clarification or future opportunities.',
+                                'cancelled' => 'This application is no longer active for the selected batch.',
+                            ];
+                            $resultNextAction = $resultActions[$availmentKey] ?? 'Wait for the next official PESO instruction.';
+                        }
+                        ?>
+                        <div class="verification-next-action"><span>What happens next</span><strong><?= htmlspecialchars($resultNextAction) ?></strong></div>
                     </div>
                 <?php endwhile; ?>
             </div>
@@ -334,13 +412,29 @@ if ($search_ready) {
                 </div>
             <?php endif; ?>
             
+        <?php elseif ($rate_limited): ?>
+            <div class="v-no-results" role="alert">
+                <div class="v-no-results-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 17h.01"></path></svg>
+                </div>
+                <h3>Lookup temporarily limited</h3>
+                <p>Too many verification requests were made in a short period. Please wait a few minutes before trying again or contact PESO for assistance.</p>
+            </div>
+        <?php elseif ($batch_required): ?>
+            <div class="v-no-results">
+                <div class="v-no-results-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16"></path></svg>
+                </div>
+                <h3>Select the exact batch</h3>
+                <p>Choose the resident's program and batch before performing a record lookup.</p>
+            </div>
         <?php elseif ($search_too_short): ?>
             <div class="v-no-results">
                 <div class="v-no-results-icon">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </div>
                 <h3>Enter More Details</h3>
-                <p>Type at least 3 characters of the resident's name, or enter their complete email address or contact number.</p>
+                <p>Enter the resident's complete registered name. Partial names, email addresses, and contact numbers are not accepted in this lookup.</p>
             </div>
         <?php elseif ($search_ready): ?>
             <div class="v-no-results">
@@ -348,7 +442,8 @@ if ($search_ready) {
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </div>
                 <h3>No Records Found</h3>
-                <p>We couldn't find any beneficiaries matching your search in Brgy. <?= htmlspecialchars($user_barangay) ?>.</p>
+                <p>No matching record was found using the information provided. Check the spelling and selected batch, or contact PESO for official assistance.</p>
+                <ul class="verification-no-match-reasons"><li>The selected batch may be different.</li><li>The registered name spelling may not match.</li><li>The record may still be awaiting entry or validation.</li><li>The resident may be registered under another barangay.</li></ul>
             </div>
         <?php else: ?>
             <div class="v-empty-state">
@@ -358,13 +453,28 @@ if ($search_ready) {
                 <span class="v-empty-kicker">Secure barangay lookup</span>
                 <h3>Start a private verification</h3>
                 <p>Resident records remain hidden until a specific name is entered.</p>
-                <div class="v-empty-guide" aria-label="How to verify a record">
-                    <span><i>1</i><b>Choose a batch</b></span>
-                    <span><i>2</i><b>Enter 3+ characters</b></span>
-                    <span><i>3</i><b>Review limited status</b></span>
-                </div>
             </div>
         <?php endif; ?>
+    </section>
+
+    <section class="verification-guidance content-wrap bp-content-module" aria-labelledby="verificationGuideTitle">
+        <div class="content-enhancement-heading">
+            <span class="content-enhancement-eyebrow">Understanding the result</span>
+            <h2 id="verificationGuideTitle">Record Status Guide</h2>
+            <p>A displayed result confirms only that a matching record exists in the selected batch. Program decisions and schedules must still be confirmed through official PESO instructions.</p>
+        </div>
+        <div class="verification-status-grid">
+            <article><strong>Pending</strong><p>The application has been received and is awaiting or undergoing review.</p></article>
+            <article><strong>Approved</strong><p>PESO has approved the application record; review the recorded availment stage for the next action.</p></article>
+            <article><strong>Requirements Received</strong><p>Submitted documents have been recorded and may still be undergoing validation.</p></article>
+            <article><strong>Ongoing</strong><p>The beneficiary's participation is currently active for the selected program.</p></article>
+            <article><strong>Completed</strong><p>The beneficiary's participation has been recorded as completed.</p></article>
+            <article><strong>Not approved / Not qualified</strong><p>The record did not proceed for this batch. The applicant may contact PESO for clarification.</p></article>
+        </div>
+        <div class="verification-correction-panel">
+            <div><strong>Is a record missing or inaccurate?</strong><p>The concerned resident should use My Profile or contact PESO Vinzons. Do not submit another application solely to correct an existing record.</p></div>
+            <div><a href="profile.php#my-programs">Track my own application</a><a href="privacy_notice.php">Read Privacy Notice</a><a href="mailto:lguvinzonspeso@gmail.com?subject=BENEPESO%20Record%20Inquiry">Contact PESO</a></div>
+        </div>
     </section>
 </main>
 
@@ -431,56 +541,54 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // =========================================
-    // PROFESSIONAL AJAX LIVE SEARCH
-    // =========================================
+    // Submit one deliberate lookup at a time; do not query while the user types.
     const searchInput = document.getElementById('searchInput');
     const programFilter = document.getElementById('programFilter');
     const resultsArea = document.getElementById('resultsArea');
-    let typingTimer;
-
     function fetchResults() {
-        const query = searchInput.value;
+        const query = searchInput.value.trim();
         const filter = programFilter.value;
-        
-        // Don't search if both are empty (returns to empty state naturally via PHP)
+        if (query.length < 5 || !filter) return;
         
         resultsArea.style.opacity = '0.5'; // Visual loading cue
         resultsArea.style.pointerEvents = 'none';
 
         const url = `verification.php?search=${encodeURIComponent(query)}&program_filter=${encodeURIComponent(filter)}`;
 
-        fetch(url)
-            .then(response => response.text())
+        fetch(url, { credentials: 'same-origin' })
+            .then(response => {
+                if (!response.ok) throw new Error(`Lookup failed with status ${response.status}`);
+                return response.text();
+            })
             .then(html => {
                 // Parse the new HTML and extract just the results area
                 const parser = new DOMParser();
                 const doc = parser.parseDocumentFromString(html, 'text/html');
-                const newResults = doc.getElementById('resultsArea').innerHTML;
+                const returnedResults = doc.getElementById('resultsArea');
+                if (!returnedResults) throw new Error('Lookup response was incomplete.');
+                const newResults = returnedResults.innerHTML;
                 
                 // Inject the new results seamlessly
                 resultsArea.innerHTML = newResults;
                 resultsArea.style.opacity = '1';
                 resultsArea.style.pointerEvents = 'auto';
+                history.replaceState(null, '', url);
             })
             .catch(error => {
                 console.error('Error fetching search results:', error);
+                resultsArea.innerHTML = '<div class="v-no-results" role="alert"><h3>Verification is temporarily unavailable</h3><p>Your request could not be completed. Please try again or contact PESO Vinzons if the problem continues.</p></div>';
                 resultsArea.style.opacity = '1';
                 resultsArea.style.pointerEvents = 'auto';
             });
     }
 
-    // Trigger on typing (with debounce so it doesn't spam the server)
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            clearTimeout(typingTimer);
-            typingTimer = setTimeout(fetchResults, 400); // Wait 400ms after user stops typing
+    const searchForm = document.getElementById('searchForm');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(event) {
+            if (!searchForm.checkValidity()) return;
+            event.preventDefault();
+            fetchResults();
         });
-    }
-
-    // Trigger immediately on dropdown change
-    if (programFilter) {
-        programFilter.addEventListener('change', fetchResults);
     }
 });
 </script>

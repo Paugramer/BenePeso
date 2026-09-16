@@ -200,7 +200,7 @@ if ($stmt_user) {
             auth_regenerate_session();
 
             // DIRECT UNIFIED SQL LOGGING FOR USERS
-            $log_desc = "User successfully logged into the system.";
+            $log_desc = $user_full_name . " logged in securely.";
             $log_stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, 'Registered User', 'Auth', 'LOGIN', 'System', ?, NOW())");
             if ($log_stmt) {
                 $log_stmt->bind_param("ss", $user_full_name, $log_desc);

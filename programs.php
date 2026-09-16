@@ -9,6 +9,7 @@ require_once "email_helper.php";
 require_once "tupad_household_helper.php";
 require_once "tupad_document_helper.php";
 require_once "spes_schema_helper.php";
+require_once "spes_lifecycle_helper.php";
 ensure_program_eligibility_schema($conn);
 ensure_tupad_category_schema($conn);
 ensure_tupad_document_schema($conn);
@@ -46,6 +47,10 @@ if ($res && $res->num_rows === 1) {
     }
 }
 $stmt->close();
+
+$spes_lifecycle = spes_user_summary($conn, $user_id, (string)($user_data['email'] ?? ''));
+$is_spes_returning = $spes_lifecycle['classification'] !== 'none';
+$spes_prefill = $spes_lifecycle['latest'] ?? [];
 
 $birthdate = $user_data['birthdate'] ?? null;
 $userAge = 0;
@@ -178,6 +183,36 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
         $_SESSION['app_error'] = $configuredEligibility['message'];
         header('Location: programs.php'); exit();
     }
+
+    // Enforce the same cross-program restriction during the final POST. The
+    // eligibility preview is only a convenience and must never be trusted as
+    // the authority for accepting an application.
+    $activeApplicationStmt = $conn->prepare("SELECT p.program_name FROM beneficiaries b
+        JOIN programs p ON p.program_id=b.program_id
+        WHERE b.user_id=?
+          AND (b.approval_status='Pending'
+               OR (b.approval_status='Approved' AND b.availment_status IN
+                   ('Not Yet Availed','Requirements Received','Orientation','Examination','Exam Passed','Exam Failed','Ongoing','Salary Distribution')))
+        ORDER BY b.created_at DESC LIMIT 1");
+    $activeApplicationStmt->bind_param('i', $user_id);
+    $activeApplicationStmt->execute();
+    $activeApplication = $activeApplicationStmt->get_result()->fetch_assoc();
+    $activeApplicationStmt->close();
+    if ($activeApplication) {
+        $_SESSION['app_error'] = 'You currently have an active or pending application for ' . $activeApplication['program_name'] . '. Complete it before applying for another program.';
+        header('Location: programs.php'); exit();
+    }
+
+    $today = date('Y-m-d');
+    $programUnavailable = !$submittedProgram
+        || strtolower((string)($submittedProgram['status'] ?? '')) === 'completed'
+        || (!empty($submittedProgram['end_date']) && $submittedProgram['end_date'] < $today)
+        || (!empty($submittedProgram['start_date']) && !empty($submittedProgram['end_date']) && $submittedProgram['end_date'] < $submittedProgram['start_date'])
+        || ((int)($submittedProgram['slots'] ?? 0) > 0 && (int)($submittedProgram['approved_count'] ?? 0) >= (int)$submittedProgram['slots']);
+    if ($programUnavailable) {
+        $_SESSION['app_error'] = 'This program batch is no longer accepting applications.';
+        header('Location: programs.php'); exit();
+    }
     if ($isMsmeApplication) {
         $today = date('Y-m-d');
         $msmeUnavailable = strtolower((string)($submittedProgram['status'] ?? '')) === 'completed'
@@ -276,7 +311,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
             $_SESSION['app_error'] = 'Please answer the SPES pregnancy declaration.';
             header('Location: programs.php'); exit();
         }
-        $spesLocalEligibility = evaluate_spes_local_eligibility($_POST);
+        $spesLocalEligibility = evaluate_spes_local_eligibility($_POST, $is_spes_returning);
         if (!$spesLocalEligibility['eligible']) {
             $_SESSION['app_error'] = $spesLocalEligibility['message'];
             header('Location: programs.php'); exit();
@@ -577,6 +612,52 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
         exit();
     }
 
+    // Serialize submissions for this user and batch, then repeat the mutable
+    // checks inside the transaction to prevent double submissions and slot
+    // overbooking caused by simultaneous requests.
+    $userLockStmt = $conn->prepare('SELECT user_id FROM users WHERE user_id=? FOR UPDATE');
+    $userLockStmt->bind_param('i', $user_id);
+    $userLockStmt->execute();
+    $lockedUser = $userLockStmt->get_result()->fetch_assoc();
+    $userLockStmt->close();
+    if (!$lockedUser) {
+        $conn->rollback();
+        $_SESSION['app_error'] = 'Your account could not be verified. Please sign in again.';
+        header('Location: programs.php'); exit();
+    }
+
+    $programLockStmt = $conn->prepare("SELECT p.slots,p.status,p.start_date,p.end_date,
+        (SELECT COUNT(*) FROM beneficiaries approved WHERE approved.program_id=p.program_id AND approved.approval_status='Approved') AS approved_count
+        FROM programs p WHERE p.program_id=? AND p.approval_status='Approved' LIMIT 1 FOR UPDATE");
+    $programLockStmt->bind_param('i', $submittedProgramId);
+    $programLockStmt->execute();
+    $lockedProgram = $programLockStmt->get_result()->fetch_assoc();
+    $programLockStmt->close();
+
+    $activeApplicationStmt = $conn->prepare("SELECT 1 FROM beneficiaries b
+        WHERE b.user_id=?
+          AND (b.approval_status='Pending'
+               OR (b.approval_status='Approved' AND b.availment_status IN
+                   ('Not Yet Availed','Requirements Received','Orientation','Examination','Exam Passed','Exam Failed','Ongoing','Salary Distribution')))
+        LIMIT 1 FOR UPDATE");
+    $activeApplicationStmt->bind_param('i', $user_id);
+    $activeApplicationStmt->execute();
+    $hasConcurrentApplication = $activeApplicationStmt->get_result()->num_rows > 0;
+    $activeApplicationStmt->close();
+
+    $lockedProgramUnavailable = !$lockedProgram
+        || strtolower((string)($lockedProgram['status'] ?? '')) === 'completed'
+        || (!empty($lockedProgram['end_date']) && $lockedProgram['end_date'] < $today)
+        || (!empty($lockedProgram['start_date']) && !empty($lockedProgram['end_date']) && $lockedProgram['end_date'] < $lockedProgram['start_date'])
+        || ((int)($lockedProgram['slots'] ?? 0) > 0 && (int)($lockedProgram['approved_count'] ?? 0) >= (int)$lockedProgram['slots']);
+    if ($hasConcurrentApplication || $lockedProgramUnavailable) {
+        $conn->rollback();
+        $_SESSION['app_error'] = $hasConcurrentApplication
+            ? 'Another active or pending application is already recorded for your account.'
+            : 'This program batch is no longer accepting applications.';
+        header('Location: programs.php'); exit();
+    }
+
     $sql = "INSERT INTO beneficiaries ($columns, created_at, updated_at) VALUES ($placeholders, NOW(), NOW())";
     $stmt = $conn->prepare($sql);
     
@@ -611,7 +692,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
                 header('Location: programs.php');
                 exit();
             }
-            $_SESSION["app_success"] = "Your application was submitted and is pending PESO review. Please wait for an official update before visiting the office or submitting documents.";
+            $_SESSION["app_success"] = $isSpesApplication && $is_spes_returning
+                ? "Your updated SPES form was submitted for review. As a returning SPES Baby, you do not need to take the SPES examination again. Please prepare your latest semester grades and the other documents required by PESO Vinzons."
+                : "Your application was submitted and is pending PESO review. Please wait for an official update before visiting the office or submitting documents.";
             if ($isTupadApplication && $needsFitnessCertificate) {
                 $_SESSION["app_success"] .= " If approved, bring a fitness-to-work certificate.";
             }
@@ -629,8 +712,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
                 if ($receiptEmail !== '' && strpos(strtolower($receiptEmail), 'no email') === false) {
                     $safeApplicantName = htmlspecialchars($first_name ?: $user_display_name, ENT_QUOTES, 'UTF-8');
                     $safeProgramName = htmlspecialchars($p_name, ENT_QUOTES, 'UTF-8');
-                    $receiptBody = "<p>Dear <strong>{$safeApplicantName}</strong>,</p><p>PESO Vinzons has received your application for <strong>{$safeProgramName}</strong>. Its current status is <strong>Pending Review</strong>.</p><p>No office visit is required at this stage. If you qualify for the next step, PESO Vinzons will send the examination schedule and documentary requirements by email or account notification.</p>";
-                    sendBENEPESOEmail($receiptEmail, "SPES Application Received: {$p_name}", 'Your SPES application is pending review', $receiptBody);
+                    if ($is_spes_returning) {
+                        $receiptBody = "<p>Dear <strong>{$safeApplicantName}</strong>,</p><p>PESO Vinzons received your updated SPES form for <strong>{$safeProgramName}</strong>.</p><p>You are recognized as a <strong>SPES Baby</strong>, so you do not need to take the SPES examination again. Please prepare and submit your latest semester grades and all other current documentary requirements when instructed by PESO Vinzons.</p><p>Keep your profile and SPES form information updated while your record is under review.</p>";
+                        sendBENEPESOEmail($receiptEmail, "SPES Baby Form Update Received: {$p_name}", 'Your updated SPES form is under review', $receiptBody);
+                    } else {
+                        $receiptBody = "<p>Dear <strong>{$safeApplicantName}</strong>,</p><p>PESO Vinzons has received your application for <strong>{$safeProgramName}</strong>. Its current status is <strong>Pending Review</strong>.</p><p>No office visit is required at this stage. If you qualify for the next step, PESO Vinzons will send the examination schedule and documentary requirements by email or account notification.</p>";
+                        sendBENEPESOEmail($receiptEmail, "SPES Application Received: {$p_name}", 'Your SPES application is pending review', $receiptBody);
+                    }
                 }
             } elseif ($isMsmeApplication) {
                 $receiptEmail = trim((string)($user_data['email'] ?? ''));
@@ -736,15 +824,6 @@ if ($result && $result->num_rows > 0) {
         }
     }
 }
-$availableTupadCategories = [];
-foreach ($active_programs as $programRow) {
-    if (stripos((string)($programRow['program_name'] ?? ''), 'TUPAD') !== false) {
-        $category = trim((string)($programRow['tupad_category'] ?? '')) ?: 'Regular TUPAD';
-        $availableTupadCategories[$category] = $category;
-    }
-}
-ksort($availableTupadCategories, SORT_NATURAL | SORT_FLAG_CASE);
-
 // Public archive summaries use aggregate counts only; no personal data is exposed.
 $program_barangay_counts = [];
 $barangay_summary_sql = "SELECT program_id,
@@ -776,13 +855,16 @@ if ($barangay_summary_result) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="home.css?v=14">
-    <link rel="stylesheet" href="programs.css?v=24">
-<link rel="stylesheet" href="frontend_polish.css?v=12">
-    <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-    <script src="frontend_polish.js?v=8" defer></script>
+    <link rel="stylesheet" href="home.css?v=16">
+    <link rel="stylesheet" href="programs.css?v=29">
+<link rel="stylesheet" href="frontend_polish.css?v=14">
+<link rel="stylesheet" href="beneficiary_responsive.css?v=10">
+    <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
+    <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
+    <script src="frontend_polish.js?v=9" defer></script>
+    <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
-<body>
+<body class="beneficiary-programs-page">
 
 <header class="topbar">
   <div class="topbar-inner">
@@ -853,16 +935,23 @@ if ($barangay_summary_result) {
                     <h2 class="area-title">Active Opportunities</h2>
                     <p class="area-sub">Click on a card to see program details and submit your application.</p>
                 </div>
-                <div class="search-container">
-                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" id="searchInput" placeholder="Search for active programs (e.g., TUPAD, SPES)..." onkeyup="filterPrograms()">
+                <div class="program-discovery-controls">
+                    <div class="search-container">
+                        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <label class="sr-only" for="searchInput">Search programs by name</label>
+                        <input type="search" id="searchInput" placeholder="Search programs" oninput="filterPrograms()">
+                    </div>
+                    <div class="schedule-filter-wrap">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
+                        <label class="sr-only" for="scheduleFilter">Filter programs by schedule</label>
+                        <select id="scheduleFilter" class="program-schedule-filter" onchange="filterPrograms()">
+                            <option value="all">All schedules</option>
+                            <option value="open">Open now</option>
+                            <option value="upcoming">Coming soon</option>
+                            <option value="ending">Ending soon</option>
+                        </select>
+                    </div>
                 </div>
-                <?php if ($availableTupadCategories): ?>
-                <select id="tupadCategoryFilter" onchange="filterPrograms()" aria-label="Filter programs by TUPAD category" style="min-height:48px;padding:0 14px;border:1px solid #d7e6de;border-radius:12px;background:#fff;color:#173728;font:600 13px Poppins,sans-serif;">
-                    <option value="all">All TUPAD Categories</option>
-                    <?php foreach ($availableTupadCategories as $category): ?><option value="<?= h(strtolower($category)) ?>"><?= h($category) ?></option><?php endforeach; ?>
-                </select>
-                <?php endif; ?>
             </div>
 
             <div class="program-grid-container">
@@ -894,6 +983,22 @@ if ($barangay_summary_result) {
                             if (!empty($row['one_per_household'])) $eligibilityParts[] = 'One active beneficiary per household';
                             $safe_eligibility = h(implode(' • ', $eligibilityParts));
                             $safe_venue = h($row['venue'] ?? 'PESO Main Office');
+                            $programSearchText = strtolower((string)($row['program_name'] ?? '') . ' ' . (string)($row['description'] ?? ''));
+                            $serviceType = 'employment';
+                            if (str_contains($programSearchText, 'spes') || str_contains($programSearchText, 'student')) $serviceType = 'student';
+                            elseif (str_contains($programSearchText, 'tupad') || str_contains($programSearchText, 'livelihood') || str_contains($programSearchText, 'emergency')) $serviceType = 'livelihood';
+                            elseif (str_contains($programSearchText, 'training') || str_contains($programSearchText, 'tesda') || str_contains($programSearchText, 'skill')) $serviceType = 'skills';
+                            $serviceLabel = $serviceType === 'student' ? 'Employment for Students' : ucfirst($serviceType);
+                            $daysUntilDeadline = !empty($row['end_date']) ? (int)floor((strtotime($row['end_date']) - strtotime(date('Y-m-d'))) / 86400) : 9999;
+                            $isClosingSoon = $daysUntilDeadline >= 0 && $daysUntilDeadline <= 14;
+                            $daysUntilStart = !empty($row['start_date']) ? (int)floor((strtotime($row['start_date']) - strtotime(date('Y-m-d'))) / 86400) : 0;
+                            $isComingSoon = strtolower(trim((string)($row['status'] ?? ''))) === 'upcoming' || $daysUntilStart > 0;
+                            $scheduleState = $isComingSoon ? 'upcoming' : ($isClosingSoon ? 'ending' : 'open');
+                            $programUpdatedAt = $row['updated_at'] ?: $row['created_at'];
+                            $missingProgramDetails = [];
+                            foreach (['description' => 'description', 'eligibility' => 'eligibility rules', 'requirements' => 'document requirements', 'venue' => 'venue', 'start_date' => 'program start date', 'end_date' => 'application deadline'] as $field => $label) {
+                                if (trim((string)($row[$field] ?? '')) === '' || in_array($row[$field] ?? '', ['0000-00-00', 'TBA'], true)) $missingProgramDetails[] = $label;
+                            }
 
                             $action_type = $user_status ? 'status' : 'apply';
                             $badge_class = ($remaining_slots <= 5) ? 'slots-badge warning' : 'slots-badge';
@@ -916,6 +1021,12 @@ if ($barangay_summary_result) {
                                  data-reqs="<?= $safe_reqs ?>"
                                  data-eligibility="<?= $safe_eligibility ?>"
                                  data-venue="<?= $safe_venue ?>"
+                                  data-service-type="<?= h($serviceType) ?>"
+                                  data-schedule="<?= h($scheduleState) ?>"
+                                 data-updated="<?= h(date('M d, Y', strtotime($programUpdatedAt))) ?>"
+                                 data-document-schedule="Issued by PESO after application review"
+                                 data-incomplete="<?= h(implode(', ', $missingProgramDetails)) ?>"
+                                 data-spes-returning="<?= ($is_spes_returning && str_contains(strtoupper((string)$row['program_name']), 'SPES')) ? '1' : '0' ?>"
                                  onclick="openProgramDetails(this)">
                                  
                             <div class="card-img-wrap">
@@ -932,7 +1043,10 @@ if ($barangay_summary_result) {
                                 <p class="card-desc"><?= mb_strimwidth($safe_desc, 0, 110, "...") ?></p>
                                 
                                 <div class="card-footer-info">
-                                    <span class="date">Start: <?= $safe_start ?></span>
+                                    <div class="program-card-schedule">
+                                        <span><small>Program starts</small><strong><?= $safe_start ?></strong></span>
+                                        <span><small>Application deadline</small><strong><?= $safe_end ?></strong></span>
+                                    </div>
                                     
                                     <?php if ($user_status): ?>
                                         <button type="button" class="btn-check-status">View Status</button>
@@ -940,6 +1054,8 @@ if ($barangay_summary_result) {
                                         <button type="button" class="program-btn">View Details</button>
                                     <?php endif; ?>
                                 </div>
+                                <div class="program-record-meta"><span><?= h($serviceLabel) ?></span><time datetime="<?= h(date('Y-m-d', strtotime($programUpdatedAt))) ?>">Updated <?= h(date('M d, Y', strtotime($programUpdatedAt))) ?> by PESO</time></div>
+                                <?php if ($missingProgramDetails): ?><div class="program-information-warning">Some official details are not yet available: <?= h(implode(', ', $missingProgramDetails)) ?>.</div><?php endif; ?>
                             </div>
                         </article>
                     <?php 
@@ -959,6 +1075,52 @@ if ($barangay_summary_result) {
                     <h3 style="color:var(--green-dark); font-weight:800; margin-bottom:5px;">No active programs match your search</h3>
                     <p style="color:var(--text-muted); font-size:14.5px;">Try using different keywords like "TUPAD" or "SPES".</p>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="program-guidance-section bp-content-module" aria-labelledby="applicationJourneyTitle">
+        <div class="content-wrap">
+            <div class="program-route-shell">
+                <div class="content-enhancement-heading">
+                    <span class="content-enhancement-eyebrow">Before you submit</span>
+                    <h2 id="applicationJourneyTitle">Your Application Journey</h2>
+                    <p>Automated eligibility is preliminary. PESO issues the final decision after validating your information and requirements.</p>
+                </div>
+                <ol class="application-journey" aria-label="Program application stages">
+                    <li><span>1</span><strong>Profile review</strong><small>Confirm registered details.</small></li>
+                    <li><span>2</span><strong>Eligibility</strong><small>Check the exact batch rules.</small></li>
+                    <li><span>3</span><strong>Application</strong><small>Submit complete information.</small></li>
+                    <li><span>4</span><strong>PESO validation</strong><small>Staff review your record.</small></li>
+                    <li><span>5</span><strong>Program activity</strong><small>Follow official instructions.</small></li>
+                </ol>
+            </div>
+
+            <div class="applicant-guide-grid">
+                <article>
+                    <span class="guide-card-code">READY</span>
+                    <h3>Prepare before applying</h3>
+                    <ul>
+                        <li>Use the exact information shown on your valid documents.</li>
+                        <li>Review requirements, venue, dates, and available slots.</li>
+                        <li>Keep your email and mobile number active for updates.</li>
+                    </ul>
+                </article>
+                <article>
+                    <span class="guide-card-code">CHECK</span>
+                    <h3>Important reminders</h3>
+                    <ul>
+                        <li>A preliminary match does not guarantee final approval.</li>
+                        <li>Incomplete or inconsistent records may require validation.</li>
+                        <li>Use My Profile to follow your recorded next action.</li>
+                    </ul>
+                </article>
+            </div>
+
+            <div class="program-faq-stack">
+                <details class="program-faq"><summary>Can I apply to more than one active program?</summary><p>BENEPESO may prevent another application while you have a pending or active program record. Complete the current program or contact PESO if the record needs correction.</p></details>
+                <details class="program-faq"><summary>What if my eligibility result uses incorrect information?</summary><p>Update editable information in My Profile. For identity or household corrections requiring validation, coordinate with PESO before applying again.</p></details>
+                <details class="program-faq"><summary>Where can I see requirements and schedules?</summary><p>Open a program card for batch dates, venue, eligibility rules, and documentary requirements. After applying, check My Profile for the latest instruction.</p></details>
             </div>
         </div>
     </section>
@@ -1015,6 +1177,7 @@ if ($barangay_summary_result) {
             <?php endif; ?>
         </div>
     </section>
+
 </main>
 
 <footer class="site-footer">
@@ -1149,45 +1312,75 @@ if ($barangay_summary_result) {
     <div class="modal-content details-box">
         <button class="modal-close" onclick="closeModal('programDetailsModal')">✕</button>
         <div class="details-header">
-            <span class="slots-badge" id="detBadge" style="margin-bottom:10px;"></span>
-            <h2 id="detTitle" style="color:var(--green-dark); font-weight:900; line-height:1.2; margin-bottom:5px;"></h2>
+            <div class="details-heading-row">
+                <h2 id="detTitle" style="color:var(--green-dark); font-weight:900; line-height:1.2; margin-bottom:5px;"></h2>
+                <span class="slots-badge" id="detBadge"></span>
+            </div>
             <div class="batch-code" id="detBatch" style="margin-bottom:0;"></div>
         </div>
         
         <div class="details-body" style="margin-top:20px;">
             <p id="detDesc" style="font-size:14px; color:var(--text-muted); line-height:1.6; margin-bottom:20px; text-align:justify;"></p>
             
-            <div style="background:var(--bg-main); border:1px solid var(--border-light); border-radius:12px; padding:15px; margin-bottom:20px;">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-                    <div>
-                        <div style="font-size:11px; font-weight:800; color:#a0b0a6; text-transform:uppercase;">Start Date</div>
-                        <div id="detStart" style="font-size:13.5px; font-weight:600; color:var(--text-main);"></div>
+            <div class="program-schedule-panel">
+                <div class="program-schedule-grid">
+                    <div class="program-schedule-item">
+                        <div class="program-schedule-label">Program activity starts</div>
+                        <div id="detStart" class="program-schedule-value"></div>
                     </div>
-                    <div>
-                        <div style="font-size:11px; font-weight:800; color:#a0b0a6; text-transform:uppercase;">End Date</div>
-                        <div id="detEnd" style="font-size:13.5px; font-weight:600; color:var(--text-main);"></div>
+                    <div class="program-schedule-item">
+                        <div class="program-schedule-label">Application deadline</div>
+                        <div id="detEnd" class="program-schedule-value"></div>
                     </div>
-                    <div style="grid-column: span 2;">
-                        <div style="font-size:11px; font-weight:800; color:#a0b0a6; text-transform:uppercase;">Venue</div>
-                        <div id="detVenue" style="font-size:13.5px; font-weight:600; color:var(--text-main);"></div>
+                    <div class="program-schedule-item program-schedule-wide">
+                        <div class="program-schedule-label">Venue</div>
+                        <div id="detVenue" class="program-schedule-value"></div>
+                    </div>
+                    <div class="program-schedule-item program-schedule-wide">
+                        <div class="program-schedule-label">Document submission schedule</div>
+                        <div id="detDocumentSchedule" class="program-schedule-value"></div>
                     </div>
                 </div>
             </div>
+            <div class="program-detail-record-meta"><span id="detUpdated"></span><strong>Official program record maintained by PESO Vinzons</strong></div>
+            <div id="detIncomplete" class="program-information-warning program-detail-warning" hidden></div>
 
             <div style="margin-bottom:18px;">
                 <div style="font-size:14px; font-weight:800; color:var(--green-dark); margin-bottom:8px;">Eligibility Rules</div>
-                <div id="detEligibility" style="font-size:13px; color:var(--text-muted); line-height:1.6; background:#f4f8f5; border:1px solid var(--border-light); padding:12px; border-radius:8px;"></div>
+                <ul id="detEligibility" class="program-detail-list"></ul>
             </div>
             
             <div style="margin-bottom:25px;">
                 <div style="font-size:14px; font-weight:800; color:var(--green-dark); margin-bottom:8px;">Documentary Requirements</div>
-                <div id="detReqs" style="font-size:13px; color:var(--text-muted); line-height:1.6; background:#fff; border:1px solid var(--border-light); padding:12px; border-radius:8px;"></div>
+                <ul id="detReqs" class="program-detail-list"></ul>
+            </div>
+            <div class="preliminary-eligibility-note">
+                <strong>Preliminary eligibility only</strong>
+                <span>Meeting the displayed rules allows you to proceed with an application but does not guarantee final approval. PESO will validate the submitted information and requirements.</span>
             </div>
         </div>
         
         <div class="details-footer" id="detFooter">
             <!-- Dynamic Buttons inserted via JS -->
         </div>
+    </div>
+</div>
+
+<div class="modal" id="spesBabyModal" role="dialog" aria-modal="true" aria-labelledby="spesBabyTitle" aria-hidden="true">
+    <div class="modal-content spes-baby-dialog">
+        <button type="button" class="modal-close" onclick="closeModal('spesBabyModal')" aria-label="Close">&times;</button>
+        <div class="spes-baby-emblem" aria-hidden="true"><span>SPES</span><strong>BABY</strong></div>
+        <span class="spes-baby-kicker">Returning beneficiary</span>
+        <h2 id="spesBabyTitle">Welcome back, SPES Baby!</h2>
+        <p>You have already completed SPES at least once. You do not need to take the qualifying examination again.</p>
+        <div class="spes-baby-checklist">
+            <strong>Your next step</strong>
+            <span>Review and update your SPES form</span>
+            <span>Prepare your latest semester grades</span>
+            <span>Submit the current documents required by PESO Vinzons</span>
+        </div>
+        <p class="spes-baby-note">Your updated record will still be reviewed for the current batch. Wait for PESO's document-submission instructions before visiting the office.</p>
+        <button type="button" class="btn-primary" id="continueSpesBaby" style="width:100%;">Continue to SPES details</button>
     </div>
 </div>
 
@@ -1227,8 +1420,10 @@ if ($barangay_summary_result) {
 <div class="modal" id="applicationModal">
     <div class="modal-content" style="max-width: 850px;">
         <button class="modal-close" onclick="closeModal('applicationModal')">✕</button>
-        <h2 style="color:#1f4d38; margin-bottom:5px;">Application Form</h2>
-        <p style="font-size:13px; color:#666; margin-bottom:20px;">Applying for: <strong id="formProgramName"></strong></p>
+        <div class="application-modal-heading">
+            <h2 id="applicationFormTitle">Application Form</h2>
+            <p id="applicationFormSubtitle">Applying for: <strong id="formProgramName"></strong></p>
+        </div>
 
         <div class="wizard-nav" id="wizardNav">
             <!-- Populated via JS -->
@@ -1314,7 +1509,7 @@ if ($barangay_summary_result) {
                     </label>
                     <div class="form-actions">
                         <button type="button" class="btn-secondary" onclick="prevStep(4)">Back</button>
-                        <button type="submit" class="btn-primary">Submit Application</button>
+                        <button type="submit" class="btn-primary" id="spesSubmitButton">Submit Application</button>
                     </div>
                 </div>
             </div>
@@ -1917,7 +2112,7 @@ if ($barangay_summary_result) {
     function filterPrograms() {
         let input = document.getElementById('searchInput');
         let filter = input.value.toLowerCase();
-        let categoryFilter = document.getElementById('tupadCategoryFilter')?.value || 'all';
+        let scheduleFilter = document.getElementById('scheduleFilter')?.value || 'all';
         let cards = document.querySelectorAll('.program-card:not(.program-batch-duplicate)');
         let grid = document.getElementById('programGrid');
         let hasMatch = false;
@@ -1935,8 +2130,9 @@ if ($barangay_summary_result) {
             let title = cards[i].getAttribute('data-title');
             let category = cards[i].getAttribute('data-category') || '';
             let matchesSearch = title && (title.toLowerCase().indexOf(filter) > -1 || category.indexOf(filter) > -1);
-            let matchesCategory = categoryFilter === 'all' || category === categoryFilter;
-            if (matchesSearch && matchesCategory) {
+            let schedule = cards[i].getAttribute('data-schedule') || 'open';
+            let matchesSchedule = scheduleFilter === 'all' || schedule === scheduleFilter;
+            if (matchesSearch && matchesSchedule) {
                 cards[i].style.display = "flex";
                 hasMatch = true;
             } else {
@@ -1952,6 +2148,46 @@ if ($barangay_summary_result) {
     }
 
     let activeProgramId = 0, activeProgramName = "", currentFormType = "tupad", totalSteps = 3;
+    const isReturningSpesBeneficiary = <?= $is_spes_returning ? 'true' : 'false' ?>;
+    const spesPreviousDetails = <?= json_encode($spes_prefill, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    let pendingSpesCard = null;
+    let spesWelcomeAcknowledged = false;
+
+    document.getElementById('continueSpesBaby')?.addEventListener('click', function () {
+        const card = pendingSpesCard;
+        spesWelcomeAcknowledged = true;
+        closeModal('spesBabyModal');
+        if (card) openProgramDetails(card);
+    });
+
+    function prefillReturningSpesForm() {
+        if (!isReturningSpesBeneficiary || !spesPreviousDetails) return;
+        const form = document.getElementById('multiStepForm');
+        const fields = {
+            gsis_beneficiary: 'gsis_beneficiary_name', gsis_relationship: 'gsis_relationship',
+            citizenship: 'citizenship', place_of_birth: 'place_of_birth', social_urls: 'social_media',
+            spes_type: 'spes_type', spes_is_pregnant: 'spes_is_pregnant', permanent_address: 'permanent_address',
+            father_name: 'father_name', father_contact: 'father_contact', father_occupation: 'father_occupation',
+            mother_name: 'mother_name', mother_contact: 'mother_contact', mother_occupation: 'mother_occupation',
+            elem_school: 'elem_school', elem_degree: 'elem_degree', elem_year_level: 'elem_year_level', elem_date_attendance: 'elem_date_attendance',
+            sec_school: 'sec_school', sec_degree: 'sec_degree', sec_year_level: 'sec_year_level', sec_date_attendance: 'sec_date_attendance',
+            tert_school: 'tert_school', tert_course: 'tert_course', tert_year_level: 'tert_year_level', tert_date_attendance: 'tert_date_attendance',
+            tv_school: 'tv_school', tv_course: 'tv_course', tv_year_level: 'tv_year_level', tv_date_attendance: 'tv_date_attendance',
+            special_skills: 'special_skills'
+        };
+        Object.entries(fields).forEach(([name, column]) => {
+            const input = form?.querySelector(`[name="${name}"]`);
+            const value = String(spesPreviousDetails[column] ?? '').trim();
+            if (!input || value === '') return;
+            if (input.tagName === 'SELECT' && !Array.from(input.options).some(option => option.value === value)) return;
+            input.value = value;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        const parentStatuses = String(spesPreviousDetails.parents_status || '').split(',').map(value => value.trim().toLowerCase());
+        form?.querySelectorAll('[name="spes_parent_status[]"]').forEach(input => {
+            input.checked = parentStatuses.includes(String(input.value).trim().toLowerCase());
+        });
+    }
     
     let lastModalTrigger = null;
     document.addEventListener('click', event => {
@@ -2146,7 +2382,30 @@ if ($barangay_summary_result) {
     }
 
     // FLOW 1: Active Programs Details -> Eligibility -> Application
+    function renderProgramDetailList(target, value, fallback) {
+        const items = String(value || '')
+            .replace(/\r/g, '')
+            .trim()
+            .split(/\n+|[•●▪]\s*|;\s*|(?:^|\s)[\-–—]\s+/g)
+            .map(item => item.trim().replace(/^[\s\-–—•●▪,.:]+|[,;]+$/g, '').trim())
+            .filter(item => item && !/^for\s+students?\s*:?$/i.test(item));
+
+        target.replaceChildren();
+        (items.length ? items : [fallback]).forEach(item => {
+            const listItem = document.createElement('li');
+            listItem.textContent = item;
+            target.appendChild(listItem);
+        });
+    }
+
     function openProgramDetails(element) {
+        if (element.getAttribute('data-spes-returning') === '1' && !spesWelcomeAcknowledged) {
+            pendingSpesCard = element;
+            const modal = document.getElementById('spesBabyModal');
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            return;
+        }
         let action = element.getAttribute('data-action');
         if (action === 'none') return; 
         
@@ -2162,6 +2421,9 @@ if ($barangay_summary_result) {
         const venue = element.getAttribute('data-venue');
         const reqs = element.getAttribute('data-reqs');
         const eligibility = element.getAttribute('data-eligibility') || '';
+        const documentSchedule = element.getAttribute('data-document-schedule') || 'Not yet announced';
+        const updated = element.getAttribute('data-updated') || 'Date unavailable';
+        const incomplete = element.getAttribute('data-incomplete') || '';
         
         const status = (element.getAttribute('data-status') || '').trim().toLowerCase();
         const availment = (element.getAttribute('data-availment') || '').trim().toLowerCase();
@@ -2174,11 +2436,15 @@ if ($barangay_summary_result) {
         document.getElementById('detStart').innerText = startDate;
         document.getElementById('detEnd').innerText = endDate;
         document.getElementById('detVenue').innerText = venue;
+        document.getElementById('detDocumentSchedule').innerText = documentSchedule;
+        document.getElementById('detUpdated').innerText = 'Updated ' + updated;
+        const incompleteTarget = document.getElementById('detIncomplete');
+        incompleteTarget.hidden = incomplete === '';
+        incompleteTarget.textContent = incomplete === '' ? '' : 'Some official information is not yet available: ' + incomplete + '. Check again later or contact PESO before visiting the office.';
         const requirementsTarget = document.getElementById('detReqs');
-        requirementsTarget.textContent = reqs;
-        requirementsTarget.style.whiteSpace = 'pre-line';
+        renderProgramDetailList(requirementsTarget, reqs, 'No requirements specified.');
         const eligibilityTarget = document.getElementById('detEligibility');
-        if (eligibilityTarget) eligibilityTarget.innerText = eligibility;
+        if (eligibilityTarget) renderProgramDetailList(eligibilityTarget, eligibility, 'No eligibility rules specified.');
         
         let badge = document.getElementById('detBadge');
         badge.innerText = slots + " Slots Available";
@@ -2198,7 +2464,7 @@ if ($barangay_summary_result) {
                 viewStatus(status, availment, reason, reqs, venue, title);
             };
         } else {
-            btn.innerText = "Check Eligibility & Apply";
+            btn.innerText = element.getAttribute('data-spes-returning') === '1' ? "Review & Update SPES Form" : "Check Eligibility & Apply";
             btn.onclick = function() {
                 // Set global active variables before checking eligibility
                 activeProgramId = element.getAttribute('data-prog-id');
@@ -2433,10 +2699,18 @@ if ($barangay_summary_result) {
     function validateSpesYearLevel(select) {
         if (!select) return;
         const isStudent = (document.getElementById('spes_type')?.value || '').trim().toLowerCase() === 'student';
-        const blocked = isStudent && select.value.trim().toLowerCase() === '4th year';
+        const blocked = !isReturningSpesBeneficiary && isStudent && select.value.trim().toLowerCase() === '4th year';
         const notice = document.getElementById('spesFourthYearNotice');
         select.setCustomValidity(blocked ? 'Fourth-year college students are not eligible for this PESO Vinzons SPES batch.' : '');
-        if (notice) notice.style.display = blocked ? 'block' : 'none';
+        if (notice && isReturningSpesBeneficiary && select.value.trim().toLowerCase() === '4th year') {
+            notice.style.display = 'block';
+            notice.style.color = '#17623f';
+            notice.textContent = 'After completing this SPES cycle, your profile will be recognized as SPES Graduate.';
+        } else if (notice) {
+            notice.style.display = blocked ? 'block' : 'none';
+            notice.style.color = '#a32222';
+            notice.textContent = 'Fourth-year college students are not eligible for this PESO Vinzons SPES batch.';
+        }
         if (blocked) select.reportValidity();
     }
 
@@ -2516,6 +2790,12 @@ if ($barangay_summary_result) {
         }
 
         document.getElementById(currentFormType + 'Wrapper').style.display = 'block';
+        const returningSpes = currentFormType === 'spes' && isReturningSpesBeneficiary;
+        document.getElementById('applicationFormTitle').textContent = returningSpes ? 'SPES Information Update' : 'Application Form';
+        document.getElementById('applicationFormSubtitle').firstChild.textContent = returningSpes ? 'Updating your record for: ' : 'Applying for: ';
+        const spesSubmitButton = document.getElementById('spesSubmitButton');
+        if (spesSubmitButton) spesSubmitButton.textContent = returningSpes ? 'Submit Updated SPES Form' : 'Submit Application';
+        if (returningSpes) prefillReturningSpesForm();
         showStep(1);
 
         // Reset Required attributes

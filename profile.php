@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/auth.php';
 require "db.php";
+require_once __DIR__ . '/user_security_metadata_helper.php';
+require_once __DIR__ . '/spes_lifecycle_helper.php';
 
 check_user_role('user');
 
@@ -15,6 +17,38 @@ $stmt = $conn->prepare("SELECT * FROM users WHERE user_id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
+$security_metadata = fetch_user_security_metadata($conn, $user_id);
+$last_successful_login = null;
+$login_stmt = $conn->prepare("SELECT login_time FROM login_history WHERE user_id = ? AND status = 'success' ORDER BY login_time DESC LIMIT 1");
+if ($login_stmt) {
+    $login_stmt->bind_param('i', $user_id);
+    $login_stmt->execute();
+    $last_successful_login = $login_stmt->get_result()->fetch_assoc()['login_time'] ?? null;
+    $login_stmt->close();
+}
+
+$profile_required_fields = [
+    'first_name', 'last_name', 'birthdate', 'sex', 'civil_status',
+    'contact_no', 'street_purok_zone', 'barangay', 'email'
+];
+$profile_completed_fields = 0;
+$profile_missing_fields = [];
+$profile_field_labels = [
+    'first_name' => 'First name', 'last_name' => 'Last name', 'birthdate' => 'Date of birth',
+    'sex' => 'Sex', 'civil_status' => 'Civil status', 'contact_no' => 'Contact number',
+    'street_purok_zone' => 'Street / Purok / Zone', 'barangay' => 'Barangay', 'email' => 'Email address',
+];
+foreach ($profile_required_fields as $profile_field) {
+    if (trim((string)($user[$profile_field] ?? '')) !== '') {
+        $profile_completed_fields++;
+    } else {
+        $profile_missing_fields[] = $profile_field_labels[$profile_field] ?? $profile_field;
+    }
+}
+$profile_completion = (int)round(($profile_completed_fields / count($profile_required_fields)) * 100);
+$profile_is_ready = $profile_completion === 100;
+$spes_lifecycle = spes_user_summary($conn, $user_id, (string)($user['email'] ?? ''));
+$spes_profile_label = $spes_lifecycle['classification'] === 'graduate' ? 'SPES Graduate' : ($spes_lifecycle['classification'] === 'baby' ? 'SPES Baby' : '');
 
 $fn = trim($user['first_name'] ?? "");
 $mn = trim($user['middle_name'] ?? "");
@@ -30,9 +64,9 @@ $first_char = !empty($fn) ? strtoupper(substr($fn, 0, 1)) : "U";
 
 $prog_stmt = $conn->prepare("
     SELECT b.beneficiary_id, p.program_name, p.requirements, p.venue,
-           p.status AS program_status, p.end_date AS program_end_date,
+           p.status AS program_status, p.start_date AS program_start_date, p.end_date AS program_end_date,
            b.availment_status, b.approval_status, b.approval_note,
-           b.date_completed, b.date_availed, b.created_at
+           b.date_completed, b.date_availed, b.created_at, b.updated_at
     FROM beneficiaries b 
     JOIN programs p ON b.program_id = p.program_id 
     WHERE b.user_id = ? OR (b.user_id IS NULL AND b.email = ?)
@@ -75,7 +109,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="home.css?v=14">
+    <link rel="stylesheet" href="home.css?v=16">
     <style>
         .status-card-horizontal {
             background: #ffffff;
@@ -225,13 +259,16 @@ while ($row = $activity_logs_result->fetch_assoc()) {
             .log-premium-right { text-align: left; align-items: flex-start; }
         }
     </style>
-    <link rel="stylesheet" href="profile.css?v=13">
+    <link rel="stylesheet" href="profile.css?v=14">
     <link rel="stylesheet" href="spes_form_modal.css?v=20260904c">
-<link rel="stylesheet" href="frontend_polish.css?v=12">
-    <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-    <script src="frontend_polish.js?v=8" defer></script>
+<link rel="stylesheet" href="frontend_polish.css?v=14">
+    <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
+    <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
+    <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
+    <script src="frontend_polish.js?v=9" defer></script>
+    <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
-<body>
+<body class="beneficiary-profile-page">
 
 <header class="topbar">
   <div class="topbar-inner">
@@ -299,9 +336,15 @@ while ($row = $activity_logs_result->fetch_assoc()) {
             <div class="id-details">
                 <div class="id-badges">
                     <span class="badge-role">Beneficiary</span>
-                    <span class="badge-status">
+                    <?php if ($spes_profile_label !== ''): ?>
+                    <span class="badge-status spes-lifecycle-badge <?= $spes_lifecycle['classification'] === 'graduate' ? 'is-graduate' : 'is-baby' ?>">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3z"/></svg>
+                        <?= h($spes_profile_label) ?>
+                    </span>
+                    <?php endif; ?>
+                    <span class="badge-status <?= $profile_is_ready ? 'profile-ready' : 'profile-incomplete' ?>">
                         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        Verified Profile
+                        <?= $profile_is_ready ? 'Profile Ready for Review' : 'Profile Needs Information' ?>
                     </span>
                 </div>
                 <h1 class="id-name"><?= htmlspecialchars($user_display_name) ?></h1>
@@ -319,9 +362,27 @@ while ($row = $activity_logs_result->fetch_assoc()) {
         </div>
     </section>
 
+    <section class="profile-readiness-panel stagger-2 bp-content-module" aria-labelledby="profileReadinessTitle" style="--profile-completion: <?= $profile_completion ?>%">
+        <div>
+            <span class="content-enhancement-eyebrow">Application readiness</span>
+            <h2 id="profileReadinessTitle"><?= $profile_completion ?>% profile complete</h2>
+            <p><?= $profile_is_ready ? 'Your required profile fields are complete. PESO will still validate your information as part of each program application.' : 'Complete the missing required fields before applying so eligibility and household checks can use accurate information.' ?></p>
+            <?php if (!$profile_is_ready): ?>
+                <div class="profile-missing-fields" aria-label="Missing required profile information">
+                    <strong>Still needed:</strong>
+                    <?php foreach ($profile_missing_fields as $missing_field): ?><span><?= h($missing_field) ?></span><?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+        <div class="profile-readiness-progress" aria-label="Profile <?= $profile_completion ?> percent complete">
+            <span style="width: <?= $profile_completion ?>%"></span>
+        </div>
+        <?php if (!$profile_is_ready): ?><button type="button" class="profile-readiness-action" onclick="document.getElementById('editToggle').click(); document.getElementById('personal-info').scrollIntoView({behavior:'smooth'})">Complete Profile</button><?php endif; ?>
+    </section>
+
     <nav class="profile-tabs-nav stagger-2">
         <button class="tab-link active" onclick="switchTab(event, 'personal-info')">Personal Details</button>
-        <button class="tab-link" onclick="switchTab(event, 'my-programs')">Availed Programs</button>
+        <button class="tab-link" onclick="switchTab(event, 'my-programs')">My Applications</button>
         <button class="tab-link" onclick="switchTab(event, 'activity-log')">Activity Logs</button>
         <button class="tab-link" onclick="switchTab(event, 'security')">Security</button>
     </nav>
@@ -430,7 +491,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
         <div id="my-programs" class="tab-content">
             <div class="content-header">
                 <div>
-                    <h3>Availed Programs</h3>
+                    <h3>My Applications</h3>
                     <p>Track the status of your PESO program applications.</p>
                 </div>
                 <div class="application-count" aria-label="Total program applications">
@@ -452,7 +513,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
                     <div class="no-results-icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"></path><path d="M3 7V5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v2"></path></svg>
                     </div>
-                    <h4>No Programs Availed Yet</h4>
+                    <h4>No Applications Yet</h4>
                     <p>You have not applied for a PESO program yet. Explore the current opportunities to get started.</p>
                     <a class="empty-program-link" href="programs.php">Explore Programs</a>
                 </div>
@@ -514,6 +575,10 @@ while ($row = $activity_logs_result->fetch_assoc()) {
                         <li><span>Mix letters, numbers, and symbols</span></li>
                         <li><span>Avoid personal information</span></li>
                     </ul>
+                    <div class="security-history" aria-label="Recent account security activity">
+                        <div><span>Last successful sign-in</span><strong><?= $last_successful_login ? h(date('M d, Y, g:i A', strtotime($last_successful_login))) : 'Not recorded' ?></strong></div>
+                        <div><span>Password last changed</span><strong><?= !empty($security_metadata['password_changed_at']) ? h(date('M d, Y, g:i A', strtotime($security_metadata['password_changed_at']))) : 'Not recorded yet' ?></strong></div>
+                    </div>
                 </div>
                 <form id="securityForm" class="security-form-panel" action="update_password_process.php" method="POST">
                     <?= auth_csrf_input() ?>
@@ -549,6 +614,17 @@ while ($row = $activity_logs_result->fetch_assoc()) {
                         <span>Update Password</span>
                     </button>
                 </form>
+            </div>
+            <div class="profile-data-rights bp-content-module">
+                <div>
+                    <span class="content-enhancement-eyebrow">Your information</span>
+                    <h4>Corrections and privacy requests</h4>
+                    <p>Contact PESO Vinzons if a locked identity field, application record, or verification result is inaccurate. You may also ask how your information is used and retained.</p>
+                </div>
+                <div class="profile-data-rights-actions">
+                    <a href="privacy_notice.php">Read Privacy Notice</a>
+                    <a href="mailto:lguvinzonspeso@gmail.com?subject=BENEPESO%20Record%20Correction%20Request">Request a correction</a>
+                </div>
             </div>
         </div>
 
@@ -799,9 +875,14 @@ const allPrograms = <?php
         $p['approval_note'] = $p['approval_note'] ?? 'No specific reason provided.';
         $p['requirements'] = $p['requirements'] ?? 'Please visit the main office for document requirements.';
         $p['venue'] = $p['venue'] ?? 'PESO Main Office';
+        $appointmentDate = $p['date_availed'] ?? '';
+        if ($appointmentDate === '' && !empty($p['program_start_date']) && strtolower((string)$p['approval_status']) === 'approved') {
+            $appointmentDate = $p['program_start_date'];
+        }
+        $p['formatted_appointment_date'] = $appointmentDate !== '' ? date('M d, Y', strtotime($appointmentDate)) : '';
         return $p;
     }, $availed_programs);
-    echo json_encode($formatted_programs); 
+    echo json_encode($formatted_programs, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 ?>;
 
 const progItemsPerPage = 5;
@@ -839,6 +920,33 @@ function formatRequirements(requirements) {
             <span>${escapeHtml(item)}</span>
         </div>
     `).join('');
+}
+
+function getApplicationNextAction(item) {
+    const approval = String(item.approval_status || 'Pending').toLowerCase();
+    const availment = String(item.availment_status || 'Not Yet Availed').toLowerCase();
+    if (approval === 'rejected') return 'Review the PESO decision note and contact the office if you need clarification.';
+    if (approval !== 'approved') return 'Wait for PESO to complete the eligibility review; keep your registered contact details active.';
+    const actions = {
+        'not yet availed': 'Review the listed requirements and wait for the official submission instruction.',
+        'requirements received': 'Your documents are recorded. Wait for PESO validation and the next schedule.',
+        'orientation': 'Attend the recorded orientation schedule and bring the instructed documents.',
+        'examination': 'Attend the recorded examination schedule and follow PESO instructions.',
+        'exam passed': 'Wait for the official orientation or placement instruction.',
+        'exam failed': 'Contact PESO if you need clarification about the examination result.',
+        'ongoing': 'Continue following the official program activity schedule.',
+        'salary distribution': 'Follow the recorded distribution schedule and identification requirements.',
+        'completed': 'No further action is required unless this record needs correction.',
+        'not qualified': 'Contact PESO if you need clarification or information about another batch.',
+        'cancelled': 'This application is closed; review other open opportunities when ready.'
+    };
+    return actions[availment] || 'Review the program details and wait for the next official PESO instruction.';
+}
+
+function shouldShowApplicationSchedule(item) {
+    const availment = String(item.availment_status || '').toLowerCase();
+    return Boolean(item.formatted_appointment_date)
+        && ['orientation', 'examination', 'ongoing', 'salary distribution'].includes(availment);
 }
 
 function buildProgramProgress(item) {
@@ -968,6 +1076,14 @@ function renderPrograms() {
         const safeVenue = escapeHtml(item.venue);
         const safeDate = escapeHtml(item.formatted_date);
         const safeCompletedDate = escapeHtml(item.formatted_completed_date);
+        const safeAppointmentDate = escapeHtml(item.formatted_appointment_date || '');
+        const safeNextAction = escapeHtml(getApplicationNextAction(item));
+        const showSchedule = shouldShowApplicationSchedule(item);
+        const actionSummary = `
+            <div class="application-action-summary${showSchedule ? '' : ' is-next-only'}">
+                <div><span>Next action</span><strong>${safeNextAction}</strong></div>
+                ${showSchedule ? `<div><span>Next schedule</span><strong>${safeAppointmentDate}</strong></div><div><span>Venue</span><strong>${safeVenue}</strong></div>` : ''}
+            </div>`;
         const spesFormAction = String(item.program_name || '').trim().toUpperCase() === 'SPES'
             ? `<button type="button" class="btn-spes-form" onclick="event.stopPropagation(); openSpesForm(${encodeURIComponent(item.beneficiary_id)})">SPES Form</button>`
             : '';
@@ -1006,6 +1122,7 @@ function renderPrograms() {
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
                     </button>
                 </div>
+                ${actionSummary}
                 ${buildProgramProgress(item)}
             </div>
         `;
@@ -1023,11 +1140,21 @@ function changeProgPage(direction) {
 }
 
 const allLogs = <?php 
-    $formatted_logs = array_map(function($l) {
+    $formatted_logs = array_map(function($l) use ($user_display_name) {
+        $action = strtoupper(trim((string)($l['action_type'] ?? '')));
+        $description = trim((string)($l['description'] ?? ''));
+        if ($action === 'LOGIN') {
+            $description = $user_display_name . (stripos($description, 'Google') !== false ? ' logged in securely using Google.' : ' logged in securely.');
+        } elseif ($action === 'LOGOUT') {
+            $description = $user_display_name . ' logged out securely.';
+        } elseif (preg_match('/^User\b/i', $description)) {
+            $description = preg_replace('/^User\b/i', $user_display_name, $description, 1);
+        }
+        $l['description'] = $description;
         $l['formatted_date'] = date("M d, Y • h:i A", strtotime($l['created_at']));
         return $l;
     }, $activity_logs);
-    echo json_encode($formatted_logs); 
+    echo json_encode($formatted_logs, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 ?>;
 
 const logItemsPerPage = 5; 
@@ -1095,9 +1222,10 @@ function changeLogPage(direction) {
 document.addEventListener('DOMContentLoaded', function() {
     renderPrograms();
     renderLogs();
-    if (window.location.hash === '#my-programs') {
-        const target = document.getElementById('my-programs');
-        const trigger = Array.from(document.querySelectorAll('.tab-link')).find(button => button.textContent.includes('Availed Programs'));
+    const requestedTab = window.location.hash.slice(1);
+    if (['personal-info', 'my-programs', 'activity-log', 'security'].includes(requestedTab)) {
+        const target = document.getElementById(requestedTab);
+        const trigger = Array.from(document.querySelectorAll('.tab-link')).find(button => button.getAttribute('onclick')?.includes(`'${requestedTab}'`));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
         document.querySelectorAll('.tab-link').forEach(button => button.classList.remove('active'));
         target?.classList.add('active');

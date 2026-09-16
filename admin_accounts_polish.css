@@ -196,7 +196,7 @@ body {
 #idCardModal .id-card-right {
   position: relative;
   justify-content: flex-start;
-  padding: 42px !important;
+  padding: 22px 42px 42px !important;
   background: linear-gradient(180deg, #ffffff 0%, #f5faf7 100%) !important;
 }
 #idCardModal .id-card-right::before {
@@ -213,6 +213,15 @@ body {
   padding: 0 0 20px;
   border-bottom: 1px solid #cfe2d8;
   text-align: center;
+}
+#idCardModal .id-card-toolbar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  min-height: 42px;
+  margin: 0 -20px 8px 0;
 }
 #idCardModal .id-header > div:first-child {
   justify-content: center;
@@ -256,19 +265,41 @@ body {
   justify-content: center;
 }
 #idCardModal .modal-close-icon {
-  width: 44px;
-  height: 44px;
-  box-shadow: 0 6px 18px rgba(13,75,49,.09);
-  transition: transform .22s cubic-bezier(.2,.8,.2,1), background-color .22s ease, color .22s ease, box-shadow .22s ease !important;
+  position: static;
+  top: auto;
+  right: auto;
+  z-index: 20;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #d5e5dc !important;
+  border-radius: 13px;
+  background: rgba(255,255,255,.94) !important;
+  color: #294b3a !important;
+  box-shadow: 0 8px 22px rgba(13,75,49,.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform .18s cubic-bezier(.2,.8,.2,1), background-color .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease !important;
 }
-#idCardModal .modal-close-icon i { transition: transform .25s cubic-bezier(.2,.8,.2,1); }
+#idCardModal .modal-close-icon i {
+  display: block;
+  font-size: 20px;
+  line-height: 1;
+  transition: transform .22s cubic-bezier(.2,.8,.2,1);
+}
 #idCardModal .modal-close-icon:hover {
-  transform: translateY(-2px) scale(1.06);
-  box-shadow: 0 10px 24px rgba(31,122,84,.22);
+  border-color: #efb8b8 !important;
+  background: #fff3f2 !important;
+  color: #c33f3f !important;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(172,54,54,.16);
 }
-#idCardModal .modal-close-icon:hover i { transform: rotate(90deg); }
+#idCardModal .modal-close-icon:hover i { transform: rotate(90deg) scale(1.05); }
 #idCardModal .modal-close-icon:active { transform: scale(.94); }
-#idCardModal .modal-close-icon:focus-visible { outline: 0; box-shadow: 0 0 0 4px rgba(31,122,84,.18); }
+#idCardModal .modal-close-icon:focus-visible {
+  outline: 0;
+  border-color: #1f7a54 !important;
+  box-shadow: 0 0 0 4px rgba(31,122,84,.16), 0 8px 22px rgba(13,75,49,.1);
+}
 @media (max-width: 760px) {
   #idCardModal .id-card-dialog { min-height: 0; }
   #idCardModal .id-card-left { padding: 28px 20px !important; }
@@ -280,7 +311,9 @@ body {
     min-width: 112px;
     min-height: 112px;
   }
-  #idCardModal .id-card-right { padding: 28px 20px !important; }
+  #idCardModal .id-card-right { padding: 14px 20px 28px !important; }
+  #idCardModal .id-card-toolbar { margin: 0 -8px 6px 0; min-height: 40px; }
+  #idCardModal .modal-close-icon { width: 40px; height: 40px; }
   #idCardModal .detail-group[style*="grid-column"] { grid-column: auto !important; }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -238,6 +238,7 @@ if ($stmt) {
   <script src="activity_filter_polish.js?v=1" defer></script>
 <link rel="stylesheet" href="frontend_polish.css?v=11">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=23">
+<link rel="stylesheet" href="system_search_polish.css?v=1">
 <script src="frontend_polish.js?v=7" defer></script>
 </head>
 <body>
@@ -353,7 +354,7 @@ if ($stmt) {
               type="text"
               name="search"
               value="<?php echo h($search); ?>"
-              class="toolbar-input"
+              class="toolbar-input system-search-input"
               placeholder="Search module, action, target, desc..."
             >
 

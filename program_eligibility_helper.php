@@ -89,7 +89,7 @@ function evaluate_program_eligibility(mysqli $conn, int $userId, int $programId)
     return ['eligible' => true, 'message' => 'You meet the configured age, sex, and household rules.'];
 }
 
-function evaluate_spes_local_eligibility(array $application): array
+function evaluate_spes_local_eligibility(array $application, bool $returningSpesBeneficiary = false): array
 {
     $pregnancyStatus = trim((string)($application['spes_is_pregnant'] ?? ''));
     if ($pregnancyStatus === 'Yes') {
@@ -97,7 +97,7 @@ function evaluate_spes_local_eligibility(array $application): array
     }
     $studentType = strtolower(trim((string)($application['spes_type'] ?? '')));
     $collegeYear = strtolower(trim((string)($application['tert_year_level'] ?? '')));
-    if ($studentType === 'student' && $collegeYear === '4th year') {
+    if (!$returningSpesBeneficiary && $studentType === 'student' && $collegeYear === '4th year') {
         return ['eligible' => false, 'message' => 'Fourth-year college students are not eligible for this PESO Vinzons SPES batch.'];
     }
     return ['eligible' => true, 'message' => 'The applicant meets the PESO Vinzons college-year rule.'];

@@ -3,6 +3,7 @@ require_once __DIR__ . '/auth_session.php';
 require "db.php";
 require_once "report_columns.php";
 require_once "xlsx_report_helper.php";
+require_once "spes_lifecycle_helper.php";
 
 // Clean output buffer to ensure no stray spaces break the Excel file
 if (ob_get_length()) {
@@ -30,6 +31,7 @@ $program_name = trim($_GET['program_name'] ?? '');
 $barangay     = trim($_GET['report_barangay'] ?? 'All');
 $availment    = trim($_GET['report_availment'] ?? 'All');
 $business_nature = trim($_GET['business_nature'] ?? 'All');
+$spes_group   = trim($_GET['report_spes_group'] ?? 'all');
 $format       = strtolower(trim($_GET['export_format'] ?? 'xlsx'));
 
 if (empty($program_name)) {
@@ -64,6 +66,11 @@ if (stripos($program_name, 'MSME') !== false && $business_nature !== "All") {
     $params[] = $business_nature;
     $types .= "s";
 }
+if (stripos($program_name, 'SPES') !== false && in_array($spes_group, ['baby', 'graduate'], true)) {
+    $whereParts[] = spes_group_condition_sql($spes_group, 'b');
+} else {
+    $spes_group = 'all';
+}
 
 // EXACT ALPHABETICAL SORTING
 $orderBy = ($barangay === "All") ? "b.barangay ASC, b.last_name ASC, b.first_name ASC" : "b.last_name ASC, b.first_name ASC";
@@ -82,6 +89,7 @@ if ($stmt) {
     $stmt->execute();
     $res = $stmt->get_result();
     while ($row = $res->fetch_assoc()) {
+        $row = array_merge($row, spes_beneficiary_lifecycle_details($conn, (int)$row['beneficiary_id']));
         $beneficiaries[] = $row;
     }
     $stmt->close();
@@ -101,6 +109,7 @@ if ($format === 'xlsx') {
     $subtitleParts[] = getReportLocationLabel($barangay);
     if ($availment !== 'All') $subtitleParts[] = 'Availment: ' . $availment;
     if ($business_nature !== 'All') $subtitleParts[] = 'Vendor Type: ' . $business_nature;
+    if ($spes_group !== 'all') $subtitleParts[] = $spes_group === 'graduate' ? 'SPES Graduates' : 'SPES Babies';
     outputNativeXlsxReport($reportTitle, $selectedColumns, $beneficiaries, implode(' | ', $subtitleParts));
 }
 

@@ -6,9 +6,55 @@
   const focusableSelector = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
   let lastTrigger = null;
 
+  function showBrandedPageLoader() {
+    if (!document.body) return null;
+
+    const existingLoader = document.querySelector('.bp-page-loader');
+    if (existingLoader) return existingLoader;
+
+    const loader = document.createElement('div');
+    loader.className = 'bp-page-loader';
+    loader.setAttribute('role', 'status');
+    loader.setAttribute('aria-live', 'polite');
+    loader.setAttribute('aria-label', 'Preparing BenePeso services');
+    loader.innerHTML =
+      '<div class="bp-loader-visual" aria-hidden="true">' +
+        '<span class="bp-loader-glow"></span>' +
+        '<svg class="bp-loader-card" viewBox="0 0 220 170" focusable="false">' +
+          '<rect class="bp-loader-card-bg" x="22" y="20" width="176" height="126" rx="19"/>' +
+          '<rect class="bp-loader-card-line" x="22" y="20" width="176" height="126" rx="19"/>' +
+          '<circle class="bp-loader-profile-head" cx="75" cy="70" r="17"/>' +
+          '<path class="bp-loader-profile-body" d="M47 120c3-22 14-32 28-32s25 10 28 32"/>' +
+          '<path class="bp-loader-info bp-loader-info-one" d="M121 63h48"/>' +
+          '<path class="bp-loader-info bp-loader-info-two" d="M121 84h36"/>' +
+          '<path class="bp-loader-info bp-loader-info-three" d="M121 105h45"/>' +
+          '<path class="bp-loader-scan" d="M37 92h146"/>' +
+          '<circle class="bp-loader-approval-ring" cx="172" cy="124" r="20"/>' +
+          '<path class="bp-loader-approval-check" d="m162 124 7 7 13-15"/>' +
+        '</svg>' +
+      '</div>' +
+      '<div class="bp-loader-brand"><strong>BENEPESO</strong><span>Profiling &bull; Eligibility &bull; Verification</span></div>' +
+      '<p>Preparing your services</p>' +
+      '<div class="bp-loader-progress" aria-hidden="true"><span></span></div>' +
+      '<span class="bp-loader-sr">Please wait while BenePeso finishes loading.</span>';
+
+    document.body.prepend(loader);
+    document.documentElement.classList.add('bp-page-loading');
+    return loader;
+  }
+
   /* Branded page loader. Kept self-contained so existing page behavior is unchanged. */
   function initializePageLoader() {
-    if (!document.body || document.body.hasAttribute('data-disable-page-loader') || document.querySelector('.bp-page-loader')) return;
+    if (!document.body) return;
+
+    let skipAfterPreparedNavigation = false;
+    try {
+      skipAfterPreparedNavigation = sessionStorage.getItem('bp-skip-next-page-loader') === '1';
+      if (skipAfterPreparedNavigation) sessionStorage.removeItem('bp-skip-next-page-loader');
+    } catch (error) {
+      /* Storage can be unavailable in privacy modes; body-level disabling remains effective. */
+    }
+    if (document.body.hasAttribute('data-disable-page-loader') || document.querySelector('.bp-page-loader') || skipAfterPreparedNavigation) return;
 
     const navigation = typeof performance.getEntriesByType === 'function'
       ? performance.getEntriesByType('navigation')[0]
@@ -22,7 +68,8 @@
       /* Storage can be unavailable in privacy modes; the loader still works safely. */
     }
 
-    const shouldShowImmediately = !hasBeenSeen || (navigation && navigation.type === 'reload');
+    const forceOnEntry = document.body.hasAttribute('data-force-page-loader');
+    const shouldShowImmediately = forceOnEntry || !hasBeenSeen || (navigation && navigation.type === 'reload');
     const showDelay = shouldShowImmediately ? 0 : 180;
     const minimumVisibleMs = shouldShowImmediately ? 1500 : 900;
     const safetyTimeoutMs = 6000;
@@ -33,35 +80,8 @@
 
     function buildLoader() {
       if (removed || pageReady && !shouldShowImmediately) return;
-
-      loader = document.createElement('div');
-      loader.className = 'bp-page-loader';
-      loader.setAttribute('role', 'status');
-      loader.setAttribute('aria-live', 'polite');
-      loader.setAttribute('aria-label', 'Preparing BenePeso services');
-      loader.innerHTML =
-        '<div class="bp-loader-visual" aria-hidden="true">' +
-          '<span class="bp-loader-glow"></span>' +
-          '<svg class="bp-loader-card" viewBox="0 0 220 170" focusable="false">' +
-            '<rect class="bp-loader-card-bg" x="22" y="20" width="176" height="126" rx="19"/>' +
-            '<rect class="bp-loader-card-line" x="22" y="20" width="176" height="126" rx="19"/>' +
-            '<circle class="bp-loader-profile-head" cx="75" cy="70" r="17"/>' +
-            '<path class="bp-loader-profile-body" d="M47 120c3-22 14-32 28-32s25 10 28 32"/>' +
-            '<path class="bp-loader-info bp-loader-info-one" d="M121 63h48"/>' +
-             '<path class="bp-loader-info bp-loader-info-two" d="M121 84h36"/>' +
-             '<path class="bp-loader-info bp-loader-info-three" d="M121 105h45"/>' +
-             '<path class="bp-loader-scan" d="M37 92h146"/>' +
-             '<circle class="bp-loader-approval-ring" cx="172" cy="124" r="20"/>' +
-             '<path class="bp-loader-approval-check" d="m162 124 7 7 13-15"/>' +
-           '</svg>' +
-        '</div>' +
-        '<div class="bp-loader-brand"><strong>BENEPESO</strong><span>Profiling &bull; Eligibility &bull; Verification</span></div>' +
-        '<p>Preparing your services</p>' +
-        '<div class="bp-loader-progress" aria-hidden="true"><span></span></div>' +
-        '<span class="bp-loader-sr">Please wait while BenePeso finishes loading.</span>';
-
-      document.body.prepend(loader);
-      document.documentElement.classList.add('bp-page-loading');
+      loader = showBrandedPageLoader();
+      if (!loader) return;
       shownAt = performance.now();
     }
 
@@ -251,11 +271,14 @@
       const action = snapshot.querySelector('.bp-service-snapshot-action');
       const status = snapshot.querySelector('.bp-service-snapshot-status span');
       if (!summary) {
-        title.textContent = 'You have no program application yet';
-        copy.textContent = 'Browse current PESO opportunities and choose the program that fits your needs.';
-        if (status) status.textContent = 'Ready to apply';
-        action.href = 'programs.php';
-        action.firstChild.textContent = 'Explore programs ';
+        const profileReady = snapshot.dataset.profileReady === 'true';
+        title.textContent = profileReady ? 'You have no program application yet' : 'Complete your profile before applying';
+        copy.textContent = profileReady
+          ? 'Browse current PESO opportunities and choose the program that fits your needs.'
+          : 'Add the missing required information so eligibility checks can use an accurate profile.';
+        if (status) status.textContent = profileReady ? 'Ready to apply' : 'Profile incomplete';
+        action.href = profileReady ? 'programs.php' : 'profile.php#personal-info';
+        action.firstChild.textContent = profileReady ? 'Explore programs ' : 'Complete profile ';
         return;
       }
       snapshot.dataset.tone = summary.tone || 'info';
@@ -393,6 +416,7 @@
   function initializeActionLoaders() {
     let activeLoader = null;
     let safetyTimer = null;
+    let authNavigationPending = false;
     const submissionDelayMs = 900;
 
     function iconFor(variant) {
@@ -507,7 +531,12 @@
       if (form.hasAttribute('data-no-action-loader')) return;
 
       event.preventDefault();
-      showActionLoader(submissionDescription(form, event.submitter));
+      const isAuthenticationForm = document.body.classList.contains('auth-page');
+      if (isAuthenticationForm) {
+        showBrandedPageLoader();
+      } else {
+        showActionLoader(submissionDescription(form, event.submitter));
+      }
 
       const submitter = event.submitter;
       window.setTimeout(() => {
@@ -523,6 +552,44 @@
 
         HTMLFormElement.prototype.submit.call(form);
       }, submissionDelayMs);
+    });
+
+    document.addEventListener('click', (event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+      const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+      if (!link || link.hasAttribute('download') || (link.target && link.target.toLowerCase() === '_blank')) return;
+
+      let destination;
+      try {
+        destination = new URL(link.href, window.location.href);
+      } catch (error) {
+        return;
+      }
+
+      if (destination.origin !== window.location.origin || destination.href === window.location.href) return;
+
+      const pageName = (url) => {
+        const name = url.pathname.split('/').pop().toLowerCase();
+        return name || 'index.php';
+      };
+      const currentPage = pageName(window.location);
+      const destinationPage = pageName(destination);
+      const authFlowPages = ['index.php', 'login.php', 'signup.php'];
+
+      if (!authFlowPages.includes(currentPage) || !authFlowPages.includes(destinationPage) || authNavigationPending) return;
+
+      event.preventDefault();
+      authNavigationPending = true;
+
+      showBrandedPageLoader();
+      try {
+        sessionStorage.setItem('bp-skip-next-page-loader', '1');
+      } catch (error) {
+        /* Navigation remains safe when storage is unavailable. */
+      }
+
+      window.setTimeout(() => window.location.assign(destination.href), 900);
     });
 
     window.BenePesoLoading = Object.freeze({ show: showActionLoader, hide: hideActionLoader });

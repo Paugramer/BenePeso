@@ -8,6 +8,7 @@ require_once "report_columns.php";
 require_once "beneficiary_import_helper.php";
 require_once "beneficiary_duplicate_helper.php";
 require_once "spes_schema_helper.php";
+require_once "spes_lifecycle_helper.php";
 require_once "tupad_category_helper.php";
 require_once "tupad_household_helper.php";
 require_once "tupad_document_helper.php";
@@ -206,7 +207,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           $_SESSION['show_error_modal'] = true;
           $_SESSION['error_modal_message'] = 'Select beneficiaries and complete the reason, date, or venue required for this status.';
       } else {
-          $updated = $sent = $failed = $blocked = $outOfScope = 0;
+          $updated = $sent = $failed = $blocked = $outOfScope = $spesExamSkipped = 0;
           $dateAvailed = in_array($bulkStatus, ['Orientation','Examination','Ongoing','Salary Distribution'], true) && $bulkDate !== '' ? $bulkDate : null;
           $dateCompleted = $bulkStatus === 'Completed' && $bulkDate !== '' ? $bulkDate : null;
           $lastAvailed = $dateAvailed ? $dateAvailed . ' 00:00:00' : null;
@@ -221,6 +222,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   $blocked++;
                   continue;
               }
+              if (in_array($bulkStatus, ['Examination', 'Exam Passed', 'Exam Failed'], true) && spes_beneficiary_is_returning($conn, $selectedId)) {
+                  $spesExamSkipped++;
+                  continue;
+              }
               $stmt->bind_param('ssssi', $bulkStatus, $dateAvailed, $dateCompleted, $lastAvailed, $selectedId);
               if ($stmt->execute() && $stmt->affected_rows >= 0) {
                   $updated++;
@@ -230,7 +235,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           $stmt->close();
           if (function_exists('logActivity')) logActivity($conn, $peso_staff_id, 'Beneficiaries', 'Bulk Status Update', 'Beneficiary Records', "Staff updated $updated beneficiaries to $bulkStatus");
           $_SESSION['show_success_modal'] = true;
-          $_SESSION['success_modal_message'] = "$updated beneficiaries updated to $bulkStatus. $sent email notification(s) will be sent automatically" . ($failed ? "; $failed email notification(s) could not be scheduled" : "") . ($blocked ? "; $blocked TUPAD applicant(s) were not updated because their required documents are not verified" : "") . ($outOfScope ? "; $outOfScope record(s) outside the selected program or batch were skipped" : "") . ".";
+          $_SESSION['success_modal_message'] = "$updated beneficiaries updated to $bulkStatus. $sent email notification(s) will be sent automatically" . ($failed ? "; $failed email notification(s) could not be scheduled" : "") . ($blocked ? "; $blocked TUPAD applicant(s) were not updated because their required documents are not verified" : "") . ($spesExamSkipped ? "; $spesExamSkipped returning SPES Baby record(s) skipped because they are exam-exempt" : "") . ($outOfScope ? "; $outOfScope record(s) outside the selected program or batch were skipped" : "") . ".";
           $_SESSION['modal_icon'] = "✓";
       }
       header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
@@ -270,6 +275,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           if ($needs_resubmission && $status_message === '') {
               $_SESSION["show_error_modal"] = true;
               $_SESSION["error_modal_message"] = "Provide the reason and instructions for document resubmission.";
+              header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+              exit();
+          }
+          if (in_array($availment_status, ['Examination', 'Exam Passed', 'Exam Failed'], true) && spes_beneficiary_is_returning($conn, $beneficiary_id)) {
+              $_SESSION["show_error_modal"] = true;
+              $_SESSION["error_modal_message"] = "This returning SPES Baby is exempt from the examination. Continue with document submission, orientation, or the appropriate next status.";
               header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
               exit();
           }
@@ -331,6 +342,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $district = trim($_POST["district"] ?? "Camarines Norte");
       $status = trim($_POST["status"] ?? "Active");
       $availment_status = normalize_availment_status($_POST["availment_status"] ?? "Not Yet Availed");
+      if ($bid > 0 && in_array($availment_status, ['Examination', 'Exam Passed', 'Exam Failed'], true) && spes_beneficiary_is_returning($conn, $bid)) {
+          $_SESSION['show_error_modal'] = true;
+          $_SESSION['error_modal_message'] = 'This returning SPES Baby is exam-exempt. Their record cannot be moved into an examination status.';
+          header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+          exit();
+      }
       $date_availed = trim($_POST["date_availed"] ?? null);
       $date_completed = trim($_POST["date_completed"] ?? null);
       if (!in_array($availment_status, ['Requirements Received', 'Ongoing', 'Completed'], true)) {
@@ -1013,6 +1030,8 @@ $search = trim($_GET["search"] ?? "");
 $sort = trim($_GET["sort"] ?? "newest");
 $approvalFilter = trim($_GET["approval"] ?? "All");
 $availmentFilter = trim($_GET["availment"] ?? "All");
+$spesGroup = trim($_GET['spes_group'] ?? 'all');
+if (!in_array($spesGroup, ['all', 'baby', 'graduate'], true) || stripos($selectedProgramName, 'SPES') === false) $spesGroup = 'all';
 if (stripos($selectedProgramName, 'SPES') === false && in_array($availmentFilter, ['Examination', 'Exam Passed', 'Exam Failed'], true)) $availmentFilter = 'All';
 $selectedNature = trim($_GET["business_nature"] ?? "All");
 
@@ -1088,6 +1107,7 @@ if ($selectedProgramName !== "") {
   }
   if ($approvalFilter !== "All") { $whereParts[] = "b.approval_status = ?"; $params[] = $approvalFilter; $types .= "s"; }
   if ($availmentFilter !== "All") { $whereParts[] = "b.availment_status = ?"; $params[] = $availmentFilter; $types .= "s"; }
+  if ($spesGroup !== 'all') $whereParts[] = spes_group_condition_sql($spesGroup, 'b');
   
   if (stripos($selectedProgramName, 'MSME') !== false && $selectedNature !== "All") {
       $whereParts[] = "FIND_IN_SET(?, REPLACE(REPLACE(REPLACE(b.business_nature, ';', ','), ', ', ','), ' ,', ',')) > 0";
@@ -1135,7 +1155,10 @@ if ($selectedProgramName !== "") {
     $stmt->bind_param($typesPaginated, ...$paramsPaginated);
     $stmt->execute();
     $res = $stmt->get_result();
-    while ($row = $res->fetch_assoc()) { $beneficiaries[] = $row; }
+    while ($row = $res->fetch_assoc()) {
+        $row = array_merge($row, spes_beneficiary_lifecycle_details($conn, (int)$row['beneficiary_id']));
+        $beneficiaries[] = $row;
+    }
     $stmt->close();
   }
 
@@ -1153,7 +1176,10 @@ if ($selectedProgramName !== "") {
       $stmtAll->bind_param("s", $selectedProgramName);
       $stmtAll->execute();
       $resAll = $stmtAll->get_result();
-      while ($row = $resAll->fetch_assoc()) { $allBeneficiariesForReport[] = $row; }
+      while ($row = $resAll->fetch_assoc()) {
+          $row = array_merge($row, spes_beneficiary_lifecycle_details($conn, (int)$row['beneficiary_id']));
+          $allBeneficiariesForReport[] = $row;
+      }
       $stmtAll->close();
   }
 }
@@ -1177,6 +1203,7 @@ if ($selectedProgramName !== "") {
   </style>
 <link rel="stylesheet" href="frontend_polish.css?v=13">
   <link rel="stylesheet" href="peso_staff_responsive.css?v=24">
+  <link rel="stylesheet" href="system_search_polish.css?v=1">
 <script src="frontend_polish.js?v=7" defer></script>
 </head>
 <body class="peso-staff-beneficiaries-page">
@@ -1315,10 +1342,14 @@ if ($selectedProgramName !== "") {
       <section class="panel-card animate-fade-in" style="flex: 1; animation-delay: 0.1s; margin-top: 8px; display: flex; flex-direction: column;">
         <div class="records-toolbar">
             <div class="custom-tabs">
-                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'All' ? 'active' : ''; ?>">All Records</a>
-                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Pending', 'availment' => 'All', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Pending' ? 'active' : ''; ?>">Needs Approval</a>
-                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Approved', 'availment' => 'All', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Approved' ? 'active' : ''; ?>">Approved</a>
-                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Rejected', 'availment' => 'All', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Rejected' ? 'active' : ''; ?>">Rejected</a>
+                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'All' && $spesGroup === 'all' ? 'active' : ''; ?>">All Records</a>
+                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Pending', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Pending' && $spesGroup === 'all' ? 'active' : ''; ?>">Needs Approval</a>
+                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Approved', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Approved' && $spesGroup === 'all' ? 'active' : ''; ?>">Approved</a>
+                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Rejected', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Rejected' && $spesGroup === 'all' ? 'active' : ''; ?>">Rejected</a>
+                <?php if (stripos($selectedProgramName, 'SPES') !== false): ?>
+                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'baby', 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'baby' ? 'active' : ''; ?>">SPES Baby</a>
+                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'graduate', 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'graduate' ? 'active' : ''; ?>">Graduated</a>
+                <?php endif; ?>
             </div>
             
             <button class="btn-main" type="button" id="openReportModal" style="margin-bottom: 12px;">
@@ -1337,9 +1368,10 @@ if ($selectedProgramName !== "") {
         <form method="GET" class="filter-container records-filter-container" id="filterForm">
             <input type="hidden" name="program_name" value="<?php echo h($selectedProgramName); ?>">
             <input type="hidden" name="approval" value="<?php echo h($approvalFilter); ?>">
+            <input type="hidden" name="spes_group" value="<?php echo h($spesGroup); ?>">
             <input type="hidden" name="page" value="1">
             
-            <div class="filter-search">
+            <div class="filter-search system-search">
               <i class="ph-bold ph-magnifying-glass search-icon"></i>
               <input type="search" name="search" value="<?php echo h($search); ?>" placeholder="Search by name or email..." class="search-input" id="liveSearchInput" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Search beneficiaries">
             </div>
@@ -2343,7 +2375,10 @@ function toggleBatchScheduleFields(select) {
                         <option value="Not Qualified">Not Qualified</option>
                     </select>
                 </div>
-                
+                <?php if (stripos($selectedProgramName, 'SPES') !== false): ?>
+                <div class="form-group" style="margin:0;"><label>SPES Classification Filter</label><select name="report_spes_group" id="report_spes_group_select"><option value="all">All SPES Records</option><option value="baby">SPES Baby</option><option value="graduate">SPES Graduate</option></select></div>
+                <?php endif; ?>
+
                 <?php if (stripos($selectedProgramName, 'MSME') !== false): ?>
                 <div class="form-group" style="margin:0;">
                     <label>Type of Vendor Filter</label>
@@ -2442,7 +2477,7 @@ function toggleBatchScheduleFields(select) {
        <div class="id-card-right-inner">
            <div class="id-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px; border-bottom: 2px solid #1f7a54; padding-bottom: 12px; width: fit-content; min-width: 250px;">
               <div style="width: 36px; height: 36px; background: #1f7a54; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff;"><i class="ph-fill ph-user" style="font-size: 18px;"></i></div>
-              <h3 class="id-name" id="pm_name" style="margin: 0; font-size: 20px; font-weight: 700; color: #0d2618;">Name</h3>
+              <div class="profile-name-stack"><span id="pm_spes_lifecycle" class="spes-lifecycle-ribbon" hidden></span><h3 class="id-name" id="pm_name" style="margin: 0; font-size: 20px; font-weight: 700; color: #0d2618;">Name</h3></div>
            </div>
            
            <div class="id-details-grid resume-details" id="pm_resume_content">
@@ -2823,6 +2858,12 @@ function toggleBatchScheduleFields(select) {
           }
           safeSetText('pm_name', data.name);
           safeSetText('pm_program_header', data.program); 
+          const lifecycleRibbon = document.getElementById('pm_spes_lifecycle');
+          if (lifecycleRibbon) {
+              lifecycleRibbon.hidden = !data.spes_lifecycle_label;
+              lifecycleRibbon.textContent = data.spes_lifecycle_label || '';
+              lifecycleRibbon.className = `spes-lifecycle-ribbon ${data.spes_lifecycle === 'graduate' ? 'is-graduate' : ''}`;
+          }
           safeSetText('pm_added_by', data.added_by); 
 
           safeSetText('pm_barangay', data.barangay);
@@ -3108,6 +3149,8 @@ function toggleBatchScheduleFields(select) {
               ['Technical-Vocational', [data.tv_school, data.tv_course, data.tv_year_level, data.tv_date_attendance].filter(hasValue).join(' · ')]
           ]],
           ['Past SPES Availments', 'ph-clock-counter-clockwise', [
+              ['SPES Classification', data.spes_lifecycle_label],
+              ['All Recorded Availments', data.spes_all_availments],
               ['1st Availment', [data.spes_history_1_year, data.spes_history_1_id && `ID: ${data.spes_history_1_id}`].filter(hasValue).join(' · ')],
               ['2nd Availment', [data.spes_history_2_year, data.spes_history_2_id && `ID: ${data.spes_history_2_id}`].filter(hasValue).join(' · ')],
               ['3rd Availment', [data.spes_history_3_year, data.spes_history_3_id && `ID: ${data.spes_history_3_id}`].filter(hasValue).join(' · ')],
@@ -3116,8 +3159,12 @@ function toggleBatchScheduleFields(select) {
           ['SPES Qualification Review', 'ph-shield-check', [
               ['Age Requirement', data.age ? ((Number(data.age) >= 18 && Number(data.age) <= 30) ? `Meets requirement (${data.age} years old)` : `Does not meet requirement (${data.age} years old; required 18–30)`) : 'For verification'],
               ['Reported Family Income', data.avg_monthly_income],
-              ['Income Qualification', 'Verify combined annual income against the latest Region V poverty threshold for a family of six.'],
-              ['Supporting Evidence', 'Validate the latest ITR, BIR tax-exemption certification, Certificate of Indigence, or Certificate of Low Income.']
+              ['Region V Income Reference', '2023 PSA threshold for a family of six: ₱16,787.50 monthly / ₱201,450.00 annually (calculated from ₱33,575 annual per capita).']
+          ]],
+          ['Regional Income Reference', 'ph-chart-line-up', [
+              ['Reported Family Income', data.avg_monthly_income],
+              ['Region V Reference', '2023 PSA threshold for a family of six: ₱16,787.50 monthly / ₱201,450.00 annually.'],
+              ['Use', 'Reference only; apply it when the current program guidelines require an income qualification.']
           ]],
           ['Business Information', 'ph-briefcase', [
               ['Business Name', data.business_name], ['Nature of Business', data.business_nature], ['Ownership Type', data.ownership_type],
@@ -3133,6 +3180,7 @@ function toggleBatchScheduleFields(select) {
           if (title === 'Business Information' && !programUpper.includes('MSME')) return;
           if (title === 'Past SPES Availments' && !programUpper.includes('SPES')) return;
           if (title === 'SPES Qualification Review' && !programUpper.includes('SPES')) return;
+          if (title === 'Regional Income Reference' && !programUpper.includes('TUPAD')) return;
           const visible = fields.filter(([, value]) => hasValue(value));
           if (!visible.length) return;
           const section = document.createElement('section');
@@ -3596,6 +3644,7 @@ function toggleBatchScheduleFields(select) {
       const reportBrgySelect = document.getElementById('report_brgy_select');
       const reportAvailSelect = document.getElementById('report_avail_select');
       const reportBatchSelect = document.getElementById('report_batch_select');
+      const reportSpesGroupSelect = document.getElementById('report_spes_group_select');
       const reportNatureSelect = document.getElementById('report_nature_select');
       const reportPrintButton = document.getElementById('report_print_button');
       const reportPreviewTable = document.getElementById('preview_main_table');
@@ -3766,6 +3815,7 @@ function toggleBatchScheduleFields(select) {
           reportBrgySelect.addEventListener('change', updateReportPreview);
           reportAvailSelect.addEventListener('change', updateReportPreview);
           if (reportBatchSelect) reportBatchSelect.addEventListener('change', updateReportPreview);
+          if (reportSpesGroupSelect) reportSpesGroupSelect.addEventListener('change', updateReportPreview);
           if (reportNatureSelect) reportNatureSelect.addEventListener('change', updateReportPreview);
       }
       if (reportPrintButton) reportPrintButton.addEventListener('click', printFilteredReport);
@@ -3842,6 +3892,7 @@ function toggleBatchScheduleFields(select) {
           const selectedBrgy = reportBrgySelect.value;
           const selectedAvail = reportAvailSelect.value;
           const selectedBatchId = reportBatchSelect ? reportBatchSelect.value : '0';
+          const selectedSpesGroup = reportSpesGroupSelect ? reportSpesGroupSelect.value : 'all';
           const selectedNature = reportNatureSelect ? reportNatureSelect.value : 'All';
           
           const subtitleParts = [];
@@ -3849,6 +3900,7 @@ function toggleBatchScheduleFields(select) {
           subtitleParts.push(selectedBrgy === 'All' || selectedBrgy === '' ? 'Municipality of Vinzons' : `Barangay ${selectedBrgy}, Vinzons`);
           if (selectedAvail !== 'All') subtitleParts.push(`Availment: ${selectedAvail === 'Not Yet Availed' ? 'Approved – Awaiting Next Step' : (selectedAvail === 'Requirements Received' ? 'Documents Submitted' : selectedAvail)}`);
           if (selectedNature !== 'All') subtitleParts.push(`Vendor Type: ${selectedNature}`);
+          if (selectedSpesGroup !== 'all') subtitleParts.push(selectedSpesGroup === 'graduate' ? 'SPES Graduates' : 'SPES Babies');
           const subtitleText = subtitleParts.join(' | ');
           const subTitle = document.getElementById('preview_subtitle_top');
           if (subTitle) subTitle.textContent = subtitleText;
@@ -3944,7 +3996,8 @@ function toggleBatchScheduleFields(select) {
                   let matchBatch = selectedBatchId === '0' || b.program_id == selectedBatchId;
                   let matchNature = selectedNature === 'All' || uniqueReportListItems(b.business_nature)
                       .some(nature => nature.toLowerCase() === selectedNature.toLowerCase());
-                  return matchBrgy && matchAvail && matchBatch && matchNature;
+                  let matchSpesGroup = selectedSpesGroup === 'all' || b.spes_lifecycle === selectedSpesGroup;
+                  return matchBrgy && matchAvail && matchBatch && matchNature && matchSpesGroup;
               });
 
               filtered.sort((a, b) => {
@@ -4402,6 +4455,7 @@ function toggleBatchScheduleFields(select) {
       }
     }, true);
   }
+
 })();
 </script>
 <script src="spes_form_modal.js?v=20260813-profile-transition-fix"></script>

@@ -201,6 +201,7 @@ if ($active_program) {
     <script src="program_filter_polish.js?v=1" defer></script>
 <link rel="stylesheet" href="frontend_polish.css?v=11">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=23">
+<link rel="stylesheet" href="system_search_polish.css?v=1">
 <script src="frontend_polish.js?v=7" defer></script>
 </head>
 <body>
@@ -319,7 +320,7 @@ if ($active_program) {
                 <a href="?<?php echo build_query(['tab'=>'Completed', 'p'=>1]); ?>" class="tab-item <?php echo $tabFilter==='Completed'?'active':''; ?>">Completed</a>
             </div>
 
-            <form class="filter-form" method="GET">
+            <form class="filter-form system-search" method="GET">
                 <input type="hidden" name="tab" value="<?php echo e($tabFilter); ?>">
                 <?php if($active_program): ?><input type="hidden" name="program" value="<?php echo e($active_program); ?>"><?php endif; ?>
                 
@@ -470,6 +471,8 @@ if ($active_program) {
                                 data-end="<?php echo date('M j, Y', strtotime($b['end_date'])); ?>" 
                                 data-venue="<?php echo e($b['venue']); ?>" 
                                 data-slots="<?php echo e($b['slots']); ?>"
+                                data-eligibility="<?php echo e($b['eligibility'] ?? ''); ?>"
+                                data-requirements="<?php echo e($b['requirements'] ?? ''); ?>"
                                 title="Click to view full details">
                                 
                                 <td>
@@ -478,7 +481,7 @@ if ($active_program) {
                                             <div class="batch-title-td" style="color: var(--green); display:flex; align-items:center; gap:6px;">
                                                 <?php echo e($b['program_name']); ?> <i class="ph-bold ph-link" style="font-size: 14px;"></i>
                                             </div>
-                                            <div class="batch-code-td" style="color: var(--green-dark);">Code: <?php echo e($b['program_code']); ?></div>
+                                            <div class="batch-code-td" style="color: var(--green-dark);">Batch Code: <?php echo e($b['program_code']); ?></div>
                                             <?php if (stripos($b['program_name'], 'TUPAD') !== false): ?><div class="batch-code-td" style="color:var(--green); margin-top:3px;"><i class="ph ph-tag"></i> <?php echo e($b['tupad_category'] ?: 'Regular TUPAD'); ?></div><?php endif; ?>
                                         </a>
                                     <?php else: ?>
@@ -486,7 +489,7 @@ if ($active_program) {
                                             <div class="batch-title-td" style="color: var(--muted); display:flex; align-items:center; gap:6px;">
                                                 <?php echo e($b['program_name']); ?> <i class="ph-bold ph-lock-key" style="font-size: 14px;"></i>
                                             </div>
-                                            <div class="batch-code-td">Code: <?php echo e($b['program_code']); ?></div>
+                                            <div class="batch-code-td">Batch Code: <?php echo e($b['program_code']); ?></div>
                                             <?php if (stripos($b['program_name'], 'TUPAD') !== false): ?><div class="batch-code-td" style="margin-top:3px;"><i class="ph ph-tag"></i> <?php echo e($b['tupad_category'] ?: 'Regular TUPAD'); ?></div><?php endif; ?>
                                         </div>
                                     <?php endif; ?>
@@ -533,7 +536,7 @@ if ($active_program) {
                                                 <i class="ph-bold ph-dots-three-vertical"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <button class="dropdown-item open-view-trigger" data-title="<?php echo e($b['program_name']); ?>" data-code="<?php echo e($b['program_code']); ?>" data-start="<?php echo date('M j, Y', strtotime($b['start_date'])); ?>" data-end="<?php echo date('M j, Y', strtotime($b['end_date'])); ?>" data-venue="<?php echo e($b['venue']); ?>" data-slots="<?php echo e($b['slots']); ?>">
+                                                <button class="dropdown-item open-view-trigger" data-title="<?php echo e($b['program_name']); ?>" data-code="<?php echo e($b['program_code']); ?>" data-start="<?php echo date('M j, Y', strtotime($b['start_date'])); ?>" data-end="<?php echo date('M j, Y', strtotime($b['end_date'])); ?>" data-venue="<?php echo e($b['venue']); ?>" data-slots="<?php echo e($b['slots']); ?>" data-eligibility="<?php echo e($b['eligibility'] ?? ''); ?>" data-requirements="<?php echo e($b['requirements'] ?? ''); ?>">
                                                     <i class="ph ph-info"></i> View Details
                                                 </button>
                                             </div>
@@ -674,6 +677,8 @@ if ($active_program) {
                 <div class="form-group"><label>Venue</label><div class="view-data" id="view_venue"></div></div>
                 <div class="form-group"><label>Total Slots</label><div class="view-data" id="view_slots"></div></div>
             </div>
+            <div class="program-bullet-section"><label>Eligibility</label><ul class="program-detail-list" id="view_eligibility"></ul></div>
+            <div class="program-bullet-section"><label>Requirements</label><ul class="program-detail-list" id="view_requirements"></ul></div>
             <div class="modal-actions">
                 <button type="button" class="btn-light" data-close-modal="viewBatchModal">Close</button>
             </div>
@@ -770,6 +775,20 @@ if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
 }
 setTimeout(() => { const f = document.querySelector('.flash'); if(f) { f.style.opacity = '0'; setTimeout(() => f.remove(), 300); } }, 4000);
 
+function renderProgramDetailList(targetId, value, fallback) {
+    const target = document.getElementById(targetId);
+    const items = String(value || '').replace(/\r/g, '').trim()
+        .split(/\n+|[•●▪]\s*|;\s*|(?:^|\s)[\-–—]\s+/g)
+        .map(item => item.trim().replace(/^[\s\-–—•●▪,.:]+|[,;]+$/g, '').trim())
+        .filter(item => item && !/^for\s+students?\s*:?$/i.test(item));
+    target.replaceChildren();
+    (items.length ? items : [fallback]).forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        target.appendChild(li);
+    });
+}
+
 function openRowDetails(e, row) {
     if(e.target.closest('.col-action') || e.target.closest('a')) {
         return; 
@@ -781,6 +800,8 @@ function openRowDetails(e, row) {
     document.getElementById('view_end').innerText = row.dataset.end;
     document.getElementById('view_venue').innerText = row.dataset.venue;
     document.getElementById('view_slots').innerText = row.dataset.slots;
+    renderProgramDetailList('view_eligibility', row.dataset.eligibility, 'No eligibility information specified.');
+    renderProgramDetailList('view_requirements', row.dataset.requirements, 'No requirements specified.');
     document.getElementById('viewBatchModal').classList.add('show');
 }
 
@@ -793,6 +814,8 @@ document.querySelectorAll('.open-view-trigger').forEach(btn => {
         document.getElementById('view_end').innerText = btn.dataset.end;
         document.getElementById('view_venue').innerText = btn.dataset.venue;
         document.getElementById('view_slots').innerText = btn.dataset.slots;
+        renderProgramDetailList('view_eligibility', btn.dataset.eligibility, 'No eligibility information specified.');
+        renderProgramDetailList('view_requirements', btn.dataset.requirements, 'No requirements specified.');
         document.getElementById('viewBatchModal').classList.add('show');
     };
 });

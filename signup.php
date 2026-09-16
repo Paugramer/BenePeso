@@ -1,14 +1,25 @@
 <?php
 require_once __DIR__ . '/auth_session.php';
 require_once __DIR__ . '/beneficiary_choices.php';
+require_once __DIR__ . '/google_auth_helper.php';
 
 $flash = $_SESSION["flash"] ?? "";
 unset($_SESSION["flash"]);
 $show_age_notice = !empty($_SESSION['show_age_notice']);
 unset($_SESSION['show_age_notice']);
+$google_signup_success = !empty($_SESSION['google_signup_success']) && ($_GET['google'] ?? '') === 'success';
+unset($_SESSION['google_signup_success']);
 
 $form_data = $_SESSION["form_data"] ?? [];
 unset($_SESSION["form_data"]);
+
+$google_identity = google_auth_pending_identity();
+$google_registration = $google_identity !== null;
+if ($google_registration) {
+    $form_data['email'] = $google_identity['email'];
+    if (empty($form_data['first_name'])) $form_data['first_name'] = $google_identity['given_name'] ?? '';
+    if (empty($form_data['last_name'])) $form_data['last_name'] = $google_identity['family_name'] ?? '';
+}
 
 function get_val($field) {
     global $form_data;
@@ -34,12 +45,17 @@ $barangays = beneficiary_barangay_options();
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=20" />
+  <link rel="stylesheet" href="style.css?v=31" />
   <link rel="stylesheet" href="frontend_polish.css?v=11">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <script src="frontend_polish.js?v=7" defer></script>
+  <link rel="stylesheet" href="auth_refresh.css?v=1">
+  <script src="frontend_polish.js?v=12" defer></script>
+  <?php if (!$google_registration): ?>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
+  <script src="google_signin.js?v=5" defer></script>
+  <?php endif; ?>
 </head>
-<body class="auth-page auth-signup">
+<body class="auth-page auth-signup" data-disable-page-loader>
 
 <div class="box">
   <div class="card compact">
@@ -67,19 +83,33 @@ $barangays = beneficiary_barangay_options();
     <div class="right">
       <div class="right-inner">
 
-        <div class="role-label stagger-1" style="margin-top: 15px;">User Registration</div>
+        <div class="auth-context-bar stagger-1">
+          <a class="auth-return" href="index.php" aria-label="Return to the BENEPESO public portal">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg>
+            <span>Public portal</span>
+          </a>
+          <div class="role-label"><?= $google_registration ? 'Google-secured registration' : 'User Registration' ?></div>
+        </div>
 
-        <h2 class="stagger-2">Create User Account</h2>
+        <h2 class="stagger-2"><?= $google_registration ? 'Complete Your Profile' : 'Create User Account' ?></h2>
+        <p class="sub signup-sub stagger-2"><?= $google_registration ? 'Add the remaining details needed for your BENEPESO account.' : 'Register once to access PESO programs and beneficiary services.' ?></p>
+
+        <?php if ($google_registration): ?>
+          <div class="google-verified-banner stagger-2" role="status">
+            <span class="google-verified-mark" aria-hidden="true">&#10003;</span>
+            <span><strong>Google account verified</strong><small><?= htmlspecialchars($google_identity['email'], ENT_QUOTES, 'UTF-8') ?></small></span>
+          </div>
+        <?php endif; ?>
 
         <div class="step-tracker stagger-2">
-            <div class="step-item active" id="tracker1">
+            <div class="step-item active" id="tracker1" aria-current="step">
                 <div class="step-circle">1</div>
                 <span class="step-text">Personal</span>
             </div>
             <div class="step-connector"></div>
             <div class="step-item" id="tracker2">
                 <div class="step-circle">2</div>
-                <span class="step-text">Security</span>
+                <span class="step-text"><?= $google_registration ? 'Contact' : 'Security' ?></span>
             </div>
             <div class="step-connector"></div>
             <div class="step-item" id="tracker3">
@@ -156,11 +186,11 @@ $barangays = beneficiary_barangay_options();
               <div class="form-row">
                   <div class="form-group">
                     <label for="contactInput">Contact Number</label>
-                    <input type="text" id="contactInput" name="contact_no" placeholder="09XXXXXXXXX" maxlength="11" value="<?php echo get_val('contact_no'); ?>" required>
+                    <input type="text" id="contactInput" name="contact_no" placeholder="09XXXXXXXXX" maxlength="11" inputmode="numeric" autocomplete="tel" value="<?php echo get_val('contact_no'); ?>" required>
                   </div>
                   <div class="form-group">
                     <label for="purokInput">Purok / Street / Zone</label>
-                    <input type="text" id="purokInput" name="street_purok_zone" placeholder="e.g. Purok 1" value="<?php echo get_val('street_purok_zone'); ?>" required>
+                    <input type="text" id="purokInput" name="street_purok_zone" placeholder="e.g. Purok 1" autocomplete="street-address" value="<?php echo get_val('street_purok_zone'); ?>" required>
                   </div>
               </div>
 
@@ -184,30 +214,37 @@ $barangays = beneficiary_barangay_options();
 
               <div class="form-group full-width">
                 <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" placeholder="juan.delacruz@email.com" value="<?php echo get_val('email'); ?>" required>
+                <input type="email" id="email" name="email" placeholder="juan.delacruz@email.com" autocomplete="email" value="<?php echo get_val('email'); ?>" required <?= $google_registration ? 'readonly aria-readonly="true"' : '' ?>>
               </div>
 
+              <?php if ($google_registration): ?>
+                <div class="google-security-note">
+                  Google will secure your sign-in. You can add a BENEPESO password later through password recovery if needed.
+                </div>
+              <?php else: ?>
               <div class="form-row">
                 <div class="form-group">
                   <label for="passwordInput">Password</label>
                   <div class="password-wrap">
-                    <input type="password" name="password" id="passwordInput" placeholder="Create password" required>
+                    <input type="password" name="password" id="passwordInput" placeholder="Create password" autocomplete="new-password" minlength="8" aria-describedby="passwordHint" required>
                     <button type="button" class="toggle-pass" id="togglePass1" name="toggle_pass_1" data-target="passwordInput" aria-label="Show password">
                       <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 5c5.5 0 9.5 5.5 9.5 7s-4 7-9.5 7S2.5 13.5 2.5 12S6.5 5 12 5Zm0 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"/></svg>
                     </button>
                   </div>
+                  <small class="field-hint" id="passwordHint">Use at least 8 characters that are difficult to guess.</small>
                 </div>
 
                 <div class="form-group">
                   <label for="confirmPasswordInput">Confirm Password</label>
                   <div class="password-wrap">
-                    <input type="password" name="confirm_password" id="confirmPasswordInput" placeholder="Retype password" required>
+                    <input type="password" name="confirm_password" id="confirmPasswordInput" placeholder="Retype password" autocomplete="new-password" minlength="8" required>
                     <button type="button" class="toggle-pass" id="togglePass2" name="toggle_pass_2" data-target="confirmPasswordInput" aria-label="Show password">
                       <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 5c5.5 0 9.5 5.5 9.5 7s-4 7-9.5 7S2.5 13.5 2.5 12S6.5 5 12 5Zm0 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"/></svg>
                     </button>
                   </div>
                 </div>
               </div>
+              <?php endif; ?>
 
               <div class="btn-group">
                   <button type="button" class="btn btn-secondary" id="backBtn2" name="back_btn_2" onclick="goToStep(1)">Back</button>
@@ -248,9 +285,23 @@ $barangays = beneficiary_barangay_options();
 
         </form>
 
+        <?php if (!$google_registration): ?>
+          <div class="auth-divider auth-divider--signup stagger-4"><span>or continue with Google</span></div>
+          <div
+            class="google-signin google-signin--signup stagger-4"
+            data-google-signin
+            data-client-id="<?= htmlspecialchars(benepeso_google_client_id(), ENT_QUOTES, 'UTF-8') ?>"
+            data-csrf="<?= htmlspecialchars(auth_csrf_token(), ENT_QUOTES, 'UTF-8') ?>"
+            data-button-text="signup_with"
+          >
+            <div class="google-button-host" aria-label="Sign up with Google"></div>
+            <p class="google-auth-message" role="status" aria-live="polite"></p>
+          </div>
+        <?php endif; ?>
+
         <p class="small stagger-4">
           Already have an account?
-          <a href="login.php" id="loginLink">Log in here</a>
+          <a href="login.php" id="loginLink">Log in securely</a>
         </p>
 
       </div>
@@ -421,15 +472,22 @@ $barangays = beneficiary_barangay_options();
           if (i < step) {
               tracker.classList.remove('active');
               tracker.classList.add('completed');
+              tracker.removeAttribute('aria-current');
           } else if (i === step) {
               tracker.classList.add('active');
               tracker.classList.remove('completed');
+              tracker.setAttribute('aria-current', 'step');
           } else {
               tracker.classList.remove('active', 'completed');
+              tracker.removeAttribute('aria-current');
           }
       }
 
       currentStep = step;
+
+      setTimeout(() => {
+          nextEl.querySelector('input:not([type="hidden"]):not([readonly]), select, button')?.focus({ preventScroll: true });
+      }, 280);
   }
 
   const pass1 = document.getElementById('passwordInput');
@@ -463,10 +521,36 @@ $barangays = beneficiary_barangay_options();
   function closeModal(id){
     const modal = document.getElementById(id);
     if (!modal) return;
+    if (modal.dataset.locked === 'true') return;
     modal.style.display = "none";
     const hasOpenModal = Array.from(document.querySelectorAll('.modal-bg')).some(item => item.style.display === 'flex');
     if (!hasOpenModal) document.body.classList.remove("modal-open");
   }
+
+  window.showAuthNotice = function(message, title = "BENEPESO Notice", options = {}) {
+    const titleEl = document.getElementById("signupNoticeTitle");
+    const messageEl = document.getElementById("modalText");
+    const dialog = document.querySelector("#modalBg .modal");
+    const action = document.getElementById("okNoticeBtn");
+    const close = document.getElementById("closeNoticeBtn");
+    const modalRoot = document.getElementById('modalBg');
+    const inferredError = /access denied|restricted|banned|could not|not completed|invalid|expired|already registered|error/i.test(message);
+    const inferredSuccess = /success|verified|created/i.test(message);
+    const type = options.type || (inferredError ? (/restricted|banned|access denied/i.test(message) ? 'restricted' : 'error') : (inferredSuccess ? 'success' : 'info'));
+    if (titleEl) titleEl.textContent = title;
+    if (messageEl) messageEl.textContent = message;
+    if (dialog) dialog.dataset.state = type;
+    if (action) {
+      action.textContent = options.actionLabel || (type === 'success' ? 'Continue' : 'Close');
+      action.onclick = () => options.redirect ? window.location.assign(options.redirect) : closeModal('modalBg');
+    }
+    if (close) {
+      close.style.display = options.redirect ? 'none' : '';
+    }
+    if (modalRoot) modalRoot.dataset.locked = options.redirect ? 'true' : 'false';
+    openModal("modalBg");
+    window.setTimeout(() => action?.focus(), 80);
+  };
 
   function openPrivacyNotice() {
     const modal = document.getElementById('privacyNoticeBg');
@@ -490,11 +574,17 @@ $barangays = beneficiary_barangay_options();
   }
 
   const showAgeNotice = <?= $show_age_notice ? 'true' : 'false' ?>;
-  if (showAgeNotice) {
+  const googleSignupSuccess = <?= $google_signup_success ? 'true' : 'false' ?>;
+  if (googleSignupSuccess) {
+    window.showAuthNotice(
+      'Your BENEPESO account has been created and linked securely to Google. Use Google for future sign-ins. If you also want password access, choose Forgot Password on the login page to create a BENEPESO password.',
+      'Account created successfully',
+      { type: 'success', actionLabel: 'Go to my dashboard', redirect: 'home.php' }
+    );
+  } else if (showAgeNotice) {
     openModal("ageNoticeBg");
   } else if (flash){
-    document.getElementById("modalText").textContent = flash;
-    openModal("modalBg");
+    window.showAuthNotice(flash, /access denied|restricted|banned/i.test(flash) ? "Access denied" : "BENEPESO Notice");
   }
 
   document.getElementById("modalBg").addEventListener("mousedown", (event) => {

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/auth.php';
 require "db.php";
+require_once __DIR__ . '/user_security_metadata_helper.php';
 
 // 1. Strict Security Check: Ensure user is logged in
 check_user_role('user');
@@ -57,6 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         if ($stmt->execute()) {
             $_SESSION["flash"] = "Success: Your account password has been securely updated.";
+            record_user_password_change($conn, $user_id);
 
             // 7. PROFESSIONAL FEATURE: Security Event Logging
             // We need to fetch the user's name first to log it accurately
@@ -68,11 +70,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if ($res && $res->num_rows > 0) {
                 $row = $res->fetch_assoc();
                 $actor_name = trim($row['first_name'] . " " . $row['last_name']);
+                $log_description = $actor_name . ' changed their account password.';
                 
-                // Insert into Activity Log (UPDATED: Added created_at NOW())
-                $log_stmt = $conn->prepare("INSERT INTO activity_logs (action_type, module_name, description, actor_name, created_at) VALUES ('Security', 'Profile', 'User successfully changed their account password.', ?, NOW())");
+                // Keep beneficiary security events visible in the beneficiary activity log.
+                $log_stmt = $conn->prepare("INSERT INTO activity_logs (action_type, module_name, description, actor_name, actor_role, created_at) VALUES ('Security', 'Profile', ?, ?, 'Registered User', NOW())");
                 if ($log_stmt) {
-                    $log_stmt->bind_param("s", $actor_name);
+                    $log_stmt->bind_param("ss", $log_description, $actor_name);
                     $log_stmt->execute();
                     $log_stmt->close();
                 }
@@ -83,7 +86,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
         $stmt->close();
     } else {
-        $_SESSION["flash"] = "Database Error: " . $conn->error;
+        error_log('BENEPESO password update prepare failed for user ' . $user_id . ': ' . $conn->error);
+        $_SESSION["flash"] = "System Error: Could not update password at this time.";
     }
 
     header("Location: profile.php");

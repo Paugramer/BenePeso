@@ -2504,3 +2504,5 @@ body .panel-card .action-menu-wrap .btn-quick-status .btn-label {
     white-space: nowrap;
   }
 }
+.profile-name-stack{display:flex;flex-direction:column;align-items:flex-start;gap:5px}.spes-lifecycle-ribbon{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid #9fd3b5;border-radius:999px;background:#e8f7ee;color:#17613e;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.spes-lifecycle-ribbon.is-graduate{border-color:#e1c982;background:#fff7d9;color:#805b10}.spes-lifecycle-ribbon[hidden]{display:none}
+.resume-field-value{white-space:pre-line}

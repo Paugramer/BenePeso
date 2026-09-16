@@ -1,0 +1,432 @@
+/* Additive content components shared by beneficiary-facing pages. */
+.content-enhancement-heading {
+    max-width: 760px;
+    margin-bottom: 28px;
+}
+
+.content-enhancement-eyebrow {
+    display: block;
+    margin-bottom: 7px;
+    color: #2f6b4f;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+}
+
+.content-enhancement-heading h2,
+.service-help-panel h2,
+.profile-readiness-panel h2 {
+    margin: 0 0 8px;
+    color: #173f2d;
+    font-size: clamp(22px, 3vw, 32px);
+    line-height: 1.22;
+}
+
+.content-enhancement-heading p,
+.service-help-panel p,
+.profile-readiness-panel p {
+    margin: 0;
+    color: #5e6f66;
+    font-size: 14px;
+    line-height: 1.75;
+}
+
+.service-guide-section,
+.service-help-section,
+.program-guidance-section,
+.verification-guidance {
+    padding: 58px 0;
+}
+
+.service-guide-section,
+.program-guidance-section,
+.verification-guidance {
+    background: #f5f9f6;
+    border-top: 1px solid #e1ebe5;
+}
+
+.service-step-grid,
+.application-journey {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.service-step-grid li {
+    display: flex;
+    gap: 14px;
+    min-height: 210px;
+    padding: 22px;
+    background: #fff;
+    border: 1px solid #dde9e2;
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(31, 77, 56, .06);
+}
+
+.service-step-grid > li > span,
+.application-journey > li > span {
+    display: grid;
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    color: #fff;
+    background: #2f6b4f;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.service-step-grid strong,
+.application-journey strong {
+    display: block;
+    margin: 5px 0 8px;
+    color: #173f2d;
+    font-size: 15px;
+}
+
+.service-step-grid p,
+.application-journey small {
+    display: block;
+    margin: 0 0 14px;
+    color: #65766d;
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+.service-step-grid a {
+    color: #2f6b4f;
+    font-size: 12.5px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.service-help-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+    padding: 32px;
+    background: linear-gradient(135deg, #fff 0%, #eff8f2 100%);
+    border: 1px solid #d7e7dd;
+    border-radius: 22px;
+    box-shadow: 0 16px 40px rgba(31, 77, 56, .08);
+}
+
+.service-help-actions,
+.profile-data-rights-actions,
+.verification-correction-panel > div:last-child {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.service-help-actions a,
+.profile-data-rights-actions a,
+.verification-correction-panel a,
+.profile-readiness-action {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    color: #1f5d3f;
+    background: #fff;
+    border: 1px solid #bfd8c9;
+    border-radius: 10px;
+    font: 700 12px Poppins, sans-serif;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.program-guidance-section {
+    padding-top: 48px;
+}
+
+.application-journey {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    margin-bottom: 24px;
+}
+
+.application-journey li {
+    position: relative;
+    padding: 18px;
+    background: #fff;
+    border: 1px solid #dce9e1;
+    border-radius: 15px;
+}
+
+.applicant-guide-grid,
+.public-service-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin: 24px 0;
+}
+
+.applicant-guide-grid article,
+.public-service-grid article,
+.verification-status-grid article {
+    padding: 22px;
+    background: #fff;
+    border: 1px solid #dce9e1;
+    border-radius: 16px;
+}
+
+.applicant-guide-grid h3,
+.public-service-grid h3 {
+    margin: 0 0 12px;
+    color: #1f4d38;
+    font-size: 16px;
+}
+
+.applicant-guide-grid ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #5e6f66;
+    font-size: 13px;
+    line-height: 1.75;
+}
+
+.program-faq {
+    margin-top: 10px;
+    padding: 0 18px;
+    background: #fff;
+    border: 1px solid #dce9e1;
+    border-radius: 12px;
+}
+
+.program-faq summary {
+    padding: 16px 0;
+    color: #1f4d38;
+    font-size: 13.5px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.program-faq p {
+    margin: -4px 0 16px;
+    color: #617168;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.preliminary-eligibility-note {
+    display: grid;
+    gap: 5px;
+    padding: 13px 14px;
+    color: #73540b;
+    background: #fff9e8;
+    border: 1px solid #edd99a;
+    border-radius: 10px;
+    font-size: 12.5px;
+    line-height: 1.55;
+}
+
+.public-service-section {
+    background: #f5f9f6;
+}
+
+.public-service-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.public-service-grid article p,
+.partner-note {
+    margin: 0;
+    color: #5e6f66;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.partner-note {
+    padding: 18px 20px;
+    background: #edf6f0;
+    border-left: 4px solid #2f6b4f;
+    border-radius: 10px;
+}
+
+.service-feedback-note {
+    text-align: left;
+}
+
+.profile-readiness-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 280px) auto;
+    align-items: center;
+    gap: 22px;
+    margin: 18px 0;
+    padding: 22px 24px;
+    background: #fff;
+    border: 1px solid #dce9e1;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(31, 77, 56, .06);
+}
+
+.profile-readiness-panel h2 {
+    font-size: 20px;
+}
+
+.profile-readiness-progress {
+    height: 10px;
+    overflow: hidden;
+    background: #e7eee9;
+    border-radius: 999px;
+}
+
+.profile-readiness-progress span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #2f6b4f, #59a877);
+    border-radius: inherit;
+}
+
+.badge-status.profile-incomplete {
+    color: #895e00;
+    background: #fff4d1;
+}
+
+.profile-data-rights {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: 24px;
+    padding: 22px;
+    background: #f5f9f6;
+    border: 1px solid #dce9e1;
+    border-radius: 14px;
+}
+
+.profile-data-rights h4 {
+    margin: 0 0 7px;
+    color: #1f4d38;
+}
+
+.profile-data-rights p {
+    max-width: 650px;
+    margin: 0;
+    color: #5e6f66;
+    font-size: 12.5px;
+    line-height: 1.65;
+}
+
+.verification-guidance {
+    margin-top: 24px;
+    padding: 44px;
+    border: 1px solid #dce9e1;
+    border-radius: 20px;
+}
+
+.stats-data-note {
+    margin: 10px 4px 0;
+    color: #6b7c72;
+    font-size: 11.5px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+.verification-status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.verification-status-grid strong {
+    display: block;
+    margin-bottom: 7px;
+    color: #1f4d38;
+    font-size: 13.5px;
+}
+
+.verification-status-grid p,
+.verification-correction-panel p {
+    margin: 0;
+    color: #5e6f66;
+    font-size: 12.5px;
+    line-height: 1.65;
+}
+
+.verification-correction-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: 18px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #dce9e1;
+    border-radius: 14px;
+}
+
+.verification-correction-panel strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #1f4d38;
+}
+
+@media (max-width: 980px) {
+    .service-step-grid,
+    .application-journey,
+    .public-service-grid,
+    .verification-status-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .profile-readiness-panel {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 680px) {
+    .service-guide-section,
+    .service-help-section,
+    .program-guidance-section,
+    .verification-guidance {
+        padding: 38px 0;
+    }
+
+    .service-step-grid,
+    .application-journey,
+    .applicant-guide-grid,
+    .public-service-grid,
+    .verification-status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .service-step-grid li {
+        min-height: 0;
+    }
+
+    .service-help-panel,
+    .profile-data-rights,
+    .verification-correction-panel {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 22px;
+    }
+
+    .service-help-actions,
+    .profile-data-rights-actions,
+    .verification-correction-panel > div:last-child {
+        width: 100%;
+    }
+
+    .service-help-actions a,
+    .profile-data-rights-actions a,
+    .verification-correction-panel a {
+        width: 100%;
+    }
+
+    .verification-guidance {
+        padding-right: 18px;
+        padding-left: 18px;
+        border-right: 0;
+        border-left: 0;
+        border-radius: 0;
+    }
+}

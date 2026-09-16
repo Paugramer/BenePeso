@@ -1015,3 +1015,11 @@ body:has(.breadcrumb) .stats-grid{margin-top:4px!important}
 .program-grid .program-card-title{max-width:calc(100% - 36px);overflow-wrap:anywhere}
 @media(max-width:760px){.program-grid .program-image-wrap{aspect-ratio:16/9}.program-grid .program-card-title{left:16px;bottom:13px;font-size:18px!important}.program-grid .program-body{padding:16px!important}.add-program-card{min-height:220px!important}}
 @media(max-width:420px){.program-grid .program-card-shell{border-radius:14px!important}.program-grid .program-image-wrap{aspect-ratio:16/10}.program-grid .program-body{padding:14px!important}.add-program-card{min-height:190px!important}}
+/* Read-only eligibility and requirements in batch details. */
+.program-bullet-section { margin: 0 0 16px; }
+.program-bullet-section > label { display: block; margin-bottom: 7px; color: var(--green-dark); font-weight: 800; }
+.program-detail-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.program-detail-list li { position: relative; min-width: 0; padding: 8px 9px 8px 25px; border: 1px solid var(--line); border-radius: 8px; background: #f5f9f7; color: var(--muted); font-size: 11.5px; line-height: 1.4; overflow-wrap: anywhere; }
+.program-detail-list li::before { content: ""; position: absolute; top: 12px; left: 10px; width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(31,122,84,.11); }
+.program-detail-list li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+@media (max-width: 520px) { .program-detail-list { gap: 6px; } .program-detail-list li { padding: 7px 7px 7px 20px; font-size: 10.5px; } .program-detail-list li::before { top: 11px; left: 8px; } }

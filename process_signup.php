@@ -3,12 +3,16 @@ require_once __DIR__ . '/auth_session.php';
 require "db.php";
 require_once "privacy_helper.php";
 require_once "beneficiary_choices.php";
+require_once __DIR__ . '/google_auth_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: signup.php');
     exit();
 }
 auth_require_csrf();
+
+$google_identity = google_auth_pending_identity();
+$google_registration = $google_identity !== null;
 
 $first_name     = trim($_POST["first_name"] ?? "");
 $middle_name    = normalize_optional_middle_name($_POST["middle_name"] ?? "");
@@ -21,7 +25,9 @@ $contact_no     = trim($_POST["contact_no"] ?? "");
 $street_purok   = trim($_POST["street_purok_zone"] ?? "");
 $barangay       = canonical_beneficiary_barangay($_POST["barangay"] ?? "");
 $district       = trim($_POST["district"] ?? "");
-$email          = trim($_POST["email"] ?? "");
+$email          = $google_registration
+    ? mb_strtolower(trim((string)$google_identity['email']))
+    : trim($_POST["email"] ?? "");
 $password       = $_POST["password"] ?? "";
 $confirm_pass   = $_POST["confirm_password"] ?? "";
 
@@ -37,7 +43,7 @@ $valid_civil_statuses = ['Single', 'Married', 'Widowed', 'Legally Separated'];
 
 if ($first_name === "" || $last_name === "" || $birthdate === "" || $sex === "" || 
     $civil_status === "" || $contact_no === "" || $street_purok === "" || 
-    $barangay === "" || $email === "" || $password === "") {
+    $barangay === "" || $email === "" || (!$google_registration && $password === "")) {
     $_SESSION["flash"] = "Please complete all required fields.";
     $_SESSION["form_data"] = $_POST; 
     header("Location: signup.php");
@@ -123,14 +129,14 @@ if (!in_array($barangay, $valid_barangays, true)) {
     exit();
 }
 
-if ($password !== $confirm_pass) {
+if (!$google_registration && $password !== $confirm_pass) {
     $_SESSION["flash"] = "Passwords do not match.";
     $_SESSION["form_data"] = $_POST; 
     header("Location: signup.php");
     exit();
 }
 
-if (strlen($password) < 8) {
+if (!$google_registration && strlen($password) < 8) {
     $_SESSION["flash"] = "Password must be at least 8 characters.";
     $_SESSION["form_data"] = $_POST; 
     header("Location: signup.php");
@@ -228,7 +234,7 @@ if ($profile_upload !== null) {
     }
 }
 
-$hash = password_hash($password, PASSWORD_DEFAULT);
+$hash = password_hash($google_registration ? bin2hex(random_bytes(32)) : $password, PASSWORD_DEFAULT);
 $municipality = "Vinzons";
 $email_db = $email;
 
@@ -243,7 +249,8 @@ $stmt = $conn->prepare("
 
 if (!$stmt) {
     if ($uploaded_profile_path !== null && is_file($uploaded_profile_path)) unlink($uploaded_profile_path);
-    $_SESSION["flash"] = "Database error: " . $conn->error;
+    error_log('BENEPESO registration prepare failed: ' . $conn->error);
+    $_SESSION["flash"] = "Registration is temporarily unavailable. Please try again.";
     $_SESSION["form_data"] = $_POST; 
     header("Location: signup.php");
     exit();
@@ -266,6 +273,29 @@ if ($stmt->execute()) {
         header("Location: signup.php");
         exit();
     }
+
+    if ($google_registration && !google_auth_link_user($conn, $new_user_id, $google_identity)) {
+        $conn->query("DELETE FROM users WHERE user_id = " . $new_user_id);
+        if ($uploaded_profile_path !== null && is_file($uploaded_profile_path)) unlink($uploaded_profile_path);
+        $_SESSION["flash"] = "Your profile was valid, but Google sign-in could not be linked safely. Please try again.";
+        $_SESSION["form_data"] = $_POST;
+        header("Location: signup.php?google=complete");
+        exit();
+    }
+
+    if ($google_registration) {
+        unset($_SESSION['google_pending_identity']);
+        google_auth_activate_beneficiary($conn, [
+            'user_id' => $new_user_id,
+            'first_name' => $first_name,
+            'last_name' => $last_name,
+            'profile_pic' => $profile_pic_name,
+        ]);
+        $_SESSION['google_signup_success'] = true;
+        header("Location: signup.php?google=success");
+        exit();
+    }
+
     $_SESSION["flash"] = "Account created successfully. You may now log in.";
     header("Location: login.php");
     exit();

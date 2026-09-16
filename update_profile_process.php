@@ -163,11 +163,12 @@ try {
 
     $actor_name = trim($first_name . ' ' . $last_name);
     $actor_role = 'Registered User';
-    $log_stmt = $conn->prepare("INSERT INTO activity_logs (action_type, module_name, description, actor_name, actor_role, created_at) VALUES ('Update', 'Profile', 'User successfully updated their personal profile information.', ?, ?, NOW())");
+    $log_description = $actor_name . ' updated their personal profile information.';
+    $log_stmt = $conn->prepare("INSERT INTO activity_logs (action_type, module_name, description, actor_name, actor_role, created_at) VALUES ('Update', 'Profile', ?, ?, ?, NOW())");
     if (!$log_stmt) {
         throw new RuntimeException('Unable to prepare activity log.');
     }
-    $log_stmt->bind_param('ss', $actor_name, $actor_role);
+    $log_stmt->bind_param('sss', $log_description, $actor_name, $actor_role);
     if (!$log_stmt->execute()) {
         throw new RuntimeException('Unable to record profile activity.');
     }

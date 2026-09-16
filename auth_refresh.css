@@ -1,0 +1,270 @@
+/* BENEPESO login and registration — shared visual system. */
+body.auth-page {
+  --auth-green: #087a53;
+  --auth-green-dark: #07543b;
+  --auth-ink: #14362a;
+  --auth-muted: #697a73;
+  --auth-line: #d9e3de;
+  --auth-mist: #f4f8f6;
+  padding: clamp(18px, 4vw, 48px);
+}
+
+body.auth-page::before {
+  background: linear-gradient(135deg, rgba(7, 43, 33, .87), rgba(7, 82, 59, .70));
+}
+
+.auth-page .box { width: min(980px, 100%); }
+.auth-page .box::before,
+.auth-page .box::after { display: none; }
+
+.auth-page .card,
+.auth-page .card.compact {
+  grid-template-columns: 310px minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  max-width: 980px;
+  overflow: hidden;
+  border-radius: 24px;
+  box-shadow: 0 30px 80px rgba(0, 30, 21, .34);
+}
+
+.auth-page .card::before {
+  height: 5px;
+  background: linear-gradient(90deg, #087a53, #2eaa79 58%, #d4b45d);
+}
+
+.auth-page .left {
+  min-width: 0;
+  padding: 46px 32px;
+  border: 0;
+  background: radial-gradient(circle at 90% 10%, rgba(255,255,255,.14), transparent 28%), linear-gradient(150deg, #0b7955, #075039 72%);
+}
+
+.auth-page .left::before {
+  width: 250px;
+  height: 250px;
+  top: -125px;
+  right: -125px;
+}
+
+.auth-page .brand { max-width: 250px; gap: 16px; }
+.auth-page .brand::before {
+  content: "PESO VINZONS  /  OFFICIAL PORTAL";
+  font-size: 9px;
+  letter-spacing: .13em;
+}
+
+.auth-page .logo {
+  width: 92px !important;
+  height: 92px !important;
+  flex-basis: 92px !important;
+  border-radius: 50%;
+}
+
+.auth-page .left h1 { font-size: 29px; letter-spacing: -.035em; }
+.auth-page .left p { font-size: 12.5px; line-height: 1.65; }
+.auth-page .badges { gap: 6px; margin-top: 4px; }
+.auth-page .badge { padding: 6px 9px; border-radius: 999px; background: rgba(255,255,255,.09); }
+
+.auth-page .right,
+.auth-page .card.compact .right {
+  min-width: 0;
+  padding: 38px clamp(32px, 5vw, 54px);
+  background: #fff;
+}
+
+.auth-page .right::before { opacity: .15; }
+.auth-page .right-inner { max-width: 500px; min-width: 0; }
+.auth-page .auth-context-bar { min-height: 30px; margin-bottom: 10px; }
+.auth-page .auth-return { margin: 0; padding: 7px 9px 7px 6px; border-radius: 8px; }
+.auth-page .auth-return:hover { background: var(--auth-mist); }
+
+.auth-page .role-label {
+  margin: 0 !important;
+  border: 1px solid #dcebe4;
+  border-radius: 999px;
+  background: #f1f8f4;
+}
+
+.auth-page .right h2 {
+  margin: 6px 0;
+  color: var(--auth-ink);
+  font-size: clamp(25px, 3vw, 31px);
+  letter-spacing: -.035em;
+}
+
+.auth-page .sub {
+  max-width: 430px;
+  margin-inline: auto;
+  margin-bottom: 23px;
+  color: var(--auth-muted);
+  line-height: 1.55;
+}
+.auth-signup .signup-sub { margin-bottom: 12px; text-align: center; }
+
+.auth-page label { color: #29483c; font-size: 10.5px; letter-spacing: .035em; }
+.auth-page input,
+.auth-page select {
+  min-height: 50px;
+  border: 1.5px solid var(--auth-line);
+  border-radius: 12px;
+  background-color: #fff;
+  color: var(--auth-ink);
+}
+.auth-page input::placeholder { color: #97a49f; }
+.auth-page input:focus,
+.auth-page select:focus {
+  border-color: var(--auth-green);
+  box-shadow: 0 0 0 4px rgba(8,122,83,.10);
+  transform: none;
+}
+
+.auth-page .field-control,
+.auth-page .password-wrap { position: relative; }
+.auth-page svg.field-icon {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 15px;
+  width: 19px !important;
+  height: 19px !important;
+  color: #82938b;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.auth-page .has-leading-icon input { padding-left: 45px; }
+.auth-page .password-wrap.has-leading-icon input { padding-right: 48px; }
+.auth-page .has-leading-icon:focus-within .field-icon { color: var(--auth-green); }
+
+.auth-page .auth-form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: -2px 1px 4px;
+  color: #819089;
+  font-size: 10.5px;
+}
+.auth-page .auth-form-options a {
+  flex: 0 0 auto;
+  color: var(--auth-green);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.auth-page .auth-form-options a:hover { color: var(--auth-green-dark); text-decoration: underline; }
+
+.auth-page .btn,
+.auth-page .modal-btn {
+  min-height: 51px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #09845a, #066b49);
+  box-shadow: 0 10px 22px rgba(7,104,71,.22);
+}
+.auth-page .btn:hover,
+.auth-page .modal-btn:hover { background: linear-gradient(135deg, #08754f, #05593d); }
+.auth-login .btn { margin-top: 16px; }
+
+.auth-page .auth-divider { margin: 18px 0 13px; color: #89968f; }
+.auth-page .google-signin {
+  width: min(400px, 100%);
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: none;
+}
+.auth-page .google-signin:hover { box-shadow: 0 8px 20px rgba(18,75,50,.08); }
+.auth-page .google-signin .google-button-host { width: 100%; }
+
+.auth-signup .step-tracker {
+  margin: 10px 0 17px;
+  padding: 12px 16px;
+  border: 1px solid #dde9e3;
+  border-radius: 12px;
+  background: #f6faf8;
+}
+.auth-signup .step-circle { width: 25px; height: 25px; }
+.auth-signup .step-item.active .step-circle { background: var(--auth-green); }
+.auth-signup .step-item.active .step-text { color: var(--auth-green-dark); }
+.auth-signup .form-group { margin-bottom: 11px; }
+.auth-signup .btn { margin-top: 13px; }
+.auth-signup .btn-group { margin-top: 13px; }
+.auth-signup .btn-group .btn { margin-top: 0; }
+.auth-page .profile-upload-container,
+.auth-page .privacy-acknowledgment { border-radius: 12px; }
+
+@media (max-width: 900px) {
+  body.auth-page { align-items: flex-start; padding: clamp(14px, 4vw, 28px); }
+  .auth-page .card,
+  .auth-page .card.compact {
+    grid-template-columns: 1fr;
+    width: min(570px, 100%);
+    margin-inline: auto;
+    border-radius: 20px;
+  }
+  .auth-page .left,
+  .auth-page .card.compact .left { padding: 20px 24px; border-bottom: 0; }
+  .auth-page .brand {
+    width: 100%;
+    max-width: none;
+    grid-template-columns: 62px minmax(0,1fr);
+    grid-template-areas: "logo title" "logo copy";
+    column-gap: 15px;
+    row-gap: 2px;
+    text-align: left;
+  }
+  .auth-page .brand::before,
+  .auth-page .badges { display: none; }
+  .auth-page .logo {
+    grid-area: logo;
+    width: 62px !important;
+    height: 62px !important;
+    flex-basis: 62px !important;
+  }
+  .auth-page .left h1 { grid-area: title; align-self: end; font-size: 23px; }
+  .auth-page .left p { grid-area: copy; align-self: start; max-width: 360px; font-size: 10.5px; line-height: 1.4; }
+  .auth-page .right,
+  .auth-page .card.compact .right { padding: 26px clamp(20px,6vw,38px) 32px; }
+}
+
+@media (max-width: 560px) {
+  body.auth-page { padding: 10px; }
+  .auth-page .card,
+  .auth-page .card.compact { border-radius: 17px; }
+  .auth-page .left,
+  .auth-page .card.compact .left { padding: 16px 18px; }
+  .auth-page .brand { grid-template-columns: 52px minmax(0,1fr); }
+  .auth-page .logo { width: 52px !important; height: 52px !important; flex-basis: 52px !important; }
+  .auth-page .left h1 { font-size: 20px; }
+  .auth-page .left p { display: block; font-size: 9.5px; }
+  .auth-page .right,
+  .auth-page .card.compact .right { padding: 22px 17px 27px; }
+  .auth-page .right-inner { width: 100%; max-width: 100%; }
+  .auth-page .role-label { display: none; }
+  .auth-page .form-row { grid-template-columns: 1fr; gap: 0; }
+  .auth-page .auth-form-options span { display: none; }
+  .auth-page .auth-form-options { justify-content: flex-end; }
+  .auth-signup .step-tracker { padding-inline: 10px; }
+  .auth-signup .step-text { font-size: 10px; }
+}
+
+@media (max-width: 380px) {
+  .auth-page .left p { display: none; }
+  .auth-page .brand { grid-template-areas: "logo title"; align-items: center; }
+  .auth-signup .step-text { display: none; }
+  .auth-signup .step-tracker { justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-page .logo,
+  .auth-page .left::before,
+  .auth-signup .step-tracker::after,
+  .auth-signup .step-item.active .step-circle { animation: none !important; }
+}

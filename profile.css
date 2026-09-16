@@ -1861,3 +1861,80 @@ body::before {
         font-size: 12px;
     }
 }
+
+/* Profile: compact two-column editing layout on small screens only. */
+@media (max-width: 768px) {
+    .beneficiary-profile-page #personal-info .content-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-direction: row;
+        gap: 10px;
+    }
+
+    .beneficiary-profile-page #personal-info .content-header > div {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .beneficiary-profile-page #personal-info .content-header .btn-edit {
+        width: auto;
+        min-width: 0;
+        flex: 0 0 auto;
+        align-self: flex-start;
+        padding: 9px 12px;
+        white-space: nowrap;
+    }
+
+    .beneficiary-profile-page #profileForm .info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px 10px;
+    }
+
+    .beneficiary-profile-page #profileForm .section-divider,
+    .beneficiary-profile-page #profileForm .info-group.full-row {
+        grid-column: 1 / -1;
+    }
+
+    .beneficiary-profile-page #profileForm .info-group {
+        min-width: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .beneficiary-profile-page #personal-info .content-header h3 {
+        font-size: 18px;
+        line-height: 1.25;
+    }
+
+    .beneficiary-profile-page #personal-info .content-header p {
+        font-size: 11px;
+        line-height: 1.45;
+    }
+
+    .beneficiary-profile-page #personal-info .content-header .btn-edit {
+        gap: 5px;
+        padding: 8px 9px;
+        font-size: 11px;
+    }
+
+    .beneficiary-profile-page #profileForm .info-grid {
+        gap: 12px 8px;
+    }
+
+    .beneficiary-profile-page #profileForm .info-group label {
+        min-height: 30px;
+        margin-bottom: 5px;
+        font-size: 10.5px;
+        line-height: 1.35;
+    }
+
+    .beneficiary-profile-page #profileForm .form-input {
+        min-height: 46px;
+        height: 46px;
+        padding: 10px;
+        font-size: 12px;
+    }
+}
+.spes-lifecycle-badge{border:1px solid #c9e6d5!important;background:#eaf8ef!important;color:#17623f!important;box-shadow:0 4px 14px rgba(23,98,63,.08)}
+.spes-lifecycle-badge.is-graduate{border-color:#ead8a6!important;background:#fff8e3!important;color:#8a6114!important}

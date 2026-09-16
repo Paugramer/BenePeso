@@ -8,9 +8,10 @@ $user_id = (int)$_SESSION["user_id"];
 $user_display_name = "User";
 $first_char = "U";
 $user_profile_src = '';
+$home_profile_ready = false;
 
 // Fetching individual name components based on your table structure
-$stmt = $conn->prepare("SELECT first_name, middle_name, last_name, ext_name, profile_pic FROM users WHERE user_id=? LIMIT 1");
+$stmt = $conn->prepare("SELECT first_name, middle_name, last_name, ext_name, profile_pic, birthdate, sex, civil_status, contact_no, street_purok_zone, barangay, email FROM users WHERE user_id=? LIMIT 1");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $res = $stmt->get_result();
@@ -36,6 +37,9 @@ if ($res && $res->num_rows === 1) {
         $first_char = strtoupper(substr($fn, 0, 1));
     }
 
+    $home_required_profile_fields = ['first_name', 'last_name', 'birthdate', 'sex', 'civil_status', 'contact_no', 'street_purok_zone', 'barangay', 'email'];
+    $home_profile_ready = count(array_filter($home_required_profile_fields, static fn($field) => trim((string)($row[$field] ?? '')) !== '')) === count($home_required_profile_fields);
+
     $profile_filename = basename((string)($row['profile_pic'] ?? ''));
     if ($profile_filename !== '' && is_file(__DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $profile_filename)) {
         $user_profile_src = 'uploads/' . rawurlencode($profile_filename);
@@ -44,6 +48,7 @@ if ($res && $res->num_rows === 1) {
 
 $programs = [];
 $has_programs_table = true;
+$official_advisory = null;
 
 try {
     $today = (new DateTimeImmutable('today', new DateTimeZone('Asia/Manila')))->format('Y-m-d');
@@ -67,6 +72,14 @@ try {
         while ($p = $result->fetch_assoc()) $programs[] = $p;
         $q->close();
     }
+    $advisoryQuery = $conn->query("SELECT program_id, program_name, program_code, start_date, end_date, created_at, updated_at
+        FROM programs
+        WHERE approval_status = 'Approved'
+          AND LOWER(COALESCE(status, '')) <> 'completed'
+          AND end_date >= CURDATE()
+        ORDER BY COALESCE(updated_at, created_at) DESC, program_id DESC
+        LIMIT 1");
+    if ($advisoryQuery) $official_advisory = $advisoryQuery->fetch_assoc() ?: null;
 } catch (Throwable $e) {
     $has_programs_table = false;
 }
@@ -83,10 +96,13 @@ try {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="home.css?v=15" />
-<link rel="stylesheet" href="frontend_polish.css?v=12">
+    <link rel="stylesheet" href="home.css?v=16" />
+<link rel="stylesheet" href="frontend_polish.css?v=13">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <script src="frontend_polish.js?v=8" defer></script>
+    <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
+    <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
+    <script src="frontend_polish.js?v=9" defer></script>
+    <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body class="home-page">
 
@@ -160,7 +176,7 @@ try {
 
             <div class="welcome-actions">
                 <a class="btn-explore" href="programs.php">Explore Programs</a>
-                <a class="btn-verify" href="verification.php">Verify Status</a>
+                <a class="btn-verify" href="profile.php#my-programs">Track My Application</a>
             </div>
 
             <div class="welcome-stats">
@@ -221,7 +237,7 @@ try {
     </div>
 </section>
 
-<section class="bp-service-snapshot-shell content-wrap" id="beneficiaryServiceSnapshot" aria-live="polite" hidden>
+<section class="bp-service-snapshot-shell content-wrap" id="beneficiaryServiceSnapshot" data-profile-ready="<?= $home_profile_ready ? 'true' : 'false' ?>" aria-live="polite" hidden>
     <div class="bp-service-snapshot bp-service-snapshot-v2">
         <div class="bp-service-snapshot-mark" aria-hidden="true">
             <span class="bp-snapshot-pulse"></span>
@@ -238,6 +254,19 @@ try {
         </div>
     </div>
 </section>
+
+<?php if ($official_advisory): ?>
+<aside class="home-official-advisory content-wrap bp-content-module" aria-labelledby="homeAdvisoryTitle">
+    <div class="home-advisory-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 13V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7"></path><path d="M7 13h10l2 7H5l2-7Z"></path><path d="M9 8h6"></path></svg></div>
+    <div class="home-advisory-copy">
+        <span>Official PESO advisory</span>
+        <h2 id="homeAdvisoryTitle"><?= htmlspecialchars($official_advisory['program_name']) ?> applications are open</h2>
+        <p>Review batch <?= htmlspecialchars($official_advisory['program_code'] ?: ('#' . $official_advisory['program_id'])) ?> before the <?= htmlspecialchars(date('M d, Y', strtotime($official_advisory['end_date']))) ?> application deadline.</p>
+    </div>
+    <div class="home-advisory-meta"><time datetime="<?= htmlspecialchars(date('Y-m-d', strtotime($official_advisory['updated_at'] ?: $official_advisory['created_at']))) ?>">Updated <?= htmlspecialchars(date('M d, Y', strtotime($official_advisory['updated_at'] ?: $official_advisory['created_at']))) ?></time><span>Published by PESO Vinzons</span></div>
+    <a href="programs.php?program_id=<?= (int)$official_advisory['program_id'] ?>">Review advisory <span aria-hidden="true">&rarr;</span></a>
+</aside>
+<?php endif; ?>
 
 <section class="quick-access-area reveal">
     <div class="content-wrap">
@@ -260,7 +289,7 @@ try {
                     <div class="quick-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path></svg></div>
                     <div>
                         <div class="quick-name">Verification</div>
-                        <div class="quick-desc">Check eligibility</div>
+                        <div class="quick-desc">Verify a beneficiary record</div>
                     </div>
                 </a>
 
@@ -284,6 +313,24 @@ try {
             <div class="quick-note">
                 <b>Tip:</b> Keep your email active for updates.
             </div>
+        </div>
+    </div>
+</section>
+
+<section class="service-guide-section reveal bp-content-module" aria-labelledby="serviceGuideTitle">
+    <div class="content-wrap">
+        <div class="service-route-shell">
+            <div class="content-enhancement-heading">
+                <span class="content-enhancement-eyebrow">Your service journey</span>
+                <h2 id="serviceGuideTitle">How BENEPESO Works</h2>
+                <p>One connected service route—from an accurate profile to a completed PESO program.</p>
+            </div>
+            <ol class="service-step-grid">
+                <li><span>01</span><div><strong>Complete your profile</strong><p>Confirm your identity, contact, and household information.</p><a href="profile.php">Review profile</a></div></li>
+                <li><span>02</span><div><strong>Review eligibility</strong><p>Check the rules and requirements for the exact batch.</p><a href="programs.php">Browse programs</a></div></li>
+                <li><span>03</span><div><strong>Submit your application</strong><p>Complete the official form and privacy acknowledgment.</p><a href="programs.php">View open batches</a></div></li>
+                <li><span>04</span><div><strong>Follow your next action</strong><p>Track validation, requirements, schedules, and completion.</p><a href="profile.php#my-programs">Track progress</a></div></li>
+            </ol>
         </div>
     </div>
 </section>
@@ -322,11 +369,6 @@ try {
                         <img class="program-image" src="<?php echo htmlspecialchars($program_image); ?>" alt="<?php echo htmlspecialchars($program_title); ?>" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='img/pesologo.png';">
                         <div class="program-top">
                             <span class="program-tag">Program</span>
-                            <span class="program-date">
-                                <?php echo !empty($p["end_date"]) && $p["end_date"] !== '0000-00-00'
-                                    ? 'Open until ' . htmlspecialchars(date("M d, Y", strtotime($p["end_date"])))
-                                    : (!empty($p["start_date"]) ? 'Starts ' . htmlspecialchars(date("M d, Y", strtotime($p["start_date"]))) : "Schedule available"); ?>
-                            </span>
                         </div>
 
                         <h3 class="program-title"><?php echo htmlspecialchars($program_title); ?></h3>
@@ -338,6 +380,11 @@ try {
                         </p>
 
                         <div class="program-btn">View details</div>
+                        <span class="program-date">
+                            <?php echo !empty($p["end_date"]) && $p["end_date"] !== '0000-00-00'
+                                ? 'Open until ' . htmlspecialchars(date("M d, Y", strtotime($p["end_date"])))
+                                : (!empty($p["start_date"]) ? 'Starts ' . htmlspecialchars(date("M d, Y", strtotime($p["start_date"]))) : "Schedule available"); ?>
+                        </span>
                     </a>
                 <?php endforeach; ?>
             <?php else: ?>
@@ -355,8 +402,8 @@ try {
     <div class="content-wrap">
         <div class="area-head">
             <div>
-                <h2 class="area-title">Before You Apply</h2>
-                <p class="area-sub">Three practical steps help PESO review your application without unnecessary delays.</p>
+                <h2 class="area-title">Application Readiness Checklist</h2>
+                <p class="area-sub">Prepare accurate supporting information before opening an application form.</p>
             </div>
         </div>
 
@@ -369,8 +416,8 @@ try {
                         <path d="M7 15c.8-1.4 2.2-2 4-2M14 8h3M14 12h3M14 16h3" />
                     </svg>
                 </div>
-                <div class="info-title">Review Your Profile</div>
-                <div class="info-text">Keep your name, address, contact number, and registered email complete and current.</div>
+                <div class="info-title">Match Your Documents</div>
+                <div class="info-text">Use the same name spelling, birthdate, and address shown on your valid supporting documents.</div>
             </div>
             <div class="info-card reveal" style="transition-delay: 0.2s;">
                 <div class="info-icon" aria-hidden="true">
@@ -379,8 +426,8 @@ try {
                         <path d="m4 5 1 1 2-2M4 12l1 1 2-2M4 19l1 1 2-2" />
                     </svg>
                 </div>
-                <div class="info-title">Check Program Rules</div>
-                <div class="info-text">Read the age, residency, household, and program-specific eligibility requirements before submitting.</div>
+                <div class="info-title">Prepare Originals and Copies</div>
+                <div class="info-text">Review the selected batch requirements and bring the requested originals or copies only when instructed by PESO.</div>
             </div>
             <div class="info-card reveal" style="transition-delay: 0.3s;">
                 <div class="info-icon" aria-hidden="true">
@@ -389,9 +436,24 @@ try {
                         <path d="M10 21h4" />
                     </svg>
                 </div>
-                <div class="info-title">Follow Official Updates</div>
-                <div class="info-text">Use your program progress page for the latest recorded step and keep your email active for PESO instructions.</div>
+                <div class="info-title">Protect Your Account</div>
+                <div class="info-text">Keep your password private and rely on BENEPESO, registered email, or PESO staff for official instructions.</div>
             </div>
+        </div>
+    </div>
+</section>
+
+<section class="service-help-section reveal bp-content-module" aria-labelledby="serviceHelpTitle">
+    <div class="content-wrap service-help-panel">
+        <div>
+            <span class="content-enhancement-eyebrow">Official assistance</span>
+            <h2 id="serviceHelpTitle">Need help with an application?</h2>
+            <p>Contact PESO Vinzons for record corrections, requirement questions, and official schedule confirmation.</p>
+        </div>
+        <div class="service-help-actions">
+            <a href="mailto:lguvinzonspeso@gmail.com">Email PESO</a>
+            <a href="tel:+639479971186">Call +63 947 997 1186</a>
+            <a href="about.php#peso-office">Office details</a>
         </div>
     </div>
 </section>

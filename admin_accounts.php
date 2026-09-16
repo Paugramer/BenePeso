@@ -299,9 +299,10 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="admin_accounts.css">
     <link rel="stylesheet" href="shared_sidebar.css">
-    <link rel="stylesheet" href="admin_accounts_polish.css?v=6">
+    <link rel="stylesheet" href="admin_accounts_polish.css?v=8">
 <link rel="stylesheet" href="frontend_polish.css?v=11">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
+<link rel="stylesheet" href="system_search_polish.css?v=1">
 <script src="frontend_polish.js?v=7" defer></script>
 </head>
 <body class="admin-accounts-page accounts-view-<?= e($view) ?>">
@@ -404,7 +405,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
             <a href="?view=banned&page=1" class="segment-btn <?= $view==='banned'?'active':'' ?>">Banned Accounts</a>
         </div>
         
-        <form class="filter-form" method="GET">
+        <form class="filter-form system-search" method="GET">
             <input type="hidden" name="view" value="<?= e($view) ?>">
             
             <?php if($view === 'banned'): ?>
@@ -723,10 +724,6 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
 <div class="modal" id="idCardModal" aria-hidden="true">
   <div class="modal-backdrop" onclick="closeProfileCard()"></div>
   <div class="modal-dialog id-card-dialog" style="padding: 0;">
-    <button type="button" class="modal-close-icon" onclick="closeProfileCard()" aria-label="Close account profile" style="position: absolute; top: 16px; right: 16px; z-index: 10;">
-        <i class="ph-bold ph-x"></i>
-    </button>
-
     <div class="id-card-left" id="idCardLeftPanel">
        <div class="id-card-pattern"></div>
        <div class="id-avatar-large" id="idAvatar">
@@ -736,6 +733,11 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
     </div>
 
     <div class="id-card-right">
+       <div class="id-card-toolbar">
+          <button type="button" class="modal-close-icon profile-card-close" onclick="closeProfileCard()" aria-label="Close account profile" title="Close profile">
+              <i class="ph-bold ph-x"></i>
+          </button>
+       </div>
        <div class="id-header">
           <div style="display: flex; align-items: center; gap: 16px;">
               <h3 class="id-name" id="idName" style="margin: 0;">User Name</h3>

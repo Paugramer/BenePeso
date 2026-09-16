@@ -1,0 +1,114 @@
+/* Consistent search controls for administrator and PESO staff workspaces. */
+.system-search,
+.system-search-input {
+  --search-green: var(--green, #1f7a54);
+  --search-text: var(--text, #153528);
+  --search-muted: var(--muted, #60766a);
+  --search-line: #d7e5dd;
+}
+
+.system-search {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: var(--search-line) !important;
+  background-color: #fff;
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease !important;
+}
+
+.system-search:hover {
+  border-color: #a9cbb9 !important;
+  background-color: #fff !important;
+}
+
+.system-search:focus-within {
+  border-color: var(--search-green) !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 3px rgba(31, 122, 84, .13), 0 8px 22px rgba(22, 83, 57, .08) !important;
+  background-color: #fff !important;
+}
+
+.system-search .search-input,
+.system-search .filter-input-search,
+.system-search-input {
+  outline: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  color: var(--search-text) !important;
+  caret-color: var(--search-green);
+  font-family: "Poppins", sans-serif;
+}
+
+.system-search .search-input:focus,
+.system-search .search-input:focus-visible,
+.system-search .filter-input-search:focus,
+.system-search .filter-input-search:focus-visible,
+.system-search-input:focus,
+.system-search-input:focus-visible {
+  outline: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.system-search .search-icon,
+.system-search .search-input-icon {
+  color: var(--search-muted) !important;
+  transition: color .18s ease, transform .18s ease;
+}
+
+.system-search:focus-within .search-icon,
+.system-search:focus-within .search-input-icon {
+  color: var(--search-green) !important;
+}
+
+.system-search:focus-within .search-icon {
+  transform: scale(1.08);
+}
+
+.system-search:focus-within .search-input-icon {
+  transform: translateY(-50%) scale(1.08);
+}
+
+.system-search .search-input::placeholder,
+.system-search .filter-input-search::placeholder,
+.system-search-input::placeholder {
+  color: #82968b;
+  opacity: 1;
+}
+
+.system-search-input {
+  padding-left: 43px !important;
+  border: 1px solid var(--search-line) !important;
+  background-color: #fff !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 256 256'%3E%3Cpath fill='none' stroke='%2360766a' stroke-linecap='round' stroke-linejoin='round' stroke-width='20' d='m184 184 40 40M112 192a80 80 0 1 1 80-80 80 80 0 0 1-80 80Z'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: 15px center !important;
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease !important;
+}
+
+.system-search-input:hover { border-color: #a9cbb9 !important; }
+.system-search-input:focus,
+.system-search-input:focus-visible {
+  border-color: var(--search-green) !important;
+  background-color: #fff !important;
+  box-shadow: 0 0 0 3px rgba(31, 122, 84, .13), 0 8px 22px rgba(22, 83, 57, .08) !important;
+}
+
+/* Neutralize browser autofill/saved-info coloring while retaining readable text. */
+.system-search input:-webkit-autofill,
+.system-search input:-webkit-autofill:hover,
+.system-search input:-webkit-autofill:focus,
+.system-search-input:-webkit-autofill,
+.system-search-input:-webkit-autofill:hover,
+.system-search-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--search-text) !important;
+  -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+  transition: background-color 9999s ease-out 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .system-search,
+  .system-search-input,
+  .system-search .search-icon,
+  .system-search .search-input-icon { transition: none !important; }
+}

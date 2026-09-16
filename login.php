@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/auth_session.php';
 require_once "db.php"; 
+require_once __DIR__ . '/google_auth_config.php';
 
 $flash = $_SESSION["flash"] ?? "";
 unset($_SESSION["flash"]);
@@ -79,12 +80,15 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=20" />
+  <link rel="stylesheet" href="style.css?v=31" />
   <link rel="stylesheet" href="frontend_polish.css?v=11">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <script src="frontend_polish.js?v=7" defer></script>
+  <link rel="stylesheet" href="auth_refresh.css?v=1">
+  <script src="frontend_polish.js?v=12" defer></script>
+  <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
+  <script src="google_signin.js?v=5" defer></script>
 </head>
-<body class="auth-page auth-login">
+<body class="auth-page auth-login" data-disable-page-loader>
 
 <div class="box">
   <div class="card compact">
@@ -112,7 +116,13 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
     <div class="right">
       <div class="right-inner">
 
-        <div class="role-label stagger-1" style="margin-top: 20px;">System Access</div>
+        <div class="auth-context-bar stagger-1">
+          <a class="auth-return" href="index.php" aria-label="Return to the BENEPESO public portal">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg>
+            <span>Public portal</span>
+          </a>
+          <div class="role-label">System Access</div>
+        </div>
 
         <h2 class="stagger-2">Welcome Back</h2>
         <p class="sub stagger-2">Please enter your phone number or email and password to log in.</p>
@@ -128,25 +138,31 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
           
           <div class="form-group">
               <label for="email">Phone Number or Email</label>
-              <input
-                type="text"
-                id="email"
-                name="email"
-                placeholder="e.g. 09XXXXXXXXX or juan@email.com"
-                value="<?php echo htmlspecialchars($login_email); ?>"
-                required
-                <?php echo $locked ? "disabled" : ""; ?>
-              >
+              <div class="field-control has-leading-icon">
+                <svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16v11H4zM4.8 7.2 12 13l7.2-5.8"/></svg>
+                <input
+                  type="text"
+                  id="email"
+                  name="email"
+                  placeholder="09XXXXXXXXX or juan@email.com"
+                  value="<?php echo htmlspecialchars($login_email); ?>"
+                  autocomplete="username"
+                  required
+                  <?php echo $locked ? "disabled" : ""; ?>
+                >
+              </div>
           </div>
 
           <div class="form-group">
               <label for="passwordInput">Password</label>
-              <div class="password-wrap">
+              <div class="password-wrap has-leading-icon">
+                <svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
                 <input
                   type="password"
                   name="password"
                   id="passwordInput"
                   placeholder="Enter your password"
+                  autocomplete="current-password"
                   required
                   <?php echo $locked ? "disabled" : ""; ?>
                 >
@@ -158,18 +174,31 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
               </div>
           </div>
 
+          <div class="auth-form-options">
+            <span>Your account is protected by secure sign-in.</span>
+            <a href="#" id="forgotLink">Forgot password?</a>
+          </div>
+
           <button class="btn" type="submit" id="loginBtn" <?php echo $locked ? "disabled" : ""; ?>>
-            Secure Login
+            Log in securely
           </button>
         </form>
 
-        <p class="small stagger-4" style="margin-top:16px;">
-          <a href="#" id="forgotLink">Forgot your password?</a>
-        </p>
+        <div class="auth-divider stagger-4"><span>or continue with</span></div>
+        <div
+          class="google-signin stagger-4"
+          data-google-signin
+          data-client-id="<?= htmlspecialchars(benepeso_google_client_id(), ENT_QUOTES, 'UTF-8') ?>"
+          data-csrf="<?= htmlspecialchars(auth_csrf_token(), ENT_QUOTES, 'UTF-8') ?>"
+          data-button-text="continue_with"
+        >
+          <div class="google-button-host" aria-label="Sign in with Google"></div>
+          <p class="google-auth-message" role="status" aria-live="polite"></p>
+        </div>
 
         <p class="small stagger-4" style="margin-top:8px;">
           Don’t have an account?
-          <a href="signup.php" id="signupLink">Register here</a>
+          <a href="signup.php" id="signupLink">Create an account</a>
         </p>
 
       </div>
@@ -333,14 +362,37 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   function closeModal(id){ 
       const modal = document.getElementById(id);
       if (!modal) return;
+      if (modal.dataset.locked === 'true') return;
       modal.style.display = "none";
       const hasOpenModal = Array.from(document.querySelectorAll('.modal-bg')).some(item => item.style.display === 'flex');
       if (!hasOpenModal) document.body.classList.remove("modal-open");
   }
 
+  window.showAuthNotice = function(message, title = "BENEPESO Notice", options = {}) {
+      const titleEl = document.getElementById("noticeTitle");
+      const messageEl = document.getElementById("modalText");
+      const dialog = document.querySelector("#modalBg .modal");
+      const action = dialog?.querySelector('.modal-btn');
+      const close = dialog?.querySelector('.modal-close-btn');
+      const modalRoot = document.getElementById('modalBg');
+      const inferredError = /access denied|restricted|banned|could not|not completed|invalid|expired|incorrect|error/i.test(message);
+      const inferredSuccess = /success|verified|created/i.test(message);
+      const type = options.type || (inferredError ? (/restricted|banned|access denied/i.test(message) ? 'restricted' : 'error') : (inferredSuccess ? 'success' : 'info'));
+      if (titleEl) titleEl.textContent = title;
+      if (messageEl) messageEl.textContent = message;
+      if (dialog) dialog.dataset.state = type;
+      if (action) {
+        action.textContent = options.actionLabel || (type === 'success' ? 'Continue' : 'Close');
+        action.onclick = () => options.redirect ? window.location.assign(options.redirect) : closeModal('modalBg');
+      }
+      if (close) close.style.display = options.redirect ? 'none' : '';
+      if (modalRoot) modalRoot.dataset.locked = options.redirect ? 'true' : 'false';
+      openModal("modalBg");
+      window.setTimeout(() => action?.focus(), 80);
+  };
+
   if (flash){
-    document.getElementById("modalText").textContent = flash;
-    openModal("modalBg");
+    window.showAuthNotice(flash, /access denied|restricted|banned/i.test(flash) ? "Access denied" : "BENEPESO Notice");
   }
 
   function showLoading(title, msg){

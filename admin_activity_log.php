@@ -167,6 +167,7 @@ $clean_modules = [
 <script src="activity_filter_polish.js?v=1" defer></script>
 <link rel="stylesheet" href="frontend_polish.css?v=11">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
+<link rel="stylesheet" href="system_search_polish.css?v=1">
 <script src="frontend_polish.js?v=7" defer></script>
 </head>
 <body>
@@ -269,7 +270,7 @@ $clean_modules = [
                 </div>
 
                 <form method="GET" class="advanced-filter-row" id="filterForm">
-                    <div style="position: relative; flex: 1; min-width: 200px;">
+                    <div class="system-search" style="position: relative; flex: 1; min-width: 200px; border-radius: 14px;">
                         <i class="ph ph-magnifying-glass search-input-icon"></i>
                         <input type="text" name="search" class="filter-input-search" id="liveSearchInput" placeholder="Search module, action, desc..." value="<?= h($search) ?>">
                     </div>

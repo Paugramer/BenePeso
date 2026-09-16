@@ -88,9 +88,12 @@ try {
     
     <link rel="stylesheet" href="home.css?v=14">
     <link rel="stylesheet" href="about.css?v=11">
-    <link rel="stylesheet" href="frontend_polish.css?v=12">
+    <link rel="stylesheet" href="frontend_polish.css?v=14">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-    <script src="frontend_polish.js?v=8" defer></script>
+    <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
+    <link rel="stylesheet" href="beneficiary_content_polish.css?v=6">
+    <script src="frontend_polish.js?v=9" defer></script>
+    <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body data-disable-page-loader>
 
@@ -189,6 +192,7 @@ try {
                     <span class="stat-label">Barangays Reached</span>
                 </div>
             </div>
+            <p class="stats-data-note">Live BENEPESO records as of <?= date('F j, Y') ?>. Figures may change as PESO validates and updates program records.</p>
         </div>
     </section>
 
@@ -264,39 +268,56 @@ try {
                     </div>
                 </button>
 
-                <article class="achievement-panel">
+                <article class="achievement-panel service-access-panel">
                     <div class="achievement-heading">
                         <div class="achievement-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="m7 16 4-5 4 3 5-7"></path></svg>
                         </div>
                         <div>
-                            <span class="achievement-kicker">Measured Service</span>
-                            <h3>PESO Vinzons Impact</h3>
+                            <span class="achievement-kicker">Service Access</span>
+                            <h3>How to Access PESO Services</h3>
                         </div>
                     </div>
-                    <p class="achievement-copy">Current milestones recorded through BENEPESO reflect the office's continuing service across Vinzons.</p>
+                    <p class="achievement-copy">Choose the service channel that is practical for you. Never send passwords or unnecessary identity documents through public messages.</p>
                     <div class="achievement-metrics">
                         <div class="achievement-metric">
-                            <strong><?php echo number_format($total_beneficiaries); ?></strong>
-                            <span>Beneficiary records</span>
+                            <strong>Online</strong>
+                            <span>Profile, applications, and recorded status</span>
                         </div>
                         <div class="achievement-metric">
-                            <strong><?php echo number_format($total_programs); ?></strong>
-                            <span>Approved programs</span>
+                            <strong>Call or text</strong>
+                            <span>Questions and accessibility assistance</span>
                         </div>
                         <div class="achievement-metric">
-                            <strong><?php echo number_format($barangays_reached); ?></strong>
-                            <span>Barangays reached</span>
+                            <strong>Walk in</strong>
+                            <span>Validated corrections and instructed submissions</span>
                         </div>
                     </div>
-                    <p class="achievement-note">Built around accessible employment support, livelihood opportunities, and reliable beneficiary records.</p>
+                    <p class="achievement-note">Bring original documents only when PESO instructs you to visit. Residents who cannot use email may call, text, message the official Facebook page, or visit during office hours.</p>
                 </article>
             </div>
         </div>
     </section>
 
+    <section class="content-section public-service-section stagger-7 bp-content-module" aria-labelledby="publicServiceTitle">
+        <div class="content-wrap">
+            <div class="content-enhancement-heading">
+                <span class="content-enhancement-eyebrow">Public service commitment</span>
+                <h2 id="publicServiceTitle">What You Can Expect from PESO Vinzons</h2>
+                <p>BENEPESO supports the office's employment-service mandate by making program information, applications, and recorded updates easier for residents to access.</p>
+            </div>
+            <div class="public-service-grid">
+                <article><h3>Who we serve</h3><p>Residents of the Municipality of Vinzons seeking employment assistance, temporary livelihood opportunities, student employment, skills support, or MSME profiling.</p></article>
+                <article><h3>How we assist</h3><p>PESO reviews submitted records, coordinates program requirements and schedules, and provides the official decision or next instruction for each application.</p></article>
+                <article><h3>Our service standard</h3><p>Applications are handled using the requirements and schedule of the selected program batch. Processing time may vary when partner-agency validation is required.</p></article>
+            </div>
+            <div class="partner-note"><strong>Program coordination:</strong> Services may be delivered with DOLE, TESDA, educational institutions, barangays, employers, and other authorized government partners, depending on the program.</div>
+            <div class="service-mandate-note"><strong>Official mandate:</strong> PESO operates as a non-fee employment service facility that supports employment information, referral, placement, and related programs under the <a href="https://lawphil.net/statutes/repacts/ra2000/ra_8759_2000.html" target="_blank" rel="noopener noreferrer">Public Employment Service Office Act of 1999 (Republic Act No. 8759)</a>.</div>
+        </div>
+    </section>
+
     <!-- CONTACT, GOOGLE MAP & CAPSTONE NOTE -->
-    <section class="content-section contact-section stagger-7">
+    <section class="content-section contact-section stagger-7" id="peso-office">
         <div class="content-wrap">
             <div class="contact-glass-panel">
                 <div class="contact-info">
@@ -306,18 +327,31 @@ try {
                     <ul class="contact-list">
                         <li>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                            Municipality of Vinzons, Camarines Norte
+                            Vinzons Municipal Hall, Vinzons Avenue, Barangay II (Poblacion), Vinzons, Camarines Norte 4603
                         </li>
                         <li>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                             Mon - Fri, 8:00 AM to 5:00 PM
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2.1Z"></path></svg>
+                            <a href="tel:+639479971186">Call or text +63 947 997 1186</a>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"></path><path d="m4 6 8 7 8-7"></path></svg>
+                            <a href="mailto:lguvinzonspeso@gmail.com">lguvinzonspeso@gmail.com</a>
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 0-10.4 8.9V14.6H8.3V12h2.3v-2c0-2.3 1.4-3.6 3.5-3.6 1 0 2.1.2 2.1.2v2.3H15c-1.1 0-1.5.7-1.5 1.4V12H16l-.4 2.6h-2.1v6.3A9 9 0 0 0 21 12Z"></path></svg>
+                            <a href="https://www.facebook.com/peso.vinzons" target="_blank" rel="noopener noreferrer">Message PESO Vinzons on Facebook</a>
                         </li>
                     </ul>
                 </div>
                 
                 <div class="contact-map">
                     <iframe 
-                        src="https://maps.google.com/maps?q=Municipal%20Hall,%20Vinzons,%20Camarines%20Norte&t=&z=16&ie=UTF8&iwloc=&output=embed" 
+                        src="https://maps.google.com/maps?q=Vinzons%20Municipal%20Hall,%20Vinzons%20Avenue,%20Barangay%20II,%20Poblacion,%20Vinzons,%20Camarines%20Norte%204603&t=m&z=18&ie=UTF8&iwloc=&output=embed"
+                        title="Street map showing Vinzons Municipal Hall on Vinzons Avenue"
                         width="100%" 
                         height="100%" 
                         style="border:0; border-radius: 20px; min-height: 250px; box-shadow: var(--shadow-soft);" 
@@ -325,11 +359,12 @@ try {
                         loading="lazy" 
                         referrerpolicy="no-referrer-when-downgrade">
                     </iframe>
+                    <a class="map-directions-link" href="https://www.google.com/maps/search/?api=1&amp;query=Vinzons+Municipal+Hall%2C+Vinzons+Avenue%2C+Barangay+II%2C+Poblacion%2C+Vinzons%2C+Camarines+Norte+4603" target="_blank" rel="noopener noreferrer">Open exact location in Google Maps <span aria-hidden="true">&nearr;</span></a>
                 </div>
             </div>
             
-            <div class="capstone-note">
-                <p><strong>BENEPESO</strong> was developed as a Capstone Project dedicated to digitalizing and streamlining the services of the Local Government Unit of Vinzons.</p>
+            <div class="capstone-note service-feedback-note">
+                <p><strong>Questions, corrections, or feedback?</strong> Contact PESO Vinzons during office hours so the responsible staff can review your concern. Never send passwords or unnecessary identity documents through public messages.</p>
             </div>
         </div>
     </section>

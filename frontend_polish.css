@@ -1693,6 +1693,74 @@ html.bp-action-loading body {
   .bp-update-list { max-height: 48vh; }
 }
 
+/* Service updates: keep the complete panel visible inside the mobile menu. */
+@media (max-width: 768px) {
+  .topbar .menu-area { overflow-x: hidden; }
+  .topbar .bp-update-center { min-width: 0; max-width: 100%; }
+  .topbar .bp-update-panel {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    max-height: min(520px, calc(100dvh - 210px));
+    box-sizing: border-box;
+  }
+  .topbar .bp-update-panel:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+  }
+  .topbar .bp-update-panel > header {
+    min-width: 0;
+    flex: 0 0 auto;
+    gap: 10px;
+  }
+  .topbar .bp-update-panel > header div {
+    min-width: 0;
+  }
+  .topbar .bp-update-panel > header strong,
+  .topbar .bp-update-panel > header span {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .topbar .bp-update-read {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .topbar .bp-update-list {
+    min-width: 0;
+    min-height: 120px;
+    max-height: none;
+    flex: 1 1 auto;
+  }
+  .topbar .bp-update-item {
+    min-width: 0;
+    padding: 12px 14px;
+  }
+  .topbar .bp-update-footer {
+    min-width: 0;
+    flex: 0 0 auto;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar .bp-update-panel {
+    max-height: min(470px, calc(100dvh - 190px));
+  }
+  .topbar .bp-update-panel > header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 12px;
+  }
+  .topbar .bp-update-read {
+    padding-inline: 7px;
+    font-size: 9px;
+  }
+  .topbar .bp-update-footer {
+    padding: 11px 13px;
+    font-size: 10px;
+  }
+}
+
 /* Home hero: a BENEPESO service record, kept distinct from travel-style visuals. */
 .bp-record-graphic { align-items: stretch; justify-content: space-between; padding: 30px 27px; }
 .bp-record-head { display: flex; align-items: center; gap: 13px; width: 100%; }
