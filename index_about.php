@@ -31,10 +31,11 @@ if (isset($_SESSION['role'])) {
     <link rel="stylesheet" href="home.css?v=16">
     <link rel="stylesheet" href="frontend_polish.css?v=16">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=22">
+    <link rel="stylesheet" href="index.css?v=23">
 <script src="frontend_polish.js?v=15" defer></script>
 </head>
 <body class="public-index-page public-about-page">
+<a class="public-skip-link" href="#mainContent">Skip to main content</a>
 <div class="page-wrap">
     <header class="topbar">
         <div class="topbar-inner">
@@ -59,19 +60,42 @@ if (isset($_SESSION['role'])) {
         </div>
     </header>
 
-    <main>
-        <section class="search-hero welcome-area public-about-hero">
-            <div class="welcome-inner centered-hero">
-                <span class="welcome-badge stagger-1"><span class="badge-dot"></span>Public service, clearly connected</span>
-                <h1 class="welcome-title stagger-2">About <span class="welcome-highlight">BENEPESO</span></h1>
-                <p class="centered-text stagger-3">The official digital service path of PESO Vinzons for discovering programs, submitting accurate applications, and following recorded beneficiary updates.</p>
-                <div class="public-hero-actions stagger-4">
-                    <a class="btn-main" href="index.php#available-programs">Explore Open Programs</a>
+    <main id="mainContent">
+        <section class="search-hero welcome-area public-about-hero" aria-labelledby="aboutHeroTitle">
+            <div class="public-hero-bubbles" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="welcome-inner public-about-hero-inner">
+                <div class="public-about-hero-copy">
+                    <span class="welcome-badge stagger-1"><span class="badge-dot"></span>Public service, clearly connected</span>
+                    <h1 class="welcome-title stagger-2" id="aboutHeroTitle">A clearer path to <span class="welcome-highlight">PESO services.</span></h1>
+                    <p class="centered-text stagger-3">BENEPESO connects residents to official program information, secure applications, and understandable updates from PESO Vinzons.</p>
+                    <div class="public-hero-actions stagger-4">
+                        <a class="btn-main" href="index.php#available-programs">Explore Open Programs</a>
+                        <a class="btn-quiet" href="#how-benepeso-helps">How It Helps</a>
+                    </div>
                 </div>
+
+                <aside class="public-about-identity stagger-3" aria-label="BENEPESO service overview">
+                    <div class="public-about-seal"><img src="img/pesologo.png" alt="PESO Vinzons official seal"></div>
+                    <span>BENEPESO</span>
+                    <strong>Beneficiary Profiling, Eligibility, and Verification System</strong>
+                    <div>
+                        <span><b>3</b><small>Core programs</small></span>
+                        <span><b>1</b><small>Resident profile</small></span>
+                        <span><b>Official</b><small>PESO updates</small></span>
+                    </div>
+                </aside>
             </div>
         </section>
 
-        <section class="public-about-overview content-wrap reveal" aria-labelledby="publicAboutTitle">
+        <section class="public-trust-strip" aria-label="BENEPESO service assurances">
+            <div class="content-wrap">
+                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></svg><b>Official information</b><small>Approved PESO program records</small></span>
+                <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><b>Privacy-aware</b><small>Authenticated resident services</small></span>
+                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v5h5"/><path d="M12 8v4l3 2"/></svg><b>Human-validated</b><small>Reviewed by authorized PESO staff</small></span>
+            </div>
+        </section>
+
+        <section class="public-about-overview content-wrap reveal" id="how-benepeso-helps" aria-labelledby="publicAboutTitle">
             <div class="public-about-heading">
                 <span>Built around resident needs</span>
                 <h2 id="publicAboutTitle">One reliable path to PESO services</h2>
@@ -79,9 +103,30 @@ if (isset($_SESSION['role'])) {
             </div>
 
             <div class="public-about-grid">
-                <article><span>01</span><h3>Discover</h3><p>Review approved programs, schedules, venues, available slots, eligibility rules, and documentary requirements.</p></article>
-                <article><span>02</span><h3>Apply accurately</h3><p>Use one registered profile to submit complete information for the exact program batch you select.</p></article>
-                <article><span>03</span><h3>Follow official updates</h3><p>Track PESO validation, requirements received, program participation, and the next recorded action.</p></article>
+                <article><span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4M8 11h6M11 8v6"/></svg></span><small>01</small><h3>Discover</h3><p>Review approved programs, schedules, venues, available slots, eligibility rules, and documentary requirements.</p></article>
+                <article><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M14 3v4h4M9 12h6M9 16h4"/></svg></span><small>02</small><h3>Apply accurately</h3><p>Use one registered profile to submit complete information for the exact program batch you select.</p></article>
+                <article><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v5h5M9 12l2 2 4-5"/></svg></span><small>03</small><h3>Follow official updates</h3><p>Track PESO validation, requirements received, program participation, and the next recorded action.</p></article>
+            </div>
+        </section>
+
+        <section class="public-about-purpose reveal" aria-labelledby="purposeTitle">
+            <div class="content-wrap public-about-purpose-inner">
+                <div class="public-purpose-visual" aria-hidden="true">
+                    <span class="purpose-ring purpose-ring-one"></span>
+                    <span class="purpose-ring purpose-ring-two"></span>
+                    <img src="img/pesologo.png" alt="">
+                    <b>Resident</b><i>PESO</i><em>Programs</em>
+                </div>
+                <div class="public-purpose-copy">
+                    <span class="section-kicker">Why BENEPESO exists</span>
+                    <h2 id="purposeTitle">Less uncertainty. Better-prepared applications.</h2>
+                    <p>Residents should not need to guess which information is official, what documents to prepare, or what happens after submitting an application. BENEPESO brings those steps together while keeping final decisions with authorized PESO personnel.</p>
+                    <ul>
+                        <li>One profile for supported PESO services</li>
+                        <li>Requirements shown before applying</li>
+                        <li>Recorded status and next-action guidance</li>
+                    </ul>
+                </div>
             </div>
         </section>
 
@@ -92,10 +137,10 @@ if (isset($_SESSION['role'])) {
                     <h2 id="serviceStandardsTitle">What residents can expect</h2>
                 </div>
                 <ul>
-                    <li><strong>Clear information</strong><span>Program details are published from approved PESO records.</span></li>
-                    <li><strong>Privacy-aware access</strong><span>Personal records remain protected behind authenticated services.</span></li>
-                    <li><strong>Human validation</strong><span>Automated checks remain preliminary until authorized PESO review.</span></li>
-                    <li><strong>Actionable guidance</strong><span>Recorded statuses explain what happened and what to do next.</span></li>
+                    <li><i aria-hidden="true">01</i><strong>Clear information</strong><span>Program details are published from approved PESO records.</span></li>
+                    <li><i aria-hidden="true">02</i><strong>Privacy-aware access</strong><span>Personal records remain protected behind authenticated services.</span></li>
+                    <li><i aria-hidden="true">03</i><strong>Human validation</strong><span>Automated checks remain preliminary until authorized PESO review.</span></li>
+                    <li><i aria-hidden="true">04</i><strong>Actionable guidance</strong><span>Recorded statuses explain what happened and what to do next.</span></li>
                 </ul>
             </div>
         </section>
@@ -107,9 +152,15 @@ if (isset($_SESSION['role'])) {
                 <p>Contact PESO Vinzons for requirement clarification, record corrections, and official schedule confirmation.</p>
             </div>
             <div class="public-about-contact-actions">
-                <a href="mailto:lguvinzonspeso@gmail.com">Email PESO</a>
-                <a href="tel:+639479971186">Call +63 947 997 1186</a>
-                <a href="https://www.facebook.com/peso.vinzons" target="_blank" rel="noopener noreferrer">PESO Vinzons on Facebook</a>
+                <div class="public-about-next-actions">
+                    <a class="is-primary" href="index.php#available-programs">Explore Programs</a>
+                    <a href="signup.php">Create an Account</a>
+                </div>
+                <div class="public-about-help-links">
+                    <a href="mailto:lguvinzonspeso@gmail.com">Email PESO</a>
+                    <a href="tel:+639479971186">Call +63 947 997 1186</a>
+                    <a href="https://www.facebook.com/peso.vinzons" target="_blank" rel="noopener noreferrer">Facebook</a>
+                </div>
             </div>
         </section>
     </main>
@@ -162,7 +213,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 menuButton.setAttribute('aria-expanded', 'false');
             });
         });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && menuArea.classList.contains('open')) {
+                menuArea.classList.remove('open');
+                menuButton.setAttribute('aria-expanded', 'false');
+                menuButton.focus();
+            }
+        });
     }
+
+    const topbar = document.querySelector('.topbar');
+    const updateTopbar = function () { topbar?.classList.toggle('is-scrolled', window.scrollY > 12); };
+    updateTopbar();
+    window.addEventListener('scroll', updateTopbar, { passive: true });
 
     if ('IntersectionObserver' in window) {
         const observer = new IntersectionObserver(function (entries, activeObserver) {

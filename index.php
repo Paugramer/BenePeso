@@ -151,10 +151,11 @@ if ($updated_stmt) {
     
     <link rel="stylesheet" href="frontend_polish.css?v=16">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=22">
+    <link rel="stylesheet" href="index.css?v=23">
 <script src="frontend_polish.js?v=15" defer></script>
 </head>
 <body class="public-index-page">
+<a class="public-skip-link" href="#mainContent">Skip to main content</a>
 
 <div class="page-wrap">
     <header class="topbar">
@@ -171,7 +172,7 @@ if ($updated_stmt) {
             <span></span><span></span><span></span>
         </button>
 
-        <nav class="menu-area" id="menuArea">
+        <nav class="menu-area" id="menuArea" aria-label="Public navigation">
           <a class="menu-item active" href="index.php" aria-current="page">Home</a>
           <a class="menu-item" href="#available-programs">Programs</a>
           <a class="menu-item" href="index_about.php">About</a>
@@ -180,28 +181,59 @@ if ($updated_stmt) {
       </div>
     </header>
 
-    <main class="content-container">
+    <main class="content-container" id="mainContent">
         
         <div id="programs-section" class="page-section">
-            <section class="search-hero welcome-area">
+            <section class="search-hero welcome-area public-home-hero" aria-labelledby="publicHeroTitle">
                 <div class="public-hero-bubbles" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
-                <div class="welcome-inner centered-hero">
-                    <span class="welcome-badge stagger-1">
-                        <span class="badge-dot"></span>
-                        Official PESO Vinzons portal
-                    </span>
-                    <h1 class="welcome-title stagger-2">Discover PESO <span class="welcome-highlight">Programs</span></h1>
-                    <p class="centered-text stagger-3">Browse approved government programs, review their requirements, and begin your application through one secure service path.</p>
+                <div class="welcome-inner public-home-hero-inner">
+                    <div class="public-home-hero-grid">
+                        <div class="public-hero-copy">
+                            <span class="welcome-badge stagger-1">
+                                <span class="badge-dot"></span>
+                                Official PESO Vinzons portal
+                            </span>
+                            <h1 class="welcome-title stagger-2" id="publicHeroTitle">Find the right PESO opportunity, <span class="welcome-highlight">all in one place.</span></h1>
+                            <p class="centered-text stagger-3">Discover approved programs, understand the requirements, and continue through one secure and trackable service path.</p>
 
-                    <div class="public-hero-actions stagger-3">
-                        <a class="btn-main" href="#available-programs">Browse Open Programs</a>
+                            <div class="public-hero-actions stagger-3">
+                                <a class="btn-main" href="#available-programs">Explore Open Programs</a>
+                                <a class="btn-quiet" href="#how-it-works">How BENEPESO Works</a>
+                            </div>
+
+                            <div class="public-program-shortcuts stagger-4" aria-label="Browse the three PESO programs">
+                                <span>Explore by program</span>
+                                <div>
+                                    <a href="?search=TUPAD#available-programs">TUPAD</a>
+                                    <a href="?search=SPES#available-programs">SPES</a>
+                                    <a href="?search=MSME#available-programs">MSME</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <aside class="public-hero-summary stagger-3" aria-label="Current PESO program summary">
+                            <div class="public-summary-head">
+                                <span>Current opportunities</span>
+                                <i aria-hidden="true"></i>
+                            </div>
+                            <div class="public-summary-count"><strong><?= number_format($total_rows) ?></strong><span>open program listing<?= $total_rows === 1 ? '' : 's' ?></span></div>
+                            <div class="public-summary-programs">
+                                <span><i aria-hidden="true">T</i><b>TUPAD</b><small>Community employment</small></span>
+                                <span><i aria-hidden="true">S</i><b>SPES</b><small>Student employment</small></span>
+                                <span><i aria-hidden="true">M</i><b>MSME</b><small>Livelihood support</small></span>
+                            </div>
+                            <div class="public-summary-foot">
+                                <span><?= $directory_updated_at ? 'Updated ' . htmlspecialchars(date('M d, Y', strtotime($directory_updated_at))) : 'Verified PESO directory' ?></span>
+                                <a href="#available-programs">View directory <span aria-hidden="true">&rarr;</span></a>
+                            </div>
+                        </aside>
                     </div>
-                    
+
                     <form action="index.php" method="GET" class="v-search-box-centered stagger-4">
                         <div class="input-wrapper">
                             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; color:var(--muted);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                             <label class="sr-only" for="publicProgramSearch">Search programs by name</label>
-                            <input id="publicProgramSearch" type="search" name="search" placeholder="Search programs, such as TUPAD or SPES" value="<?= htmlspecialchars($search_query) ?>" style="flex:1;">
+                            <input id="publicProgramSearch" type="search" name="search" list="publicProgramSuggestions" placeholder="Search TUPAD, SPES, or MSME" value="<?= htmlspecialchars($search_query) ?>" style="flex:1;">
                             <input id="publicStatusFilter" type="hidden" name="status" value="<?= htmlspecialchars($status_filter) ?>">
                             <div class="public-schedule-select" id="publicScheduleSelect">
                                 <button class="public-schedule-toggle" id="publicScheduleToggle" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="publicScheduleMenu">
@@ -218,10 +250,23 @@ if ($updated_stmt) {
                             <button type="submit" class="btn-main">Search</button>
                         </div>
                     </form>
+                    <datalist id="publicProgramSuggestions">
+                        <option value="TUPAD"></option>
+                        <option value="SPES"></option>
+                        <option value="MSME"></option>
+                    </datalist>
                 </div>
             </section>
 
-            <section class="public-route content-wrap reveal" aria-labelledby="publicRouteTitle">
+            <section class="public-trust-strip" aria-label="BENEPESO service assurances">
+                <div class="content-wrap">
+                    <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></svg><b>Official PESO records</b><small>Published from approved listings</small></span>
+                    <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><b>Secure applications</b><small>Personal records stay protected</small></span>
+                    <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v5h5"/><path d="M12 8v4l3 2"/></svg><b>Trackable updates</b><small>Follow validation and next steps</small></span>
+                </div>
+            </section>
+
+            <section class="public-route content-wrap reveal" id="how-it-works" aria-labelledby="publicRouteTitle">
                 <div class="public-route-heading">
                     <span>Start with confidence</span>
                     <h2 id="publicRouteTitle">How to apply through BENEPESO</h2>
@@ -255,10 +300,40 @@ if ($updated_stmt) {
                     </div>
                 </div>
 
+                <div class="public-directory-toolbar" aria-label="Filter the program directory">
+                    <form action="index.php#available-programs" method="GET">
+                        <label class="sr-only" for="directorySearch">Search the program directory</label>
+                        <span class="directory-search-control">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+                            <input id="directorySearch" name="search" type="search" list="publicProgramSuggestions" placeholder="Search TUPAD, SPES, or MSME" value="<?= htmlspecialchars($search_query) ?>">
+                        </span>
+                        <label class="sr-only" for="directoryStatus">Filter by schedule</label>
+                        <select id="directoryStatus" name="status">
+                            <option value="" <?= $status_filter === '' ? 'selected' : '' ?>>All schedules</option>
+                            <option value="Ongoing" <?= $status_filter === 'Ongoing' ? 'selected' : '' ?>>Open now</option>
+                            <option value="Upcoming" <?= $status_filter === 'Upcoming' ? 'selected' : '' ?>>Coming soon</option>
+                        </select>
+                        <button type="submit">Update results</button>
+                    </form>
+                </div>
+
                 <div class="public-directory-notice" role="note">
                     <div><strong>Official program information</strong><span>Availability and remaining slots may change after PESO validation. Eligibility and final approval follow the requirements of the selected batch.</span></div>
                     <?php if ($directory_updated_at): ?><time datetime="<?= htmlspecialchars(date('Y-m-d', strtotime($directory_updated_at))) ?>">Directory updated <?= htmlspecialchars(date('M d, Y', strtotime($directory_updated_at))) ?></time><?php endif; ?>
                 </div>
+
+                <?php if ($search_query !== '' || $status_filter !== ''): ?>
+                    <div class="public-active-filters" aria-label="Active program filters">
+                        <span>Active filters</span>
+                        <?php if ($search_query !== ''): ?>
+                            <a href="<?= $status_filter !== '' ? '?status=' . rawurlencode($status_filter) . '#available-programs' : 'index.php#available-programs' ?>">Search: <?= htmlspecialchars($search_query) ?> <span aria-hidden="true">&times;</span></a>
+                        <?php endif; ?>
+                        <?php if ($status_filter !== ''): ?>
+                            <a href="<?= $search_query !== '' ? '?search=' . rawurlencode($search_query) . '#available-programs' : 'index.php#available-programs' ?>"><?= $status_filter === 'Ongoing' ? 'Open now' : 'Coming soon' ?> <span aria-hidden="true">&times;</span></a>
+                        <?php endif; ?>
+                        <a class="clear-all" href="index.php#available-programs">Clear all</a>
+                    </div>
+                <?php endif; ?>
 
                 <?php if (count($programs) > 0): ?>
                     <div class="program-grid program-count-<?= min(6, count($programs)) ?>" id="programGridContainer">
@@ -316,7 +391,7 @@ if ($updated_stmt) {
                                         </span>
                                     </div>
                                     <div class="card-footer-info">
-                                        <button type="button" class="program-btn" data-program="<?= $modalData ?>" aria-label="View <?= htmlspecialchars($row['program_name']) ?><?= $batch_count > 1 ? ' open batches' : ' details' ?>" onclick="openProgramModal(this)">View Details</button>
+                                        <button type="button" class="program-btn" data-program="<?= $modalData ?>" aria-label="View <?= htmlspecialchars($row['program_name']) ?><?= $batch_count > 1 ? ' open batches' : ' details' ?>" onclick="openProgramModal(this)">View Program Details</button>
                                     </div>
                                 </div>
                             </article>
@@ -355,9 +430,9 @@ if ($updated_stmt) {
                                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="9" y1="9" x2="13" y2="13"></line><line x1="13" y1="9" x2="9" y2="13"></line></svg>
                             </div>
                             <h3>No Programs Found</h3>
-                            <p>We couldn't find any approved programs matching your search.</p>
+                            <p>We couldn't find an open TUPAD, SPES, or MSME listing matching these filters.</p>
                             <?php if($search_query !== '' || $status_filter !== ''): ?>
-                                <a href="index.php" class="btn-outline" style="margin-top: 15px;">Clear Search</a>
+                                <a href="index.php#available-programs" class="btn-outline" style="margin-top: 15px;">View All Programs</a>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -667,22 +742,37 @@ if ($updated_stmt) {
                 menuArea.classList.remove('open');
                 menuBtn.setAttribute('aria-expanded', 'false');
             }));
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && menuArea.classList.contains('open')) {
+                    menuArea.classList.remove('open');
+                    menuBtn.setAttribute('aria-expanded', 'false');
+                    menuBtn.focus();
+                }
+            });
         }
+
+        const topbar = document.querySelector('.topbar');
+        const updateTopbar = () => topbar?.classList.toggle('is-scrolled', window.scrollY > 12);
+        updateTopbar();
+        window.addEventListener('scroll', updateTopbar, { passive: true });
 
         // Scroll Reveal Animation Logic
         const observerOptions = { root: null, rootMargin: '0px', threshold: 0.15 };
-        const observer = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('active');
-                    observer.unobserve(entry.target); 
-                }
-            });
-        }, observerOptions);
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
 
-        document.querySelectorAll('.reveal').forEach(el => {
-            observer.observe(el);
-        });
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        } else {
+            document.querySelectorAll('.reveal').forEach(el => el.classList.add('active'));
+        }
     });
 </script>
 </body>
