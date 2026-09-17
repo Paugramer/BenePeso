@@ -11,8 +11,6 @@ uploads/*
 
 # Local database and code backups must remain outside version control.
 _safety_backups/*
-!_safety_backups/.htaccess
-!_safety_backups/index.php
 
 # Local/editor files
 .vscode/
