@@ -300,10 +300,10 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
     <link rel="stylesheet" href="admin_accounts.css">
     <link rel="stylesheet" href="shared_sidebar.css">
     <link rel="stylesheet" href="admin_accounts_polish.css?v=8">
-<link rel="stylesheet" href="frontend_polish.css?v=11">
+<link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<script src="frontend_polish.js?v=7" defer></script>
+<script src="frontend_polish.js?v=14" defer></script>
 </head>
 <body class="admin-accounts-page accounts-view-<?= e($view) ?>">
 

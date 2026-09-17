@@ -165,10 +165,10 @@ $clean_modules = [
 <link rel="stylesheet" href="shared_sidebar.css">
 <link rel="stylesheet" href="activity_filter_polish.css?v=1">
 <script src="activity_filter_polish.js?v=1" defer></script>
-<link rel="stylesheet" href="frontend_polish.css?v=11">
+<link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<script src="frontend_polish.js?v=7" defer></script>
+<script src="frontend_polish.js?v=14" defer></script>
 </head>
 <body>
 

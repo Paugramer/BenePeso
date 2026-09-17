@@ -857,11 +857,11 @@ if ($barangay_summary_result) {
     
     <link rel="stylesheet" href="home.css?v=16">
     <link rel="stylesheet" href="programs.css?v=29">
-<link rel="stylesheet" href="frontend_polish.css?v=15">
+<link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
-    <script src="frontend_polish.js?v=13" defer></script>
+    <script src="frontend_polish.js?v=14" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body class="beneficiary-programs-page">

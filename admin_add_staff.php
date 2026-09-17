@@ -430,9 +430,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 </style>
 <link rel="stylesheet" href="admin_accounts_polish.css?v=5">
-<link rel="stylesheet" href="frontend_polish.css?v=11">
+<link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
-<script src="frontend_polish.js?v=7" defer></script>
+<script src="frontend_polish.js?v=14" defer></script>
 </head>
 <body class="admin-add-staff-page">
 

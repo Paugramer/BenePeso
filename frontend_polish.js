@@ -726,6 +726,7 @@
     const dialog = container.matches('[role="dialog"]') ? container : container.querySelector('[role="dialog"]');
 
     if (event.key === 'Escape') {
+      if (document.querySelector('.bp-select-menu')) return;
       const close = container.querySelector(closeSelector);
       if (close) {
         event.preventDefault();
@@ -749,12 +750,147 @@
     }
   });
 
+  function initializeEnhancedSelects() {
+    let active = null;
+    let sequence = 0;
+
+    const closeActive = (restoreFocus) => {
+      if (!active) return;
+      const { root, button, menu } = active;
+      root.classList.remove('is-open');
+      button.setAttribute('aria-expanded', 'false');
+      menu.remove();
+      active = null;
+      if (restoreFocus) button.focus();
+    };
+
+    const enhance = (select) => {
+      if (!(select instanceof HTMLSelectElement) || select.multiple || select.dataset.bpEnhanced === 'true' || select.hasAttribute('data-native-select')) return;
+      select.dataset.bpEnhanced = 'true';
+      select.classList.add('bp-native-select');
+
+      const root = document.createElement('span');
+      root.className = 'bp-select';
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'bp-select-trigger';
+      button.innerHTML = '<span class="bp-select-value"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>';
+      button.setAttribute('aria-haspopup', 'listbox');
+      button.setAttribute('aria-expanded', 'false');
+      select.insertAdjacentElement('afterend', root);
+      root.appendChild(button);
+
+      const sync = () => {
+        const selected = select.options[select.selectedIndex];
+        button.querySelector('.bp-select-value').textContent = selected ? selected.textContent.trim() : 'Select an option';
+        button.disabled = select.disabled;
+        root.classList.toggle('is-disabled', select.disabled);
+        root.classList.toggle('is-placeholder', !select.value);
+      };
+
+      const open = () => {
+        if (select.disabled) return;
+        if (active && active.root === root) { closeActive(false); return; }
+        closeActive(false);
+        sync();
+
+        const menu = document.createElement('div');
+        const menuId = 'bpSelectMenu' + (++sequence);
+        menu.className = 'bp-select-menu';
+        menu.id = menuId;
+        menu.setAttribute('role', 'listbox');
+        button.setAttribute('aria-controls', menuId);
+        Array.from(select.options).forEach((option, index) => {
+          if (option.hidden) return;
+          const item = document.createElement('button');
+          item.type = 'button';
+          item.className = 'bp-select-option';
+          item.setAttribute('role', 'option');
+          item.dataset.index = String(index);
+          item.disabled = option.disabled;
+          item.setAttribute('aria-selected', option.selected ? 'true' : 'false');
+          item.innerHTML = '<span></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';
+          item.querySelector('span').textContent = option.textContent.trim();
+          item.addEventListener('click', () => {
+            if (option.disabled) return;
+            select.selectedIndex = index;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            sync();
+            closeActive(true);
+          });
+          menu.appendChild(item);
+        });
+
+        document.body.appendChild(menu);
+        const rect = root.getBoundingClientRect();
+        const roomBelow = window.innerHeight - rect.bottom - 12;
+        const menuHeight = Math.min(menu.scrollHeight, 320);
+        const openAbove = roomBelow < Math.min(menuHeight, 220) && rect.top > roomBelow;
+        menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - rect.width - 8)) + 'px';
+        menu.style.width = rect.width + 'px';
+        menu.style.maxHeight = Math.max(150, Math.min(320, openAbove ? rect.top - 12 : roomBelow)) + 'px';
+        menu.style.top = (openAbove ? Math.max(8, rect.top - Math.min(menuHeight, rect.top - 12) - 6) : rect.bottom + 6) + 'px';
+        menu.classList.toggle('opens-above', openAbove);
+        root.classList.add('is-open');
+        button.setAttribute('aria-expanded', 'true');
+        active = { root, button, menu };
+        const selectedItem = menu.querySelector('[aria-selected="true"]');
+        (selectedItem || menu.querySelector('.bp-select-option:not(:disabled)'))?.focus();
+        selectedItem?.scrollIntoView({ block: 'nearest' });
+      };
+
+      button.addEventListener('click', open);
+      button.addEventListener('keydown', event => {
+        if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) {
+          event.preventDefault();
+          open();
+        }
+      });
+      select.addEventListener('change', sync);
+      select.addEventListener('focus', () => button.focus());
+      select.addEventListener('invalid', event => {
+        event.preventDefault();
+        button.focus();
+        root.classList.add('is-invalid');
+        window.setTimeout(() => root.classList.remove('is-invalid'), 1800);
+      });
+      new MutationObserver(sync).observe(select, { attributes: true, childList: true, subtree: true });
+      sync();
+    };
+
+    document.querySelectorAll('select').forEach(enhance);
+    new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => {
+      if (!(node instanceof Element)) return;
+      if (node.matches('select')) enhance(node);
+      node.querySelectorAll?.('select').forEach(enhance);
+    }))).observe(document.body, { childList: true, subtree: true });
+
+    document.addEventListener('pointerdown', event => {
+      if (active && !active.root.contains(event.target) && !active.menu.contains(event.target)) closeActive(false);
+    });
+    document.addEventListener('keydown', event => {
+      if (!active) return;
+      const options = Array.from(active.menu.querySelectorAll('.bp-select-option:not(:disabled)'));
+      const current = options.indexOf(document.activeElement);
+      if (event.key === 'Escape') { event.preventDefault(); closeActive(true); }
+      if (event.key === 'ArrowDown') { event.preventDefault(); (options[current + 1] || options[0])?.focus(); }
+      if (event.key === 'ArrowUp') { event.preventDefault(); (options[current - 1] || options[options.length - 1])?.focus(); }
+      if (event.key === 'Home') { event.preventDefault(); options[0]?.focus(); }
+      if (event.key === 'End') { event.preventDefault(); options[options.length - 1]?.focus(); }
+    });
+    window.addEventListener('resize', () => closeActive(false), { passive: true });
+    document.addEventListener('scroll', event => {
+      if (active && event.target !== active.menu && !active.menu.contains(event.target)) closeActive(false);
+    }, { passive: true, capture: true });
+  }
+
   function initialize() {
     document.documentElement.classList.add('bp-ui-ready');
     initializeFooterContactModal();
     initializeBeneficiaryUpdates();
     initializeProgramSuggestions();
     initializeBackToTop();
+    initializeEnhancedSelects();
     prepareDialogs();
     labelIconButtons();
     improveImages();

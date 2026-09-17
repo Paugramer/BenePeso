@@ -46,10 +46,10 @@ $barangays = beneficiary_barangay_options();
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css?v=31" />
-  <link rel="stylesheet" href="frontend_polish.css?v=11">
+  <link rel="stylesheet" href="frontend_polish.css?v=16">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
   <link rel="stylesheet" href="auth_refresh.css?v=1">
-  <script src="frontend_polish.js?v=12" defer></script>
+  <script src="frontend_polish.js?v=14" defer></script>
   <?php if (!$google_registration): ?>
     <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
   <script src="google_signin.js?v=5" defer></script>

@@ -32,7 +32,7 @@ function beneficiary_lifecycle_flow(string $programName, bool $returningSpes = f
  * Enforces one successful milestone at a time. Negative terminal outcomes can
  * be recorded from any active stage, while SPES examination cannot be skipped.
  */
-function beneficiary_validate_status_transition(mysqli $conn, int $beneficiaryId, string $targetStatus): array
+function beneficiary_validate_status_transition(mysqli $conn, int $beneficiaryId, string $targetStatus, bool $allowDocumentResubmission = false): array
 {
     $stmt = $conn->prepare('SELECT b.approval_status,b.availment_status,p.program_name FROM beneficiaries b JOIN programs p ON p.program_id=b.program_id WHERE b.beneficiary_id=? LIMIT 1');
     if (!$stmt) return ['allowed' => false, 'message' => 'The beneficiary workflow could not be checked.'];
@@ -44,7 +44,25 @@ function beneficiary_validate_status_transition(mysqli $conn, int $beneficiaryId
 
     $current = trim((string)($record['availment_status'] ?? 'Not Yet Availed')) ?: 'Not Yet Availed';
     if (strcasecmp($current, 'Requirements Recieved') === 0) $current = 'Requirements Received';
-    if ($targetStatus === $current) return ['allowed' => true, 'message' => '', 'current' => $current];
+    if ($targetStatus === $current) {
+        if ($current === 'Requirements Received' && $allowDocumentResubmission) {
+            return ['allowed' => true, 'message' => '', 'current' => $current];
+        }
+        return [
+            'allowed' => false,
+            'message' => $current === 'Requirements Received'
+                ? 'Documents Submitted can only be selected again when "Needs resubmission" is checked.'
+                : 'This beneficiary is already at "' . beneficiary_lifecycle_label($current) . '". Choose the next required stage.',
+            'current' => $current,
+        ];
+    }
+    if (in_array($current, ['Completed', 'Exam Failed', 'Not Qualified', 'Cancelled'], true)) {
+        return [
+            'allowed' => false,
+            'message' => 'The "' . beneficiary_lifecycle_label($current) . '" status is final and cannot be moved backward or replaced.',
+            'current' => $current,
+        ];
+    }
     if (in_array($targetStatus, ['Not Qualified', 'Cancelled'], true)) return ['allowed' => true, 'message' => '', 'current' => $current];
     if (($record['approval_status'] ?? '') !== 'Approved') {
         return ['allowed' => false, 'message' => 'Approve the application before updating its program progress.'];
@@ -67,6 +85,13 @@ function beneficiary_validate_status_transition(mysqli $conn, int $beneficiaryId
     }
     if ($currentIndex !== false && $targetIndex !== false && $targetIndex === $currentIndex + 1) {
         return ['allowed' => true, 'message' => '', 'current' => $current];
+    }
+    if ($currentIndex !== false && $targetIndex !== false && $targetIndex < $currentIndex) {
+        return [
+            'allowed' => false,
+            'message' => 'Program progress cannot move backward from "' . beneficiary_lifecycle_label($current) . '" to "' . beneficiary_lifecycle_label($targetStatus) . '".',
+            'current' => $current,
+        ];
     }
 
     $next = $currentIndex !== false ? ($flow[$currentIndex + 1] ?? null) : null;

@@ -709,7 +709,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $last_availed_at = (!empty($date_availed)) ? $date_availed . " 00:00:00" : null;
 
       if ($beneficiary_id > 0) {
-          $transition = beneficiary_validate_status_transition($conn, $beneficiary_id, $availment_status);
+          $transition = beneficiary_validate_status_transition($conn, $beneficiary_id, $availment_status, $needs_resubmission);
           if (!$transition['allowed']) {
               $_SESSION["show_error_modal"] = true;
               $_SESSION["error_modal_message"] = $transition['message'];
@@ -1708,10 +1708,10 @@ if ($selectedProgramName !== "") {
       .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #ccc; padding: 6px 3px; font-size: 9px; white-space: normal; overflow-wrap: anywhere; }
       .spreadsheet-table thead th { background: #e6f4ed; color: #0d2618; position: sticky; top: 0; z-index: 10; font-weight: 700;}
   </style>
-<link rel="stylesheet" href="frontend_polish.css?v=15">
+<link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<script src="frontend_polish.js?v=13" defer></script>
+<script src="frontend_polish.js?v=14" defer></script>
 </head>
 <body class="admin-beneficiaries-page">
   <div class="page-wrap">
