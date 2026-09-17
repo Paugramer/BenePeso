@@ -387,7 +387,7 @@ body.auth-page::before {
   .auth-signup .small { margin-top: 6px; }
 }
 
-@media (min-width: 901px) and (max-height: 760px) {
+@media (min-width: 901px) and (max-height: 960px) {
   body.auth-page { align-items: safe center; padding-block: 10px; }
   .auth-page .left { padding-block: 24px; }
   .auth-page .right,
@@ -653,6 +653,22 @@ body.auth-page::before {
   outline: none;
 }
 
+.auth-page .auth-account-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2px 5px;
+  margin-top: 5px;
+  color: #91a098;
+}
+
+.auth-page .auth-account-footer .small,
+.auth-page .auth-account-footer .auth-support-link {
+  width: auto;
+  margin: 0;
+}
+
 .auth-signup .signup-progress-copy {
   display: flex;
   align-items: center;
@@ -762,6 +778,41 @@ body.auth-page::before {
 @media (min-width: 901px) {
   .auth-signup .right,
   .auth-signup .card.compact .right { padding-block: 14px 16px; }
+}
+
+/* Laptop-height signup: retain comfortable controls while keeping the full step onscreen. */
+@media (min-width: 901px) and (max-height: 960px) {
+  .auth-signup .right,
+  .auth-signup .card.compact .right { padding: 10px 34px 12px; }
+  .auth-signup .auth-context-bar { min-height: 28px; margin-bottom: 2px; }
+  .auth-signup .auth-return,
+  .auth-signup .role-label { min-height: 30px; padding-block: 5px; }
+  .auth-signup .right h2 { margin-block: 0 2px; font-size: 22px; }
+  .auth-signup .signup-sub { max-width: none; margin-bottom: 4px; font-size: 11.5px; line-height: 1.3; }
+
+  .auth-signup .signup-progress-copy {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .auth-signup .step-tracker { margin: 3px 0 6px; padding-block: 5px; }
+  .auth-signup .step-circle { width: 22px; height: 22px; }
+  .auth-signup .form-group { margin-bottom: 4px; }
+  .auth-signup label { margin-top: 3px; margin-bottom: 2px; font-size: 9.5px; }
+  .auth-signup input,
+  .auth-signup select { min-height: 41px; padding-block: 7px; }
+  .auth-signup .btn { min-height: 42px; margin-top: 7px; }
+  .auth-signup .auth-divider { margin: 7px 0 5px; }
+  .auth-signup .google-signin--signup { margin-top: 4px; padding-block: 5px; }
+  .auth-signup .auth-account-footer { margin-top: 3px; }
+  .auth-signup .password-strength { padding-block: 6px; margin-bottom: 3px; }
 }
 
 @media (max-width: 900px) {

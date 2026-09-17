@@ -48,7 +48,7 @@ $barangays = beneficiary_barangay_options();
   <link rel="stylesheet" href="style.css?v=31" />
   <link rel="stylesheet" href="frontend_polish.css?v=16">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=8">
+  <link rel="stylesheet" href="auth_refresh.css?v=9">
 <script src="frontend_polish.js?v=15" defer></script>
   <?php if (!$google_registration): ?>
     <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
@@ -97,7 +97,7 @@ $barangays = beneficiary_barangay_options();
         </div>
 
         <h2 class="stagger-2"><?= $google_registration ? 'Complete Your Profile' : 'Create User Account' ?></h2>
-        <p class="sub signup-sub stagger-2"><?= $google_registration ? 'Add the remaining details needed for your BENEPESO account.' : 'Register once to access PESO programs and beneficiary services.' ?></p>
+        <p class="sub signup-sub stagger-2"><?= $google_registration ? 'Add the remaining details for your BENEPESO account.' : 'One account for PESO programs and beneficiary services.' ?></p>
 
         <?php if ($google_registration): ?>
           <div class="google-verified-banner stagger-2" role="status">
@@ -321,11 +321,14 @@ $barangays = beneficiary_barangay_options();
           </div>
         <?php endif; ?>
 
-        <p class="small stagger-4">
-          Already have an account?
-          <a href="login.php" id="loginLink">Log in securely</a>
-        </p>
-        <a class="auth-support-link stagger-4" href="mailto:lguvinzonspeso@gmail.com?subject=BENEPESO%20Registration%20Help">Need help? Contact PESO Vinzons</a>
+        <div class="auth-account-footer stagger-4">
+          <p class="small">
+            Already have an account?
+            <a href="login.php" id="loginLink">Log in securely</a>
+          </p>
+          <span aria-hidden="true">&bull;</span>
+          <a class="auth-support-link" href="mailto:lguvinzonspeso@gmail.com?subject=BENEPESO%20Registration%20Help">Contact PESO</a>
+        </div>
 
       </div>
     </div>
