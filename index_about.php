@@ -31,7 +31,7 @@ if (isset($_SESSION['role'])) {
     <link rel="stylesheet" href="home.css?v=16">
     <link rel="stylesheet" href="frontend_polish.css?v=16">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=27">
+    <link rel="stylesheet" href="index.css?v=28">
 <script src="frontend_polish.js?v=16" defer></script>
 </head>
 <body class="public-index-page public-about-page">

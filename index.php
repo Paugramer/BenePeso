@@ -151,7 +151,7 @@ if ($updated_stmt) {
     
     <link rel="stylesheet" href="frontend_polish.css?v=16">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=27">
+    <link rel="stylesheet" href="index.css?v=28">
 <script src="frontend_polish.js?v=16" defer></script>
 </head>
 <body class="public-index-page">
@@ -270,7 +270,14 @@ if ($updated_stmt) {
                 <div class="public-route-heading">
                     <span>A guided service path</span>
                     <h2 id="publicRouteTitle">From discovery to an official decision</h2>
-                    <p>BENEPESO keeps every next step visible.</p>
+                    <div class="public-beneficiary-cue">
+                        <svg viewBox="0 0 100 54" aria-hidden="true">
+                            <g class="beneficiary-person beneficiary-person-one"><circle cx="18" cy="15" r="6"/><path d="M8 36c1-9 5-14 10-14s9 5 10 14"/></g>
+                            <g class="beneficiary-person beneficiary-person-two"><circle cx="43" cy="15" r="6"/><path d="M33 36c1-9 5-14 10-14s9 5 10 14"/></g>
+                            <g class="beneficiary-document"><rect x="61" y="7" width="28" height="38" rx="5"/><path d="M68 17h14M68 23h10M68 29h7"/><circle cx="83" cy="38" r="9"/><path class="beneficiary-check" d="m79 38 3 3 6-7"/></g>
+                        </svg>
+                        <span><strong>Built for beneficiaries</strong><small>One profile. Clear application steps.</small></span>
+                    </div>
                 </div>
                 <ol class="public-route-flow">
                     <li><span class="route-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></span><div><small>Discover</small><strong>Find your program</strong><p>Compare open opportunities.</p></div></li>
