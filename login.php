@@ -91,7 +91,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="stylesheet" href="style.css?v=31" />
   <link rel="stylesheet" href="frontend_polish.css?v=16">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=9">
+  <link rel="stylesheet" href="auth_refresh.css?v=10">
 <script src="frontend_polish.js?v=15" defer></script>
   <?php if (benepeso_turnstile_enabled()): ?>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -121,11 +121,6 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
           <span><i aria-hidden="true">&#10003;</i>Protected beneficiary records</span>
         </div>
 
-        <div class="auth-brand-status stagger-4" aria-hidden="true">
-          <span class="auth-brand-status-dot"></span>
-          <span>Protected municipal access</span>
-          <span class="auth-brand-status-bars"><i></i><i></i><i></i></span>
-        </div>
       </div>
     </div>
 
