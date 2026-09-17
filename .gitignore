@@ -12,6 +12,13 @@ uploads/*
 # Local database and code backups must remain outside version control.
 _safety_backups/*
 
+# Composer installs PHP dependencies during deployment. Keep the standalone
+# browser PDF library, which is not managed by Composer.
+vendor/*
+!vendor/pdf-lib/
+vendor/pdf-lib/*
+!vendor/pdf-lib/pdf-lib.min.js
+
 # Local/editor files
 .vscode/
 .idea/
