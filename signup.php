@@ -48,7 +48,7 @@ $barangays = beneficiary_barangay_options();
   <link rel="stylesheet" href="style.css?v=31" />
   <link rel="stylesheet" href="frontend_polish.css?v=16">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=6">
+  <link rel="stylesheet" href="auth_refresh.css?v=7">
 <script src="frontend_polish.js?v=15" defer></script>
   <?php if (!$google_registration): ?>
     <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
@@ -76,6 +76,12 @@ $barangays = beneficiary_barangay_options();
           <span class="badge">Fast Sign Up</span>
           <span class="badge">Verified Access</span>
           <span class="badge">PESO Services</span>
+        </div>
+
+        <div class="auth-brand-status stagger-4" aria-hidden="true">
+          <span class="auth-brand-status-dot"></span>
+          <span>Guided secure registration</span>
+          <span class="auth-brand-status-bars"><i></i><i></i><i></i></span>
         </div>
       </div>
     </div>
