@@ -158,6 +158,27 @@ body.auth-page::before {
   text-decoration: none;
 }
 .auth-page .auth-form-options a:hover { color: var(--auth-green-dark); text-decoration: underline; }
+.auth-page .remember-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #56665f;
+  font-size: 11.5px;
+  font-weight: 650;
+  cursor: pointer;
+  user-select: none;
+}
+.auth-page .remember-option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--auth-green);
+  cursor: pointer;
+}
+.auth-page .remember-option input[type="checkbox"]:focus-visible {
+  outline: 2px solid rgba(9,132,90,.3);
+  outline-offset: 2px;
+}
 
 .auth-page .btn,
 .auth-page .modal-btn {
@@ -249,8 +270,7 @@ body.auth-page::before {
   .auth-page .right-inner { width: 100%; max-width: 100%; }
   .auth-page .role-label { display: none; }
   .auth-page .form-row { grid-template-columns: 1fr; gap: 0; }
-  .auth-page .auth-form-options span { display: none; }
-  .auth-page .auth-form-options { justify-content: flex-end; }
+  .auth-page .auth-form-options { justify-content: space-between; }
   .auth-signup .step-tracker { padding-inline: 10px; }
   .auth-signup .step-text { font-size: 10px; }
 }

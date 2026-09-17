@@ -2,6 +2,13 @@
 require_once __DIR__ . '/auth_session.php';
 require_once "db.php"; 
 require_once __DIR__ . '/google_auth_config.php';
+require_once __DIR__ . '/remember_auth.php';
+
+$remembered_role = remember_auth_attempt($conn);
+if ($remembered_role !== null) {
+    header('Location: ' . remember_auth_destination($remembered_role));
+    exit();
+}
 
 $flash = $_SESSION["flash"] ?? "";
 unset($_SESSION["flash"]);
@@ -175,7 +182,10 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
           </div>
 
           <div class="auth-form-options">
-            <span>Your account is protected by secure sign-in.</span>
+            <label class="remember-option" for="rememberMe" title="Keep this account signed in for 30 days on this device">
+              <input type="checkbox" id="rememberMe" name="remember_me" value="1" <?php echo $locked ? "disabled" : ""; ?>>
+              <span>Remember me</span>
+            </label>
             <a href="#" id="forgotLink">Forgot password?</a>
           </div>
 

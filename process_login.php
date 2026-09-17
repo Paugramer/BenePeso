@@ -2,6 +2,7 @@
 require_once __DIR__ . '/auth_session.php';
 require_once __DIR__ . '/auth_rate_limit.php';
 require "db.php";
+require_once __DIR__ . '/remember_auth.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: login.php');
@@ -20,6 +21,7 @@ if ($lock_until && $lock_until > $now) {
 
 $email    = trim($_POST["email"] ?? ""); // Email or beneficiary phone number.
 $password = $_POST["password"] ?? "";
+$remember_requested = ($_POST['remember_me'] ?? '') === '1';
 
 function password_matches($password, $hash): bool {
     if (password_verify($password, $hash)) {
@@ -75,6 +77,11 @@ if ($stmt_admin) {
             $_SESSION["admin_name"] = "Administrator"; 
             auth_activate_role("admin");
             auth_regenerate_session();
+            if ($remember_requested) {
+                remember_auth_issue($conn, 'admin', (int)$row['admin_id']);
+            } else {
+                remember_auth_revoke_cookie($conn);
+            }
 
             // DIRECT UNIFIED SQL LOGGING FOR ADMIN
             $log_stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES ('System Admin', 'Administrator', 'Auth', 'LOGIN', 'System', 'Admin logged in securely.', NOW())");
@@ -123,6 +130,11 @@ if ($stmt_staff) {
             $_SESSION["staff_pic"] = $row["profile_picture"];
             auth_activate_role("peso_staff");
             auth_regenerate_session();
+            if ($remember_requested) {
+                remember_auth_issue($conn, 'peso_staff', $staff_id);
+            } else {
+                remember_auth_revoke_cookie($conn);
+            }
 
             // DIRECT UNIFIED SQL LOGGING FOR STAFF
             $log_desc = $staff_full_name . " logged in securely.";
@@ -198,6 +210,11 @@ if ($stmt_user) {
             $_SESSION["user_pic"] = $row["profile_pic"] ?? 'default_avatar.png';
             auth_activate_role("user");
             auth_regenerate_session();
+            if ($remember_requested) {
+                remember_auth_issue($conn, 'user', $user_id);
+            } else {
+                remember_auth_revoke_cookie($conn);
+            }
 
             // DIRECT UNIFIED SQL LOGGING FOR USERS
             $log_desc = $user_full_name . " logged in securely.";

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/auth_session.php';
 require "db.php";
+require_once __DIR__ . '/remember_auth.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: login.php'); exit(); }
 auth_require_csrf();
@@ -35,8 +36,9 @@ if ($p1 !== $p2) {
 $table = "users";
 if ($role === "peso_staff") $table = "peso_staff";
 if ($role === "admin") $table = "admins";
+$id_column = $role === 'admin' ? 'admin_id' : ($role === 'peso_staff' ? 'staff_id' : 'user_id');
 
-$stmt = $conn->prepare("SELECT reset_code, reset_expire FROM $table WHERE email=?");
+$stmt = $conn->prepare("SELECT $id_column AS account_id, reset_code, reset_expire FROM $table WHERE email=?");
 $stmt->bind_param("s", $email);
 $stmt->execute();
 $res = $stmt->get_result();
@@ -66,6 +68,7 @@ $hash = password_hash($p1, PASSWORD_DEFAULT);
 $up = $conn->prepare("UPDATE $table SET password_hash=?, reset_code=NULL, reset_expire=NULL WHERE email=?");
 $up->bind_param("ss", $hash, $email);
 $up->execute();
+remember_auth_revoke_account($conn, $role, (int)$row['account_id']);
 
 unset($_SESSION["fp_step"], $_SESSION["fp_email"], $_SESSION["fp_code"], $_SESSION["fp_msg"], $_SESSION["fp_role"]);
 

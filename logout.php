@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/auth_session.php';
 require "db.php";
+require_once __DIR__ . '/remember_auth.php';
 
 $requested_role = $_POST['role'] ?? $_GET['role'] ?? ($_SESSION['role'] ?? null);
 $role = is_string($requested_role) && auth_has_role($requested_role) ? $requested_role : null;
@@ -79,6 +80,7 @@ if ($role !== null) {
 }
 
 if ($role !== null) {
+    remember_auth_revoke_cookie($conn, $role);
     auth_clear_role($role);
 }
 
