@@ -151,7 +151,7 @@ if ($updated_stmt) {
     
     <link rel="stylesheet" href="frontend_polish.css?v=16">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=26">
+    <link rel="stylesheet" href="index.css?v=27">
 <script src="frontend_polish.js?v=16" defer></script>
 </head>
 <body class="public-index-page">
@@ -214,9 +214,9 @@ if ($updated_stmt) {
                         <aside class="public-hero-summary stagger-3" aria-label="Current PESO program summary">
                             <div class="public-summary-head">
                                 <span>Current opportunities</span>
-                                <i aria-hidden="true"></i>
+                                <span class="public-summary-live"><i aria-hidden="true"></i> Live directory</span>
                             </div>
-                            <div class="public-summary-count"><strong><?= number_format($total_rows) ?></strong><span>open program listing<?= $total_rows === 1 ? '' : 's' ?></span></div>
+                            <div class="public-summary-count"><strong><?= number_format($total_rows) ?></strong><span>open program listing<?= $total_rows === 1 ? '' : 's' ?><small>Browse official schedules</small></span></div>
                             <div class="public-summary-programs">
                                 <a href="?search=TUPAD#available-programs"><i class="program-symbol program-symbol--tupad" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18h14M7 15v-2a5 5 0 0 1 10 0v2M9 8.5V7a3 3 0 0 1 6 0v1.5M6 9h12"/></svg></i><span><b>TUPAD</b><small>Community employment</small></span><em aria-hidden="true">&rarr;</em></a>
                                 <a href="?search=SPES#available-programs"><i class="program-symbol program-symbol--spes" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Z"/><path d="M7 12v4c3 2 7 2 10 0v-4M21 9v6"/></svg></i><span><b>SPES</b><small>Student employment</small></span><em aria-hidden="true">&rarr;</em></a>
