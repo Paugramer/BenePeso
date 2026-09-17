@@ -31,10 +31,10 @@ if (isset($_SESSION['role'])) {
     <link rel="stylesheet" href="home.css?v=16">
     <link rel="stylesheet" href="frontend_polish.css?v=16">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=24">
-<script src="frontend_polish.js?v=15" defer></script>
+    <link rel="stylesheet" href="index.css?v=25">
+<script src="frontend_polish.js?v=16" defer></script>
 </head>
-<body class="public-index-page public-about-page" data-disable-page-loader>
+<body class="public-index-page public-about-page">
 <a class="public-skip-link" href="#mainContent">Skip to main content</a>
 <div class="page-wrap">
     <header class="topbar">
@@ -102,10 +102,10 @@ if (isset($_SESSION['role'])) {
                 <p>BENEPESO supports the Public Employment Service Office of Vinzons by organizing program information, beneficiary applications, validation, and official next steps in one secure platform.</p>
             </div>
 
-            <div class="public-about-grid">
-                <article><span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4M8 11h6M11 8v6"/></svg></span><small>01</small><h3>Discover</h3><p>Review approved programs, schedules, venues, available slots, eligibility rules, and documentary requirements.</p></article>
-                <article><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M14 3v4h4M9 12h6M9 16h4"/></svg></span><small>02</small><h3>Apply accurately</h3><p>Use one registered profile to submit complete information for the exact program batch you select.</p></article>
-                <article><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v5h5M9 12l2 2 4-5"/></svg></span><small>03</small><h3>Follow official updates</h3><p>Track PESO validation, requirements received, program participation, and the next recorded action.</p></article>
+            <div class="public-about-grid" aria-label="BENEPESO resident service journey">
+                <article><span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4M8 11h6M11 8v6"/></svg></span><div><small>EXPLORE</small><h3>Discover</h3><p>Review approved programs, schedules, venues, available slots, eligibility rules, and documentary requirements.</p></div></article>
+                <article><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M14 3v4h4M9 12h6M9 16h4"/></svg></span><div><small>PREPARE</small><h3>Apply accurately</h3><p>Use one registered profile to submit complete information for the exact program batch you select.</p></div></article>
+                <article><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v5h5M9 12l2 2 4-5"/></svg></span><div><small>TRACK</small><h3>Follow official updates</h3><p>Track PESO validation, requirements received, program participation, and the next recorded action.</p></div></article>
             </div>
         </section>
 
@@ -115,9 +115,9 @@ if (isset($_SESSION['role'])) {
                     <span class="purpose-ring purpose-ring-one"></span>
                     <span class="purpose-ring purpose-ring-two"></span>
                     <span class="purpose-center"><img src="img/pesologo.png" alt=""><b>BENEPESO</b></span>
-                    <span class="purpose-program purpose-program-tupad"><img src="img/tupads.png" alt=""><b>TUPAD</b></span>
-                    <span class="purpose-program purpose-program-spes"><img src="img/spes.png" alt=""><b>SPES</b></span>
-                    <span class="purpose-program purpose-program-msme"><img src="img/msme.png" alt=""><b>MSME</b></span>
+                    <span class="purpose-program purpose-program-tupad"><i class="program-symbol program-symbol--tupad"><svg viewBox="0 0 24 24"><path d="M5 18h14M7 15v-2a5 5 0 0 1 10 0v2M9 8.5V7a3 3 0 0 1 6 0v1.5M6 9h12"/></svg></i><b>TUPAD</b></span>
+                    <span class="purpose-program purpose-program-spes"><i class="program-symbol program-symbol--spes"><svg viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Z"/><path d="M7 12v4c3 2 7 2 10 0v-4M21 9v6"/></svg></i><b>SPES</b></span>
+                    <span class="purpose-program purpose-program-msme"><i class="program-symbol program-symbol--msme"><svg viewBox="0 0 24 24"><path d="M5 10v9h14v-9M4 5h16l1 5a3 3 0 0 1-4 0 3 3 0 0 1-5 0 3 3 0 0 1-5 0 3 3 0 0 1-4 0l1-5Z"/><path d="M9 19v-5h6v5"/></svg></i><b>MSME</b></span>
                     <svg class="purpose-connections" viewBox="0 0 320 320"><path d="M160 160 77 75M160 160l92-70M160 160l76 100"/></svg>
                 </div>
                 <div class="public-purpose-copy">

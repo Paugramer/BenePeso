@@ -151,10 +151,10 @@ if ($updated_stmt) {
     
     <link rel="stylesheet" href="frontend_polish.css?v=16">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=24">
-<script src="frontend_polish.js?v=15" defer></script>
+    <link rel="stylesheet" href="index.css?v=25">
+<script src="frontend_polish.js?v=16" defer></script>
 </head>
-<body class="public-index-page" data-disable-page-loader>
+<body class="public-index-page">
 <a class="public-skip-link" href="#mainContent">Skip to main content</a>
 
 <div class="page-wrap">
@@ -218,9 +218,9 @@ if ($updated_stmt) {
                             </div>
                             <div class="public-summary-count"><strong><?= number_format($total_rows) ?></strong><span>open program listing<?= $total_rows === 1 ? '' : 's' ?></span></div>
                             <div class="public-summary-programs">
-                                <a href="?search=TUPAD#available-programs"><i aria-hidden="true"><img src="img/tupads.png" alt=""></i><span><b>TUPAD</b><small>Community employment</small></span><em aria-hidden="true">&rarr;</em></a>
-                                <a href="?search=SPES#available-programs"><i aria-hidden="true"><img src="img/spes.png" alt=""></i><span><b>SPES</b><small>Student employment</small></span><em aria-hidden="true">&rarr;</em></a>
-                                <a href="?search=MSME#available-programs"><i aria-hidden="true"><img src="img/msme.png" alt=""></i><span><b>MSME</b><small>Livelihood support</small></span><em aria-hidden="true">&rarr;</em></a>
+                                <a href="?search=TUPAD#available-programs"><i class="program-symbol program-symbol--tupad" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18h14M7 15v-2a5 5 0 0 1 10 0v2M9 8.5V7a3 3 0 0 1 6 0v1.5M6 9h12"/></svg></i><span><b>TUPAD</b><small>Community employment</small></span><em aria-hidden="true">&rarr;</em></a>
+                                <a href="?search=SPES#available-programs"><i class="program-symbol program-symbol--spes" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Z"/><path d="M7 12v4c3 2 7 2 10 0v-4M21 9v6"/></svg></i><span><b>SPES</b><small>Student employment</small></span><em aria-hidden="true">&rarr;</em></a>
+                                <a href="?search=MSME#available-programs"><i class="program-symbol program-symbol--msme" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 10v9h14v-9M4 5h16l1 5a3 3 0 0 1-4 0 3 3 0 0 1-5 0 3 3 0 0 1-5 0 3 3 0 0 1-4 0l1-5Z"/><path d="M9 19v-5h6v5"/></svg></i><span><b>MSME</b><small>Livelihood support</small></span><em aria-hidden="true">&rarr;</em></a>
                             </div>
                             <div class="public-summary-foot">
                                 <span><?= $directory_updated_at ? 'Updated ' . htmlspecialchars(date('M d, Y', strtotime($directory_updated_at))) : 'Verified PESO directory' ?></span>
@@ -235,9 +235,9 @@ if ($updated_stmt) {
                             <label class="sr-only" for="publicProgramSearch">Search programs by name</label>
                             <input id="publicProgramSearch" type="search" name="search" placeholder="Search TUPAD, SPES, or MSME" value="<?= htmlspecialchars($search_query) ?>" style="flex:1;" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="publicHeroSuggestions">
                             <div class="public-program-suggestions" id="publicHeroSuggestions" role="listbox" aria-label="Program suggestions" hidden>
-                                <a href="?search=TUPAD#available-programs" role="option" data-search-value="TUPAD"><img src="img/tupads.png" alt=""><span><strong>TUPAD</strong><small>Community-based emergency employment</small></span><i aria-hidden="true">&rarr;</i></a>
-                                <a href="?search=SPES#available-programs" role="option" data-search-value="SPES"><img src="img/spes.png" alt=""><span><strong>SPES</strong><small>Employment opportunities for students</small></span><i aria-hidden="true">&rarr;</i></a>
-                                <a href="?search=MSME#available-programs" role="option" data-search-value="MSME"><img src="img/msme.png" alt=""><span><strong>MSME Profiling</strong><small>Business and livelihood support</small></span><i aria-hidden="true">&rarr;</i></a>
+                                <a href="?search=TUPAD#available-programs" role="option" data-search-value="TUPAD"><span class="program-symbol program-symbol--tupad" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18h14M7 15v-2a5 5 0 0 1 10 0v2M9 8.5V7a3 3 0 0 1 6 0v1.5M6 9h12"/></svg></span><span><strong>TUPAD</strong><small>Community-based emergency employment</small></span><i aria-hidden="true">&rarr;</i></a>
+                                <a href="?search=SPES#available-programs" role="option" data-search-value="SPES"><span class="program-symbol program-symbol--spes" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Z"/><path d="M7 12v4c3 2 7 2 10 0v-4M21 9v6"/></svg></span><span><strong>SPES</strong><small>Employment opportunities for students</small></span><i aria-hidden="true">&rarr;</i></a>
+                                <a href="?search=MSME#available-programs" role="option" data-search-value="MSME"><span class="program-symbol program-symbol--msme" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 10v9h14v-9M4 5h16l1 5a3 3 0 0 1-4 0 3 3 0 0 1-5 0 3 3 0 0 1-5 0 3 3 0 0 1-4 0l1-5Z"/><path d="M9 19v-5h6v5"/></svg></span><span><strong>MSME Profiling</strong><small>Business and livelihood support</small></span><i aria-hidden="true">&rarr;</i></a>
                             </div>
                             <input id="publicStatusFilter" type="hidden" name="status" value="<?= htmlspecialchars($status_filter) ?>">
                             <div class="public-schedule-select" id="publicScheduleSelect" data-public-schedule>
@@ -308,9 +308,9 @@ if ($updated_stmt) {
                             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
                             <input id="directorySearch" name="search" type="search" placeholder="Search TUPAD, SPES, or MSME" value="<?= htmlspecialchars($search_query) ?>" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="publicDirectorySuggestions">
                             <div class="public-program-suggestions public-program-suggestions--directory" id="publicDirectorySuggestions" role="listbox" aria-label="Program suggestions" hidden>
-                                <a href="?search=TUPAD#available-programs" role="option" data-search-value="TUPAD"><img src="img/tupads.png" alt=""><span><strong>TUPAD</strong><small>Community-based emergency employment</small></span><i aria-hidden="true">&rarr;</i></a>
-                                <a href="?search=SPES#available-programs" role="option" data-search-value="SPES"><img src="img/spes.png" alt=""><span><strong>SPES</strong><small>Employment opportunities for students</small></span><i aria-hidden="true">&rarr;</i></a>
-                                <a href="?search=MSME#available-programs" role="option" data-search-value="MSME"><img src="img/msme.png" alt=""><span><strong>MSME Profiling</strong><small>Business and livelihood support</small></span><i aria-hidden="true">&rarr;</i></a>
+                                <a href="?search=TUPAD#available-programs" role="option" data-search-value="TUPAD"><span class="program-symbol program-symbol--tupad" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18h14M7 15v-2a5 5 0 0 1 10 0v2M9 8.5V7a3 3 0 0 1 6 0v1.5M6 9h12"/></svg></span><span><strong>TUPAD</strong><small>Community-based emergency employment</small></span><i aria-hidden="true">&rarr;</i></a>
+                                <a href="?search=SPES#available-programs" role="option" data-search-value="SPES"><span class="program-symbol program-symbol--spes" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Z"/><path d="M7 12v4c3 2 7 2 10 0v-4M21 9v6"/></svg></span><span><strong>SPES</strong><small>Employment opportunities for students</small></span><i aria-hidden="true">&rarr;</i></a>
+                                <a href="?search=MSME#available-programs" role="option" data-search-value="MSME"><span class="program-symbol program-symbol--msme" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 10v9h14v-9M4 5h16l1 5a3 3 0 0 1-4 0 3 3 0 0 1-5 0 3 3 0 0 1-5 0 3 3 0 0 1-4 0l1-5Z"/><path d="M9 19v-5h6v5"/></svg></span><span><strong>MSME Profiling</strong><small>Business and livelihood support</small></span><i aria-hidden="true">&rarr;</i></a>
                             </div>
                         </span>
                         <input class="directory-status-input" type="hidden" name="status" value="<?= htmlspecialchars($status_filter) ?>">

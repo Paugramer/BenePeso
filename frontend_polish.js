@@ -569,6 +569,10 @@
 
       if (destination.origin !== window.location.origin || destination.href === window.location.href) return;
 
+      const sameDocumentAnchor = destination.pathname === window.location.pathname &&
+        destination.search === window.location.search && destination.hash;
+      if (sameDocumentAnchor) return;
+
       const pageName = (url) => {
         const name = url.pathname.split('/').pop().toLowerCase();
         return name || 'index.php';

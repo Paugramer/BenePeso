@@ -2841,3 +2841,179 @@ html { scroll-behavior: smooth; }
     .public-summary-head i,
     .purpose-ring-two { animation: none !important; }
 }
+
+/* ========================================================================== */
+/* Public layout correction and BENEPESO service identity v25                 */
+/* ========================================================================== */
+.public-home-hero.search-hero.welcome-area {
+    z-index: 5;
+    overflow: visible;
+}
+
+.public-home-hero-inner,
+.public-home-hero .v-search-box-centered,
+.public-home-hero .v-search-box-centered .input-wrapper { overflow: visible; }
+.public-trust-strip { z-index: 3; }
+.public-program-suggestions,
+.public-schedule-menu { z-index: 120; }
+
+.program-symbol {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid rgba(23,107,73,.12);
+    border-radius: 12px 4px 12px 4px;
+    background: linear-gradient(145deg,#edf8f2,#dff0e7);
+    color: #176b49;
+}
+.program-symbol svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.program-symbol--spes { background: linear-gradient(145deg,#f4f7e9,#e6eed2); color: #557428; }
+.program-symbol--msme { background: linear-gradient(145deg,#fff7e8,#f4e8c7); color: #87671b; }
+
+.public-summary-programs > a > .program-symbol {
+    width: 42px;
+    height: 38px;
+    overflow: visible;
+}
+.public-summary-programs > a > .program-symbol svg { width: 20px; height: 20px; }
+
+.public-program-suggestions a { grid-template-columns: 48px minmax(0,1fr) 20px; }
+.public-program-suggestions a > .program-symbol { width: 44px; height: 40px; }
+.public-program-suggestions a > .program-symbol + span { display: grid; gap: 2px; min-width: 0; }
+
+.public-route::after {
+    top: 20px;
+    right: -1px;
+    width: 5px;
+    height: 44px;
+    border-radius: 5px 0 0 5px;
+    background: linear-gradient(180deg,#d5a62e 0 38%,#1f845c 38% 100%);
+}
+.public-route-flow::before { display: none; animation: none; }
+.public-route-flow { gap: 10px; }
+.public-route-flow li {
+    grid-template-columns: 44px minmax(0,1fr);
+    min-height: 72px;
+    padding: 9px;
+    border: 1px solid transparent;
+    background: linear-gradient(145deg,rgba(232,246,239,.72),rgba(255,255,255,.3));
+}
+.public-route-flow li:nth-child(even) { background: linear-gradient(145deg,rgba(248,242,221,.58),rgba(255,255,255,.32)); }
+.public-route-flow li:hover { border-color: #c8dfd3; background: #fff; }
+.public-route-flow .route-icon { width: 42px; height: 42px; border-width: 3px; }
+
+/* One branded service map instead of three generic numbered cards. */
+.public-about-grid {
+    position: relative;
+    gap: 0;
+    padding: 47px 16px 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 22px 7px 22px 7px;
+    background:
+        radial-gradient(circle at 92% 5%,rgba(213,166,46,.2),transparent 25%),
+        linear-gradient(125deg,#0b5137,#0f6847 58%,#174c38);
+    box-shadow: 0 22px 48px rgba(10,70,46,.17);
+}
+.public-about-grid::before {
+    content: 'BENEPESO  /  RESIDENT SERVICE MAP';
+    position: absolute;
+    top: 18px;
+    left: 22px;
+    color: rgba(255,255,255,.76);
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .13em;
+}
+.public-about-grid::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    right: 22px;
+    width: 58px;
+    height: 3px;
+    border-radius: 4px;
+    background: linear-gradient(90deg,#d6b24e,#7fbe9f);
+}
+.public-about-grid article {
+    position: relative;
+    min-height: 176px;
+    display: grid;
+    grid-template-columns: 48px minmax(0,1fr);
+    gap: 14px;
+    padding: 22px;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    align-items: start;
+}
+.public-about-grid article + article { border-left: 1px solid rgba(255,255,255,.16); }
+.public-about-grid article::after {
+    inset: auto 20px 15px auto;
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(255,255,255,.14);
+    opacity: .55;
+}
+.public-about-grid article:hover {
+    transform: translateY(-3px);
+    border-color: transparent;
+    background: rgba(255,255,255,.055);
+    box-shadow: none;
+}
+.public-about-grid article > span {
+    width: 46px;
+    height: 46px;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 14px 5px 14px 5px;
+    background: rgba(255,255,255,.12);
+    color: #d9f5e8;
+}
+.public-about-grid article > span svg { width: 22px; height: 22px; }
+.public-about-grid article > div { min-width: 0; }
+.public-about-grid article small {
+    position: static;
+    display: block;
+    margin: 1px 0 4px;
+    color: #dfc575;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: .13em;
+}
+.public-about-grid h3 { margin: 0 0 8px; color: #fff; font-size: 18px; }
+.public-about-grid p { color: rgba(239,250,244,.76); font-size: 11px; line-height: 1.68; }
+
+.public-purpose-visual .purpose-program { grid-template-columns: 39px minmax(0,1fr); }
+.public-purpose-visual .purpose-program .program-symbol {
+    position: static;
+    width: 38px;
+    height: 36px;
+    padding: 0;
+    border-radius: 10px 3px 10px 3px;
+    box-shadow: none;
+}
+.public-purpose-visual .purpose-program .program-symbol svg { width: 19px; height: 19px; }
+
+@media (max-width: 760px) {
+    .public-home-hero.search-hero.welcome-area { z-index: 5; }
+    .public-about-grid { grid-template-columns: 1fr; padding: 43px 12px 12px; }
+    .public-about-grid article { min-height: 0; padding: 18px; }
+    .public-about-grid article + article { border-top: 1px solid rgba(255,255,255,.16); border-left: 0; }
+}
+
+@media (max-width: 560px) {
+    .public-program-suggestions { right: 0; left: 0; width: 100%; }
+    .public-home-hero .public-schedule-menu { top: calc(100% + 7px); }
+}
