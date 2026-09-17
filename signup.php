@@ -48,7 +48,7 @@ $barangays = beneficiary_barangay_options();
   <link rel="stylesheet" href="style.css?v=31" />
   <link rel="stylesheet" href="frontend_polish.css?v=16">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=1">
+  <link rel="stylesheet" href="auth_refresh.css?v=6">
 <script src="frontend_polish.js?v=15" defer></script>
   <?php if (!$google_registration): ?>
     <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
@@ -135,7 +135,7 @@ $barangays = beneficiary_barangay_options();
                 </div>
                 <div class="form-group">
                   <label for="middleName">Middle Name (Optional)</label>
-                  <input type="text" id="middleName" name="middle_name" maxlength="50" placeholder="Complete legal middle name; leave blank if none" value="<?php echo get_val('middle_name'); ?>" autocomplete="additional-name">
+                  <input type="text" id="middleName" name="middle_name" maxlength="50" placeholder="e.g. Santos (leave blank if none)" value="<?php echo get_val('middle_name'); ?>" autocomplete="additional-name">
                 </div>
               </div>
 
@@ -146,7 +146,7 @@ $barangays = beneficiary_barangay_options();
                 </div>
                 <div class="form-group">
                   <label for="extName">Extension Name (Optional)</label>
-                  <input type="text" id="extName" name="ext_name" maxlength="10" placeholder="e.g. Jr.; leave blank if none" value="<?php echo get_val('ext_name'); ?>">
+                  <input type="text" id="extName" name="ext_name" maxlength="10" placeholder="e.g. Jr. (leave blank if none)" value="<?php echo get_val('ext_name'); ?>">
                 </div>
               </div>
 

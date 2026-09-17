@@ -110,7 +110,32 @@ $embedded = isset($_GET['embedded']) && $_GET['embedded'] === '1';
   <h2>Changes to this notice</h2>
   <p>Material changes will be identified by a new notice version and presented at the appropriate collection point. Information will not be used for an incompatible new purpose without the notice or authorization required by law.</p>
 
-  <div class="actions"><a class="back" href="<?= htmlspecialchars($backLink, ENT_QUOTES, 'UTF-8') ?>"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>Return to BenePeso</a></div>
+  <div class="actions"><a class="back" href="<?= htmlspecialchars($backLink, ENT_QUOTES, 'UTF-8') ?>" data-return-previous><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>Return to previous page</a></div>
 </main>
+<?php if (!$embedded): ?>
+<script>
+  document.querySelectorAll('[data-return-previous]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+      let previousPage = null;
+      try {
+        previousPage = document.referrer ? new URL(document.referrer) : null;
+      } catch (error) {
+        previousPage = null;
+      }
+
+      const isSafePreviousPage = previousPage
+        && previousPage.origin === window.location.origin
+        && previousPage.pathname !== window.location.pathname;
+
+      if (isSafePreviousPage && window.history.length > 1) {
+        event.preventDefault();
+        window.history.back();
+      }
+    });
+  });
+</script>
+<?php endif; ?>
 </body>
 </html>
