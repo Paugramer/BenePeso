@@ -59,7 +59,7 @@ if ($stmt) {
 
             $statusMessages = [
                 'Requirements Received' => ['Documents recorded', 'Your submitted requirements are now recorded.', 'Wait for the office to confirm the next program activity.'],
-                'Orientation' => ['Orientation scheduled', 'Your application has moved to orientation.', 'Check the schedule below and prepare to attend the orientation.'],
+                'Orientation' => ['Verification passed - orientation scheduled', 'Your submitted requirements passed PESO document verification.', 'Check the schedule below and prepare to attend the orientation.'],
                 'Examination' => ['Examination scheduled', 'Your SPES application is ready for examination.', 'Check the schedule below and attend the face-to-face examination.'],
                 'Exam Passed' => ['Examination passed', 'You passed the recorded SPES examination.', 'Wait for the official orientation schedule and instructions from PESO Vinzons.'],
                 'Exam Failed' => ['Examination result recorded', 'The examination requirement was not passed for this batch.', 'Contact PESO Vinzons if you need clarification about the result.'],

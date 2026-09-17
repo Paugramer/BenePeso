@@ -12,6 +12,7 @@ require_once "spes_lifecycle_helper.php";
 require_once "tupad_category_helper.php";
 require_once "tupad_household_helper.php";
 require_once "tupad_document_helper.php";
+require_once "beneficiary_lifecycle_helper.php";
 ensure_tupad_category_schema($conn);
 ensure_tupad_document_schema($conn);
 ensureSpesParentStatusCapacity($conn);
@@ -218,7 +219,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           $_SESSION['show_error_modal'] = true;
           $_SESSION['error_modal_message'] = 'Select beneficiaries and complete the reason, date, or venue required for this status.';
       } else {
-          $updated = $sent = $failed = $blocked = $outOfScope = $spesExamSkipped = 0;
+          $updated = $sent = $failed = $blocked = $outOfScope = $spesExamSkipped = $invalidFlow = 0;
           $dateAvailed = in_array($bulkStatus, ['Orientation','Examination','Ongoing','Salary Distribution'], true) && $bulkDate !== '' ? $bulkDate : null;
           $dateCompleted = $bulkStatus === 'Completed' && $bulkDate !== '' ? $bulkDate : null;
           $lastAvailed = $dateAvailed ? $dateAvailed . ' 00:00:00' : null;
@@ -226,6 +227,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           foreach ($selectedIds as $selectedId) {
               if (!beneficiary_matches_bulk_scope($conn, $selectedId, $program_name_post, $bulkProgramId)) {
                   $outOfScope++;
+                  continue;
+              }
+              $transition = beneficiary_validate_status_transition($conn, $selectedId, $bulkStatus);
+              if (!$transition['allowed']) {
+                  $invalidFlow++;
                   continue;
               }
               if (in_array($bulkStatus, ['Ongoing', 'Salary Distribution', 'Completed'], true)
@@ -250,7 +256,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           $stmt->close();
           if (function_exists('logActivity')) logActivity($conn, $peso_staff_id, 'Beneficiaries', 'Bulk Status Update', 'Beneficiary Records', "Staff updated $updated beneficiaries to $bulkStatus");
           $_SESSION['show_success_modal'] = true;
-          $_SESSION['success_modal_message'] = "$updated beneficiaries updated to $bulkStatus. $sent email notification(s) will be sent automatically" . ($failed ? "; $failed email notification(s) could not be scheduled" : "") . ($blocked ? "; $blocked TUPAD applicant(s) were not updated because their required documents are not verified" : "") . ($spesExamSkipped ? "; $spesExamSkipped returning SPES Baby record(s) skipped because they are exam-exempt" : "") . ($outOfScope ? "; $outOfScope record(s) outside the selected program or batch were skipped" : "") . ".";
+          $_SESSION['success_modal_message'] = "$updated beneficiaries updated to $bulkStatus. $sent email notification(s) will be sent automatically" . ($failed ? "; $failed email notification(s) could not be scheduled" : "") . ($blocked ? "; $blocked TUPAD applicant(s) could not complete document verification" : "") . ($invalidFlow ? "; $invalidFlow record(s) were skipped because the required previous stage is not complete" : "") . ($spesExamSkipped ? "; $spesExamSkipped returning SPES Baby record(s) skipped because they are exam-exempt" : "") . ($outOfScope ? "; $outOfScope record(s) outside the selected program or batch were skipped" : "") . ".";
           $_SESSION['modal_icon'] = "✓";
       }
       header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
@@ -272,6 +278,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $last_availed_at = (!empty($date_availed)) ? $date_availed . " 00:00:00" : null;
 
       if ($beneficiary_id > 0) {
+          $transition = beneficiary_validate_status_transition($conn, $beneficiary_id, $availment_status);
+          if (!$transition['allowed']) {
+              $_SESSION["show_error_modal"] = true;
+              $_SESSION["error_modal_message"] = $transition['message'];
+              header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
+              exit();
+          }
           $needs_schedule = in_array($availment_status, ['Orientation', 'Examination', 'Salary Distribution'], true);
           $needs_completion_date = $availment_status === 'Completed';
           if (($needs_schedule && (empty($date_availed) || $schedule_place === '')) || ($needs_completion_date && empty($date_completed))) {
@@ -322,6 +335,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               $_SESSION["show_success_modal"] = true;
               if (!$email_sent) {
                   $_SESSION["success_modal_message"] = "DOLE availment status updated to $availment_status, but the notification could not be sent: " . ($email_error ?: "Unknown delivery error.");
+              } elseif ($availment_status === 'Orientation') {
+                  $_SESSION["success_modal_message"] = "Document verification passed and the Orientation schedule was saved. The beneficiary was notified.";
               } else {
                   $_SESSION["success_modal_message"] = "DOLE availment status updated to $availment_status successfully and notification sent.";
               }
@@ -560,6 +575,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               }
                $statusStmt->close();
            }
+          if ($previous_availment_status !== null && $previous_availment_status !== $availment_status) {
+              $transition = beneficiary_validate_status_transition($conn, $bid, $availment_status);
+              if (!$transition['allowed']) {
+                  $_SESSION['show_error_modal'] = true;
+                  $_SESSION['error_modal_message'] = $transition['message'];
+                  header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
+                  exit();
+              }
+              if (in_array($availment_status, ['Orientation', 'Examination', 'Salary Distribution'], true)) {
+                  $_SESSION['show_error_modal'] = true;
+                  $_SESSION['error_modal_message'] = 'Use Update Program Status for scheduled stages so the required date, venue, and beneficiary notification are recorded together.';
+                  header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
+                  exit();
+              }
+              if (in_array($availment_status, ['Ongoing', 'Salary Distribution', 'Completed'], true) && !tupad_can_start_work($conn, $bid)) {
+                  $_SESSION['show_error_modal'] = true;
+                  $_SESSION['error_modal_message'] = 'Complete document verification and Orientation before starting this TUPAD stage.';
+                  header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
+                  exit();
+              }
+          }
        }
       $full_name = trim("$first_name $middle_name $last_name $ext_name");
       $last_availed_at = (!empty($date_availed)) ? $date_availed . " 00:00:00" : null;
@@ -4486,12 +4522,17 @@ function toggleBatchScheduleFields(select) {
     document.querySelectorAll('select option[value="Examination"], select option[value="Exam Passed"], select option[value="Exam Failed"]').forEach(option => option.remove());
   }
   const allowed = isSpes
-    ? ['Not Yet Availed','Requirements Received','Orientation','Examination','Exam Passed','Exam Failed','Ongoing','Completed','Not Qualified']
+    ? ['Not Yet Availed','Requirements Received','Examination','Exam Passed','Exam Failed','Orientation','Ongoing','Completed','Not Qualified']
     : (isTupad
       ? ['Not Yet Availed','Requirements Received','Orientation','Ongoing','Salary Distribution','Completed','Not Qualified']
-      : ['Not Yet Availed','Requirements Received','Ongoing','Completed','Not Qualified']);
+      : ['Not Yet Availed','Requirements Received','Orientation','Ongoing','Completed','Not Qualified']);
   document.querySelectorAll('#quick_availment_status option').forEach(option => {
     if (!allowed.includes(option.value)) option.remove();
+  });
+  const quickStatus = document.getElementById('quick_availment_status');
+  if (quickStatus) allowed.forEach(value => {
+    const option = Array.from(quickStatus.options).find(item => item.value === value);
+    if (option) quickStatus.appendChild(option);
   });
 })();
 </script>

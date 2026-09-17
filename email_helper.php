@@ -256,10 +256,11 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
             break;
 
         case 'orientation':
-            $subject = $applicant['program_name'] . " Orientation Schedule";
-            $headline = "Your orientation has been scheduled";
+            $subject = $applicant['program_name'] . " Verification Passed and Orientation Schedule";
+            $headline = "You passed verification - orientation scheduled";
             $message = "
-                <p>Your orientation for the <strong>{$safe_program}</strong> program is scheduled on <strong>{$safe_schedule_date}</strong> at <strong>{$safe_schedule_place}</strong>.</p>
+                <p>Your submitted requirements have been successfully verified by PESO Vinzons. You passed the document-verification stage and may now proceed to orientation for <strong>{$safe_program}</strong>.</p>
+                <p>Your orientation is scheduled on <strong>{$safe_schedule_date}</strong> at <strong>{$safe_schedule_place}</strong>.</p>
                 <p>Please arrive on time and bring the documents specified by PESO Vinzons. If you cannot attend, contact the office before the scheduled date.</p>
             ";
             break;
