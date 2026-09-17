@@ -31,10 +31,10 @@ if (isset($_SESSION['role'])) {
     <link rel="stylesheet" href="home.css?v=16">
     <link rel="stylesheet" href="frontend_polish.css?v=16">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=23">
+    <link rel="stylesheet" href="index.css?v=24">
 <script src="frontend_polish.js?v=15" defer></script>
 </head>
-<body class="public-index-page public-about-page">
+<body class="public-index-page public-about-page" data-disable-page-loader>
 <a class="public-skip-link" href="#mainContent">Skip to main content</a>
 <div class="page-wrap">
     <header class="topbar">
@@ -114,8 +114,11 @@ if (isset($_SESSION['role'])) {
                 <div class="public-purpose-visual" aria-hidden="true">
                     <span class="purpose-ring purpose-ring-one"></span>
                     <span class="purpose-ring purpose-ring-two"></span>
-                    <img src="img/pesologo.png" alt="">
-                    <b>Resident</b><i>PESO</i><em>Programs</em>
+                    <span class="purpose-center"><img src="img/pesologo.png" alt=""><b>BENEPESO</b></span>
+                    <span class="purpose-program purpose-program-tupad"><img src="img/tupads.png" alt=""><b>TUPAD</b></span>
+                    <span class="purpose-program purpose-program-spes"><img src="img/spes.png" alt=""><b>SPES</b></span>
+                    <span class="purpose-program purpose-program-msme"><img src="img/msme.png" alt=""><b>MSME</b></span>
+                    <svg class="purpose-connections" viewBox="0 0 320 320"><path d="M160 160 77 75M160 160l92-70M160 160l76 100"/></svg>
                 </div>
                 <div class="public-purpose-copy">
                     <span class="section-kicker">Why BENEPESO exists</span>

@@ -151,10 +151,10 @@ if ($updated_stmt) {
     
     <link rel="stylesheet" href="frontend_polish.css?v=16">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=23">
+    <link rel="stylesheet" href="index.css?v=24">
 <script src="frontend_polish.js?v=15" defer></script>
 </head>
-<body class="public-index-page">
+<body class="public-index-page" data-disable-page-loader>
 <a class="public-skip-link" href="#mainContent">Skip to main content</a>
 
 <div class="page-wrap">
@@ -218,9 +218,9 @@ if ($updated_stmt) {
                             </div>
                             <div class="public-summary-count"><strong><?= number_format($total_rows) ?></strong><span>open program listing<?= $total_rows === 1 ? '' : 's' ?></span></div>
                             <div class="public-summary-programs">
-                                <span><i aria-hidden="true">T</i><b>TUPAD</b><small>Community employment</small></span>
-                                <span><i aria-hidden="true">S</i><b>SPES</b><small>Student employment</small></span>
-                                <span><i aria-hidden="true">M</i><b>MSME</b><small>Livelihood support</small></span>
+                                <a href="?search=TUPAD#available-programs"><i aria-hidden="true"><img src="img/tupads.png" alt=""></i><span><b>TUPAD</b><small>Community employment</small></span><em aria-hidden="true">&rarr;</em></a>
+                                <a href="?search=SPES#available-programs"><i aria-hidden="true"><img src="img/spes.png" alt=""></i><span><b>SPES</b><small>Student employment</small></span><em aria-hidden="true">&rarr;</em></a>
+                                <a href="?search=MSME#available-programs"><i aria-hidden="true"><img src="img/msme.png" alt=""></i><span><b>MSME</b><small>Livelihood support</small></span><em aria-hidden="true">&rarr;</em></a>
                             </div>
                             <div class="public-summary-foot">
                                 <span><?= $directory_updated_at ? 'Updated ' . htmlspecialchars(date('M d, Y', strtotime($directory_updated_at))) : 'Verified PESO directory' ?></span>
@@ -233,28 +233,28 @@ if ($updated_stmt) {
                         <div class="input-wrapper">
                             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; color:var(--muted);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                             <label class="sr-only" for="publicProgramSearch">Search programs by name</label>
-                            <input id="publicProgramSearch" type="search" name="search" list="publicProgramSuggestions" placeholder="Search TUPAD, SPES, or MSME" value="<?= htmlspecialchars($search_query) ?>" style="flex:1;">
+                            <input id="publicProgramSearch" type="search" name="search" placeholder="Search TUPAD, SPES, or MSME" value="<?= htmlspecialchars($search_query) ?>" style="flex:1;" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="publicHeroSuggestions">
+                            <div class="public-program-suggestions" id="publicHeroSuggestions" role="listbox" aria-label="Program suggestions" hidden>
+                                <a href="?search=TUPAD#available-programs" role="option" data-search-value="TUPAD"><img src="img/tupads.png" alt=""><span><strong>TUPAD</strong><small>Community-based emergency employment</small></span><i aria-hidden="true">&rarr;</i></a>
+                                <a href="?search=SPES#available-programs" role="option" data-search-value="SPES"><img src="img/spes.png" alt=""><span><strong>SPES</strong><small>Employment opportunities for students</small></span><i aria-hidden="true">&rarr;</i></a>
+                                <a href="?search=MSME#available-programs" role="option" data-search-value="MSME"><img src="img/msme.png" alt=""><span><strong>MSME Profiling</strong><small>Business and livelihood support</small></span><i aria-hidden="true">&rarr;</i></a>
+                            </div>
                             <input id="publicStatusFilter" type="hidden" name="status" value="<?= htmlspecialchars($status_filter) ?>">
-                            <div class="public-schedule-select" id="publicScheduleSelect">
+                            <div class="public-schedule-select" id="publicScheduleSelect" data-public-schedule>
                                 <button class="public-schedule-toggle" id="publicScheduleToggle" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="publicScheduleMenu">
                                     <svg class="schedule-calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
                                     <span id="publicScheduleLabel"><?= $status_filter === 'Upcoming' ? 'Coming soon' : ($status_filter === 'Ongoing' ? 'Open now' : 'All schedules') ?></span>
                                     <svg class="schedule-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 8 4 4 4-4"></path></svg>
                                 </button>
                                 <div class="public-schedule-menu" id="publicScheduleMenu" role="listbox" aria-label="Program schedule" hidden>
-                                    <button type="button" role="option" data-value="" aria-selected="<?= $status_filter === '' ? 'true' : 'false' ?>"><span class="schedule-option-mark"></span><span><strong>All schedules</strong><small>Show every open listing</small></span></button>
-                                    <button type="button" role="option" data-value="Upcoming" aria-selected="<?= $status_filter === 'Upcoming' ? 'true' : 'false' ?>"><span class="schedule-option-mark"></span><span><strong>Coming soon</strong><small>Programs opening next</small></span></button>
-                                    <button type="button" role="option" data-value="Ongoing" aria-selected="<?= $status_filter === 'Ongoing' ? 'true' : 'false' ?>"><span class="schedule-option-mark"></span><span><strong>Open now</strong><small>Currently accepting applications</small></span></button>
+                                    <button type="button" role="option" data-value="" aria-selected="<?= $status_filter === '' ? 'true' : 'false' ?>"><span class="schedule-option-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span><span><strong>All schedules</strong><small>Show every open listing</small></span><span class="schedule-option-check" aria-hidden="true"></span></button>
+                                    <button type="button" role="option" data-value="Upcoming" aria-selected="<?= $status_filter === 'Upcoming' ? 'true' : 'false' ?>"><span class="schedule-option-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><strong>Coming soon</strong><small>Programs opening next</small></span><span class="schedule-option-check" aria-hidden="true"></span></button>
+                                    <button type="button" role="option" data-value="Ongoing" aria-selected="<?= $status_filter === 'Ongoing' ? 'true' : 'false' ?>"><span class="schedule-option-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></svg></span><span><strong>Open now</strong><small>Currently accepting applications</small></span><span class="schedule-option-check" aria-hidden="true"></span></button>
                                 </div>
                             </div>
                             <button type="submit" class="btn-main">Search</button>
                         </div>
                     </form>
-                    <datalist id="publicProgramSuggestions">
-                        <option value="TUPAD"></option>
-                        <option value="SPES"></option>
-                        <option value="MSME"></option>
-                    </datalist>
                 </div>
             </section>
 
@@ -268,14 +268,15 @@ if ($updated_stmt) {
 
             <section class="public-route content-wrap reveal" id="how-it-works" aria-labelledby="publicRouteTitle">
                 <div class="public-route-heading">
-                    <span>Start with confidence</span>
-                    <h2 id="publicRouteTitle">How to apply through BENEPESO</h2>
+                    <span>A guided service path</span>
+                    <h2 id="publicRouteTitle">From discovery to an official decision</h2>
+                    <p>BENEPESO keeps every next step visible.</p>
                 </div>
-                <ol class="public-route-steps">
-                    <li><span>01</span><div><strong>Choose a program</strong><p>Open a listing and review its schedule.</p></div></li>
-                    <li><span>02</span><div><strong>Check requirements</strong><p>Confirm eligibility and required documents.</p></div></li>
-                    <li><span>03</span><div><strong>Sign in securely</strong><p>Create an account or use your existing profile.</p></div></li>
-                    <li><span>04</span><div><strong>Track the result</strong><p>Follow PESO validation and your next action.</p></div></li>
+                <ol class="public-route-flow">
+                    <li><span class="route-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></span><div><small>Discover</small><strong>Find your program</strong><p>Compare open opportunities.</p></div></li>
+                    <li><span class="route-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6zM14 3v4h4"/><path d="m9 14 2 2 4-5"/></svg></span><div><small>Prepare</small><strong>Review requirements</strong><p>Know what you need first.</p></div></li>
+                    <li><span class="route-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span><div><small>Submit</small><strong>Apply securely</strong><p>Use one verified profile.</p></div></li>
+                    <li><span class="route-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/><path d="m9 12 2 2 4-5"/></svg></span><div><small>Follow</small><strong>See the next action</strong><p>Track PESO validation.</p></div></li>
                 </ol>
             </section>
 
@@ -305,14 +306,26 @@ if ($updated_stmt) {
                         <label class="sr-only" for="directorySearch">Search the program directory</label>
                         <span class="directory-search-control">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-                            <input id="directorySearch" name="search" type="search" list="publicProgramSuggestions" placeholder="Search TUPAD, SPES, or MSME" value="<?= htmlspecialchars($search_query) ?>">
+                            <input id="directorySearch" name="search" type="search" placeholder="Search TUPAD, SPES, or MSME" value="<?= htmlspecialchars($search_query) ?>" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="publicDirectorySuggestions">
+                            <div class="public-program-suggestions public-program-suggestions--directory" id="publicDirectorySuggestions" role="listbox" aria-label="Program suggestions" hidden>
+                                <a href="?search=TUPAD#available-programs" role="option" data-search-value="TUPAD"><img src="img/tupads.png" alt=""><span><strong>TUPAD</strong><small>Community-based emergency employment</small></span><i aria-hidden="true">&rarr;</i></a>
+                                <a href="?search=SPES#available-programs" role="option" data-search-value="SPES"><img src="img/spes.png" alt=""><span><strong>SPES</strong><small>Employment opportunities for students</small></span><i aria-hidden="true">&rarr;</i></a>
+                                <a href="?search=MSME#available-programs" role="option" data-search-value="MSME"><img src="img/msme.png" alt=""><span><strong>MSME Profiling</strong><small>Business and livelihood support</small></span><i aria-hidden="true">&rarr;</i></a>
+                            </div>
                         </span>
-                        <label class="sr-only" for="directoryStatus">Filter by schedule</label>
-                        <select id="directoryStatus" name="status">
-                            <option value="" <?= $status_filter === '' ? 'selected' : '' ?>>All schedules</option>
-                            <option value="Ongoing" <?= $status_filter === 'Ongoing' ? 'selected' : '' ?>>Open now</option>
-                            <option value="Upcoming" <?= $status_filter === 'Upcoming' ? 'selected' : '' ?>>Coming soon</option>
-                        </select>
+                        <input class="directory-status-input" type="hidden" name="status" value="<?= htmlspecialchars($status_filter) ?>">
+                        <div class="public-schedule-select public-schedule-select--directory" data-public-schedule>
+                            <button class="public-schedule-toggle" type="button" aria-haspopup="listbox" aria-expanded="false">
+                                <svg class="schedule-calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
+                                <span class="public-schedule-label"><?= $status_filter === 'Upcoming' ? 'Coming soon' : ($status_filter === 'Ongoing' ? 'Open now' : 'All schedules') ?></span>
+                                <svg class="schedule-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 8 4 4 4-4"></path></svg>
+                            </button>
+                            <div class="public-schedule-menu" role="listbox" aria-label="Program schedule" hidden>
+                                <button type="button" role="option" data-value="" aria-selected="<?= $status_filter === '' ? 'true' : 'false' ?>"><span class="schedule-option-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span><span><strong>All schedules</strong><small>Show every open listing</small></span><span class="schedule-option-check" aria-hidden="true"></span></button>
+                                <button type="button" role="option" data-value="Ongoing" aria-selected="<?= $status_filter === 'Ongoing' ? 'true' : 'false' ?>"><span class="schedule-option-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></svg></span><span><strong>Open now</strong><small>Currently accepting applications</small></span><span class="schedule-option-check" aria-hidden="true"></span></button>
+                                <button type="button" role="option" data-value="Upcoming" aria-selected="<?= $status_filter === 'Upcoming' ? 'true' : 'false' ?>"><span class="schedule-option-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><strong>Coming soon</strong><small>Programs opening next</small></span><span class="schedule-option-check" aria-hidden="true"></span></button>
+                            </div>
+                        </div>
                         <button type="submit">Update results</button>
                     </form>
                 </div>
@@ -494,6 +507,10 @@ if ($updated_stmt) {
             <div class="modal-right">
                 <button type="button" class="modal-close-btn" aria-label="Close program details" onclick="closeModals()">&times;</button>
                 <div class="m-scroll-area">
+                    <div class="modal-service-heading">
+                        <span><i aria-hidden="true"></i> Official PESO program</span>
+                        <strong>Review before you apply</strong>
+                    </div>
                     <div class="m-section">
                         <h4>Description</h4>
                         <p id="m_desc"></p>
@@ -541,7 +558,8 @@ if ($updated_stmt) {
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn-main full-width" onclick="clickApply()">Apply for this Program</button>
+                    <div><strong>Ready to continue?</strong><span>Sign in to use your verified BENEPESO profile.</span></div>
+                    <button type="button" class="btn-main" onclick="clickApply()">Sign in to Apply <span aria-hidden="true">&rarr;</span></button>
                 </div>
             </div>
         </div>
@@ -674,31 +692,42 @@ if ($updated_stmt) {
     });
 
     document.addEventListener('DOMContentLoaded', function() {
-        const scheduleSelect = document.getElementById('publicScheduleSelect');
-        const scheduleToggle = document.getElementById('publicScheduleToggle');
-        const scheduleMenu = document.getElementById('publicScheduleMenu');
-        const scheduleInput = document.getElementById('publicStatusFilter');
-        const scheduleLabel = document.getElementById('publicScheduleLabel');
-        const scheduleOptions = scheduleMenu ? Array.from(scheduleMenu.querySelectorAll('[role="option"]')) : [];
+        const scheduleSelects = Array.from(document.querySelectorAll('[data-public-schedule]'));
+        const closeOtherSchedules = activeSelect => scheduleSelects.forEach(select => {
+            if (select === activeSelect) return;
+            select.classList.remove('is-open');
+            select.querySelector('.public-schedule-menu').hidden = true;
+            select.querySelector('.public-schedule-toggle').setAttribute('aria-expanded', 'false');
+        });
 
-        function closeScheduleMenu(returnFocus = false) {
-            if (!scheduleMenu || !scheduleToggle) return;
-            scheduleMenu.hidden = true;
-            scheduleSelect.classList.remove('is-open');
-            scheduleToggle.setAttribute('aria-expanded', 'false');
-            if (returnFocus) scheduleToggle.focus();
-        }
+        scheduleSelects.forEach(function(scheduleSelect, scheduleIndex) {
+            const scheduleToggle = scheduleSelect.querySelector('.public-schedule-toggle');
+            const scheduleMenu = scheduleSelect.querySelector('.public-schedule-menu');
+            const scheduleInput = scheduleSelect.closest('form')?.querySelector('input[name="status"]');
+            const scheduleLabel = scheduleToggle?.querySelector('#publicScheduleLabel, .public-schedule-label');
+            const scheduleOptions = scheduleMenu ? Array.from(scheduleMenu.querySelectorAll('[role="option"]')) : [];
+            if (!scheduleToggle || !scheduleMenu || !scheduleInput || !scheduleLabel) return;
 
-        function openScheduleMenu() {
-            if (!scheduleMenu || !scheduleToggle) return;
-            scheduleMenu.hidden = false;
-            scheduleSelect.classList.add('is-open');
-            scheduleToggle.setAttribute('aria-expanded', 'true');
-            const selected = scheduleOptions.find(option => option.getAttribute('aria-selected') === 'true') || scheduleOptions[0];
-            selected?.focus();
-        }
+            const menuId = scheduleMenu.id || `publicScheduleMenu${scheduleIndex + 1}`;
+            scheduleMenu.id = menuId;
+            scheduleToggle.setAttribute('aria-controls', menuId);
 
-        if (scheduleToggle && scheduleMenu && scheduleInput && scheduleLabel) {
+            function closeScheduleMenu(returnFocus = false) {
+                scheduleMenu.hidden = true;
+                scheduleSelect.classList.remove('is-open');
+                scheduleToggle.setAttribute('aria-expanded', 'false');
+                if (returnFocus) scheduleToggle.focus();
+            }
+
+            function openScheduleMenu() {
+                closeOtherSchedules(scheduleSelect);
+                scheduleMenu.hidden = false;
+                scheduleSelect.classList.add('is-open');
+                scheduleToggle.setAttribute('aria-expanded', 'true');
+                const selected = scheduleOptions.find(option => option.getAttribute('aria-selected') === 'true') || scheduleOptions[0];
+                selected?.focus();
+            }
+
             scheduleToggle.addEventListener('click', function() {
                 scheduleMenu.hidden ? openScheduleMenu() : closeScheduleMenu();
             });
@@ -728,7 +757,58 @@ if ($updated_stmt) {
             document.addEventListener('click', function(event) {
                 if (!scheduleSelect.contains(event.target)) closeScheduleMenu();
             });
-        }
+        });
+
+        document.querySelectorAll('input[role="combobox"][aria-controls]').forEach(function(input) {
+            const suggestions = document.getElementById(input.getAttribute('aria-controls'));
+            if (!suggestions) return;
+            const options = Array.from(suggestions.querySelectorAll('[role="option"]'));
+
+            const closeSuggestions = () => {
+                suggestions.hidden = true;
+                input.setAttribute('aria-expanded', 'false');
+            };
+
+            const updateSuggestions = () => {
+                const query = input.value.trim().toLowerCase();
+                let visible = 0;
+                options.forEach(option => {
+                    const matches = !query || option.dataset.searchValue.toLowerCase().includes(query) || option.textContent.toLowerCase().includes(query);
+                    option.hidden = !matches;
+                    if (matches) visible++;
+                });
+                suggestions.hidden = visible === 0;
+                input.setAttribute('aria-expanded', visible ? 'true' : 'false');
+            };
+
+            input.addEventListener('focus', updateSuggestions);
+            input.addEventListener('input', updateSuggestions);
+            input.addEventListener('keydown', function(event) {
+                const visibleOptions = options.filter(option => !option.hidden);
+                if (event.key === 'ArrowDown' && visibleOptions.length) {
+                    event.preventDefault();
+                    visibleOptions[0].focus();
+                } else if (event.key === 'Escape') {
+                    closeSuggestions();
+                }
+            });
+            suggestions.addEventListener('keydown', function(event) {
+                const visibleOptions = options.filter(option => !option.hidden);
+                const currentIndex = visibleOptions.indexOf(document.activeElement);
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    const direction = event.key === 'ArrowDown' ? 1 : -1;
+                    visibleOptions[(currentIndex + direction + visibleOptions.length) % visibleOptions.length]?.focus();
+                } else if (event.key === 'Escape') {
+                    event.preventDefault();
+                    closeSuggestions();
+                    input.focus();
+                }
+            });
+            document.addEventListener('click', event => {
+                if (!suggestions.contains(event.target) && event.target !== input) closeSuggestions();
+            });
+        });
 
         // Mobile Menu Toggle
         const menuBtn = document.getElementById('menuButton');
