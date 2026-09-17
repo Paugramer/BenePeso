@@ -589,3 +589,187 @@ body.auth-page::before {
   .auth-page input,
   .auth-page select { transform: none !important; }
 }
+
+/* Professional trust cues replace repetitive decorative badges. */
+.auth-page .auth-benefits {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  margin-top: 3px;
+}
+
+.auth-page .auth-benefits span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, .82);
+  font-size: 9px;
+  font-weight: 650;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.auth-page .auth-benefits i {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  place-items: center;
+  border: 1px solid rgba(153, 236, 194, .3);
+  border-radius: 50%;
+  background: rgba(78, 199, 139, .15);
+  color: #a7f0cb;
+  font-size: 9px;
+  font-style: normal;
+}
+
+.auth-page .auth-turnstile--adaptive {
+  min-height: 0;
+  margin: 8px 0 0;
+  border: 0;
+  background: transparent;
+}
+
+.auth-page .auth-turnstile--adaptive .cf-turnstile { min-height: 0; }
+
+.auth-page .auth-support-link {
+  display: block;
+  width: fit-content;
+  margin: 6px auto 0;
+  padding: 5px 8px;
+  border-radius: 7px;
+  color: #63786d;
+  font-size: 10px;
+  font-weight: 650;
+  text-align: center;
+  text-decoration: none;
+  transition: color .2s ease, background-color .2s ease !important;
+}
+
+.auth-page .auth-support-link:hover,
+.auth-page .auth-support-link:focus-visible {
+  background: #f0f7f3;
+  color: var(--auth-green-dark);
+  outline: none;
+}
+
+.auth-signup .signup-progress-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 2px 3px;
+  color: #77877f;
+  font-size: 9px;
+  line-height: 1.25;
+}
+
+.auth-signup .signup-progress-copy strong {
+  color: var(--auth-green-dark);
+  font-size: 9.5px;
+  letter-spacing: .03em;
+}
+
+.auth-signup .step-tracker { margin-top: 0; margin-bottom: 9px; padding-block: 7px; }
+
+.auth-page .auth-form-alert {
+  margin: 0 0 9px;
+  padding: 9px 11px;
+  border: 1px solid #efc7c3;
+  border-radius: 9px;
+  background: #fff5f3;
+  color: #943b35;
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.auth-page .auth-form-alert[hidden] { display: none; }
+
+.auth-page input.is-invalid,
+.auth-page select.is-invalid {
+  border-color: #c9534b !important;
+  background-color: #fffafa;
+  box-shadow: 0 0 0 3px rgba(201, 83, 75, .1) !important;
+}
+
+.auth-page input.is-valid,
+.auth-page select.is-valid {
+  border-color: #65a989;
+}
+
+.auth-page .field-error {
+  display: block;
+  margin: 4px 2px 0;
+  color: #a13f38;
+  font-size: 9.5px;
+  font-weight: 650;
+  line-height: 1.35;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.auth-page .visually-hidden-file {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+}
+
+.auth-page .visually-hidden-file:focus + *,
+.auth-page .profile-upload-container:focus-within {
+  border-color: var(--auth-green);
+  box-shadow: 0 0 0 4px rgba(8, 122, 83, .1);
+}
+
+.auth-page .privacy-acknowledgment.is-invalid {
+  border-color: #c9534b;
+  background: #fff7f6;
+  box-shadow: 0 0 0 3px rgba(201, 83, 75, .08);
+}
+
+.auth-signup .password-strength {
+  margin: -1px 0 5px;
+  padding: 8px 10px;
+  border: 1px solid #dce9e2;
+  border-radius: 10px;
+  background: #f8fbf9;
+}
+
+.auth-signup .password-strength-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #607269;
+  font-size: 9px;
+}
+
+.auth-signup .password-strength-head strong { color: var(--auth-green-dark); }
+.auth-signup .password-strength-track { height: 3px; margin: 6px 0; overflow: hidden; border-radius: 99px; background: #dfe9e4; }
+.auth-signup .password-strength-track span { display: block; width: 0; height: 100%; border-radius: inherit; background: #b66a3c; transition: width .25s ease, background-color .25s ease !important; }
+.auth-signup .password-checks { display: flex; flex-wrap: wrap; gap: 5px 12px; }
+.auth-signup .password-checks span { color: #829088; font-size: 8.5px; line-height: 1.3; }
+.auth-signup .password-checks span::before { content: "○"; margin-right: 4px; }
+.auth-signup .password-checks span.is-met { color: #267653; }
+.auth-signup .password-checks span.is-met::before { content: "✓"; font-weight: 800; }
+
+@media (min-width: 901px) {
+  .auth-signup .right,
+  .auth-signup .card.compact .right { padding-block: 14px 16px; }
+}
+
+@media (max-width: 900px) {
+  .auth-page .auth-benefits { display: none; }
+  .auth-page .auth-support-link { font-size: 10.5px; }
+}
+
+@media (max-width: 560px) {
+  .auth-signup .signup-progress-copy { margin-bottom: 5px; }
+  .auth-signup .password-checks { display: grid; grid-template-columns: 1fr; gap: 3px; }
+}

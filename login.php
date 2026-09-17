@@ -91,7 +91,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="stylesheet" href="style.css?v=31" />
   <link rel="stylesheet" href="frontend_polish.css?v=16">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=7">
+  <link rel="stylesheet" href="auth_refresh.css?v=8">
 <script src="frontend_polish.js?v=15" defer></script>
   <?php if (benepeso_turnstile_enabled()): ?>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -116,10 +116,9 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
           Beneficiary Profiling, Eligibility, and Verification System for PESO Programs
         </p>
 
-        <div class="badges stagger-4">
-          <span class="badge">Secure Login</span>
-          <span class="badge">Verification</span>
-          <span class="badge">PESO Services</span>
+        <div class="auth-benefits stagger-4" aria-label="Portal benefits">
+          <span><i aria-hidden="true">&#10003;</i>Verified PESO services</span>
+          <span><i aria-hidden="true">&#10003;</i>Protected beneficiary records</span>
         </div>
 
         <div class="auth-brand-status stagger-4" aria-hidden="true">
@@ -200,13 +199,13 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
           </div>
 
           <?php if (benepeso_turnstile_enabled()): ?>
-            <div class="auth-turnstile" aria-label="Cloudflare security verification">
+            <div class="auth-turnstile auth-turnstile--adaptive" aria-label="Cloudflare security verification">
               <div class="cf-turnstile"
                    data-sitekey="<?= htmlspecialchars(benepeso_turnstile_site_key(), ENT_QUOTES, 'UTF-8') ?>"
                    data-theme="light"
                    data-size="flexible"
                    data-action="login"
-                   data-appearance="always"></div>
+                   data-appearance="interaction-only"></div>
             </div>
           <?php endif; ?>
 
@@ -215,7 +214,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
           </button>
         </form>
 
-        <div class="auth-divider stagger-4"><span>or continue with</span></div>
+        <div class="auth-divider stagger-4"><span>or sign in with Google</span></div>
         <div
           class="google-signin stagger-4"
           data-google-signin
@@ -234,6 +233,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
         <p class="small auth-privacy-link stagger-4">
           By signing in, you acknowledge the <a href="privacy_notice.php">Privacy Notice</a>.
         </p>
+        <a class="auth-support-link stagger-4" href="mailto:lguvinzonspeso@gmail.com?subject=BENEPESO%20Account%20Access%20Help">Need help? Contact PESO Vinzons</a>
 
       </div>
     </div>

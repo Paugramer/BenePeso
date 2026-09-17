@@ -48,7 +48,7 @@ $barangays = beneficiary_barangay_options();
   <link rel="stylesheet" href="style.css?v=31" />
   <link rel="stylesheet" href="frontend_polish.css?v=16">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=7">
+  <link rel="stylesheet" href="auth_refresh.css?v=8">
 <script src="frontend_polish.js?v=15" defer></script>
   <?php if (!$google_registration): ?>
     <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
@@ -72,10 +72,9 @@ $barangays = beneficiary_barangay_options();
           Beneficiary Profiling, Eligibility, and Verification System for PESO Programs
         </p>
 
-        <div class="badges stagger-4">
-          <span class="badge">Fast Sign Up</span>
-          <span class="badge">Verified Access</span>
-          <span class="badge">PESO Services</span>
+        <div class="auth-benefits stagger-4" aria-label="Registration benefits">
+          <span><i aria-hidden="true">&#10003;</i>Guided account setup</span>
+          <span><i aria-hidden="true">&#10003;</i>Protected beneficiary records</span>
         </div>
 
         <div class="auth-brand-status stagger-4" aria-hidden="true">
@@ -107,6 +106,10 @@ $barangays = beneficiary_barangay_options();
           </div>
         <?php endif; ?>
 
+        <div class="signup-progress-copy stagger-2" aria-live="polite">
+          <strong id="signupStepLabel">Step 1 of 3</strong>
+          <span id="signupStepHelp">Personal information</span>
+        </div>
         <div class="step-tracker stagger-2">
             <div class="step-item active" id="tracker1" aria-current="step">
                 <div class="step-circle">1</div>
@@ -131,6 +134,7 @@ $barangays = beneficiary_barangay_options();
           <?= auth_csrf_input() ?>
           <input type="hidden" name="role" value="user" id="roleInput">
           <input type="hidden" name="municipality" value="Vinzons" id="municipalityHidden">
+          <div class="auth-form-alert" id="signupFormAlert" role="alert" aria-live="assertive" hidden></div>
 
           <div class="form-step active" id="step1">
               
@@ -253,6 +257,15 @@ $barangays = beneficiary_barangay_options();
                   </div>
                 </div>
               </div>
+              <div class="password-strength" id="passwordStrength" aria-live="polite">
+                <div class="password-strength-head"><span>Stronger password</span><strong id="passwordStrengthLabel">Start typing</strong></div>
+                <div class="password-strength-track" aria-hidden="true"><span id="passwordStrengthBar"></span></div>
+                <div class="password-checks">
+                  <span data-password-check="length">8 or more characters</span>
+                  <span data-password-check="case">Upper and lowercase letters</span>
+                  <span data-password-check="variety">A number or symbol</span>
+                </div>
+              </div>
               <?php endif; ?>
 
               <div class="btn-group">
@@ -278,7 +291,7 @@ $barangays = beneficiary_barangay_options();
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px; vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
                     Upload Photo
                 </label>
-                <input type="file" name="profile_pic" id="profile_pic" accept="image/*" style="display:none;" required>
+                <input type="file" name="profile_pic" id="profile_pic" class="visually-hidden-file" accept="image/*" required>
               </div>
 
               <label class="privacy-acknowledgment" for="privacyAcknowledgment">
@@ -295,7 +308,7 @@ $barangays = beneficiary_barangay_options();
         </form>
 
         <?php if (!$google_registration): ?>
-          <div class="auth-divider auth-divider--signup stagger-4"><span>or continue with Google</span></div>
+          <div class="auth-divider auth-divider--signup stagger-4"><span>or sign up with Google</span></div>
           <div
             class="google-signin google-signin--signup stagger-4"
             data-google-signin
@@ -312,6 +325,7 @@ $barangays = beneficiary_barangay_options();
           Already have an account?
           <a href="login.php" id="loginLink">Log in securely</a>
         </p>
+        <a class="auth-support-link stagger-4" href="mailto:lguvinzonspeso@gmail.com?subject=BENEPESO%20Registration%20Help">Need help? Contact PESO Vinzons</a>
 
       </div>
     </div>
@@ -401,26 +415,93 @@ $barangays = beneficiary_barangay_options();
       return age;
   }
 
+  const signupFormAlert = document.getElementById('signupFormAlert');
+  const signupStepLabel = document.getElementById('signupStepLabel');
+  const signupStepHelp = document.getElementById('signupStepHelp');
+  const signupStepDescriptions = {
+      1: 'Personal information',
+      2: <?= $google_registration ? "'Contact and address'" : "'Address and account security'" ?>,
+      3: 'Photo and privacy confirmation'
+  };
+
+  function showSignupAlert(message) {
+      if (!signupFormAlert) return;
+      signupFormAlert.textContent = message;
+      signupFormAlert.hidden = false;
+  }
+
+  function hideSignupAlert() {
+      if (!signupFormAlert) return;
+      signupFormAlert.hidden = true;
+      signupFormAlert.textContent = '';
+  }
+
+  function fieldLabel(input) {
+      const label = document.querySelector(`label[for="${input.id}"]`);
+      return label ? label.textContent.replace(/\s*\(Optional\)\s*/i, '').trim() : 'This field';
+  }
+
+  function fieldMessage(input) {
+      const name = fieldLabel(input);
+      if (!String(input.value || '').trim()) return `${name} is required.`;
+      if (input.validity?.typeMismatch) return `Enter a valid ${name.toLowerCase()}.`;
+      if (input.validity?.tooShort) return `${name} must contain at least ${input.minLength} characters.`;
+      return `Check the ${name.toLowerCase()} and try again.`;
+  }
+
+  function setFieldError(input, message) {
+      if (!input) return;
+      const group = input.closest('.form-group');
+      const errorId = `${input.id}Error`;
+      let error = group?.querySelector('.field-error');
+      if (!error && group) {
+          error = document.createElement('small');
+          error.className = 'field-error';
+          error.id = errorId;
+          group.appendChild(error);
+      }
+      if (error) error.textContent = message;
+      input.classList.add('is-invalid');
+      input.classList.remove('is-valid');
+      input.setAttribute('aria-invalid', 'true');
+      const describedBy = new Set((input.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean));
+      describedBy.add(errorId);
+      input.setAttribute('aria-describedby', Array.from(describedBy).join(' '));
+  }
+
+  function clearFieldError(input, showValid = false) {
+      if (!input) return;
+      const errorId = `${input.id}Error`;
+      input.closest('.form-group')?.querySelector(`#${errorId}`)?.remove();
+      input.classList.remove('is-invalid');
+      input.classList.toggle('is-valid', showValid && Boolean(String(input.value || '').trim()));
+      input.removeAttribute('aria-invalid');
+      const describedBy = (input.getAttribute('aria-describedby') || '').split(/\s+/).filter(id => id && id !== errorId);
+      if (describedBy.length) input.setAttribute('aria-describedby', describedBy.join(' '));
+      else input.removeAttribute('aria-describedby');
+  }
+
   function goToStep(step) {
       if (step > currentStep) {
           const currentStepEl = document.getElementById('step' + currentStep);
           const requiredInputs = currentStepEl.querySelectorAll('[required]');
           let isValid = true;
 
+          let firstInvalid = null;
+
           requiredInputs.forEach(input => {
-              if (!input.value.trim()) {
+              if (!String(input.value || '').trim() || !input.checkValidity()) {
                   isValid = false;
-                  input.style.borderColor = "#c0392b"; 
-                  input.style.boxShadow = "0 0 0 4px rgba(192,57,43,0.1)";
+                  firstInvalid ||= input;
+                  setFieldError(input, fieldMessage(input));
               } else {
-                  input.style.borderColor = ""; 
-                  input.style.boxShadow = "";
+                  clearFieldError(input, true);
               }
           });
 
           if (!isValid) {
-              document.getElementById("modalText").textContent = "Please fill in all required fields before proceeding.";
-              openModal("modalBg");
+              showSignupAlert('Please review the highlighted fields before continuing.');
+              firstInvalid?.focus({ preventScroll: true });
               return;
           }
 
@@ -428,8 +509,8 @@ $barangays = beneficiary_barangay_options();
               const age = calculateAge();
               if (age === null || age < 18) {
                   const birthDateInput = document.getElementById('birthDate');
-                  birthDateInput.style.borderColor = "#c0392b";
-                  birthDateInput.style.boxShadow = "0 0 0 4px rgba(192,57,43,0.1)";
+                  setFieldError(birthDateInput, 'You must be at least 18 years old to register.');
+                  showSignupAlert('Please review your date of birth.');
                   openModal("ageNoticeBg");
                   return;
               }
@@ -443,22 +524,28 @@ $barangays = beneficiary_barangay_options();
               const contact = document.getElementById('contactInput').value;
               
               if (contact.length !== 11 || !contact.startsWith("09")) {
-                  document.getElementById("modalText").textContent = "Contact number must be 11 digits and start with 09.";
-                  openModal("modalBg");
+                  const contactInput = document.getElementById('contactInput');
+                  setFieldError(contactInput, 'Use an 11-digit Philippine mobile number beginning with 09.');
+                  showSignupAlert('Please review the highlighted contact number.');
+                  contactInput.focus({ preventScroll: true });
                   return;
               }
               if (passInput && pass !== conf) {
-                  document.getElementById("modalText").textContent = "Passwords do not match.";
-                  openModal("modalBg");
+                  setFieldError(confirmInput, 'Passwords do not match.');
+                  showSignupAlert('Please confirm your account password.');
+                  confirmInput.focus({ preventScroll: true });
                   return;
               }
               if (passInput && pass.length < 8) {
-                  document.getElementById("modalText").textContent = "Password must be at least 8 characters.";
-                  openModal("modalBg");
+                  setFieldError(passInput, 'Use at least 8 characters.');
+                  showSignupAlert('Choose a longer account password.');
+                  passInput.focus({ preventScroll: true });
                   return;
               }
           }
       }
+
+      hideSignupAlert();
 
       const currentEl = document.getElementById('step' + currentStep);
       const nextEl = document.getElementById('step' + step);
@@ -493,6 +580,8 @@ $barangays = beneficiary_barangay_options();
       }
 
       currentStep = step;
+      if (signupStepLabel) signupStepLabel.textContent = `Step ${step} of 3`;
+      if (signupStepHelp) signupStepHelp.textContent = signupStepDescriptions[step];
 
       setTimeout(() => {
           nextEl.querySelector('input:not([type="hidden"]):not([readonly]), select, button')?.focus({ preventScroll: true });
@@ -502,23 +591,58 @@ $barangays = beneficiary_barangay_options();
   const pass1 = document.getElementById('passwordInput');
   const pass2 = document.getElementById('confirmPasswordInput');
 
+  function updatePasswordStrength() {
+      if (!pass1) return;
+      const value = pass1.value;
+      const checks = {
+          length: value.length >= 8,
+          case: /[a-z]/.test(value) && /[A-Z]/.test(value),
+          variety: /[0-9]|[^A-Za-z0-9]/.test(value)
+      };
+      const score = Object.values(checks).filter(Boolean).length;
+      const bar = document.getElementById('passwordStrengthBar');
+      const label = document.getElementById('passwordStrengthLabel');
+      const labels = value ? ['Needs work', 'Fair', 'Good', 'Strong'] : ['Start typing'];
+      if (bar) {
+          bar.style.width = value ? `${Math.max(18, score * 33.333)}%` : '0';
+          bar.style.backgroundColor = score >= 3 ? '#26835b' : (score === 2 ? '#c09a35' : '#b85b4f');
+      }
+      if (label) label.textContent = labels[value ? score : 0];
+      Object.entries(checks).forEach(([key, met]) => {
+          document.querySelector(`[data-password-check="${key}"]`)?.classList.toggle('is-met', met);
+      });
+  }
+
   function checkPasswordMatch() {
+      if (!pass1 || !pass2) return;
       if(pass2.value.length === 0) {
-          pass2.style.borderColor = "";
-          pass2.style.boxShadow = "";
+          clearFieldError(pass2);
           return;
       }
       if(pass1.value === pass2.value && pass1.value.length >= 8) {
-          pass2.style.borderColor = "var(--green)"; 
-          pass2.style.boxShadow = "0 0 0 4px rgba(31, 122, 84, 0.1)";
+          clearFieldError(pass2, true);
       } else {
-          pass2.style.borderColor = "#c0392b"; 
-          pass2.style.boxShadow = "0 0 0 4px rgba(192, 57, 43, 0.1)";
+          setFieldError(pass2, 'Passwords do not match.');
       }
   }
 
-  pass1?.addEventListener('input', checkPasswordMatch);
+  pass1?.addEventListener('input', () => {
+      updatePasswordStrength();
+      clearFieldError(pass1, pass1.value.length >= 8);
+      checkPasswordMatch();
+  });
   pass2?.addEventListener('input', checkPasswordMatch);
+  updatePasswordStrength();
+
+  document.querySelectorAll('#signupForm input:not([type="hidden"]):not([type="file"]), #signupForm select').forEach(input => {
+      const clear = () => {
+          const value = String(input.value || '').trim();
+          const isContactValid = input.id !== 'contactInput' || (value.length === 11 && value.startsWith('09'));
+          if (input.checkValidity() && value && isContactValid) clearFieldError(input, true);
+      };
+      input.addEventListener('input', clear);
+      input.addEventListener('change', clear);
+  });
 
   const flash = <?php echo json_encode($flash); ?>;
   function openModal(id){
@@ -667,8 +791,17 @@ $barangays = beneficiary_barangay_options();
         e.preventDefault();
         uploadContainer.style.borderColor = "#c0392b";
         uploadContainer.style.background = "#fdf2f0";
-        document.getElementById("modalText").textContent = "Please upload a profile photo to complete registration.";
-        openModal("modalBg");
+        showSignupAlert('Upload a clear profile photo to complete registration.');
+        profileInput.focus();
+        return;
+    }
+
+    const privacyInput = document.getElementById('privacyAcknowledgment');
+    if (!privacyInput.checked) {
+        e.preventDefault();
+        showSignupAlert('Read and acknowledge the Privacy Notice before registering.');
+        privacyInput.closest('.privacy-acknowledgment')?.classList.add('is-invalid');
+        privacyInput.focus();
         return;
     }
 
@@ -676,12 +809,21 @@ $barangays = beneficiary_barangay_options();
     const confirmPasswordInput = document.getElementById("confirmPasswordInput");
     if (passwordInput && passwordInput.value !== confirmPasswordInput.value){
       e.preventDefault();
-      document.getElementById("modalText").textContent = "Passwords do not match. Please retype carefully.";
-      openModal("modalBg");
+      goToStep(2);
+      window.setTimeout(() => {
+          setFieldError(confirmPasswordInput, 'Passwords do not match.');
+          showSignupAlert('Please confirm your account password.');
+          confirmPasswordInput.focus({ preventScroll: true });
+      }, 300);
       return;
     }
     
     showLoading("Creating account", "Uploading photo and saving details securely...");
+  });
+
+  document.getElementById('privacyAcknowledgment')?.addEventListener('change', (event) => {
+      event.target.closest('.privacy-acknowledgment')?.classList.remove('is-invalid');
+      if (event.target.checked) hideSignupAlert();
   });
 </script>
 <script src="signup_draft.js?v=1"></script>
