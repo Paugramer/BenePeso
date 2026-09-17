@@ -90,7 +90,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="stylesheet" href="style.css?v=31" />
   <link rel="stylesheet" href="frontend_polish.css?v=11">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=1">
+  <link rel="stylesheet" href="auth_refresh.css?v=2">
   <script src="frontend_polish.js?v=12" defer></script>
   <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
   <script src="google_signin.js?v=5" defer></script>

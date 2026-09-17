@@ -145,6 +145,7 @@ body.auth-page::before {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: nowrap;
   gap: 16px;
   margin: -2px 1px 4px;
   color: #819089;
@@ -160,20 +161,48 @@ body.auth-page::before {
 .auth-page .auth-form-options a:hover { color: var(--auth-green-dark); text-decoration: underline; }
 .auth-page .remember-option {
   display: inline-flex;
+  flex: 0 0 auto;
+  flex-direction: row;
   align-items: center;
   gap: 7px;
+  margin: 0;
   color: #56665f;
   font-size: 11.5px;
   font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
   cursor: pointer;
   user-select: none;
 }
 .auth-page .remember-option input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  margin: 0;
+  appearance: auto;
+  -webkit-appearance: checkbox;
+  flex: 0 0 17px;
+  width: 17px;
+  min-width: 17px;
+  height: 17px;
+  min-height: 17px;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  box-shadow: none;
   accent-color: var(--auth-green);
   cursor: pointer;
+}
+.auth-page .remember-option input[type="checkbox"]:hover,
+.auth-page .remember-option input[type="checkbox"]:focus {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+.auth-page .remember-option span {
+  display: inline;
+  line-height: 1.3;
 }
 .auth-page .remember-option input[type="checkbox"]:focus-visible {
   outline: 2px solid rgba(9,132,90,.3);
@@ -256,7 +285,21 @@ body.auth-page::before {
 }
 
 @media (max-width: 560px) {
+  html,
+  body.auth-page { width: 100%; max-width: 100%; overflow-x: hidden; }
   body.auth-page { padding: 10px; }
+  .auth-page .box,
+  .auth-page .card,
+  .auth-page .card.compact,
+  .auth-page .left,
+  .auth-page .card.compact .left,
+  .auth-page .right,
+  .auth-page .card.compact .right,
+  .auth-page .right-inner {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
   .auth-page .card,
   .auth-page .card.compact { border-radius: 17px; }
   .auth-page .left,
@@ -270,7 +313,8 @@ body.auth-page::before {
   .auth-page .right-inner { width: 100%; max-width: 100%; }
   .auth-page .role-label { display: none; }
   .auth-page .form-row { grid-template-columns: 1fr; gap: 0; }
-  .auth-page .auth-form-options { justify-content: space-between; }
+  .auth-page .auth-form-options { width: 100%; min-width: 0; justify-content: space-between; gap: 12px; }
+  .auth-page .auth-form-options a { white-space: nowrap; }
   .auth-signup .step-tracker { padding-inline: 10px; }
   .auth-signup .step-text { font-size: 10px; }
 }
@@ -280,6 +324,9 @@ body.auth-page::before {
   .auth-page .brand { grid-template-areas: "logo title"; align-items: center; }
   .auth-signup .step-text { display: none; }
   .auth-signup .step-tracker { justify-content: center; }
+  .auth-page .auth-form-options { gap: 9px; }
+  .auth-page .remember-option,
+  .auth-page .auth-form-options a { font-size: 10.5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
