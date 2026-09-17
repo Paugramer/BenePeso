@@ -3017,3 +3017,99 @@ html { scroll-behavior: smooth; }
     .public-program-suggestions { right: 0; left: 0; width: 100%; }
     .public-home-hero .public-schedule-menu { top: calc(100% + 7px); }
 }
+
+/* ========================================================================== */
+/* Public visual balance and alignment refinement v26                         */
+/* ========================================================================== */
+.program-symbol,
+.program-symbol--spes,
+.program-symbol--msme {
+    border-color: #cfe3d8;
+    background: linear-gradient(145deg,#f3faf6,#e5f3eb);
+    color: #187451;
+}
+.program-symbol svg { display: block; margin: auto; }
+
+.public-summary-programs > a {
+    grid-template-columns: 42px minmax(0,1fr) 18px;
+    gap: 11px;
+}
+.public-summary-programs > a > span {
+    align-content: center;
+    text-align: left;
+}
+.public-summary-programs > a b,
+.public-summary-programs > a small { text-align: left; }
+.public-summary-programs > a > em { display: grid; place-items: center; }
+
+.public-program-suggestions a {
+    min-height: 58px;
+    grid-template-columns: 44px minmax(0,1fr) 18px;
+    gap: 12px;
+    align-items: center;
+}
+.public-program-suggestions a > .program-symbol {
+    align-self: center;
+    justify-self: center;
+}
+.public-program-suggestions a > .program-symbol + span {
+    align-content: center;
+    text-align: left;
+}
+.public-program-suggestions a > i { display: grid; place-items: center; }
+
+.public-route-flow li {
+    min-height: 84px;
+    align-items: center;
+}
+.public-route-flow div {
+    padding-top: 0;
+    align-self: center;
+}
+.public-route-flow .route-icon { align-self: center; }
+
+.public-index-page .card-status {
+    display: inline-flex;
+    gap: 7px;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.25;
+}
+.public-index-page .card-status::before {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 7px;
+    margin: 0;
+    align-self: center;
+    vertical-align: initial;
+}
+
+.public-about-grid {
+    border-color: #cadfd4;
+    background:
+        radial-gradient(circle at 94% 2%,rgba(213,166,46,.14),transparent 23%),
+        linear-gradient(125deg,#fbfdfc,#eef7f2 62%,#fbf7ea);
+    box-shadow: 0 20px 44px rgba(10,70,46,.11);
+}
+.public-about-grid::before { color: #176b49; }
+.public-about-grid::after { background: linear-gradient(90deg,#cda63e,#4b9b76); }
+.public-about-grid article { color: #173f2e; }
+.public-about-grid article + article { border-color: #d5e5dd; }
+.public-about-grid article:hover {
+    background: rgba(255,255,255,.7);
+    box-shadow: inset 0 0 0 1px rgba(31,132,92,.08);
+}
+.public-about-grid article > span {
+    border-color: #c7dfd3;
+    background: #e3f2e9;
+    color: #176f4d;
+}
+.public-about-grid article small { color: #9a761d; }
+.public-about-grid h3 { color: #123d2b; }
+.public-about-grid p { color: #5d7468; }
+.public-about-grid article::after { border-color: rgba(31,132,92,.12); }
+
+@media (max-width: 760px) {
+    .public-about-grid article + article { border-top-color: #d5e5dd; }
+    .public-route-flow li { min-height: 74px; }
+}
