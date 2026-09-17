@@ -311,7 +311,7 @@ if (table_exists($conn, "activity_logs")) {
   <link rel="stylesheet" href="dashboard_polish.css?v=4">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
-<script src="frontend_polish.js?v=14" defer></script>
+<script src="frontend_polish.js?v=15" defer></script>
 </head>
 <body>
 

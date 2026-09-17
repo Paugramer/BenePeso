@@ -92,7 +92,7 @@ try {
     <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=6">
-    <script src="frontend_polish.js?v=14" defer></script>
+<script src="frontend_polish.js?v=15" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body data-disable-page-loader>

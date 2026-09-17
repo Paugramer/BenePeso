@@ -342,7 +342,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               $email_attempted = true;
               $email_error = null;
               $email_status = $needs_resubmission ? 'Requirements Resubmission' : $availment_status;
-              $email_sent = sendBENEPESOStatusEmail($conn, $beneficiary_id, $email_status, $email_error, $status_message, $date_availed, $schedule_place);
+              $email_date = $availment_status === 'Completed' ? (string)$date_completed : (string)$date_availed;
+              $email_sent = sendBENEPESOStatusEmail($conn, $beneficiary_id, $email_status, $email_error, $status_message, $email_date, $schedule_place, (string)$date_completed);
 
               $_SESSION["show_success_modal"] = true;
               if (!$email_sent) {
@@ -777,7 +778,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
                           if ($previous_availment_status !== null && $previous_availment_status !== $availment_status) {
                               $email_error = null;
-                              if (sendBENEPESOStatusEmail($conn, $bid, $availment_status, $email_error)) {
+                              $email_date = $availment_status === 'Completed' ? (string)$date_completed : (string)$date_availed;
+                              if (sendBENEPESOStatusEmail($conn, $bid, $availment_status, $email_error, '', $email_date, '', (string)$date_completed)) {
                                   $_SESSION["success_modal_message"] .= " Email notification sent.";
                               } else {
                                   $_SESSION["success_modal_message"] .= " Status changed, but one or more notifications could not be sent: " . ($email_error ?: "Unknown delivery error.");
@@ -1276,7 +1278,7 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="frontend_polish.css?v=16">
   <link rel="stylesheet" href="peso_staff_responsive.css?v=24">
   <link rel="stylesheet" href="system_search_polish.css?v=1">
-<script src="frontend_polish.js?v=14" defer></script>
+<script src="frontend_polish.js?v=15" defer></script>
 </head>
 <body class="peso-staff-beneficiaries-page">
   <div class="page-wrap">

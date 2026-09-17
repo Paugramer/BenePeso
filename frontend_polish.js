@@ -688,6 +688,9 @@
     const visible = isVisible(container);
     container.setAttribute('aria-hidden', visible ? 'false' : 'true');
     if (visible) {
+      container.querySelectorAll('select').forEach(select => {
+        select.dispatchEvent(new Event('bp-select-sync'));
+      });
       const dialog = container.matches('[role="dialog"]') ? container : container.querySelector('[role="dialog"]');
       window.setTimeout(() => {
         if (dialog && !dialog.contains(document.activeElement)) {
@@ -847,6 +850,7 @@
         }
       });
       select.addEventListener('change', sync);
+      select.addEventListener('bp-select-sync', sync);
       select.addEventListener('focus', () => button.focus());
       select.addEventListener('invalid', event => {
         event.preventDefault();

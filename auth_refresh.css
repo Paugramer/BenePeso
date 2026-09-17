@@ -209,6 +209,23 @@ body.auth-page::before {
   outline-offset: 2px;
 }
 
+.auth-page .auth-turnstile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 67px;
+  margin: 12px 0 2px;
+  overflow: hidden;
+  border: 1px solid #d8e5de;
+  border-radius: 12px;
+  background: #fbfdfc;
+}
+
+.auth-page .auth-turnstile .cf-turnstile {
+  width: 100%;
+}
+
 .auth-page .btn,
 .auth-page .modal-btn {
   min-height: 51px;

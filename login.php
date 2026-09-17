@@ -3,6 +3,7 @@ require_once __DIR__ . '/auth_session.php';
 require_once "db.php"; 
 require_once __DIR__ . '/google_auth_config.php';
 require_once __DIR__ . '/remember_auth.php';
+require_once __DIR__ . '/turnstile_config.php';
 
 $remembered_role = remember_auth_attempt($conn);
 if ($remembered_role !== null) {
@@ -90,8 +91,11 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="stylesheet" href="style.css?v=31" />
   <link rel="stylesheet" href="frontend_polish.css?v=16">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=3">
-  <script src="frontend_polish.js?v=14" defer></script>
+  <link rel="stylesheet" href="auth_refresh.css?v=4">
+<script src="frontend_polish.js?v=15" defer></script>
+  <?php if (benepeso_turnstile_enabled()): ?>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <?php endif; ?>
   <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
   <script src="google_signin.js?v=5" defer></script>
 </head>
@@ -188,6 +192,17 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
             </label>
             <a href="#" id="forgotLink">Forgot password?</a>
           </div>
+
+          <?php if (benepeso_turnstile_enabled()): ?>
+            <div class="auth-turnstile" aria-label="Cloudflare security verification">
+              <div class="cf-turnstile"
+                   data-sitekey="<?= htmlspecialchars(benepeso_turnstile_site_key(), ENT_QUOTES, 'UTF-8') ?>"
+                   data-theme="light"
+                   data-size="flexible"
+                   data-action="login"
+                   data-appearance="always"></div>
+            </div>
+          <?php endif; ?>
 
           <button class="btn" type="submit" id="loginBtn" <?php echo $locked ? "disabled" : ""; ?>>
             Log in securely

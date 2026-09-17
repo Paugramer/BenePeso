@@ -155,7 +155,7 @@ function queueBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $sta
 /**
  * Sends an availment status notification using the beneficiary's current database record.
  */
-function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $status, &$error_message = null, string $custom_message = '', string $schedule_date = '', string $schedule_place = ''): bool {
+function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $status, &$error_message = null, string $custom_message = '', string $schedule_date = '', string $schedule_place = '', string $completion_date = ''): bool {
     $error_message = null;
     $stmt = $conn->prepare(
         "SELECT COALESCE(NULLIF(TRIM(b.email), ''), NULLIF(TRIM(b.business_email), '')) AS email,
@@ -202,6 +202,12 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
         $schedule_date_text = $parsed_schedule_date->format('F j, Y');
     }
     $safe_schedule_date = htmlspecialchars($schedule_date_text, ENT_QUOTES, 'UTF-8');
+    $completion_date_text = trim($completion_date);
+    $parsed_completion_date = DateTime::createFromFormat('!Y-m-d', $completion_date_text);
+    if ($parsed_completion_date && $parsed_completion_date->format('Y-m-d') === $completion_date_text) {
+        $completion_date_text = $parsed_completion_date->format('F j, Y');
+    }
+    $safe_completion_date = htmlspecialchars($completion_date_text, ENT_QUOTES, 'UTF-8');
     $safe_schedule_place = htmlspecialchars(trim($schedule_place), ENT_QUOTES, 'UTF-8');
     $normalized_status = strtolower(trim($status));
     $program_key = strtoupper((string)$applicant['program_name']);
@@ -223,8 +229,10 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
         case 'requirements recieved':
             $subject = $applicant['program_name'] . " Documents Submitted";
             $headline = "Documents submitted";
+            $received_date_line = $safe_schedule_date !== '' ? "<p><strong>Date received:</strong> {$safe_schedule_date}</p>" : '';
             $message = "
                 <p>Your document submission for <strong>{$safe_program}</strong> has been recorded by PESO Vinzons.</p>
+                {$received_date_line}
                 <p>Your documents are now under verification. Please keep your registered contact number active in case the office needs additional information.</p>
             ";
             break;
@@ -232,26 +240,35 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
         case 'ongoing':
             $subject = $applicant['program_name'] . " Participation Update";
             $headline = "Program participation started";
+            $ongoing_date_lines = '';
+            if ($safe_schedule_date !== '') {
+                $ongoing_date_lines .= "<p><strong>Start date:</strong> {$safe_schedule_date}</p>";
+            }
+            if ($safe_completion_date !== '') {
+                $ongoing_date_lines .= "<p><strong>Expected completion date:</strong> {$safe_completion_date}</p>";
+            }
             $message = "
                 <p>Your participation in <strong>{$safe_program}</strong> is now recorded as <strong>Ongoing</strong>.</p>
+                {$ongoing_date_lines}
                 <p>Please follow the schedule and instructions issued by PESO Vinzons and keep all program-related documents for your records.</p>
             ";
             break;
 
         case 'completed':
             $classification = $is_spes ? spes_beneficiary_classification($conn, $beneficiary_id) : 'none';
+            $completion_date_line = $safe_schedule_date !== '' ? "<p><strong>Completion date:</strong> {$safe_schedule_date}</p>" : '';
             if ($classification === 'graduate') {
                 $subject = "Congratulations - You are now a SPES Graduate";
                 $headline = "SPES Graduate status recorded";
-                $message = "<p>Your participation in <strong>{$safe_program}</strong> has been recorded as <strong>Completed</strong>.</p><p>Congratulations! PESO Vinzons now recognizes you as a <strong>SPES Graduate</strong>. Thank you for your participation in the program.</p><p>Please retain your SPES forms, grades, and supporting documents for your records.</p>";
+                $message = "<p>Your participation in <strong>{$safe_program}</strong> has been recorded as <strong>Completed</strong>.</p>{$completion_date_line}<p>Congratulations! PESO Vinzons now recognizes you as a <strong>SPES Graduate</strong>. Thank you for your participation in the program.</p><p>Please retain your SPES forms, grades, and supporting documents for your records.</p>";
             } elseif ($classification === 'baby') {
                 $subject = "Congratulations - You are now a SPES Baby";
                 $headline = "Welcome to the SPES Baby community";
-                $message = "<p>Your participation in <strong>{$safe_program}</strong> has been recorded as <strong>Completed</strong>.</p><p>You are now recognized as a <strong>SPES Baby</strong>. For a future SPES batch, you will not need to take the qualifying examination again.</p><p>When a new batch opens, update your SPES form and prepare your latest semester grades and the other documents required by PESO Vinzons.</p>";
+                $message = "<p>Your participation in <strong>{$safe_program}</strong> has been recorded as <strong>Completed</strong>.</p>{$completion_date_line}<p>You are now recognized as a <strong>SPES Baby</strong>. For a future SPES batch, you will not need to take the qualifying examination again.</p><p>When a new batch opens, update your SPES form and prepare your latest semester grades and the other documents required by PESO Vinzons.</p>";
             } else {
                 $subject = $applicant['program_name'] . " Completion Notice";
                 $headline = "Program completion recorded";
-                $message = "<p>Your participation in <strong>{$safe_program}</strong> has been recorded as <strong>Completed</strong>.</p><p>Thank you for participating. Please retain your program documents and monitor your account for any final notice from PESO Vinzons.</p>";
+                $message = "<p>Your participation in <strong>{$safe_program}</strong> has been recorded as <strong>Completed</strong>.</p>{$completion_date_line}<p>Thank you for participating. Please retain your program documents and monitor your account for any final notice from PESO Vinzons.</p>";
             }
             break;
 

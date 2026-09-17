@@ -3,6 +3,7 @@ require_once __DIR__ . '/auth_session.php';
 require_once __DIR__ . '/auth_rate_limit.php';
 require "db.php";
 require_once __DIR__ . '/remember_auth.php';
+require_once __DIR__ . '/turnstile_config.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: login.php');
@@ -50,6 +51,14 @@ $retry_after = max(
 if ($retry_after > 0) {
     $_SESSION['flash'] = 'Too many login attempts. Please wait before trying again.';
     header('Retry-After: ' . $retry_after);
+    header('Location: login.php');
+    exit();
+}
+
+$turnstile_error = null;
+if (!benepeso_verify_turnstile((string)($_POST['cf-turnstile-response'] ?? ''), $login_ip, $turnstile_error)) {
+    $_SESSION['login_email'] = $email;
+    $_SESSION['flash'] = $turnstile_error ?: 'Please complete the security verification.';
     header('Location: login.php');
     exit();
 }
