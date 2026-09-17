@@ -72,6 +72,23 @@ function auth_regenerate_session(): void
     unset($_SESSION['csrf_token']);
 }
 
+function auth_persist_current_session(int $lifetimeSeconds): void
+{
+    if (session_status() !== PHP_SESSION_ACTIVE || headers_sent() || $lifetimeSeconds < 1) {
+        return;
+    }
+
+    $params = session_get_cookie_params();
+    setcookie(session_name(), session_id(), [
+        'expires' => time() + $lifetimeSeconds,
+        'path' => $params['path'] ?: '/',
+        'domain' => $params['domain'] ?? '',
+        'secure' => !empty($params['secure']),
+        'httponly' => true,
+        'samesite' => $params['samesite'] ?? 'Lax',
+    ]);
+}
+
 function auth_role_id_key(string $role): ?string
 {
     return [

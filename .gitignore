@@ -8,6 +8,7 @@ config.local.php
 uploads/*
 !uploads/.gitkeep
 !uploads/.htaccess
+/uploads*.zip
 
 # Local database and code backups must remain outside version control.
 _safety_backups/*

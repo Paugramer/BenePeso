@@ -145,7 +145,11 @@ if ($user !== null) {
     ]);
 }
 
+// Keep an unfinished Google registration available briefly when a mobile
+// browser refreshes the page or suspends and restores the tab.
+auth_regenerate_session();
 $_SESSION['google_pending_identity'] = $identity;
+auth_persist_current_session(GOOGLE_PENDING_REGISTRATION_TTL);
 auth_rate_limit_clear('google-login-ip', $requestIp);
 google_auth_response(200, [
     'ok' => true,

@@ -118,7 +118,10 @@ $barangays = beneficiary_barangay_options();
             </div>
         </div>
 
-        <form action="process_signup.php" method="POST" enctype="multipart/form-data" autocomplete="off" id="signupForm" class="stagger-3" novalidate>
+        <form action="process_signup.php" method="POST" enctype="multipart/form-data" autocomplete="off" id="signupForm" class="stagger-3" novalidate
+          data-google-registration="<?= $google_registration ? '1' : '0' ?>"
+          data-google-signup-success="<?= $google_signup_success ? '1' : '0' ?>"
+          data-draft-key="<?= $google_registration ? 'benepeso_google_signup_draft_' . substr(hash('sha256', mb_strtolower((string)$google_identity['email'])), 0, 24) : '' ?>">
           <?= auth_csrf_input() ?>
           <input type="hidden" name="role" value="user" id="roleInput">
           <input type="hidden" name="municipality" value="Vinzons" id="municipalityHidden">
@@ -675,6 +678,7 @@ $barangays = beneficiary_barangay_options();
     showLoading("Creating account", "Uploading photo and saving details securely...");
   });
 </script>
+<script src="signup_draft.js?v=1"></script>
 
 </body>
 </html>

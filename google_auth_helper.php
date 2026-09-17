@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/google_auth_config.php';
 
+const GOOGLE_PENDING_REGISTRATION_TTL = 1800;
+
 function google_auth_ensure_schema(mysqli $conn): bool
 {
     return $conn->query(
@@ -30,7 +32,7 @@ function google_auth_pending_identity(): ?array
         return null;
     }
 
-    if ((int)($pending['created_at'] ?? 0) < time() - 900) {
+    if ((int)($pending['created_at'] ?? 0) < time() - GOOGLE_PENDING_REGISTRATION_TTL) {
         unset($_SESSION['google_pending_identity']);
         return null;
     }
