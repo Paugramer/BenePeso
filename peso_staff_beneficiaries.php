@@ -234,6 +234,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   $invalidFlow++;
                   continue;
               }
+              if ($bulkStatus === 'Ongoing' && ($transition['current'] ?? '') === 'Orientation'
+                  && !tupad_confirm_documents_for_orientation($conn, $selectedId, 'peso_staff', $peso_staff_id)) {
+                  $blocked++;
+                  continue;
+              }
               if (in_array($bulkStatus, ['Ongoing', 'Salary Distribution', 'Completed'], true)
                   && !tupad_can_start_work($conn, $selectedId)) {
                   $blocked++;
@@ -282,6 +287,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           if (!$transition['allowed']) {
               $_SESSION["show_error_modal"] = true;
               $_SESSION["error_modal_message"] = $transition['message'];
+              header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
+              exit();
+          }
+          if ($availment_status === 'Ongoing' && ($transition['current'] ?? '') === 'Orientation'
+              && !tupad_confirm_documents_for_orientation($conn, $beneficiary_id, 'peso_staff', $peso_staff_id)) {
+              $_SESSION["show_error_modal"] = true;
+              $_SESSION["error_modal_message"] = "The existing Orientation record could not be linked to document verification. Please try again.";
               header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
               exit();
           }
@@ -580,6 +592,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               if (!$transition['allowed']) {
                   $_SESSION['show_error_modal'] = true;
                   $_SESSION['error_modal_message'] = $transition['message'];
+                  header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
+                  exit();
+              }
+              if ($availment_status === 'Ongoing' && ($transition['current'] ?? '') === 'Orientation'
+                  && !tupad_confirm_documents_for_orientation($conn, $bid, 'peso_staff', $peso_staff_id)) {
+                  $_SESSION['show_error_modal'] = true;
+                  $_SESSION['error_modal_message'] = 'The existing Orientation record could not be linked to document verification. Please try again.';
                   header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
                   exit();
               }
