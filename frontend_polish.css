@@ -1957,3 +1957,32 @@ html.bp-action-loading body {
   .bp-update-panel:not([hidden]) { animation: none; }
   .bp-back-to-top { transition: none; }
 }
+
+/* Consistent, accessible dropdown treatment across public and staff screens. */
+select:not([multiple]):not([size]) {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 42px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231d7653' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 16px !important;
+  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease, transform .2s ease !important;
+}
+
+select:not([multiple]):not([size]):hover:not(:disabled) {
+  border-color: #83b99f !important;
+  background-color: #fbfefc !important;
+}
+
+select:not([multiple]):not([size]):focus-visible {
+  border-color: #1f7a54 !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 4px rgba(31, 122, 84, .12) !important;
+}
+
+select:disabled { cursor: not-allowed; opacity: .72; }
+
+@media (prefers-reduced-motion: reduce) {
+  select { transition: none !important; }
+}

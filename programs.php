@@ -710,7 +710,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
             if ($isSpesApplication) {
                 $receiptEmail = trim((string)($user_data['email'] ?? ''));
                 if ($receiptEmail !== '' && strpos(strtolower($receiptEmail), 'no email') === false) {
-                    $safeApplicantName = htmlspecialchars($first_name ?: $user_display_name, ENT_QUOTES, 'UTF-8');
+            $safeApplicantName = htmlspecialchars(benepeso_recipient_name((string)$first_name, (string)$user_display_name), ENT_QUOTES, 'UTF-8');
                     $safeProgramName = htmlspecialchars($p_name, ENT_QUOTES, 'UTF-8');
                     if ($is_spes_returning) {
                         $receiptBody = "<p>Dear <strong>{$safeApplicantName}</strong>,</p><p>PESO Vinzons received your updated SPES form for <strong>{$safeProgramName}</strong>.</p><p>You are recognized as a <strong>SPES Baby</strong>, so you do not need to take the SPES examination again. Please prepare and submit your latest semester grades and all other current documentary requirements when instructed by PESO Vinzons.</p><p>Keep your profile and SPES form information updated while your record is under review.</p>";
@@ -724,7 +724,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
                 $receiptEmail = trim((string)($user_data['email'] ?? ''));
                 if ($receiptEmail === '') $receiptEmail = trim((string)($_POST['business_email'] ?? ''));
                 if (filter_var($receiptEmail, FILTER_VALIDATE_EMAIL)) {
-                    $safeApplicantName = htmlspecialchars($first_name ?: $user_display_name, ENT_QUOTES, 'UTF-8');
+            $safeApplicantName = htmlspecialchars(benepeso_recipient_name((string)$first_name, (string)$user_display_name), ENT_QUOTES, 'UTF-8');
                     $safeProgramName = htmlspecialchars($p_name, ENT_QUOTES, 'UTF-8');
                     $receiptBody = "<p>Dear <strong>{$safeApplicantName}</strong>,</p><p>PESO Vinzons has received your application for <strong>{$safeProgramName}</strong>. Its current status is <strong>Pending Review</strong>.</p><p>The office will verify the submitted business information. Please wait for an official email or account update before taking further action.</p>";
                     sendBENEPESOEmail($receiptEmail, "MSME Application Received: {$p_name}", 'Your MSME application is pending review', $receiptBody);
@@ -732,7 +732,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
             } elseif ($isTupadApplication) {
                 $receiptEmail = trim((string)($user_data['email'] ?? ''));
                 if (filter_var($receiptEmail, FILTER_VALIDATE_EMAIL)) {
-                    $safeApplicantName = htmlspecialchars($first_name ?: $user_display_name, ENT_QUOTES, 'UTF-8');
+            $safeApplicantName = htmlspecialchars(benepeso_recipient_name((string)$first_name, (string)$user_display_name), ENT_QUOTES, 'UTF-8');
                     $safeProgramName = htmlspecialchars($p_name, ENT_QUOTES, 'UTF-8');
                     $receiptBody = "<p>Dear <strong>{$safeApplicantName}</strong>,</p><p>PESO Vinzons has received your application for <strong>{$safeProgramName}</strong>. Its current status is <strong>Pending Review</strong>.</p><p>Do not submit physical documents while the application is pending. If approved, PESO Vinzons will advise you when to visit the office and which original documents and photocopies to bring for verification.</p>";
                     sendBENEPESOEmail($receiptEmail, "TUPAD Application Received: {$p_name}", 'Your TUPAD application is pending review', $receiptBody);
@@ -857,11 +857,11 @@ if ($barangay_summary_result) {
     
     <link rel="stylesheet" href="home.css?v=16">
     <link rel="stylesheet" href="programs.css?v=29">
-<link rel="stylesheet" href="frontend_polish.css?v=14">
+<link rel="stylesheet" href="frontend_polish.css?v=15">
 <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
-    <script src="frontend_polish.js?v=9" defer></script>
+    <script src="frontend_polish.js?v=13" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body class="beneficiary-programs-page">

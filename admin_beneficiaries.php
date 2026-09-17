@@ -169,6 +169,17 @@ function build_query(array $overrides = []): string {
   return http_build_query($query);
 }
 
+function beneficiary_return_location(string $script, string $fallbackProgram = ''): string {
+  $allowed = ['program_name', 'approval', 'spes_group', 'page', 'search', 'sort', 'program_id', 'tupad_category', 'barangay', 'availment', 'business_nature'];
+  $query = [];
+  parse_str((string)($_POST['return_query'] ?? ''), $submitted);
+  foreach ($allowed as $key) {
+    if (isset($submitted[$key]) && is_scalar($submitted[$key]) && trim((string)$submitted[$key]) !== '') $query[$key] = trim((string)$submitted[$key]);
+  }
+  if (!isset($query['program_name']) && $fallbackProgram !== '') $query['program_name'] = $fallbackProgram;
+  return $script . ($query ? '?' . http_build_query($query) : '');
+}
+
 // Minimal native Excel (.xlsx) parser to fix garbled text uploads
 function read_simple_xlsx(string $filepath): array {
     $rows = [];
@@ -262,6 +273,7 @@ if (table_exists($conn, "admins")) {
 if (empty(trim($admin_name))) {
     $admin_name = "System Admin";
 }
+
 $admin_name = "PESO VINZONS";
 
 $pic_path = "uploads/admin_pics/" . $admin_pic;
@@ -337,6 +349,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   $blocked++;
                   continue;
               }
+              if ($bulkStatus === 'Orientation' && !tupad_confirm_documents_for_orientation($conn, $selectedId, 'admin', $admin_id)) {
+                  $blocked++;
+                  continue;
+              }
               if (in_array($bulkStatus, ['Examination', 'Exam Passed', 'Exam Failed'], true) && spes_beneficiary_is_returning($conn, $selectedId)) {
                   $spesExamSkipped++;
                   continue;
@@ -353,7 +369,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           $_SESSION['success_modal_message'] = "$updated beneficiaries updated to $bulkStatus. $sent email notification(s) will be sent automatically" . ($failed ? "; $failed email notification(s) could not be scheduled" : "") . ($blocked ? "; $blocked TUPAD applicant(s) were not updated because their required documents are not verified" : "") . ($spesExamSkipped ? "; $spesExamSkipped returning SPES Baby record(s) skipped because they are exam-exempt" : "") . ($outOfScope ? "; $outOfScope record(s) outside the selected program or batch were skipped" : "") . ".";
           $_SESSION['modal_icon'] = "✓";
       }
-      header("Location: admin_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('admin_beneficiaries.php', $program_name_post));
       exit();
   }
 
@@ -365,7 +381,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           $conn->begin_transaction();
 
           // Fetch beneficiary details and program slots
-          $fetch_query = "SELECT b.email, b.first_name, b.program_id, b.approval_status, b.birthdate, b.spes_type, b.spes_is_pregnant, b.tert_year_level,
+          $fetch_query = "SELECT b.email, b.first_name, b.last_name, b.full_name, b.program_id, b.approval_status, b.birthdate, b.spes_type, b.spes_is_pregnant, b.tert_year_level,
                                  b.business_name, b.ownership_type, b.business_nature, b.primary_products, b.business_size,
                                  p.program_name, p.slots, p.minimum_age, p.maximum_age,
                                  t.is_pregnant, t.is_pwd, t.has_work_limitation, t.capable_of_work
@@ -381,7 +397,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
           if ($row = $result->fetch_assoc()) {
               $user_email = $row['email'];
-              $first_name = $row['first_name'];
+              $first_name = benepeso_recipient_name(trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? '')), (string)($row['full_name'] ?? ''));
               $program_id = $row['program_id'];
               $program_name = $row['program_name'];
               $total_slots = (int)$row['slots'];
@@ -521,7 +537,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   if ($total_slots > 0 && $approved_count >= $total_slots) {
                       
                       // Fetch all remaining 'Pending' users for this program
-                      $pendingStmt = $conn->prepare("SELECT beneficiary_id, email, first_name FROM beneficiaries WHERE program_id = ? AND approval_status = 'Pending'");
+                      $pendingStmt = $conn->prepare("SELECT beneficiary_id, email, first_name, last_name, full_name FROM beneficiaries WHERE program_id = ? AND approval_status = 'Pending'");
                       $pendingStmt->bind_param("i", $program_id);
                       $pendingStmt->execute();
                       $pendingRes = $pendingStmt->get_result();
@@ -532,7 +548,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                       while ($pending_row = $pendingRes->fetch_assoc()) {
                           $pending_id = $pending_row['beneficiary_id'];
                           $pending_email = $pending_row['email'];
-                          $pending_fname = $pending_row['first_name'];
+                          $pending_fname = benepeso_recipient_name(trim(($pending_row['first_name'] ?? '') . ' ' . ($pending_row['last_name'] ?? '')), (string)($pending_row['full_name'] ?? ''));
 
                           // Update status to Rejected
                           if ($hasApprovalNote) {
@@ -588,7 +604,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           }
           $stmt_fetch->close();
       }
-      header("Location: admin_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('admin_beneficiaries.php', $program_name_post));
       exit();
   }
 
@@ -599,7 +615,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
       if ($beneficiary_id > 0) {
           // Fetch email, name, and program name for the email
-          $fetch_query = "SELECT b.email, b.first_name, p.program_name 
+          $fetch_query = "SELECT b.email, b.first_name, b.last_name, b.full_name, p.program_name
                           FROM beneficiaries b 
                           JOIN programs p ON b.program_id = p.program_id 
                           WHERE b.beneficiary_id = ?";
@@ -614,7 +630,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           
           if ($row = $result->fetch_assoc()) {
               $user_email = $row['email'];
-              $first_name = $row['first_name'];
+              $first_name = benepeso_recipient_name(trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? '')), (string)($row['full_name'] ?? ''));
               $program_name = $row['program_name'];
           }
           $stmt_fetch->close();
@@ -665,7 +681,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           }
                $stmt->close();
            }
-       header("Location: admin_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('admin_beneficiaries.php', $program_name_post));
        exit();
    }
 
@@ -687,26 +703,32 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           if (($needs_schedule && (empty($date_availed) || $schedule_place === '')) || ($needs_completion_date && empty($date_completed))) {
               $_SESSION["show_error_modal"] = true;
               $_SESSION["error_modal_message"] = "Complete the required schedule date and venue for this status.";
-              header("Location: admin_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('admin_beneficiaries.php', $program_name_post));
               exit();
           }
           if (in_array($availment_status, ['Ongoing', 'Salary Distribution', 'Completed'], true)
               && !tupad_can_start_work($conn, $beneficiary_id)) {
               $_SESSION["show_error_modal"] = true;
               $_SESSION["error_modal_message"] = "Verify the required TUPAD documents before moving this beneficiary to the selected status.";
-              header("Location: admin_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('admin_beneficiaries.php', $program_name_post));
+              exit();
+          }
+          if ($availment_status === 'Orientation' && !tupad_confirm_documents_for_orientation($conn, $beneficiary_id, 'admin', $admin_id)) {
+              $_SESSION["show_error_modal"] = true;
+              $_SESSION["error_modal_message"] = "The TUPAD document verification could not be recorded. Please try again before scheduling orientation.";
+              header("Location: " . beneficiary_return_location('admin_beneficiaries.php', $program_name_post));
               exit();
           }
           if ($needs_resubmission && $status_message === '') {
               $_SESSION["show_error_modal"] = true;
               $_SESSION["error_modal_message"] = "Provide the reason and instructions for document resubmission.";
-              header("Location: admin_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('admin_beneficiaries.php', $program_name_post));
               exit();
           }
           if (in_array($availment_status, ['Examination', 'Exam Passed', 'Exam Failed'], true) && spes_beneficiary_is_returning($conn, $beneficiary_id)) {
               $_SESSION["show_error_modal"] = true;
               $_SESSION["error_modal_message"] = "This returning SPES Baby is exempt from the examination. Continue with document submission, orientation, or the appropriate next status.";
-              header("Location: admin_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('admin_beneficiaries.php', $program_name_post));
               exit();
           }
           $stmt = $conn->prepare("UPDATE beneficiaries SET availment_status = ?, date_availed = ?, date_completed = ?, last_availed_at = ?, updated_at = NOW() WHERE beneficiary_id = ?");
@@ -738,7 +760,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               $stmt->close();
           }
       }
-      header("Location: admin_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('admin_beneficiaries.php', $program_name_post));
       exit();
   }
 
@@ -774,7 +796,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       if ($bid > 0 && in_array($availment_status, ['Examination', 'Exam Passed', 'Exam Failed'], true) && spes_beneficiary_is_returning($conn, $bid)) {
           $_SESSION['show_error_modal'] = true;
           $_SESSION['error_modal_message'] = 'This returning SPES Baby is exam-exempt. Their record cannot be moved into an examination status.';
-          header("Location: admin_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('admin_beneficiaries.php', $program_name_post));
           exit();
       }
       $date_availed = trim($_POST["date_availed"] ?? null);
@@ -1154,7 +1176,7 @@ $stmt->bind_param($bindTypes, ...$bindParams);
           }
           }
       }
-      header("Location: admin_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('admin_beneficiaries.php', $program_name_post));
       exit();
   }
 
@@ -1243,7 +1265,7 @@ $stmt->bind_param($bindTypes, ...$bindParams);
               } catch (Throwable $error) {
                   $_SESSION["show_error_modal"] = true;
                   $_SESSION["error_modal_message"] = "Import failed: " . $error->getMessage();
-                  header("Location: admin_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('admin_beneficiaries.php', $program_name_post));
                   exit();
               }
 
@@ -1270,7 +1292,7 @@ $stmt->bind_param($bindTypes, ...$bindParams);
               if (!$header_found) {
                   $_SESSION["show_error_modal"] = true;
                   $_SESSION["error_modal_message"] = "Invalid Template. Could not find column headers (First Name, Last Name, Full Name, or Owner Name) in the file.";
-                  header("Location: admin_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('admin_beneficiaries.php', $program_name_post));
                   exit();
               }
 
@@ -1447,7 +1469,7 @@ $stmt->bind_param($bindTypes, ...$bindParams);
               ? "Please select a valid program batch before importing."
               : "The selected file could not be uploaded. Please check its size and try again.";
       }
-      header("Location: admin_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('admin_beneficiaries.php', $program_name_post));
       exit();
   }
 }
@@ -1559,14 +1581,10 @@ if ($selectedProgramName !== "") {
     $countStmt->close();
   }
   $totalPages = max(1, ceil($totalRecords / $limit));
+  // The approval queue is FIFO; all other tabs show the latest record first.
   $orderBy = $approvalFilter === 'Pending'
       ? "b.created_at ASC, b.beneficiary_id ASC"
-      : ($approvalFilter === 'All'
-          ? "CASE WHEN b.approval_status = 'Pending' THEN 0 ELSE 1 END ASC,
-             CASE WHEN b.approval_status = 'Pending' THEN b.created_at END ASC,
-             CASE WHEN b.approval_status <> 'Pending' THEN b.created_at END DESC,
-             b.beneficiary_id ASC"
-          : "b.created_at DESC, b.beneficiary_id DESC");
+      : "b.created_at DESC, b.beneficiary_id DESC";
   
   $sqlList = "SELECT b.*, p.program_code, u.profile_pic AS user_profile_pic,
       CASE WHEN b.user_id IS NOT NULL THEN 'Online Applicant'
@@ -1635,10 +1653,10 @@ if ($selectedProgramName !== "") {
       .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #ccc; padding: 6px 3px; font-size: 9px; white-space: normal; overflow-wrap: anywhere; }
       .spreadsheet-table thead th { background: #e6f4ed; color: #0d2618; position: sticky; top: 0; z-index: 10; font-weight: 700;}
   </style>
-<link rel="stylesheet" href="frontend_polish.css?v=13">
+<link rel="stylesheet" href="frontend_polish.css?v=15">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<script src="frontend_polish.js?v=7" defer></script>
+<script src="frontend_polish.js?v=13" defer></script>
 </head>
 <body class="admin-beneficiaries-page">
   <div class="page-wrap">

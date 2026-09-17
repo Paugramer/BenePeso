@@ -10,6 +10,14 @@ require_once "PHPMailer/src/Exception.php";
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+function benepeso_recipient_name(string ...$candidates): string {
+    foreach ($candidates as $candidate) {
+        $name = trim((string)preg_replace('/\s+/u', ' ', $candidate));
+        if ($name !== '' && !preg_match('/^(?:bene\s*peso|benepeso|peso vinzons|user)$/i', $name)) return $name;
+    }
+    return 'Applicant';
+}
+
 /**
  * Reusable function to send beautifully formatted BENEPESO emails
  * 
@@ -151,10 +159,16 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
     $error_message = null;
     $stmt = $conn->prepare(
         "SELECT COALESCE(NULLIF(TRIM(b.email), ''), NULLIF(TRIM(b.business_email), '')) AS email,
-                COALESCE(NULLIF(TRIM(b.first_name), ''), NULLIF(TRIM(b.full_name), ''), 'Applicant') AS first_name,
+                COALESCE(
+                    NULLIF(TRIM(CONCAT_WS(' ', NULLIF(TRIM(b.first_name), ''), NULLIF(TRIM(b.last_name), ''))), ''),
+                    NULLIF(TRIM(b.full_name), ''),
+                    NULLIF(TRIM(CONCAT_WS(' ', NULLIF(TRIM(u.first_name), ''), NULLIF(TRIM(u.last_name), ''))), ''),
+                    'Applicant'
+                ) AS beneficiary_name,
                 COALESCE(p.program_name, 'PESO Vinzons Program') AS program_name
          FROM beneficiaries b
          LEFT JOIN programs p ON p.program_id = b.program_id
+         LEFT JOIN users u ON u.user_id = b.user_id
          WHERE b.beneficiary_id = ?
          LIMIT 1"
     );
@@ -177,7 +191,8 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
     }
 
     $email = trim((string)($applicant['email'] ?? ''));
-    $safe_name = htmlspecialchars((string)($applicant['first_name'] ?: 'Applicant'), ENT_QUOTES, 'UTF-8');
+    $beneficiary_name = benepeso_recipient_name((string)($applicant['beneficiary_name'] ?? ''));
+    $safe_name = htmlspecialchars($beneficiary_name, ENT_QUOTES, 'UTF-8');
     $safe_program = htmlspecialchars((string)$applicant['program_name'], ENT_QUOTES, 'UTF-8');
     $safe_status = htmlspecialchars(trim($status), ENT_QUOTES, 'UTF-8');
     $safe_custom_message = nl2br(htmlspecialchars(trim($custom_message), ENT_QUOTES, 'UTF-8'));

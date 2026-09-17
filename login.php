@@ -88,10 +88,10 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css?v=31" />
-  <link rel="stylesheet" href="frontend_polish.css?v=11">
+  <link rel="stylesheet" href="frontend_polish.css?v=15">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=2">
-  <script src="frontend_polish.js?v=12" defer></script>
+  <link rel="stylesheet" href="auth_refresh.css?v=3">
+  <script src="frontend_polish.js?v=13" defer></script>
   <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
   <script src="google_signin.js?v=5" defer></script>
 </head>
@@ -209,6 +209,9 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
         <p class="small stagger-4" style="margin-top:8px;">
           Don’t have an account?
           <a href="signup.php" id="signupLink">Create an account</a>
+        </p>
+        <p class="small auth-privacy-link stagger-4">
+          By signing in, you acknowledge the <a href="privacy_notice.php">Privacy Notice</a>.
         </p>
 
       </div>

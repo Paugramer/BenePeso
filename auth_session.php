@@ -6,7 +6,10 @@ function start_secure_session(): void
         return;
     }
 
-    $https = !empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off';
+    $https = (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off')
+        || (int)($_SERVER['SERVER_PORT'] ?? 0) === 443
+        || strtolower(trim(explode(',', (string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''))[0])) === 'https'
+        || strtolower((string)($_SERVER['HTTP_CF_VISITOR'] ?? '')) === '{"scheme":"https"}';
 
     ini_set('session.use_strict_mode', '1');
     ini_set('session.use_only_cookies', '1');
@@ -58,9 +61,11 @@ function auth_enable_csrf_form_injection(): void
 {
     ob_start(static function (string $html): string {
         $field = auth_csrf_input();
+        $query = htmlspecialchars((string)($_SERVER['QUERY_STRING'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $returnField = '<input type="hidden" name="return_query" value="' . $query . '">';
         return (string)preg_replace_callback(
             '/<form\b(?=[^>]*\bmethod\s*=\s*(["\'])post\1)[^>]*>/i',
-            static fn(array $match): string => $match[0] . $field,
+            static fn(array $match): string => $match[0] . $field . $returnField,
             $html
         );
     });

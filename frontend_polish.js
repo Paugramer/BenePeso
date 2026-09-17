@@ -70,9 +70,9 @@
 
     const forceOnEntry = document.body.hasAttribute('data-force-page-loader');
     const shouldShowImmediately = forceOnEntry || !hasBeenSeen || (navigation && navigation.type === 'reload');
-    const showDelay = shouldShowImmediately ? 0 : 180;
-    const minimumVisibleMs = shouldShowImmediately ? 1500 : 900;
-    const safetyTimeoutMs = 6000;
+    const showDelay = shouldShowImmediately ? 0 : 160;
+    const minimumVisibleMs = shouldShowImmediately ? 550 : 240;
+    const safetyTimeoutMs = 3500;
     let loader = null;
     let shownAt = 0;
     let pageReady = document.readyState === 'complete';
@@ -417,7 +417,7 @@
     let activeLoader = null;
     let safetyTimer = null;
     let authNavigationPending = false;
-    const submissionDelayMs = 900;
+    const submissionDelayMs = 120;
 
     function iconFor(variant) {
       if (variant === 'login') {
@@ -589,7 +589,7 @@
         /* Navigation remains safe when storage is unavailable. */
       }
 
-      window.setTimeout(() => window.location.assign(destination.href), 900);
+      window.setTimeout(() => window.location.assign(destination.href), 180);
     });
 
     window.BenePesoLoading = Object.freeze({ show: showActionLoader, hide: hideActionLoader });

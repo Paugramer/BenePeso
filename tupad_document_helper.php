@@ -106,3 +106,39 @@ function tupad_can_start_work(mysqli $conn, int $beneficiaryId): bool
 {
     return !is_tupad_beneficiary($conn, $beneficiaryId) || tupad_documents_are_verified($conn, $beneficiaryId);
 }
+
+/**
+ * Scheduling TUPAD orientation is the reviewer's confirmation that every
+ * applicable physical document has already been inspected successfully.
+ */
+function tupad_confirm_documents_for_orientation(mysqli $conn, int $beneficiaryId, string $reviewerRole, int $reviewerId): bool
+{
+    if (!is_tupad_beneficiary($conn, $beneficiaryId)) return true;
+
+    $details = $conn->prepare('SELECT is_pwd,has_work_limitation FROM beneficiary_tupad_details WHERE beneficiary_id=? LIMIT 1');
+    if (!$details) return false;
+    $details->bind_param('i', $beneficiaryId);
+    $details->execute();
+    $row = $details->get_result()->fetch_assoc();
+    $details->close();
+    // Legacy records without a checklist continue through the manual process.
+    if (!$row) return true;
+
+    $types = ['government_id'];
+    if (($row['is_pwd'] ?? 'No') === 'Yes' || ($row['has_work_limitation'] ?? 'No') === 'Yes') $types[] = 'fitness_to_work';
+    $insert = $conn->prepare('INSERT IGNORE INTO beneficiary_documents (beneficiary_id,document_type) VALUES (?,?)');
+    if (!$insert) return false;
+    foreach ($types as $type) {
+        $insert->bind_param('is', $beneficiaryId, $type);
+        if (!$insert->execute()) { $insert->close(); return false; }
+    }
+    $insert->close();
+
+    $note = 'Verified in person before orientation was scheduled.';
+    $update = $conn->prepare("UPDATE beneficiary_documents SET verification_status='Verified',reviewer_note=?,reviewed_by_role=?,reviewed_by_id=?,reviewed_at=NOW() WHERE beneficiary_id=? AND document_type IN ('government_id','fitness_to_work')");
+    if (!$update) return false;
+    $update->bind_param('ssii', $note, $reviewerRole, $reviewerId, $beneficiaryId);
+    $saved = $update->execute();
+    $update->close();
+    return $saved;
+}

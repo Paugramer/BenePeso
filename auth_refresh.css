@@ -335,3 +335,17 @@ body.auth-page::before {
   .auth-signup .step-tracker::after,
   .auth-signup .step-item.active .step-circle { animation: none !important; }
 }
+
+.auth-page .auth-privacy-link {
+  margin-top: 10px;
+  color: #74857c;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.auth-page .auth-privacy-link a {
+  color: #176d4e;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

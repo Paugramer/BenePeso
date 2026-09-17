@@ -145,6 +145,17 @@ function build_query(array $overrides = []): string {
   return http_build_query($query);
 }
 
+function beneficiary_return_location(string $script, string $fallbackProgram = ''): string {
+  $allowed = ['program_name', 'approval', 'spes_group', 'page', 'search', 'sort', 'program_id', 'tupad_category', 'barangay', 'availment', 'business_nature'];
+  $query = [];
+  parse_str((string)($_POST['return_query'] ?? ''), $submitted);
+  foreach ($allowed as $key) {
+    if (isset($submitted[$key]) && is_scalar($submitted[$key]) && trim((string)$submitted[$key]) !== '') $query[$key] = trim((string)$submitted[$key]);
+  }
+  if (!isset($query['program_name']) && $fallbackProgram !== '') $query['program_name'] = $fallbackProgram;
+  return $script . ($query ? '?' . http_build_query($query) : '');
+}
+
 /* =========================
    STAFF INFO
 ========================= */
@@ -222,6 +233,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   $blocked++;
                   continue;
               }
+              if ($bulkStatus === 'Orientation' && !tupad_confirm_documents_for_orientation($conn, $selectedId, 'peso_staff', $peso_staff_id)) {
+                  $blocked++;
+                  continue;
+              }
               if (in_array($bulkStatus, ['Examination', 'Exam Passed', 'Exam Failed'], true) && spes_beneficiary_is_returning($conn, $selectedId)) {
                   $spesExamSkipped++;
                   continue;
@@ -238,7 +253,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           $_SESSION['success_modal_message'] = "$updated beneficiaries updated to $bulkStatus. $sent email notification(s) will be sent automatically" . ($failed ? "; $failed email notification(s) could not be scheduled" : "") . ($blocked ? "; $blocked TUPAD applicant(s) were not updated because their required documents are not verified" : "") . ($spesExamSkipped ? "; $spesExamSkipped returning SPES Baby record(s) skipped because they are exam-exempt" : "") . ($outOfScope ? "; $outOfScope record(s) outside the selected program or batch were skipped" : "") . ".";
           $_SESSION['modal_icon'] = "✓";
       }
-      header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
       exit();
   }
 
@@ -262,26 +277,32 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           if (($needs_schedule && (empty($date_availed) || $schedule_place === '')) || ($needs_completion_date && empty($date_completed))) {
               $_SESSION["show_error_modal"] = true;
               $_SESSION["error_modal_message"] = "Complete the required schedule date and venue for this status.";
-              header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
               exit();
           }
           if (in_array($availment_status, ['Ongoing', 'Salary Distribution', 'Completed'], true)
               && !tupad_can_start_work($conn, $beneficiary_id)) {
               $_SESSION["show_error_modal"] = true;
               $_SESSION["error_modal_message"] = "Verify the required TUPAD documents before moving this beneficiary to the selected status.";
-              header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
+              exit();
+          }
+          if ($availment_status === 'Orientation' && !tupad_confirm_documents_for_orientation($conn, $beneficiary_id, 'peso_staff', $peso_staff_id)) {
+              $_SESSION["show_error_modal"] = true;
+              $_SESSION["error_modal_message"] = "The TUPAD document verification could not be recorded. Please try again before scheduling orientation.";
+              header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
               exit();
           }
           if ($needs_resubmission && $status_message === '') {
               $_SESSION["show_error_modal"] = true;
               $_SESSION["error_modal_message"] = "Provide the reason and instructions for document resubmission.";
-              header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
               exit();
           }
           if (in_array($availment_status, ['Examination', 'Exam Passed', 'Exam Failed'], true) && spes_beneficiary_is_returning($conn, $beneficiary_id)) {
               $_SESSION["show_error_modal"] = true;
               $_SESSION["error_modal_message"] = "This returning SPES Baby is exempt from the examination. Continue with document submission, orientation, or the appropriate next status.";
-              header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
               exit();
           }
           $stmt = $conn->prepare("UPDATE beneficiaries SET availment_status = ?, date_availed = ?, date_completed = ?, last_availed_at = ?, updated_at = NOW() WHERE beneficiary_id = ?");
@@ -308,7 +329,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           }
           $stmt->close();
       }
-      header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
       exit();
   }
 
@@ -345,7 +366,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       if ($bid > 0 && in_array($availment_status, ['Examination', 'Exam Passed', 'Exam Failed'], true) && spes_beneficiary_is_returning($conn, $bid)) {
           $_SESSION['show_error_modal'] = true;
           $_SESSION['error_modal_message'] = 'This returning SPES Baby is exam-exempt. Their record cannot be moved into an examination status.';
-          header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
           exit();
       }
       $date_availed = trim($_POST["date_availed"] ?? null);
@@ -720,7 +741,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           }
           }
       }
-      header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
       exit();
   }
 
@@ -809,7 +830,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               } catch (Throwable $error) {
                   $_SESSION["show_error_modal"] = true;
                   $_SESSION["error_modal_message"] = "Import failed: " . $error->getMessage();
-                  header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
                   exit();
               }
 
@@ -836,7 +857,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               if (!$header_found) {
                   $_SESSION["show_error_modal"] = true;
                   $_SESSION["error_modal_message"] = "Invalid Template. Could not find column headers (First Name, Last Name, Full Name, or Owner Name) in the file.";
-                  header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
                   exit();
               }
 
@@ -1013,7 +1034,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               ? "Please select a valid program batch before importing."
               : "The selected file could not be uploaded. Please check its size and try again.";
       }
-      header("Location: peso_staff_beneficiaries.php" . ($program_name_post ? "?program_name=" . urlencode($program_name_post) : ""));
+      header("Location: " . beneficiary_return_location('peso_staff_beneficiaries.php', $program_name_post));
       exit();
   }
 }
@@ -1125,14 +1146,10 @@ if ($selectedProgramName !== "") {
     $countStmt->close();
   }
   $totalPages = max(1, ceil($totalRecords / $limit));
+  // The approval queue is FIFO; all other tabs show the latest record first.
   $orderBy = $approvalFilter === 'Pending'
       ? "b.created_at ASC, b.beneficiary_id ASC"
-      : ($approvalFilter === 'All'
-          ? "CASE WHEN b.approval_status = 'Pending' THEN 0 ELSE 1 END ASC,
-             CASE WHEN b.approval_status = 'Pending' THEN b.created_at END ASC,
-             CASE WHEN b.approval_status <> 'Pending' THEN b.created_at END DESC,
-             b.beneficiary_id ASC"
-          : "b.created_at DESC, b.beneficiary_id DESC");
+      : "b.created_at DESC, b.beneficiary_id DESC";
   
   $sqlList = "SELECT b.*, p.program_code, u.profile_pic AS user_profile_pic,
       CASE WHEN b.user_id IS NOT NULL THEN 'Online Applicant'
@@ -1201,10 +1218,10 @@ if ($selectedProgramName !== "") {
       .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #ccc; padding: 6px 3px; font-size: 9px; white-space: normal; overflow-wrap: anywhere; }
       .spreadsheet-table thead th { background: #e6f4ed; color: #0d2618; position: sticky; top: 0; z-index: 10; font-weight: 700;}
   </style>
-<link rel="stylesheet" href="frontend_polish.css?v=13">
+<link rel="stylesheet" href="frontend_polish.css?v=15">
   <link rel="stylesheet" href="peso_staff_responsive.css?v=24">
   <link rel="stylesheet" href="system_search_polish.css?v=1">
-<script src="frontend_polish.js?v=7" defer></script>
+<script src="frontend_polish.js?v=13" defer></script>
 </head>
 <body class="peso-staff-beneficiaries-page">
   <div class="page-wrap">

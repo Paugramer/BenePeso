@@ -149,12 +149,12 @@ if ($updated_stmt) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="home.css?v=16">
     
-    <link rel="stylesheet" href="frontend_polish.css?v=13">
+    <link rel="stylesheet" href="frontend_polish.css?v=15">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="index.css?v=22">
-    <script src="frontend_polish.js?v=12" defer></script>
+    <script src="frontend_polish.js?v=13" defer></script>
 </head>
-<body class="public-index-page"<?= empty($_GET) ? ' data-force-page-loader' : '' ?>>
+<body class="public-index-page">
 
 <div class="page-wrap">
     <header class="topbar">
