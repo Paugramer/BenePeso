@@ -113,7 +113,7 @@ try {
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
-    <link rel="stylesheet" href="authenticated_experience.css?v=5">
+    <link rel="stylesheet" href="authenticated_experience.css?v=6">
 <script src="frontend_polish.js?v=16" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -137,13 +137,13 @@ try {
             <span></span><span></span><span></span>
         </button>
 
-        <nav class="menu-area" id="menuArea">
-            <a class="menu-item active" href="home.php">Home</a>
+        <nav class="menu-area" id="menuArea" aria-label="Resident navigation">
+            <a class="menu-item active" href="home.php" aria-current="page">Home</a>
             <a class="menu-item" href="programs.php">Programs</a>
             <a class="menu-item" href="about.php">About</a>
 
             <div class="account-area" id="accountWrap">
-                <button class="account-button" id="accountButton" type="button">
+                <button class="account-button" id="accountButton" type="button" aria-label="Open account menu" aria-controls="accountDropdown" aria-expanded="false">
                     <span class="account-icon">
                         <?php echo htmlspecialchars($first_char); ?>
                         <?php if ($user_profile_src !== ''): ?><img src="<?php echo htmlspecialchars($user_profile_src); ?>" alt="" onerror="this.remove()"><?php endif; ?>
@@ -349,11 +349,15 @@ try {
     </div>
 </section>
 
-<section class="program-area reveal">
+<section class="program-area reveal" aria-labelledby="homeProgramsTitle">
     <div class="content-wrap">
         <div class="area-head">
-            <div>
-                <h2 class="area-title">Open Programs</h2>
+            <div class="program-heading-copy">
+                <div class="program-heading-meta">
+                    <span class="home-section-eyebrow">Official PESO directory</span>
+                    <span class="program-listing-count" aria-label="<?= count($programs) ?> featured open programs"><strong><?= count($programs) ?></strong> Featured</span>
+                </div>
+                <h2 class="area-title" id="homeProgramsTitle">Available Programs</h2>
                 <p class="area-sub">Current and upcoming PESO opportunities that are still accepting beneficiaries.</p>
             </div>
             <a class="see-more" href="programs.php">See all →</a>
@@ -418,7 +422,7 @@ try {
                     </a>
                 <?php endforeach; ?>
             <?php else: ?>
-                <div class="program-card reveal" style="grid-column:1/-1; text-align:center; padding:40px;">
+                <div class="program-card home-program-empty reveal">
                     <h3 class="program-title">No current programs</h3>
                     <p class="program-text">There are no active or upcoming approved programs at this time. Please check again later.</p>
                     <a class="program-btn" href="programs.php">View program archive</a>
@@ -538,12 +542,14 @@ try {
         if(btn && drop) {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
-                drop.classList.toggle('show');
+                const isOpen = drop.classList.toggle('show');
+                btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             });
             
             document.addEventListener('click', function(e) {
                 if(!drop.contains(e.target) && !btn.contains(e.target)) {
                     drop.classList.remove('show');
+                    btn.setAttribute('aria-expanded', 'false');
                 }
             });
         }
