@@ -3300,3 +3300,32 @@ html { scroll-behavior: smooth; }
     .public-beneficiary-cue .beneficiary-check { animation: none !important; }
     .public-beneficiary-cue .beneficiary-check { stroke-dashoffset: 0; opacity: 1; }
 }
+
+/* Public directory readability for laptop and large desktop viewports. */
+@media (min-width: 1024px) {
+    .public-index-page .program-code-badge,
+    .public-index-page .program-slot-badge,
+    .public-index-page .card-status,
+    .public-index-page .public-directory-toolbar input,
+    .public-index-page .public-directory-toolbar select,
+    .public-index-page .public-directory-toolbar button { font-size: 12px; }
+
+    .public-index-page .card-excerpt,
+    .public-index-page .card-meta,
+    .public-index-page .program-btn { font-size: 14px; }
+
+    .public-index-page .public-route-flow small,
+    .public-index-page .public-summary-head,
+    .public-index-page .public-summary-foot > span,
+    .public-index-page .public-summary-foot a { font-size: 10px; }
+
+    .public-index-page .public-route-flow strong,
+    .public-index-page .public-summary-programs b,
+    .public-index-page .public-directory-notice strong,
+    .public-index-page .public-beneficiary-cue strong { font-size: 12px; }
+
+    .public-index-page .public-route-flow p,
+    .public-index-page .public-summary-programs small,
+    .public-index-page .public-directory-notice span,
+    .public-index-page .public-beneficiary-cue small { font-size: 11px; }
+}

@@ -2090,11 +2090,29 @@ input[type="number"] { -moz-appearance: textfield; }
     }
 }
 
-.program-multi-batch { border-color: rgba(184, 137, 36, .4); }
+.program-multi-batch { border-color: rgba(39, 132, 92, .42); }
 .program-multi-batch .batch-code {
-    color: #8a6317;
-    background: #fff8e6;
-    border: 1px solid #eed79b;
+    width: fit-content;
+    display: inline-flex;
+    gap: 7px;
+    margin: 0 auto 14px;
+    padding: 6px 12px;
+    align-items: center;
+    justify-content: center;
+    color: #176b49;
+    border: 1px solid #c8e2d4;
+    border-radius: 999px;
+    background: #edf7f2;
+    line-height: 1;
+}
+.program-multi-batch .batch-code::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    flex: 0 0 7px;
+    border-radius: 50%;
+    background: #2ca46f;
+    box-shadow: 0 0 0 4px rgba(44, 164, 111, .12);
 }
 
 .batch-chooser-dialog {
@@ -3248,4 +3266,37 @@ input[type="number"] { -moz-appearance: textfield; }
     outline: 0;
     border-color: #23845d;
     box-shadow: 0 0 0 3px rgba(35, 132, 93, .13);
+}
+
+/* Laptop and large-screen readability: preserve the layout while raising tiny UI copy. */
+@media (min-width: 1024px) {
+    .beneficiary-programs-page .area-sub,
+    .beneficiary-programs-page .card-desc,
+    .beneficiary-programs-page .batch-chooser-intro { font-size: 15px; }
+
+    .beneficiary-programs-page .floating-badge,
+    .beneficiary-programs-page .batch-code,
+    .beneficiary-programs-page .program-filter-guidance strong,
+    .beneficiary-programs-page .program-record-meta,
+    .beneficiary-programs-page .batch-choice-slots { font-size: 12px; }
+
+    .beneficiary-programs-page .program-card-schedule small,
+    .beneficiary-programs-page .program-details-path strong,
+    .beneficiary-programs-page .program-details-trust strong,
+    .beneficiary-programs-page #applicationModal .form-group label { font-size: 11px; }
+
+    .beneficiary-programs-page .program-card-schedule strong,
+    .beneficiary-programs-page .batch-choice-copy small,
+    .beneficiary-programs-page .program-details-path small,
+    .beneficiary-programs-page .program-details-trust small { font-size: 12px; }
+
+    .beneficiary-programs-page .batch-choice-copy strong,
+    .beneficiary-programs-page .program-btn,
+    .beneficiary-programs-page .btn-check-status { font-size: 14px; }
+
+    .beneficiary-programs-page .application-journey strong { font-size: 14.5px; }
+    .beneficiary-programs-page .application-journey small,
+    .beneficiary-programs-page .applicant-guide-grid ul,
+    .beneficiary-programs-page .program-faq summary,
+    .beneficiary-programs-page .program-faq p { font-size: 12.5px; }
 }

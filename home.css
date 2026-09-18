@@ -1895,3 +1895,30 @@ body::before,
   .bp-orbit-live i,
   .bp-snapshot-pulse { animation: none !important; }
 }
+
+/* Laptop and large-screen readability without changing the compact mobile layout. */
+@media (min-width: 1024px) {
+  .home-page .quick-step,
+  .home-page .home-section-eyebrow,
+  .home-page .home-program-status,
+  .home-page .program-listing-count { font-size: 11px; }
+
+  .home-page .quick-desc,
+  .home-page .quick-note,
+  .home-page .home-program-meta,
+  .home-page .service-step-grid p,
+  .home-page .service-step-grid a { font-size: 13px; }
+
+  .home-page .program-text,
+  .home-page .info-text,
+  .home-page .service-step-grid strong { font-size: 15px; }
+
+  .home-page .bp-orbit-eyebrow,
+  .home-page .bp-orbit-node small { font-size: 9px; }
+
+  .home-page .bp-orbit-core > small,
+  .home-page .bp-orbit-live,
+  .home-page .bp-orbit-node strong { font-size: 11px; }
+
+  .home-page .bp-service-snapshot-v2 .bp-service-snapshot-copy p { font-size: 13px; }
+}

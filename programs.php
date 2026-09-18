@@ -839,7 +839,14 @@ if ($result && $result->num_rows > 0) {
         $is_user_current = in_array($user_approval, ['pending', 'approved'], true)
             && !in_array($user_availment, ['completed', 'not qualified', 'cancelled', 'exam failed'], true);
         
-        if (($is_full || $has_ended || $has_invalid_schedule) && !$is_user_current) {
+        $is_program_concluded = $is_full || $has_ended || $has_invalid_schedule;
+
+        // Keep the user's exact pending/active batch available for status tracking,
+        // even if its public schedule has concluded. All other concluded batches
+        // belong exclusively in the public archive summary.
+        if ($is_user_current) {
+            $active_programs[] = $row;
+        } elseif ($is_program_concluded) {
             $completed_programs[] = $row;
         } else {
             $active_programs[] = $row;
@@ -877,8 +884,8 @@ if ($barangay_summary_result) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="home.css?v=16">
-    <link rel="stylesheet" href="programs.css?v=35">
+    <link rel="stylesheet" href="home.css?v=17">
+    <link rel="stylesheet" href="programs.css?v=36">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -2358,7 +2365,7 @@ if ($barangay_summary_result) {
             representative.classList.add('program-multi-batch');
             representative.setAttribute('role', 'button');
             representative.setAttribute('tabindex', '0');
-            representative.setAttribute('aria-label', `${representative.dataset.title}: choose from ${groupCards.length} active batches`);
+            representative.setAttribute('aria-label', `${representative.dataset.title}: choose from ${groupCards.length} batch options`);
             representative.addEventListener('click', () => openBatchChooser(groupCards));
             representative.addEventListener('keydown', event => {
                 if (event.key === 'Enter' || event.key === ' ') {
@@ -2370,7 +2377,7 @@ if ($barangay_summary_result) {
             representative.dataset.schedules = [...new Set(groupCards.flatMap(card => (card.dataset.schedules || card.dataset.schedule || 'open').split(/\s+/)))].join(' ');
 
             const batchLabel = representative.querySelector('.batch-code');
-            if (batchLabel) batchLabel.textContent = `${groupCards.length} ACTIVE BATCHES`;
+            if (batchLabel) batchLabel.textContent = `${groupCards.length} BATCHES`;
             representative.querySelector('.program-category-badge')?.remove();
             const slotBadge = representative.querySelector('.floating-badge');
             if (slotBadge) {
@@ -2380,7 +2387,7 @@ if ($barangay_summary_result) {
             }
             const schedulePanel = representative.querySelector('.program-card-schedule');
             if (schedulePanel) {
-                schedulePanel.innerHTML = `<span><small>Available schedules</small><strong>${groupCards.length} active batches</strong></span><span><small>Dates & deadlines</small><strong>See batch options</strong></span>`;
+                schedulePanel.innerHTML = `<span><small>Batch options</small><strong>${groupCards.length} schedules</strong></span><span><small>Dates & status</small><strong>Review each batch</strong></span>`;
             }
             const actionButton = representative.querySelector('.program-btn, .btn-check-status');
             const currentCard = groupCards.find(card => card.dataset.action === 'status');
