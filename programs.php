@@ -874,7 +874,7 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=16">
-    <link rel="stylesheet" href="programs.css?v=29">
+    <link rel="stylesheet" href="programs.css?v=30">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -899,14 +899,14 @@ if ($barangay_summary_result) {
       <span></span><span></span><span></span>
     </button>
 
-    <nav class="menu-area" id="menuArea">
+    <nav class="menu-area" id="menuArea" aria-label="Resident navigation">
       <a class="menu-item" href="home.php">Home</a>
-      <a class="menu-item active" href="programs.php">Programs</a>
+      <a class="menu-item active" href="programs.php" aria-current="page">Programs</a>
       <a class="menu-item" href="about.php">About</a>
 
       <?php if($is_logged_in): ?>
       <div class="account-area" id="accountWrap">
-        <button class="account-button" id="accountButton" type="button">
+        <button class="account-button" id="accountButton" type="button" aria-label="Open account menu" aria-controls="accountDropdown" aria-expanded="false">
           <span class="account-icon">
             <?php echo htmlspecialchars($first_char); ?>
             <?php if ($user_profile_src !== ''): ?><img src="<?php echo h($user_profile_src); ?>" alt="" onerror="this.remove()"><?php endif; ?>
@@ -936,7 +936,7 @@ if ($barangay_summary_result) {
 </header>
 
 <main class="page-wrap">
-    <section class="welcome-area">
+    <section class="welcome-area programs-hero">
         <div class="welcome-inner content-wrap">
             <div class="welcome-left">
                 <div class="welcome-badge"><span class="badge-dot"></span>OPPORTUNITIES AWAIT</div>
@@ -1332,60 +1332,63 @@ if ($barangay_summary_result) {
 </div>
 
 <!-- PROGRAM DETAILS MODAL (First step before applying) -->
-<div class="modal" id="programDetailsModal">
-    <div class="modal-content details-box">
-        <button class="modal-close" onclick="closeModal('programDetailsModal')">✕</button>
-        <div class="details-header">
-            <div class="details-heading-row">
-                <h2 id="detTitle" style="color:var(--green-dark); font-weight:900; line-height:1.2; margin-bottom:5px;"></h2>
-                <span class="slots-badge" id="detBadge"></span>
-            </div>
-            <div class="batch-code" id="detBatch" style="margin-bottom:0;"></div>
-        </div>
-        
-        <div class="details-body" style="margin-top:20px;">
-            <p id="detDesc" style="font-size:14px; color:var(--text-muted); line-height:1.6; margin-bottom:20px; text-align:justify;"></p>
-            
-            <div class="program-schedule-panel">
-                <div class="program-schedule-grid">
-                    <div class="program-schedule-item">
-                        <div class="program-schedule-label">Program activity starts</div>
-                        <div id="detStart" class="program-schedule-value"></div>
+<div class="modal" id="programDetailsModal" aria-hidden="true">
+    <div class="modal-content details-box program-details-dialog" role="dialog" aria-modal="true" aria-labelledby="detTitle" tabindex="-1">
+        <div class="program-details-split">
+            <aside class="program-details-identity">
+                <div class="program-details-image-wrap">
+                    <img id="detImage" src="img/pesologo.png" alt="" onerror="this.onerror=null;this.src='img/pesologo.png';">
+                </div>
+                <div class="details-header">
+                    <span class="program-details-kicker">Official PESO program</span>
+                    <div class="details-heading-row">
+                        <h2 id="detTitle"></h2>
                     </div>
-                    <div class="program-schedule-item">
-                        <div class="program-schedule-label">Application deadline</div>
-                        <div id="detEnd" class="program-schedule-value"></div>
+                    <div class="batch-code" id="detBatch"></div>
+                    <span class="slots-badge" id="detBadge"></span>
+                </div>
+                <div class="program-details-trust"><span aria-hidden="true"></span><div><strong>Verified listing</strong><small>Maintained by PESO Vinzons</small></div></div>
+            </aside>
+
+            <section class="program-details-content">
+                <button type="button" class="modal-close" onclick="closeModal('programDetailsModal')" aria-label="Close program details">&times;</button>
+                <div class="program-details-scroll">
+                    <div class="program-details-review-heading"><span><i aria-hidden="true"></i>Program details</span><strong>Review before you apply</strong></div>
+                    <section class="program-details-section" aria-labelledby="programDescriptionTitle">
+                        <h3 id="programDescriptionTitle">Description</h3>
+                        <p id="detDesc"></p>
+                    </section>
+
+                    <div class="program-schedule-panel">
+                        <div class="program-schedule-grid">
+                            <div class="program-schedule-item"><div class="program-schedule-label">Program activity starts</div><div id="detStart" class="program-schedule-value"></div></div>
+                            <div class="program-schedule-item"><div class="program-schedule-label">Application deadline</div><div id="detEnd" class="program-schedule-value"></div></div>
+                            <div class="program-schedule-item"><div class="program-schedule-label">Venue</div><div id="detVenue" class="program-schedule-value"></div></div>
+                            <div class="program-schedule-item"><div class="program-schedule-label">Document submission</div><div id="detDocumentSchedule" class="program-schedule-value"></div></div>
+                        </div>
                     </div>
-                    <div class="program-schedule-item program-schedule-wide">
-                        <div class="program-schedule-label">Venue</div>
-                        <div id="detVenue" class="program-schedule-value"></div>
-                    </div>
-                    <div class="program-schedule-item program-schedule-wide">
-                        <div class="program-schedule-label">Document submission schedule</div>
-                        <div id="detDocumentSchedule" class="program-schedule-value"></div>
+                    <div class="program-detail-record-meta"><span id="detUpdated"></span><strong>Official program record maintained by PESO Vinzons</strong></div>
+                    <div id="detIncomplete" class="program-information-warning program-detail-warning" hidden></div>
+
+                    <section class="program-details-section">
+                        <h3>Eligibility Rules</h3>
+                        <ul id="detEligibility" class="program-detail-list"></ul>
+                    </section>
+                    <section class="program-details-section">
+                        <h3>Documentary Requirements</h3>
+                        <ul id="detReqs" class="program-detail-list"></ul>
+                    </section>
+                    <div class="preliminary-eligibility-note">
+                        <strong>Preliminary eligibility only</strong>
+                        <span>Meeting the displayed rules allows you to proceed with an application but does not guarantee final approval. PESO will validate the submitted information and requirements.</span>
                     </div>
                 </div>
-            </div>
-            <div class="program-detail-record-meta"><span id="detUpdated"></span><strong>Official program record maintained by PESO Vinzons</strong></div>
-            <div id="detIncomplete" class="program-information-warning program-detail-warning" hidden></div>
 
-            <div style="margin-bottom:18px;">
-                <div style="font-size:14px; font-weight:800; color:var(--green-dark); margin-bottom:8px;">Eligibility Rules</div>
-                <ul id="detEligibility" class="program-detail-list"></ul>
-            </div>
-            
-            <div style="margin-bottom:25px;">
-                <div style="font-size:14px; font-weight:800; color:var(--green-dark); margin-bottom:8px;">Documentary Requirements</div>
-                <ul id="detReqs" class="program-detail-list"></ul>
-            </div>
-            <div class="preliminary-eligibility-note">
-                <strong>Preliminary eligibility only</strong>
-                <span>Meeting the displayed rules allows you to proceed with an application but does not guarantee final approval. PESO will validate the submitted information and requirements.</span>
-            </div>
-        </div>
-        
-        <div class="details-footer" id="detFooter">
-            <!-- Dynamic Buttons inserted via JS -->
+                <div class="details-footer" id="detFooter">
+                    <div class="program-details-next"><strong>Ready to continue?</strong><span>Your registered profile will be checked first.</span></div>
+                    <div id="detAction"></div>
+                </div>
+            </section>
         </div>
     </div>
 </div>
@@ -2109,8 +2112,19 @@ if ($barangay_summary_result) {
 <script>
     const accountButton = document.getElementById('accountButton');
     const accountDropdown = document.getElementById('accountDropdown');
-    if(accountButton) { accountButton.addEventListener('click', (e) => { e.stopPropagation(); accountDropdown.classList.toggle('show'); }); }
-    window.addEventListener('click', () => { if(accountDropdown && accountDropdown.classList.contains('show')) accountDropdown.classList.remove('show'); });
+    if(accountButton) {
+        accountButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = accountDropdown.classList.toggle('show');
+            accountButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+    }
+    window.addEventListener('click', () => {
+        if(accountDropdown && accountDropdown.classList.contains('show')) {
+            accountDropdown.classList.remove('show');
+            accountButton?.setAttribute('aria-expanded', 'false');
+        }
+    });
     const menuButton = document.getElementById('menuButton');
     const menuArea = document.getElementById('menuArea');
     if(menuButton && menuArea) {
@@ -2125,10 +2139,12 @@ if ($barangay_summary_result) {
         if (!grid) return;
         const cards = Array.from(grid.querySelectorAll('.program-card:not(.program-batch-duplicate)'));
         cards.forEach(card => card.classList.remove('bp-grid-last-desktop', 'bp-grid-last-pair'));
+        grid.classList.remove('bp-grid-count-four');
         if (grid.classList.contains('list-view')) return;
         const visibleCards = cards.filter(card => !card.hidden && card.style.display !== 'none');
         const last = visibleCards[visibleCards.length - 1];
         if (!last) return;
+        if (visibleCards.length === 4) grid.classList.add('bp-grid-count-four');
         if (visibleCards.length % 3 === 1) last.classList.add('bp-grid-last-desktop');
         if (visibleCards.length % 2 === 1) last.classList.add('bp-grid-last-pair');
     }
@@ -2448,6 +2464,7 @@ if ($barangay_summary_result) {
         const documentSchedule = element.getAttribute('data-document-schedule') || 'Not yet announced';
         const updated = element.getAttribute('data-updated') || 'Date unavailable';
         const incomplete = element.getAttribute('data-incomplete') || '';
+        const programImage = element.querySelector('.card-img-wrap img');
         
         const status = (element.getAttribute('data-status') || '').trim().toLowerCase();
         const availment = (element.getAttribute('data-availment') || '').trim().toLowerCase();
@@ -2455,6 +2472,9 @@ if ($barangay_summary_result) {
 
         // Populate Details Modal
         document.getElementById('detTitle').innerText = title;
+        const detailsImage = document.getElementById('detImage');
+        detailsImage.src = programImage?.currentSrc || programImage?.src || 'img/pesologo.png';
+        detailsImage.alt = title + ' program image';
         document.getElementById('detBatch').innerText = "BATCH: " + batch;
         document.getElementById('detDesc').innerText = desc;
         document.getElementById('detStart').innerText = startDate;
@@ -2474,8 +2494,8 @@ if ($barangay_summary_result) {
         badge.innerText = slots + " Slots Available";
         badge.className = (slots <= 5) ? 'slots-badge warning' : 'slots-badge';
 
-        let footer = document.getElementById('detFooter');
-        footer.innerHTML = ''; 
+        let footer = document.getElementById('detAction');
+        footer.replaceChildren();
         
         let btn = document.createElement('button');
         btn.className = "btn-primary";
@@ -2498,7 +2518,10 @@ if ($barangay_summary_result) {
         }
         
         footer.appendChild(btn);
-        document.getElementById('programDetailsModal').classList.add('show');
+        const detailsModal = document.getElementById('programDetailsModal');
+        detailsModal.classList.add('show');
+        detailsModal.setAttribute('aria-hidden', 'false');
+        window.setTimeout(() => detailsModal.querySelector('.modal-close')?.focus(), 80);
         fetch('programs.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'},
