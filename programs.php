@@ -874,7 +874,7 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=16">
-    <link rel="stylesheet" href="programs.css?v=31">
+    <link rel="stylesheet" href="programs.css?v=32">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -1077,7 +1077,7 @@ if ($barangay_summary_result) {
                                     </div>
                                     
                                     <?php if ($user_status): ?>
-                                        <button type="button" class="btn-check-status">View Status</button>
+                                        <button type="button" class="btn-check-status">View Your Status</button>
                                     <?php else: ?>
                                         <button type="button" class="program-btn">View Details</button>
                                     <?php endif; ?>
@@ -2192,12 +2192,10 @@ if ($barangay_summary_result) {
         if (!grid) return;
         const cards = Array.from(grid.querySelectorAll('.program-card:not(.program-batch-duplicate)'));
         cards.forEach(card => card.classList.remove('bp-grid-last-desktop', 'bp-grid-last-pair'));
-        grid.classList.remove('bp-grid-count-four');
         if (grid.classList.contains('list-view')) return;
         const visibleCards = cards.filter(card => !card.hidden && card.style.display !== 'none');
         const last = visibleCards[visibleCards.length - 1];
         if (!last) return;
-        if (visibleCards.length === 4) grid.classList.add('bp-grid-count-four');
         if (visibleCards.length % 3 === 1) last.classList.add('bp-grid-last-desktop');
         if (visibleCards.length % 2 === 1) last.classList.add('bp-grid-last-pair');
     }
@@ -2309,7 +2307,11 @@ if ($barangay_summary_result) {
         const groups = new Map();
 
         cards.forEach(card => {
-            const key = `${(card.dataset.title || '').trim().toLowerCase()}::${(card.dataset.category || '').trim().toLowerCase()}`;
+            const title = (card.dataset.title || '').trim().toLowerCase();
+            const key = title.includes('tupad') ? 'tupad'
+                : title.includes('spes') ? 'spes'
+                : title.includes('msme') ? 'msme'
+                : title;
             if (!groups.has(key)) groups.set(key, []);
             groups.get(key).push(card);
         });
@@ -2325,11 +2327,30 @@ if ($barangay_summary_result) {
             representative.classList.add('program-multi-batch');
             representative.setAttribute('aria-label', `${representative.dataset.title}: choose from ${groupCards.length} active batches`);
             representative.addEventListener('click', () => openBatchChooser(groupCards));
+            representative.dataset.category = groupCards.map(card => card.dataset.category || '').filter(Boolean).join(' ');
 
             const batchLabel = representative.querySelector('.batch-code');
             if (batchLabel) batchLabel.textContent = `${groupCards.length} ACTIVE BATCHES`;
+            const categoryLabel = representative.querySelector('.program-category-badge');
+            if (categoryLabel) categoryLabel.textContent = 'Choose a schedule';
+            const slotBadge = representative.querySelector('.floating-badge');
+            if (slotBadge) {
+                const totalSlots = groupCards.reduce((total, card) => total + (Number.parseInt(card.dataset.slots || '0', 10) || 0), 0);
+                slotBadge.classList.toggle('warning', totalSlots <= 5);
+                slotBadge.innerHTML = `<span class="pulse-dot"></span> ${totalSlots} Slots`;
+            }
             const actionButton = representative.querySelector('.program-btn, .btn-check-status');
-            if (actionButton) actionButton.textContent = 'Choose Batch';
+            if (actionButton) {
+                actionButton.className = 'program-btn';
+                actionButton.textContent = 'Choose Batch';
+            }
+            if (groupCards.some(card => card.dataset.action === 'status')) {
+                representative.classList.add('has-current-batch');
+                const statusNote = document.createElement('div');
+                statusNote.className = 'program-current-batch-note';
+                statusNote.innerHTML = '<span aria-hidden="true"></span>Your current application is included';
+                representative.querySelector('.card-footer-info')?.before(statusNote);
+            }
         });
 
         updateProgramGridBalance();
@@ -2354,8 +2375,10 @@ if ($barangay_summary_result) {
         cards.forEach((card, index) => {
             const choice = document.createElement('button');
             choice.type = 'button';
-            choice.className = 'batch-choice-card';
-            choice.innerHTML = `<span class="batch-choice-number">${index + 1}</span><span class="batch-choice-copy"><strong>${escapeHtml(card.dataset.batch || 'Batch')}</strong><small>${escapeHtml(card.dataset.start || 'TBA')} – ${escapeHtml(card.dataset.end || 'TBA')}</small></span><span class="batch-choice-slots">${escapeHtml(card.dataset.slots || '0')} slots</span><span class="batch-choice-arrow" aria-hidden="true">→</span>`;
+            const hasStatus = card.dataset.action === 'status';
+            choice.className = `batch-choice-card${hasStatus ? ' has-user-status' : ''}`;
+            choice.setAttribute('aria-label', `${card.dataset.batch || 'Batch'}: ${hasStatus ? 'view your status' : `${card.dataset.slots || '0'} slots available`}`);
+            choice.innerHTML = `<span class="batch-choice-number">${index + 1}</span><span class="batch-choice-copy"><strong>${escapeHtml(card.dataset.batch || 'Batch')}</strong><small>${escapeHtml(card.dataset.start || 'TBA')} – ${escapeHtml(card.dataset.end || 'TBA')}</small></span><span class="batch-choice-slots">${hasStatus ? 'View your status' : `${escapeHtml(card.dataset.slots || '0')} slots`}</span><span class="batch-choice-arrow" aria-hidden="true">→</span>`;
             choice.addEventListener('click', () => {
                 closeModal('batchChooserModal');
                 openProgramDetails(card);
@@ -2492,6 +2515,19 @@ if ($barangay_summary_result) {
     }
 
     function openProgramDetails(element) {
+        const action = element.getAttribute('data-action');
+        if (action === 'none') return;
+        if (action === 'status') {
+            viewStatus(
+                (element.getAttribute('data-status') || '').trim().toLowerCase(),
+                (element.getAttribute('data-availment') || '').trim().toLowerCase(),
+                element.getAttribute('data-reason'),
+                element.getAttribute('data-reqs'),
+                element.getAttribute('data-venue'),
+                element.getAttribute('data-title')
+            );
+            return;
+        }
         if (element.getAttribute('data-spes-returning') === '1' && !spesWelcomeAcknowledged) {
             pendingSpesCard = element;
             const modal = document.getElementById('spesBabyModal');
@@ -2499,9 +2535,6 @@ if ($barangay_summary_result) {
             modal.setAttribute('aria-hidden', 'false');
             return;
         }
-        let action = element.getAttribute('data-action');
-        if (action === 'none') return; 
-        
         activeProgramId = element.getAttribute('data-prog-id');
         activeProgramName = element.getAttribute('data-title');
         
@@ -2555,7 +2588,7 @@ if ($barangay_summary_result) {
         btn.style.width = "100%";
 
         if (action === 'status') {
-            btn.innerText = "Check Application Status";
+            btn.innerText = "View Your Status";
             btn.onclick = function() {
                 closeModal('programDetailsModal');
                 viewStatus(status, availment, reason, reqs, venue, title);

@@ -2128,6 +2128,9 @@ input[type="number"] { -moz-appearance: textfield; }
 .batch-choice-copy strong { overflow-wrap: anywhere; font-size: 14px; }
 .batch-choice-copy small { margin-top: 3px; color: #718278; font-size: 11.5px; }
 .batch-choice-slots { padding: 7px 10px; border-radius: 999px; background: #eef7f2; color: #176b49; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.batch-choice-card.has-user-status { border-color: #79b99a; background: #f3fbf7; box-shadow: inset 3px 0 0 #1f855d; }
+.batch-choice-card.has-user-status .batch-choice-number { background: #197851; color: #fff; }
+.batch-choice-card.has-user-status .batch-choice-slots { background: #197851; color: #fff; }
 .batch-choice-arrow { color: #1f7a54; font-size: 20px; }
 
 .archive-pagination { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 24px; }
@@ -2274,10 +2277,11 @@ input[type="number"] { -moz-appearance: textfield; }
 
 /* Programs hero: use the same civic photography treatment as the authenticated About page. */
 .beneficiary-programs-page .page-wrap > .welcome-area.programs-hero {
-    background-color: #0b4b34;
-    background-image: linear-gradient(90deg, rgba(5, 48, 34, .92) 0%, rgba(10, 83, 58, .72) 48%, rgba(10, 83, 58, .26) 100%), url("img/pesobgs.jpg");
+    background-color: rgba(8, 54, 36, .72);
+    background-image: url("img/pesobgs.jpg");
     background-position: center 42%;
     background-size: cover;
+    background-blend-mode: multiply;
 }
 
 .beneficiary-programs-page .page-wrap > .welcome-area.programs-hero .welcome-title {
@@ -2317,15 +2321,27 @@ input[type="number"] { -moz-appearance: textfield; }
 .beneficiary-programs-page .program-hero-assurance .program-hero-icon--spes { color: #557428; background: linear-gradient(145deg, #f4f7e9, #e6eed2); }
 .beneficiary-programs-page .program-hero-assurance .program-hero-icon--msme { color: #87671b; background: linear-gradient(145deg, #fff7e8, #f4e8c7); }
 
-/* Four equal listings read more clearly as a balanced two-by-two directory. */
-.beneficiary-programs-page .program-grid.bp-grid-count-four:not(.list-view) {
-    max-width: 980px;
-    margin-inline: auto;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.beneficiary-programs-page .program-current-batch-note {
+    display: inline-flex;
+    align-items: center;
+    align-self: center;
+    gap: 7px;
+    margin: 0 auto 12px;
+    padding: 6px 10px;
+    border: 1px solid #b9ddca;
+    border-radius: 999px;
+    background: #eef8f3;
+    color: #176b49;
+    font-size: 10.5px;
+    font-weight: 800;
 }
 
-.beneficiary-programs-page .program-grid.bp-grid-count-four:not(.list-view) .program-card.bp-grid-last-desktop {
-    grid-column: auto;
+.beneficiary-programs-page .program-current-batch-note span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2fb879;
+    box-shadow: 0 0 0 4px rgba(47, 184, 121, .12);
 }
 
 /* Signed-in program details use the same landscape information hierarchy as index.php. */
@@ -2849,11 +2865,6 @@ input[type="number"] { -moz-appearance: textfield; }
 }
 
 @media (max-width: 520px) {
-    .beneficiary-programs-page .program-grid.bp-grid-count-four:not(.list-view) {
-        max-width: none;
-        grid-template-columns: 1fr;
-    }
-
     .beneficiary-programs-page .program-discovery-controls {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
