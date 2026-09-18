@@ -113,7 +113,7 @@ try {
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
-    <link rel="stylesheet" href="authenticated_experience.css?v=2">
+    <link rel="stylesheet" href="authenticated_experience.css?v=3">
 <script src="frontend_polish.js?v=16" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -285,46 +285,47 @@ try {
     <div class="content-wrap">
         <div class="quick-area">
             <div class="quick-top">
-                <div class="quick-title">Quick Access</div>
-                <div class="quick-tag">User</div>
+                <div>
+                    <span class="home-section-eyebrow">Resident workspace</span>
+                    <div class="quick-title">Your next actions</div>
+                </div>
+                <div class="quick-tag"><?= $home_profile_ready ? 'Profile ready' : 'Action needed' ?></div>
             </div>
 
             <div class="quick-links">
-                <a class="quick-link" href="programs.php">
-                    <div class="quick-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"></rect><path d="M9 4V2h6v2M9 9h6M9 13h6M9 17h4"></path></svg></div>
-                    <div>
-                        <div class="quick-name">Programs</div>
-                        <div class="quick-desc">See active programs</div>
-                    </div>
-                </a>
-
-                <a class="quick-link" href="verification.php">
-                    <div class="quick-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path></svg></div>
-                    <div>
-                        <div class="quick-name">Verification</div>
-                        <div class="quick-desc">Verify a beneficiary record</div>
-                    </div>
-                </a>
-
                 <a class="quick-link" href="profile.php">
                     <div class="quick-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg></div>
                     <div>
-                        <div class="quick-name">Profile</div>
-                        <div class="quick-desc">Update your info</div>
+                        <span class="quick-step">01 &middot; PROFILE</span>
+                        <div class="quick-name"><?= $home_profile_ready ? 'Review your profile' : 'Complete your profile' ?></div>
+                        <div class="quick-desc"><?= $home_profile_ready ? 'Keep your resident information accurate' : 'Finish the required information before applying' ?></div>
                     </div>
+                    <span class="quick-arrow" aria-hidden="true">&rarr;</span>
                 </a>
 
-                <a class="quick-link" href="about.php">
-                    <div class="quick-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7h.01"></path></svg></div>
+                <a class="quick-link" href="verification.php">
+                    <div class="quick-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 7.9 7.5 9.5 4.4-1.6 7.5-4.9 7.5-9.5V6L12 3Z"></path><path d="m9 12 2 2 4-4"></path></svg></div>
                     <div>
-                        <div class="quick-name">About</div>
-                        <div class="quick-desc">Learn more</div>
+                        <span class="quick-step">02 &middot; VERIFY</span>
+                        <div class="quick-name">Check your record</div>
+                        <div class="quick-desc">Review your latest beneficiary status securely</div>
                     </div>
+                    <span class="quick-arrow" aria-hidden="true">&rarr;</span>
+                </a>
+
+                <a class="quick-link" href="programs.php">
+                    <div class="quick-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"></path></svg></div>
+                    <div>
+                        <span class="quick-step">03 &middot; PROGRAMS</span>
+                        <div class="quick-name">Find an opportunity</div>
+                        <div class="quick-desc">Compare approved TUPAD, SPES, and MSME listings</div>
+                    </div>
+                    <span class="quick-arrow" aria-hidden="true">&rarr;</span>
                 </a>
             </div>
 
             <div class="quick-note">
-                <b>Tip:</b> Keep your email active for updates.
+                <b>Account reminder:</b> Keep your registered email and mobile number active for official PESO updates.
             </div>
         </div>
     </div>
@@ -334,8 +335,8 @@ try {
     <div class="content-wrap">
         <div class="service-route-shell">
             <div class="content-enhancement-heading">
-                <span class="content-enhancement-eyebrow">Your service journey</span>
-                <h2 id="serviceGuideTitle">How BENEPESO Works</h2>
+                <span class="content-enhancement-eyebrow">Your service path</span>
+                <h2 id="serviceGuideTitle">From profile to official result</h2>
                 <p>One connected service route—from an accurate profile to a completed PESO program.</p>
             </div>
             <ol class="service-step-grid" aria-label="BENEPESO service path">
@@ -366,6 +367,12 @@ try {
                             $program_title = trim($p["program_name"] ?? "Program");
                             $program_key = strtolower($program_title);
                             $program_image = trim($p["image_path"] ?? "");
+                            $program_type = str_contains($program_key, "tupad") ? "TUPAD"
+                                : (str_contains($program_key, "spes") ? "SPES"
+                                : (str_contains($program_key, "msme") ? "MSME" : "PESO"));
+                            $program_is_upcoming = !empty($p["start_date"])
+                                && $p["start_date"] !== '0000-00-00'
+                                && $p["start_date"] > $today;
 
                             if ($program_image === "") {
                                 if (str_contains($program_key, "tupad") || str_contains($program_key, "emergency")) {
@@ -380,8 +387,20 @@ try {
                             }
                         ?>
                         <img class="program-image" src="<?php echo htmlspecialchars($program_image); ?>" alt="<?php echo htmlspecialchars($program_title); ?>" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='img/pesologo.png';">
-                        <div class="program-top">
-                            <span class="program-tag">Program</span>
+                        <div class="program-top home-program-top">
+                            <span class="home-program-identity">
+                                <span class="home-program-icon" aria-hidden="true">
+                                    <?php if ($program_type === 'SPES'): ?>
+                                        <svg viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Z"></path><path d="M7 12v4c3 2 7 2 10 0v-4M21 9v6"></path></svg>
+                                    <?php elseif ($program_type === 'MSME'): ?>
+                                        <svg viewBox="0 0 24 24"><path d="M4 10v10h16V10M3 10l2-6h14l2 6"></path><path d="M3 10a3 3 0 0 0 5 2 3 3 0 0 0 4 0 3 3 0 0 0 4 0 3 3 0 0 0 5-2M9 20v-5h6v5"></path></svg>
+                                    <?php else: ?>
+                                        <svg viewBox="0 0 24 24"><path d="M6 8h12l1 12H5L6 8Z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2M9 13h6"></path></svg>
+                                    <?php endif; ?>
+                                </span>
+                                <span><small>Official program</small><strong><?= htmlspecialchars($program_type) ?></strong></span>
+                            </span>
+                            <span class="home-program-status<?= $program_is_upcoming ? ' is-upcoming' : '' ?>"><i aria-hidden="true"></i> <?= $program_is_upcoming ? 'Coming soon' : 'Open now' ?></span>
                         </div>
 
                         <h3 class="program-title"><?php echo htmlspecialchars($program_title); ?></h3>
@@ -392,12 +411,13 @@ try {
                             ?>
                         </p>
 
-                        <div class="program-btn">View details</div>
-                        <span class="program-date">
-                            <?php echo !empty($p["end_date"]) && $p["end_date"] !== '0000-00-00'
+                        <div class="home-program-meta">
+                            <span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"></path></svg><?php echo !empty($p["end_date"]) && $p["end_date"] !== '0000-00-00'
                                 ? 'Open until ' . htmlspecialchars(date("M d, Y", strtotime($p["end_date"])))
-                                : (!empty($p["start_date"]) ? 'Starts ' . htmlspecialchars(date("M d, Y", strtotime($p["start_date"]))) : "Schedule available"); ?>
-                        </span>
+                                : (!empty($p["start_date"]) ? 'Starts ' . htmlspecialchars(date("M d, Y", strtotime($p["start_date"]))) : "Schedule available"); ?></span>
+                            <span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 21s7-5 7-12a7 7 0 1 0-14 0c0 7 7 12 7 12Z"></path><circle cx="12" cy="9" r="2"></circle></svg>PESO Vinzons</span>
+                        </div>
+                        <div class="program-btn">View program details <span aria-hidden="true">&rarr;</span></div>
                     </a>
                 <?php endforeach; ?>
             <?php else: ?>
@@ -413,14 +433,15 @@ try {
 
 <section class="info-area reveal">
     <div class="content-wrap">
-        <div class="area-head">
-            <div>
-                <h2 class="area-title">Application Readiness Checklist</h2>
-                <p class="area-sub">Prepare accurate supporting information before opening an application form.</p>
-            </div>
+        <div class="home-readiness-panel">
+        <div class="home-readiness-heading">
+            <span class="home-section-eyebrow">Before you apply</span>
+            <h2 class="area-title">Application readiness</h2>
+            <p class="area-sub">Prepare accurate information before opening an official application form.</p>
+            <a href="programs.php">Review program requirements <span aria-hidden="true">&rarr;</span></a>
         </div>
 
-        <div class="info-list">
+        <div class="info-list home-readiness-list">
             <div class="info-card reveal" style="transition-delay: 0.1s;">
                 <div class="info-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -429,7 +450,8 @@ try {
                         <path d="M7 15c.8-1.4 2.2-2 4-2M14 8h3M14 12h3M14 16h3" />
                     </svg>
                 </div>
-                <div class="info-title">Match Your Documents</div>
+                <span class="readiness-number">01</span>
+                <div class="info-title">Match your documents</div>
                 <div class="info-text">Use the same name spelling, birthdate, and address shown on your valid supporting documents.</div>
             </div>
             <div class="info-card reveal" style="transition-delay: 0.2s;">
@@ -439,7 +461,8 @@ try {
                         <path d="m4 5 1 1 2-2M4 12l1 1 2-2M4 19l1 1 2-2" />
                     </svg>
                 </div>
-                <div class="info-title">Prepare Originals and Copies</div>
+                <span class="readiness-number">02</span>
+                <div class="info-title">Prepare originals and copies</div>
                 <div class="info-text">Review the selected batch requirements and bring the requested originals or copies only when instructed by PESO.</div>
             </div>
             <div class="info-card reveal" style="transition-delay: 0.3s;">
@@ -449,9 +472,11 @@ try {
                         <path d="M10 21h4" />
                     </svg>
                 </div>
-                <div class="info-title">Protect Your Account</div>
+                <span class="readiness-number">03</span>
+                <div class="info-title">Protect your account</div>
                 <div class="info-text">Keep your password private and rely on BENEPESO, registered email, or PESO staff for official instructions.</div>
             </div>
+        </div>
         </div>
     </div>
 </section>
