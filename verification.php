@@ -35,7 +35,7 @@ if ($res && $res->num_rows === 1) {
 }
 
 // 2. Fetch approved batches for a clear Program > Batch filter.
-$programs_list = $conn->query("SELECT program_id, program_name, program_code, start_date, end_date FROM programs WHERE approval_status = 'Approved' ORDER BY program_name ASC, start_date DESC, program_id DESC");
+$programs_list = $conn->query("SELECT program_id, program_name, program_code, start_date, end_date FROM programs WHERE approval_status = 'Approved' AND (UPPER(program_name) LIKE '%TUPAD%' OR UPPER(program_name) LIKE '%SPES%' OR UPPER(program_name) LIKE '%MSME%') ORDER BY program_name ASC, start_date DESC, program_id DESC");
 
 // 3. Setup Pagination Variables
 $results_per_page = 5;
@@ -106,7 +106,8 @@ if ($search_ready) {
     $search_param = $search_query;
     
     // Base WHERE clause - restricts search strictly to the user's barangay for privacy
-    $where_clause = "WHERE b.barangay = ? AND p.approval_status = 'Approved'";
+    $where_clause = "WHERE b.barangay = ? AND p.approval_status = 'Approved'
+        AND (UPPER(p.program_name) LIKE '%TUPAD%' OR UPPER(p.program_name) LIKE '%SPES%' OR UPPER(p.program_name) LIKE '%MSME%')";
     
     if (!empty($search_query)) $where_clause .= " AND LOWER(TRIM(b.full_name)) = LOWER(TRIM(?))";
     if (!empty($filter_program)) {
@@ -170,6 +171,7 @@ if ($search_ready) {
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
+    <link rel="stylesheet" href="authenticated_experience.css?v=1">
 <script src="frontend_polish.js?v=15" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -295,6 +297,9 @@ if ($search_ready) {
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                         <span>Use this service only for a legitimate beneficiary-status inquiry. Results are intentionally limited; do not copy or redistribute another resident's information.</span>
                     </div>
+                    <?php if ($search_query !== '' || $filter_program !== ''): ?>
+                        <a class="verification-reset" href="verification.php">Clear lookup and start again</a>
+                    <?php endif; ?>
                 </form>
             </div>
         </div>

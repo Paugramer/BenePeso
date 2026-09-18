@@ -265,6 +265,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
+    <link rel="stylesheet" href="authenticated_experience.css?v=1">
 <script src="frontend_polish.js?v=15" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -380,16 +381,16 @@ while ($row = $activity_logs_result->fetch_assoc()) {
         <?php if (!$profile_is_ready): ?><button type="button" class="profile-readiness-action" onclick="document.getElementById('editToggle').click(); document.getElementById('personal-info').scrollIntoView({behavior:'smooth'})">Complete Profile</button><?php endif; ?>
     </section>
 
-    <nav class="profile-tabs-nav stagger-2">
-        <button class="tab-link active" onclick="switchTab(event, 'personal-info')">Personal Details</button>
-        <button class="tab-link" onclick="switchTab(event, 'my-programs')">My Applications</button>
-        <button class="tab-link" onclick="switchTab(event, 'activity-log')">Activity Logs</button>
-        <button class="tab-link" onclick="switchTab(event, 'security')">Security</button>
+    <nav class="profile-tabs-nav stagger-2" role="tablist" aria-label="Profile sections">
+        <button class="tab-link active" id="tab-personal-info" role="tab" aria-selected="true" aria-controls="personal-info" tabindex="0" onclick="switchTab(event, 'personal-info')">Personal Details</button>
+        <button class="tab-link" id="tab-my-programs" role="tab" aria-selected="false" aria-controls="my-programs" tabindex="-1" onclick="switchTab(event, 'my-programs')">My Applications</button>
+        <button class="tab-link" id="tab-activity-log" role="tab" aria-selected="false" aria-controls="activity-log" tabindex="-1" onclick="switchTab(event, 'activity-log')">Activity Logs</button>
+        <button class="tab-link" id="tab-security" role="tab" aria-selected="false" aria-controls="security" tabindex="-1" onclick="switchTab(event, 'security')">Security</button>
     </nav>
 
     <section class="profile-main stagger-3">
         
-        <div id="personal-info" class="tab-content active">
+        <div id="personal-info" class="tab-content active" role="tabpanel" aria-labelledby="tab-personal-info">
             <div class="content-header">
                 <div>
                     <h3>Personal Information</h3>
@@ -488,7 +489,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
             </form>
         </div>
 
-        <div id="my-programs" class="tab-content">
+        <div id="my-programs" class="tab-content" role="tabpanel" aria-labelledby="tab-my-programs" hidden>
             <div class="content-header">
                 <div>
                     <h3>My Applications</h3>
@@ -520,7 +521,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
             <?php endif; ?>
         </div>
 
-        <div id="activity-log" class="tab-content">
+        <div id="activity-log" class="tab-content" role="tabpanel" aria-labelledby="tab-activity-log" hidden>
             <div class="content-header">
                 <div>
                     <h3>System Activity</h3>
@@ -551,7 +552,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
             <?php endif; ?>
         </div>
 
-        <div id="security" class="tab-content">
+        <div id="security" class="tab-content" role="tabpanel" aria-labelledby="tab-security" hidden>
             <div class="content-header">
                 <div>
                     <h3>Security Settings</h3>
@@ -748,19 +749,53 @@ document.addEventListener('DOMContentLoaded', function() {
             this.value = this.value.replace(/\D/g, '').slice(0, maxLength);
         });
     });
+
+    const profileTabs = Array.from(document.querySelectorAll('.profile-tabs-nav [role="tab"]'));
+    profileTabs.forEach((tab, index) => {
+        tab.addEventListener('keydown', function(event) {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault();
+            let nextIndex = index;
+            if (event.key === 'ArrowRight') nextIndex = (index + 1) % profileTabs.length;
+            if (event.key === 'ArrowLeft') nextIndex = (index - 1 + profileTabs.length) % profileTabs.length;
+            if (event.key === 'Home') nextIndex = 0;
+            if (event.key === 'End') nextIndex = profileTabs.length - 1;
+            profileTabs[nextIndex].focus();
+            profileTabs[nextIndex].click();
+        });
+    });
+
+    document.getElementById('profileForm')?.addEventListener('submit', function() {
+        profileHasUnsavedChanges = false;
+    });
+
+    window.addEventListener('beforeunload', function(event) {
+        if (!profileHasUnsavedChanges) return;
+        event.preventDefault();
+        event.returnValue = '';
+    });
 });
+
+let profileHasUnsavedChanges = false;
 
 function switchTab(evt, tabName) {
     const tabcontent = document.getElementsByClassName("tab-content");
     for (let i = 0; i < tabcontent.length; i++) {
         tabcontent[i].classList.remove("active");
+        tabcontent[i].hidden = true;
     }
     const tablinks = document.getElementsByClassName("tab-link");
     for (let i = 0; i < tablinks.length; i++) {
         tablinks[i].classList.remove("active");
+        tablinks[i].setAttribute('aria-selected', 'false');
+        tablinks[i].tabIndex = -1;
     }
-    document.getElementById(tabName).classList.add("active");
+    const targetPanel = document.getElementById(tabName);
+    targetPanel.hidden = false;
+    targetPanel.classList.add("active");
     evt.currentTarget.classList.add("active");
+    evt.currentTarget.setAttribute('aria-selected', 'true');
+    evt.currentTarget.tabIndex = 0;
     if (history.replaceState) history.replaceState(null, '', '#' + tabName);
 }
 
@@ -780,6 +815,7 @@ function toggleEdit() {
     
     saveAction.hidden = false;
     editBtn.hidden = true;
+    profileHasUnsavedChanges = true;
     document.getElementById('profileFirstName').focus();
 }
 
@@ -1226,10 +1262,20 @@ document.addEventListener('DOMContentLoaded', function() {
     if (['personal-info', 'my-programs', 'activity-log', 'security'].includes(requestedTab)) {
         const target = document.getElementById(requestedTab);
         const trigger = Array.from(document.querySelectorAll('.tab-link')).find(button => button.getAttribute('onclick')?.includes(`'${requestedTab}'`));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        document.querySelectorAll('.tab-link').forEach(button => button.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+            content.hidden = true;
+        });
+        document.querySelectorAll('.tab-link').forEach(button => {
+            button.classList.remove('active');
+            button.setAttribute('aria-selected', 'false');
+            button.tabIndex = -1;
+        });
+        if (target) target.hidden = false;
         target?.classList.add('active');
         trigger?.classList.add('active');
+        trigger?.setAttribute('aria-selected', 'true');
+        if (trigger) trigger.tabIndex = 0;
         window.setTimeout(() => target?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
     }
 });

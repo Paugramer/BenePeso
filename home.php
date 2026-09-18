@@ -55,6 +55,7 @@ try {
     $q = $conn->prepare("SELECT program_id, program_name, description, start_date, end_date, image_path
         FROM programs
         WHERE approval_status = 'Approved'
+          AND (UPPER(program_name) LIKE '%TUPAD%' OR UPPER(program_name) LIKE '%SPES%' OR UPPER(program_name) LIKE '%MSME%')
           AND LOWER(COALESCE(status, '')) <> 'completed'
           AND (end_date IS NULL OR end_date = '0000-00-00' OR end_date >= ?)
           AND (start_date IS NULL OR end_date IS NULL OR end_date = '0000-00-00' OR end_date >= start_date)
@@ -75,6 +76,7 @@ try {
     $advisoryQuery = $conn->query("SELECT program_id, program_name, program_code, start_date, end_date, created_at, updated_at
         FROM programs
         WHERE approval_status = 'Approved'
+          AND (UPPER(program_name) LIKE '%TUPAD%' OR UPPER(program_name) LIKE '%SPES%' OR UPPER(program_name) LIKE '%MSME%')
           AND LOWER(COALESCE(status, '')) <> 'completed'
           AND end_date >= CURDATE()
         ORDER BY COALESCE(updated_at, created_at) DESC, program_id DESC
@@ -101,6 +103,7 @@ try {
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
+    <link rel="stylesheet" href="authenticated_experience.css?v=1">
 <script src="frontend_polish.js?v=15" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -325,11 +328,11 @@ try {
                 <h2 id="serviceGuideTitle">How BENEPESO Works</h2>
                 <p>One connected service route—from an accurate profile to a completed PESO program.</p>
             </div>
-            <ol class="service-step-grid">
-                <li><span>01</span><div><strong>Complete your profile</strong><p>Confirm your identity, contact, and household information.</p><a href="profile.php">Review profile</a></div></li>
-                <li><span>02</span><div><strong>Review eligibility</strong><p>Check the rules and requirements for the exact batch.</p><a href="programs.php">Browse programs</a></div></li>
-                <li><span>03</span><div><strong>Submit your application</strong><p>Complete the official form and privacy acknowledgment.</p><a href="programs.php">View open batches</a></div></li>
-                <li><span>04</span><div><strong>Follow your next action</strong><p>Track validation, requirements, schedules, and completion.</p><a href="profile.php#my-programs">Track progress</a></div></li>
+            <ol class="service-step-grid" aria-label="BENEPESO service path">
+                <li><span aria-hidden="true">01</span><div><small>PROFILE</small><strong>Complete your profile</strong><p>Confirm your identity, contact, and household information.</p><a href="profile.php">Review profile</a></div></li>
+                <li><span aria-hidden="true">02</span><div><small>DISCOVER</small><strong>Review eligibility</strong><p>Check the rules and requirements for the exact batch.</p><a href="programs.php">Browse programs</a></div></li>
+                <li><span aria-hidden="true">03</span><div><small>APPLY</small><strong>Submit securely</strong><p>Complete the official form and privacy acknowledgment.</p><a href="programs.php">View open batches</a></div></li>
+                <li><span aria-hidden="true">04</span><div><small>FOLLOW</small><strong>See your next action</strong><p>Track validation, requirements, schedules, and completion.</p><a href="profile.php#my-programs">Track progress</a></div></li>
             </ol>
         </div>
     </div>

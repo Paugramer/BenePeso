@@ -19,6 +19,14 @@ check_user_role('user');
 
 function h($str) { return htmlspecialchars((string)$str, ENT_QUOTES, 'UTF-8'); }
 
+function is_supported_benepeso_program_name(string $programName): bool
+{
+    $normalized = strtoupper(trim($programName));
+    return str_contains($normalized, 'TUPAD')
+        || str_contains($normalized, 'SPES')
+        || str_contains($normalized, 'MSME');
+}
+
 $user_id = (int)$_SESSION["user_id"];
 $user_display_name = "User";
 $first_char = "U";
@@ -113,6 +121,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_eligibility') {
     $pStmt->close();
     
     $prog_name_check = $pRes ? $pRes['program_name'] : '';
+    if (!is_supported_benepeso_program_name($prog_name_check)) {
+        echo json_encode(['eligible' => false, 'message' => 'This listing is not part of the supported BENEPESO catalog.']);
+        exit();
+    }
     $base_prog_name = explode(' ', trim($prog_name_check))[0];
 
     // RULE 1: Global Block - User cannot apply if they have ANY active or pending program.
@@ -175,6 +187,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
     $submittedProgram = $programNameStmt->get_result()->fetch_assoc() ?: [];
     $submittedProgramName = (string)($submittedProgram['program_name'] ?? '');
     $programNameStmt->close();
+    if (!is_supported_benepeso_program_name($submittedProgramName)) {
+        $_SESSION['app_error'] = 'This listing is not part of the supported BENEPESO catalog.';
+        header('Location: programs.php');
+        exit();
+    }
     $isTupadApplication = stripos($submittedProgramName, 'TUPAD') !== false;
     $isSpesApplication = stripos($submittedProgramName, 'SPES') !== false;
     $isMsmeApplication = stripos($submittedProgramName, 'MSME') !== false;
@@ -799,6 +816,7 @@ $sql = "SELECT p.*,
         (SELECT availment_status FROM beneficiaries b5 WHERE b5.program_id = p.program_id AND b5.user_id = ? ORDER BY created_at DESC LIMIT 1) AS user_availment_status
         FROM programs p 
         WHERE p.approval_status = 'Approved' 
+          AND (UPPER(p.program_name) LIKE '%TUPAD%' OR UPPER(p.program_name) LIKE '%SPES%' OR UPPER(p.program_name) LIKE '%MSME%')
         ORDER BY p.created_at DESC";
 
 $stmt_prog = $conn->prepare($sql);
@@ -861,6 +879,7 @@ if ($barangay_summary_result) {
 <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
+    <link rel="stylesheet" href="authenticated_experience.css?v=1">
 <script src="frontend_polish.js?v=15" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -922,7 +941,12 @@ if ($barangay_summary_result) {
             <div class="welcome-left">
                 <div class="welcome-badge"><span class="badge-dot"></span>OPPORTUNITIES AWAIT</div>
                 <h1 class="welcome-title">Community <span class="welcome-highlight">Programs</span></h1>
-                <p class="welcome-text">Browse and apply for available programs designed to support your growth, skills, and employment journey in Vinzons.</p>
+                <p class="welcome-text">Compare official TUPAD, SPES, and MSME listings, review the exact requirements, and apply through one secure service path.</p>
+                <div class="program-hero-assurance" aria-label="Available BENEPESO program categories">
+                    <span><b>T</b><strong>TUPAD</strong><small>Community employment</small></span>
+                    <span><b>S</b><strong>SPES</strong><small>Student employment</small></span>
+                    <span><b>M</b><strong>MSME</strong><small>Livelihood profiling</small></span>
+                </div>
             </div>
         </div>
     </section>
@@ -939,7 +963,7 @@ if ($barangay_summary_result) {
                     <div class="search-container">
                         <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                         <label class="sr-only" for="searchInput">Search programs by name</label>
-                        <input type="search" id="searchInput" placeholder="Search programs" oninput="filterPrograms()">
+                        <input type="search" id="searchInput" placeholder="Search TUPAD, SPES, or MSME" autocomplete="off" oninput="filterPrograms()">
                     </div>
                     <div class="schedule-filter-wrap">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>

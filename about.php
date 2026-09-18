@@ -58,6 +58,7 @@ try {
     // Count active approved programs
     $p_query = $conn->query("SELECT COUNT(*) as total FROM programs
         WHERE approval_status = 'Approved'
+          AND (UPPER(program_name) LIKE '%TUPAD%' OR UPPER(program_name) LIKE '%SPES%' OR UPPER(program_name) LIKE '%MSME%')
           AND LOWER(COALESCE(status, '')) <> 'completed'
           AND (end_date IS NULL OR end_date = '' OR end_date >= CURDATE())
           AND (start_date IS NULL OR end_date IS NULL OR end_date = '' OR end_date >= start_date)");
@@ -86,16 +87,17 @@ try {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="home.css?v=14">
-    <link rel="stylesheet" href="about.css?v=11">
+    <link rel="stylesheet" href="home.css?v=16">
+    <link rel="stylesheet" href="about.css?v=12">
     <link rel="stylesheet" href="frontend_polish.css?v=16">
-    <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
+    <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
-    <link rel="stylesheet" href="beneficiary_content_polish.css?v=6">
+    <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
+    <link rel="stylesheet" href="authenticated_experience.css?v=1">
 <script src="frontend_polish.js?v=15" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
-<body data-disable-page-loader>
+<body class="about-page">
 
 <header class="topbar">
   <div class="topbar-inner">
@@ -182,7 +184,7 @@ try {
                     <div class="stat-num-wrap">
                         <span class="stat-num counter" data-target="<?php echo $total_programs; ?>">0</span>
                     </div>
-                    <span class="stat-label">Active Programs</span>
+                    <span class="stat-label">Active Listings</span>
                 </div>
                 <div class="stat-divider"></div>
                 <div class="stat-item">
@@ -222,25 +224,28 @@ try {
     <section class="content-section services-section stagger-5">
         <div class="content-wrap">
             <div class="section-title-wrap">
-                <span class="section-eyebrow">Community Support</span>
-                <h2>Our Core Services</h2>
-                <p>Dedicated to supporting the community through actionable employment initiatives.</p>
+                <span class="section-eyebrow">One trusted service path</span>
+                <h2>How BENEPESO Supports Residents</h2>
+                <p>Official information, secure applications, and understandable next steps in one connected experience.</p>
             </div>
             <div class="grid-three">
                 <div class="service-card interactive-service-hover">
                     <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
-                    <h4>Job Referrals</h4>
-                    <p>Connecting skilled individuals with local and national employers actively seeking talent.</p>
+                    <span class="service-card-kicker">DISCOVER</span>
+                    <h4>Find official opportunities</h4>
+                    <p>Compare approved TUPAD, SPES, and MSME listings with their schedules, eligibility rules, and requirements.</p>
                 </div>
                 <div class="service-card interactive-service-hover">
                     <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
-                    <h4>Livelihood (TUPAD/SPES)</h4>
-                    <p>Facilitating emergency employment and student assistance programs to provide financial relief.</p>
+                    <span class="service-card-kicker">PREPARE</span>
+                    <h4>Apply with one profile</h4>
+                    <p>Use one registered resident profile to submit accurate information for the exact program batch you select.</p>
                 </div>
                 <div class="service-card interactive-service-hover">
                     <div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>
-                    <h4>Skills Training</h4>
-                    <p>Partnering with TESDA and other agencies to equip residents with in-demand technical skills.</p>
+                    <span class="service-card-kicker">FOLLOW</span>
+                    <h4>Track validated updates</h4>
+                    <p>Review recorded status changes, requirements received, official schedules, and your next required action.</p>
                 </div>
             </div>
         </div>
