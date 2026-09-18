@@ -878,7 +878,7 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=16">
-    <link rel="stylesheet" href="programs.css?v=33">
+    <link rel="stylesheet" href="programs.css?v=34">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -945,11 +945,10 @@ if ($barangay_summary_result) {
             <div class="welcome-left">
                 <div class="welcome-badge"><span class="badge-dot"></span>OPPORTUNITIES AWAIT</div>
                 <h1 class="welcome-title">Community <span class="welcome-highlight">Programs</span></h1>
-                <p class="welcome-text">Compare official TUPAD, SPES, and MSME listings, review the exact requirements, and apply through one secure service path.</p>
-                <div class="program-hero-assurance" aria-label="Available BENEPESO program categories">
-                    <span><b class="program-hero-icon program-hero-icon--tupad" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18h14M7 15v-2a5 5 0 0 1 10 0v2M9 8.5V7a3 3 0 0 1 6 0v1.5M6 9h12"/></svg></b><strong>TUPAD</strong><small>Community employment</small></span>
-                    <span><b class="program-hero-icon program-hero-icon--spes" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Z"/><path d="M7 12v4c3 2 7 2 10 0v-4M21 9v6"/></svg></b><strong>SPES</strong><small>Student employment</small></span>
-                    <span><b class="program-hero-icon program-hero-icon--msme" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 10v9h14v-9M4 5h16l1 5a3 3 0 0 1-4 0 3 3 0 0 1-5 0 3 3 0 0 1-5 0 3 3 0 0 1-4 0l1-5Z"/><path d="M9 19v-5h6v5"/></svg></b><strong>MSME</strong><small>Livelihood profiling</small></span>
+                <p class="welcome-text">Discover verified PESO opportunities, review batch-specific requirements, and continue through one secure application service.</p>
+                <div class="programs-hero-note">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 7.9 7.5 9.5 4.4-1.6 7.5-4.9 7.5-9.5V6L12 3Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                    <span><strong>Official PESO Vinzons listings</strong><small>Every schedule, requirement, and application status is connected to its exact batch.</small></span>
                 </div>
             </div>
         </div>
@@ -1468,10 +1467,11 @@ if ($barangay_summary_result) {
     </div>
 </div>
 
-<div class="modal" id="applicationModal">
-    <div class="modal-content" style="max-width: 850px;">
-        <button class="modal-close" onclick="closeModal('applicationModal')">✕</button>
+<div class="modal" id="applicationModal" aria-hidden="true">
+    <div class="modal-content" style="max-width: 850px;" role="dialog" aria-modal="true" aria-labelledby="applicationFormTitle" tabindex="-1">
+        <button class="modal-close" onclick="closeModal('applicationModal')" aria-label="Close application form">✕</button>
         <div class="application-modal-heading">
+            <span class="application-modal-eyebrow"><i aria-hidden="true"></i>Secure resident application</span>
             <h2 id="applicationFormTitle">Application Form</h2>
             <p id="applicationFormSubtitle">Applying for: <strong id="formProgramName"></strong></p>
         </div>
@@ -1479,8 +1479,12 @@ if ($barangay_summary_result) {
         <div class="wizard-nav" id="wizardNav">
             <!-- Populated via JS -->
         </div>
+        <div class="application-progress-summary">
+            <strong id="applicationStepStatus">Step 1</strong>
+            <span>Complete the required fields marked with an asterisk.</span>
+        </div>
 
-        <form method="POST" action="programs.php" id="multiStepForm">
+        <form method="POST" action="programs.php" id="multiStepForm" autocomplete="off">
             <?= auth_csrf_input() ?>
             <input type="hidden" name="action" value="submit_application">
             <input type="hidden" name="program_id" id="hiddenProgramId">
@@ -1520,7 +1524,7 @@ if ($barangay_summary_result) {
                             </select>
                             <input type="text" name="other_occupation" id="tupad_occ_other" style="display:none; margin-top:5px;" placeholder="Specify Occupation" class="not-required" oninput="this.value = this.value.replace(/[^a-zA-ZñÑ\s.-]/g, '')">
                         </div>
-                        <div class="form-group"><label>Avg Monthly Income</label><input type="text" name="avg_monthly_income" placeholder="e.g. 5000" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div>
+                        <div class="form-group"><label>Avg Monthly Income</label><input type="text" name="avg_monthly_income" placeholder="e.g. 5000" inputmode="numeric" autocomplete="off" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div>
                         <div class="form-group"><label>Interested in Wage Employment?</label><select name="interested_in_employment"><option value="No">No</option><option value="Yes">Yes</option></select></div>
                     </div>
                     <div class="form-actions">
@@ -2350,20 +2354,22 @@ if ($barangay_summary_result) {
             });
             representative.removeAttribute('onclick');
             representative.classList.add('program-multi-batch');
+            representative.setAttribute('role', 'button');
+            representative.setAttribute('tabindex', '0');
             representative.setAttribute('aria-label', `${representative.dataset.title}: choose from ${groupCards.length} active batches`);
             representative.addEventListener('click', () => openBatchChooser(groupCards));
+            representative.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openBatchChooser(groupCards);
+                }
+            });
             representative.dataset.category = groupCards.map(card => card.dataset.category || '').filter(Boolean).join(' ');
             representative.dataset.schedules = [...new Set(groupCards.flatMap(card => (card.dataset.schedules || card.dataset.schedule || 'open').split(/\s+/)))].join(' ');
 
             const batchLabel = representative.querySelector('.batch-code');
             if (batchLabel) batchLabel.textContent = `${groupCards.length} ACTIVE BATCHES`;
-            const categoryLabel = representative.querySelector('.program-category-badge');
-            if (categoryLabel) {
-                const categoryNames = [...new Set(groupCards.map(card => (card.dataset.category || '')
-                    .replace(/tupad/gi, '').trim()).filter(Boolean))];
-                categoryLabel.textContent = categoryNames.length ? categoryNames.join(' + ') : 'Multiple schedules';
-                categoryLabel.title = 'Every active batch remains available in the batch chooser';
-            }
+            representative.querySelector('.program-category-badge')?.remove();
             const slotBadge = representative.querySelector('.floating-badge');
             if (slotBadge) {
                 const totalSlots = groupCards.reduce((total, card) => total + (Number.parseInt(card.dataset.slots || '0', 10) || 0), 0);
@@ -2376,35 +2382,20 @@ if ($barangay_summary_result) {
             }
             const actionButton = representative.querySelector('.program-btn, .btn-check-status');
             const currentCard = groupCards.find(card => card.dataset.action === 'status');
-            if (actionButton && currentCard) {
-                const actions = document.createElement('div');
-                actions.className = 'program-group-actions';
-                const statusButton = document.createElement('button');
-                statusButton.type = 'button';
-                statusButton.className = 'btn-check-status';
-                statusButton.textContent = 'View Your Status';
-                statusButton.addEventListener('click', event => {
-                    event.stopPropagation();
-                    openProgramDetails(currentCard);
-                });
-                const chooseButton = document.createElement('button');
-                chooseButton.type = 'button';
-                chooseButton.className = 'program-btn program-btn-secondary';
-                chooseButton.textContent = 'Choose Batch';
-                chooseButton.addEventListener('click', event => {
-                    event.stopPropagation();
-                    openBatchChooser(groupCards);
-                });
-                actions.append(statusButton, chooseButton);
-                actionButton.replaceWith(actions);
+            if (currentCard) {
                 representative.classList.add('has-current-batch');
                 const statusNote = document.createElement('div');
                 statusNote.className = 'program-current-batch-note';
                 statusNote.innerHTML = '<span aria-hidden="true"></span>Your current application is included';
                 representative.querySelector('.card-footer-info')?.before(statusNote);
-            } else if (actionButton) {
+            }
+            if (actionButton) {
                 actionButton.className = 'program-btn';
                 actionButton.textContent = 'Choose Batch';
+                actionButton.addEventListener('click', event => {
+                    event.stopPropagation();
+                    openBatchChooser(groupCards);
+                });
             }
         });
 
@@ -3031,6 +3022,12 @@ if ($barangay_summary_result) {
             let ind = document.getElementById(`ind-step-${i}`);
             if(ind) ind.classList.add('active');
         }
+
+        const applicationStepStatus = document.getElementById('applicationStepStatus');
+        const currentLabel = document.querySelector(`#ind-step-${step} .wizard-label`)?.textContent || 'Application details';
+        if (applicationStepStatus) applicationStepStatus.textContent = `Step ${step} of ${totalSteps} · ${currentLabel}`;
+        const applicationForm = document.getElementById('multiStepForm');
+        if (applicationForm) applicationForm.scrollTop = 0;
 
         // Keep the current wizard step visible on narrow screens in both directions.
         const wizardNav = document.getElementById('wizardNav');
