@@ -171,8 +171,8 @@ if ($search_ready) {
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
-    <link rel="stylesheet" href="authenticated_experience.css?v=1">
-<script src="frontend_polish.js?v=15" defer></script>
+    <link rel="stylesheet" href="authenticated_experience.css?v=2">
+<script src="frontend_polish.js?v=16" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body class="verification-page">
@@ -211,8 +211,8 @@ if ($search_ready) {
         </button>
 
         <div class="account-dropdown" id="accountDropdown">
-          <a href="profile.php">My Profile</a>
-          <a href="verification.php">Verification</a>
+                    <a class="account-dropdown-link" href="profile.php"><span class="account-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg></span><span>My Profile</span></a>
+                    <a class="account-dropdown-link" href="verification.php" aria-current="page"><span class="account-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 7.9 7.5 9.5 4.4-1.6 7.5-4.9 7.5-9.5V6L12 3Z"></path><path d="m9 12 2 2 4-4"></path></svg></span><span>Verification</span></a>
           <div class="dropdown-line"></div>
           <form class="logout-form" action="logout.php" method="POST">
             <?= auth_csrf_input() ?><input type="hidden" name="role" value="user">

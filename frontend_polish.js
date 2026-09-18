@@ -359,10 +359,16 @@
       const matches = suggestions.filter(value => !query || value.toLowerCase().includes(query)).slice(0, 5);
       panel.replaceChildren();
       matches.forEach(value => {
+        const normalized = value.toLowerCase();
+        const icon = normalized.includes('spes')
+          ? '<svg viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Z"></path><path d="M7 12v4c3 2 7 2 10 0v-4M21 9v6"></path></svg>'
+          : normalized.includes('msme')
+            ? '<svg viewBox="0 0 24 24"><path d="M4 10v10h16V10M3 10l2-6h14l2 6"></path><path d="M3 10a3 3 0 0 0 5 2 3 3 0 0 0 4 0 3 3 0 0 0 4 0 3 3 0 0 0 5-2M9 20v-5h6v5"></path></svg>'
+            : '<svg viewBox="0 0 24 24"><path d="M6 8h12l1 12H5L6 8Z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2M9 13h6"></path></svg>';
         const option = document.createElement('button');
         option.type = 'button';
         option.setAttribute('role', 'option');
-        option.innerHTML = '<span aria-hidden="true">&#128269;</span><strong></strong><small>Show matching open batches</small>';
+        option.innerHTML = '<span aria-hidden="true">' + icon + '</span><strong></strong><small>Show matching open batches</small>';
         option.querySelector('strong').textContent = value;
         option.addEventListener('click', () => {
           input.value = value;

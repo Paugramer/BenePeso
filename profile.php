@@ -265,8 +265,8 @@ while ($row = $activity_logs_result->fetch_assoc()) {
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
-    <link rel="stylesheet" href="authenticated_experience.css?v=1">
-<script src="frontend_polish.js?v=15" defer></script>
+    <link rel="stylesheet" href="authenticated_experience.css?v=2">
+<script src="frontend_polish.js?v=16" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body class="beneficiary-profile-page">
@@ -301,8 +301,8 @@ while ($row = $activity_logs_result->fetch_assoc()) {
         </button>
 
         <div class="account-dropdown" id="accountDropdown">
-          <a href="profile.php">My Profile</a>
-          <a href="verification.php">Verification</a>
+                    <a class="account-dropdown-link" href="profile.php" aria-current="page"><span class="account-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg></span><span>My Profile</span></a>
+                    <a class="account-dropdown-link" href="verification.php"><span class="account-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 7.9 7.5 9.5 4.4-1.6 7.5-4.9 7.5-9.5V6L12 3Z"></path><path d="m9 12 2 2 4-4"></path></svg></span><span>Verification</span></a>
           <div class="dropdown-line"></div>
           <form class="logout-form" action="logout.php" method="POST">
             <?= auth_csrf_input() ?><input type="hidden" name="role" value="user">
@@ -382,10 +382,10 @@ while ($row = $activity_logs_result->fetch_assoc()) {
     </section>
 
     <nav class="profile-tabs-nav stagger-2" role="tablist" aria-label="Profile sections">
-        <button class="tab-link active" id="tab-personal-info" role="tab" aria-selected="true" aria-controls="personal-info" tabindex="0" onclick="switchTab(event, 'personal-info')">Personal Details</button>
-        <button class="tab-link" id="tab-my-programs" role="tab" aria-selected="false" aria-controls="my-programs" tabindex="-1" onclick="switchTab(event, 'my-programs')">My Applications</button>
-        <button class="tab-link" id="tab-activity-log" role="tab" aria-selected="false" aria-controls="activity-log" tabindex="-1" onclick="switchTab(event, 'activity-log')">Activity Logs</button>
-        <button class="tab-link" id="tab-security" role="tab" aria-selected="false" aria-controls="security" tabindex="-1" onclick="switchTab(event, 'security')">Security</button>
+        <button class="tab-link active" id="tab-personal-info" role="tab" aria-selected="true" aria-controls="personal-info" tabindex="0" onclick="switchTab(event, 'personal-info')"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg><span>Personal Details</span></button>
+        <button class="tab-link" id="tab-my-programs" role="tab" aria-selected="false" aria-controls="my-programs" tabindex="-1" onclick="switchTab(event, 'my-programs')"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 6V4h8v2M5 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"></path><path d="M3 12h18M10 12v2h4v-2"></path></svg><span>My Applications</span></button>
+        <button class="tab-link" id="tab-activity-log" role="tab" aria-selected="false" aria-controls="activity-log" tabindex="-1" onclick="switchTab(event, 'activity-log')"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5M12 7v5l3 2"></path></svg><span>Activity Logs</span></button>
+        <button class="tab-link" id="tab-security" role="tab" aria-selected="false" aria-controls="security" tabindex="-1" onclick="switchTab(event, 'security')"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"></path></svg><span>Security</span></button>
     </nav>
 
     <section class="profile-main stagger-3">

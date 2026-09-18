@@ -93,8 +93,8 @@ try {
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
-    <link rel="stylesheet" href="authenticated_experience.css?v=1">
-<script src="frontend_polish.js?v=15" defer></script>
+    <link rel="stylesheet" href="authenticated_experience.css?v=2">
+<script src="frontend_polish.js?v=16" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body class="about-page">
@@ -130,8 +130,8 @@ try {
             </button>
 
             <div class="account-dropdown" id="accountDropdown">
-            <a href="profile.php">My Profile</a>
-            <a href="verification.php">Verification</a>
+                    <a class="account-dropdown-link" href="profile.php"><span class="account-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg></span><span>My Profile</span></a>
+                    <a class="account-dropdown-link" href="verification.php"><span class="account-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 7.9 7.5 9.5 4.4-1.6 7.5-4.9 7.5-9.5V6L12 3Z"></path><path d="m9 12 2 2 4-4"></path></svg></span><span>Verification</span></a>
             <div class="dropdown-line"></div>
             <form class="logout-form" action="logout.php" method="POST">
                 <?= auth_csrf_input() ?><input type="hidden" name="role" value="user">
@@ -354,17 +354,28 @@ try {
                 </div>
                 
                 <div class="contact-map">
-                    <iframe 
+                    <div class="map-card-header">
+                        <span class="map-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 5.5-8 11-8 11S4 15.5 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg></span>
+                        <span><strong>PESO Vinzons Office</strong><small>Vinzons Municipal Hall</small></span>
+                        <span class="map-official-badge"><i aria-hidden="true"></i> Official location</span>
+                    </div>
+                    <div class="map-preview" aria-label="Map preview of the PESO Vinzons office">
+                    <iframe
                         src="https://maps.google.com/maps?q=Vinzons%20Municipal%20Hall,%20Vinzons%20Avenue,%20Barangay%20II,%20Poblacion,%20Vinzons,%20Camarines%20Norte%204603&t=m&z=18&ie=UTF8&iwloc=&output=embed"
                         title="Street map showing Vinzons Municipal Hall on Vinzons Avenue"
                         width="100%" 
                         height="100%" 
-                        style="border:0; border-radius: 20px; min-height: 250px; box-shadow: var(--shadow-soft);" 
+                        style="border:0;"
                         allowfullscreen="" 
                         loading="lazy" 
+                        tabindex="-1"
                         referrerpolicy="no-referrer-when-downgrade">
                     </iframe>
-                    <a class="map-directions-link" href="https://www.google.com/maps/search/?api=1&amp;query=Vinzons+Municipal+Hall%2C+Vinzons+Avenue%2C+Barangay+II%2C+Poblacion%2C+Vinzons%2C+Camarines+Norte+4603" target="_blank" rel="noopener noreferrer">Open exact location in Google Maps <span aria-hidden="true">&nearr;</span></a>
+                    </div>
+                    <div class="map-card-footer">
+                        <span>Barangay II (Poblacion), Vinzons</span>
+                        <a class="map-directions-link" href="https://www.google.com/maps/search/?api=1&amp;query=Vinzons+Municipal+Hall%2C+Vinzons+Avenue%2C+Barangay+II%2C+Poblacion%2C+Vinzons%2C+Camarines+Norte+4603" target="_blank" rel="noopener noreferrer">Get directions <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"></path></svg></a>
+                    </div>
                 </div>
             </div>
             

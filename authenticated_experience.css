@@ -72,6 +72,69 @@
   box-shadow: 0 9px 22px rgba(14, 92, 64, 0.1);
 }
 
+/* One account-menu language across the authenticated experience. */
+:is(.about-page, .home-page, .beneficiary-programs-page, .verification-page, .beneficiary-profile-page) .account-dropdown {
+  width: min(280px, calc(100vw - 28px));
+  padding: 8px;
+  border: 1px solid var(--bp-line);
+  border-radius: 18px;
+  box-shadow: 0 22px 55px rgba(8, 54, 37, 0.18);
+}
+
+:is(.about-page, .home-page, .beneficiary-programs-page, .verification-page, .beneficiary-profile-page) .account-dropdown-link {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 50px;
+  padding: 6px 9px;
+  border-radius: 11px;
+  color: var(--bp-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+:is(.about-page, .home-page, .beneficiary-programs-page, .verification-page, .beneficiary-profile-page) .account-dropdown-link:hover {
+  padding-left: 9px;
+  color: var(--bp-green-strong);
+  background: #eef7f2;
+}
+
+:is(.about-page, .home-page, .beneficiary-programs-page, .verification-page, .beneficiary-profile-page) .account-dropdown-link[aria-current="page"] {
+  color: var(--bp-green-strong);
+  background: linear-gradient(90deg, #e7f5ee, #f7fbf9);
+}
+
+.account-link-icon {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #cde3d8;
+  border-radius: 10px;
+  color: var(--bp-green-strong);
+  background: #edf7f2;
+}
+
+.account-link-icon svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+:is(.about-page, .home-page, .beneficiary-programs-page, .verification-page, .beneficiary-profile-page) .account-dropdown .dropdown-line {
+  margin: 6px 3px;
+}
+
+:is(.about-page, .home-page, .beneficiary-programs-page, .verification-page, .beneficiary-profile-page) .account-dropdown .logout-link {
+  min-height: 48px;
+  border-radius: 11px;
+}
+
 /* Home: recognizable resident journey rather than generic numbered cards */
 .home-page .service-route-shell {
   position: relative;
@@ -235,17 +298,159 @@
 .about-page .services-section .service-card h4 { color: var(--bp-ink); }
 .about-page .services-section .service-card p { color: var(--bp-muted); }
 
+/* About: a branded, deliberate location card instead of a raw map embed. */
+.about-page .contact-glass-panel {
+  border: 1px solid var(--bp-line);
+  border-top: 3px solid var(--bp-green);
+  border-radius: 20px;
+}
+
+.about-page .contact-map {
+  align-self: stretch;
+  display: grid;
+  grid-template-rows: auto minmax(280px, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid #c9ddd3;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 18px 42px rgba(10, 77, 54, 0.09);
+}
+
+.about-page .map-card-header,
+.about-page .map-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 13px 15px;
+  background: rgba(255, 255, 255, 0.97);
+}
+
+.about-page .map-card-header { border-bottom: 1px solid var(--bp-line); }
+.about-page .map-card-footer { justify-content: space-between; border-top: 1px solid var(--bp-line); }
+
+.about-page .map-card-icon {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #c6dfd2;
+  border-radius: 11px;
+  color: var(--bp-green-strong);
+  background: var(--bp-mint);
+}
+
+.about-page .map-card-icon svg { width: 21px; height: 21px; }
+.about-page .map-card-header > span:nth-child(2) { display: grid; gap: 1px; min-width: 0; }
+.about-page .map-card-header strong { color: var(--bp-ink); font-size: 13px; }
+.about-page .map-card-header small,
+.about-page .map-card-footer > span { color: var(--bp-muted); font-size: 10px; }
+
+.about-page .map-official-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 6px 9px;
+  border: 1px solid #cce2d7;
+  border-radius: 999px;
+  color: var(--bp-green-strong);
+  background: #f2faf6;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.about-page .map-official-badge i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2bb67d;
+  box-shadow: 0 0 0 4px rgba(43, 182, 125, 0.12);
+}
+
+.about-page .map-preview {
+  position: relative;
+  min-height: 280px;
+  overflow: hidden;
+  background: #dfeae4;
+}
+
+.about-page .map-preview::after {
+  content: "Map preview \00b7  use Get directions to open Google Maps";
+  position: absolute;
+  left: 14px;
+  bottom: 13px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 9px;
+  color: #fff;
+  background: rgba(7, 53, 37, 0.78);
+  box-shadow: 0 8px 20px rgba(3, 31, 21, 0.2);
+  font-size: 9px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.about-page .map-preview iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  border-radius: 0 !important;
+  filter: saturate(0.72) contrast(0.96);
+  pointer-events: none;
+}
+
+.about-page .map-card-footer .map-directions-link {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 1px solid #bcd8ca;
+  border-radius: 10px;
+  color: #fff;
+  background: var(--bp-green-strong);
+  box-shadow: none;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.about-page .map-directions-link svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 /* Programs: more useful hero summary and balanced discovery controls */
 .beneficiary-programs-page .page-wrap > .welcome-area {
   overflow: hidden;
+  min-height: 0;
+  padding: 62px 0 58px;
   background:
     radial-gradient(circle at 86% 24%, rgba(198, 164, 71, 0.15) 0 7px, transparent 8px),
     linear-gradient(125deg, #eef8f3 0%, #f8fbf9 60%, #fffaf0 100%);
 }
 
 .beneficiary-programs-page .page-wrap > .welcome-area .welcome-inner {
-  min-height: 360px;
+  min-height: 0;
   align-items: center;
+}
+
+.beneficiary-programs-page .page-wrap > .welcome-area :is(.welcome-title, .welcome-text) { text-shadow: none; }
+.beneficiary-programs-page .page-wrap > .welcome-area .welcome-title { color: var(--bp-ink); }
+.beneficiary-programs-page .page-wrap > .welcome-area .welcome-highlight { color: #208c63; }
+.beneficiary-programs-page .page-wrap > .welcome-area .welcome-text { color: #526f63; }
+.beneficiary-programs-page .page-wrap > .welcome-area .welcome-badge {
+  color: var(--bp-green-strong);
+  border-color: #c9e0d5;
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .beneficiary-programs-page .program-hero-assurance {
@@ -293,6 +498,14 @@
 
 .beneficiary-programs-page .program-discovery-controls :is(.search-container, .schedule-filter-wrap) {
   min-height: 54px;
+}
+
+.beneficiary-programs-page .schedule-filter-wrap > .bp-select { height: 100%; }
+.beneficiary-programs-page .schedule-filter-wrap > svg { z-index: 3; }
+.beneficiary-programs-page .schedule-filter-wrap .bp-select-trigger {
+  min-height: 100%;
+  padding-left: 46px;
+  border-radius: 14px;
 }
 
 .beneficiary-programs-page .program-card {
@@ -359,8 +572,22 @@
 }
 
 .beneficiary-profile-page .tab-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   min-height: 46px;
   border-radius: 10px;
+}
+
+.beneficiary-profile-page .tab-link svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .beneficiary-profile-page .tab-link[aria-selected="true"] {
@@ -372,6 +599,43 @@
 .beneficiary-profile-page .section-divider {
   color: var(--bp-green-strong);
   background: linear-gradient(90deg, var(--bp-mint), transparent);
+}
+
+/* Shared dialog finish: same depth, corners and close/action language on every page. */
+:is(.about-page, .beneficiary-programs-page, .verification-page, .beneficiary-profile-page) :is(.modal, .modal-overlay) {
+  background: rgba(5, 40, 28, 0.7);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+}
+
+:is(.about-page, .beneficiary-programs-page, .verification-page, .beneficiary-profile-page) :is(.modal-content, .modal-box) {
+  border: 1px solid rgba(210, 231, 221, 0.95);
+  border-radius: 22px;
+  box-shadow: inset 0 3px 0 var(--bp-green), 0 28px 75px rgba(3, 35, 23, 0.28);
+}
+
+:is(.about-page, .beneficiary-programs-page, .verification-page, .beneficiary-profile-page) :is(.modal-close, .close-modal, .close-btn) {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid #d2e3da;
+  border-radius: 12px;
+  color: var(--bp-ink);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 20px rgba(7, 53, 37, 0.09);
+}
+
+.bp-program-suggestions button > span svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: var(--bp-green-strong);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 @media (max-width: 900px) {
@@ -387,6 +651,9 @@
     border-bottom: 1px solid var(--bp-line);
   }
   .about-page .services-section .service-card:last-child { border-bottom: 0; }
+
+  .about-page .map-card-footer { align-items: stretch; flex-direction: column; }
+  .about-page .map-card-footer .map-directions-link { justify-content: center; }
 
   .beneficiary-profile-page .profile-tabs-nav { top: 70px; }
 }
@@ -404,6 +671,7 @@
   .home-page .service-step-grid > li > span { margin-bottom: 0; }
 
   .beneficiary-programs-page .page-wrap > .welcome-area .welcome-inner { min-height: auto; }
+  .beneficiary-programs-page .page-wrap > .welcome-area { padding: 42px 0; }
   .beneficiary-programs-page .program-hero-assurance { grid-template-columns: 1fr; }
   .beneficiary-programs-page .program-hero-assurance > span { min-height: 62px; }
 
