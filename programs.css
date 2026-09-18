@@ -2272,12 +2272,12 @@ input[type="number"] { -moz-appearance: textfield; }
   }
 }
 
-/* Programs hero: restore the page's green identity while retaining the shared system language. */
+/* Programs hero: use the same civic photography treatment as the authenticated About page. */
 .beneficiary-programs-page .page-wrap > .welcome-area.programs-hero {
-    background:
-        radial-gradient(circle at 86% 24%, rgba(218, 180, 69, .34) 0 7px, transparent 8px),
-        radial-gradient(circle at 76% 76%, rgba(91, 188, 139, .18), transparent 26%),
-        linear-gradient(125deg, #0b4933 0%, #126a49 58%, #0d553b 100%);
+    background-color: #0b4b34;
+    background-image: linear-gradient(90deg, rgba(5, 48, 34, .92) 0%, rgba(10, 83, 58, .72) 48%, rgba(10, 83, 58, .26) 100%), url("img/pesobgs.jpg");
+    background-position: center 42%;
+    background-size: cover;
 }
 
 .beneficiary-programs-page .page-wrap > .welcome-area.programs-hero .welcome-title {
@@ -2301,10 +2301,21 @@ input[type="number"] { -moz-appearance: textfield; }
 }
 
 .beneficiary-programs-page .programs-hero .program-hero-assurance > span {
-    border-color: rgba(255, 255, 255, .18);
-    background: rgba(255, 255, 255, .94);
-    box-shadow: 0 12px 28px rgba(3, 42, 27, .16);
+    min-height: 72px;
+    padding: 12px 14px;
+    border-color: rgba(255, 255, 255, .26);
+    border-radius: 14px 5px 14px 5px;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 14px 30px rgba(3, 42, 27, .18);
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
+
+.beneficiary-programs-page .programs-hero .program-hero-assurance > span:hover { transform: translateY(-3px); border-color: rgba(143, 205, 174, .9); box-shadow: 0 18px 34px rgba(3, 42, 27, .22); }
+.beneficiary-programs-page .programs-hero .program-hero-assurance { width: min(900px, 100%); gap: 12px; }
+.beneficiary-programs-page .program-hero-assurance .program-hero-icon { grid-row: 1 / 3; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid #c7e0d3; border-radius: 12px 4px 12px 4px; color: #176b49; background: linear-gradient(145deg, #edf8f2, #dff0e7); }
+.beneficiary-programs-page .program-hero-assurance .program-hero-icon svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.beneficiary-programs-page .program-hero-assurance .program-hero-icon--spes { color: #557428; background: linear-gradient(145deg, #f4f7e9, #e6eed2); }
+.beneficiary-programs-page .program-hero-assurance .program-hero-icon--msme { color: #87671b; background: linear-gradient(145deg, #fff7e8, #f4e8c7); }
 
 /* Four equal listings read more clearly as a balanced two-by-two directory. */
 .beneficiary-programs-page .program-grid.bp-grid-count-four:not(.list-view) {
@@ -2918,4 +2929,152 @@ input[type="number"] { -moz-appearance: textfield; }
         margin-top: 6px;
         text-align: left;
     }
+}
+
+/* Unified discovery toolbar and illustrated option menus. */
+.beneficiary-programs-page .program-discovery-controls {
+    grid-template-columns: minmax(0, 1.45fr) minmax(250px, .55fr);
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid #d2e4da;
+    border-radius: 14px 5px 14px 5px;
+    background: #fff;
+    box-shadow: 0 12px 28px rgba(14, 78, 53, .08);
+}
+
+.beneficiary-programs-page .program-discovery-controls .search-container,
+.beneficiary-programs-page .schedule-filter-wrap { min-height: 58px; }
+.beneficiary-programs-page .program-discovery-controls .search-container:focus-within { z-index: 95; }
+.beneficiary-programs-page .program-discovery-controls .search-container input {
+    height: 58px;
+    min-height: 58px;
+    border-color: transparent;
+    border-radius: 10px 3px 10px 3px;
+    background: #f9fcfa;
+    box-shadow: none;
+}
+.beneficiary-programs-page .program-discovery-controls .search-container input:focus,
+.beneficiary-programs-page .program-discovery-controls .search-container input.searching {
+    border-color: #4c9b79;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(31, 132, 92, .11);
+}
+
+.beneficiary-programs-page .schedule-filter-wrap { position: relative; z-index: 85; }
+.beneficiary-programs-page .program-schedule-toggle {
+    width: 100%;
+    height: 58px;
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) 18px;
+    gap: 10px;
+    padding: 10px 14px;
+    align-items: center;
+    color: #153f2e;
+    border: 1px solid transparent;
+    border-radius: 10px 3px 10px 3px;
+    background: linear-gradient(145deg, #f8fcfa, #f0f7f3);
+    font: 800 13px/1.25 Poppins, sans-serif;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+.beneficiary-programs-page .program-schedule-toggle:hover { border-color: #9ac4af; background: #f6fbf8; }
+.beneficiary-programs-page .schedule-filter-wrap.is-open .program-schedule-toggle,
+.beneficiary-programs-page .program-schedule-toggle:focus-visible { outline: none; border-color: #4c9b79; background: #fff; box-shadow: 0 0 0 3px rgba(31, 132, 92, .11); }
+.beneficiary-programs-page .program-schedule-leading,
+.beneficiary-programs-page .program-schedule-chevron,
+.beneficiary-programs-page .program-filter-icon svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.beneficiary-programs-page .program-schedule-leading { width: 19px; height: 19px; color: #1f845c; }
+.beneficiary-programs-page .program-schedule-chevron { width: 17px; height: 17px; color: #557267; transition: transform .2s ease; }
+.beneficiary-programs-page .schedule-filter-wrap.is-open .program-schedule-chevron { transform: rotate(180deg); }
+
+.beneficiary-programs-page .program-schedule-menu {
+    position: absolute;
+    z-index: 120;
+    top: calc(100% + 8px);
+    right: 0;
+    left: 0;
+    padding: 7px;
+    overflow: hidden;
+    border: 1px solid #cfe1d8;
+    border-radius: 5px 14px 5px 14px;
+    background: rgba(255, 255, 255, .99);
+    box-shadow: 0 18px 38px rgba(16, 65, 45, .16);
+    backdrop-filter: blur(14px);
+    animation: programsMenuIn .2s cubic-bezier(.2, .8, .2, 1) both;
+}
+.beneficiary-programs-page .program-schedule-menu[hidden] { display: none; }
+.beneficiary-programs-page .program-schedule-menu [role="option"] {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) 20px;
+    gap: 10px;
+    padding: 9px;
+    align-items: center;
+    color: #214737;
+    border: 0;
+    border-radius: 8px 3px 8px 3px;
+    background: transparent;
+    font-family: Poppins, sans-serif;
+    text-align: left;
+    cursor: pointer;
+}
+.beneficiary-programs-page .program-schedule-menu [role="option"]:hover,
+.beneficiary-programs-page .program-schedule-menu [role="option"]:focus-visible { outline: none; color: #0f5d3e; background: #edf7f2; }
+.beneficiary-programs-page .program-schedule-menu [aria-selected="true"] { background: linear-gradient(100deg, #e3f3ea, #f7fbf9); }
+.beneficiary-programs-page .program-filter-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 9px 3px 9px 3px; color: #1f845c; background: #e8f4ed; }
+.beneficiary-programs-page .program-filter-icon--gold { color: #8b6817; background: #fbf3dd; }
+.beneficiary-programs-page .program-filter-icon svg { width: 18px; height: 18px; }
+.beneficiary-programs-page .program-schedule-menu strong,
+.beneficiary-programs-page .program-schedule-menu small { display: block; }
+.beneficiary-programs-page .program-schedule-menu strong { font-size: 11.5px; }
+.beneficiary-programs-page .program-schedule-menu small { margin-top: 2px; color: #71857b; font-size: 9px; font-weight: 600; }
+.beneficiary-programs-page .program-filter-check { width: 20px; height: 20px; display: grid; place-items: center; border: 1px solid #d2e3da; border-radius: 50%; }
+.beneficiary-programs-page [aria-selected="true"] > .program-filter-check { border-color: #1f845c; background: #1f845c; }
+.beneficiary-programs-page [aria-selected="true"] > .program-filter-check::after { content: ""; width: 6px; height: 3px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: translateY(-1px) rotate(-45deg); }
+@keyframes programsMenuIn { from { opacity: 0; transform: translateY(7px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+.beneficiary-programs-page .bp-program-suggestions { top: calc(100% + 8px); padding: 7px; border-radius: 5px 14px 5px 14px; }
+.beneficiary-programs-page .bp-program-suggestions button { min-height: 58px; grid-template-columns: 42px minmax(0, 1fr); column-gap: 11px; padding: 8px 10px; border-radius: 9px 3px 9px 3px; }
+.beneficiary-programs-page .bp-program-suggestions button > span { width: 40px; height: 40px; border: 1px solid #cfe3d8; border-radius: 11px 4px 11px 4px; color: #176b49; background: linear-gradient(145deg, #edf8f2, #dff0e7); }
+.beneficiary-programs-page .bp-program-suggestions button > span svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Give dates a dedicated row so labels, values, and actions can breathe. */
+.beneficiary-programs-page .program-card .card-footer-info { display: grid; grid-template-columns: 1fr; gap: 11px; padding-top: 15px; }
+.beneficiary-programs-page .program-card .program-card-schedule { gap: 10px; }
+.beneficiary-programs-page .program-card .program-card-schedule span { min-height: 58px; padding: 9px 10px; justify-content: center; border: 1px solid #dfeae4; border-radius: 8px 3px 8px 3px; background: #f8fbf9; text-align: left; }
+.beneficiary-programs-page .program-card .program-card-schedule small { margin-bottom: 2px; }
+.beneficiary-programs-page .program-card .program-card-schedule strong { font-size: 12px; line-height: 1.45; }
+.beneficiary-programs-page .program-card .program-btn,
+.beneficiary-programs-page .program-card .btn-check-status { width: 100%; min-height: 46px; height: auto; }
+
+/* Tighter modal proportions remove unused side space and clarify reading order. */
+.beneficiary-programs-page #programDetailsModal .program-details-dialog { width: min(920px, calc(100vw - 48px)); max-width: 920px !important; max-height: min(690px, calc(100dvh - 48px)); }
+.beneficiary-programs-page .program-details-split { height: min(640px, calc(100dvh - 48px)); }
+.beneficiary-programs-page .program-details-identity { width: 34%; padding: 24px 22px; }
+.beneficiary-programs-page .program-details-content { width: 66%; }
+.beneficiary-programs-page .program-details-image-wrap { margin-bottom: 18px; }
+.beneficiary-programs-page .program-details-path { display: grid; gap: 7px; margin: 20px 0; padding: 0; list-style: none; }
+.beneficiary-programs-page .program-details-path li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 9px; padding: 8px; align-items: center; border: 1px solid #d9e8e0; border-radius: 8px 3px 8px 3px; background: rgba(255, 255, 255, .58); }
+.beneficiary-programs-page .program-details-path b { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #1d7b56; font-size: 8px; }
+.beneficiary-programs-page .program-details-path span { display: grid; gap: 1px; }
+.beneficiary-programs-page .program-details-path strong { color: #18452f; font-size: 10px; }
+.beneficiary-programs-page .program-details-path small { color: #72847b; font-size: 8px; line-height: 1.35; }
+.beneficiary-programs-page .program-details-scroll { padding: 25px 28px 18px; }
+.beneficiary-programs-page #programDetailsModal .details-footer { padding: 12px 28px; }
+.beneficiary-programs-page #programDetailsModal .program-schedule-grid { gap: 9px; }
+.beneficiary-programs-page #programDetailsModal .program-schedule-item { min-height: 66px; display: flex; flex-direction: column; justify-content: center; }
+
+@media (max-width: 800px) {
+    .beneficiary-programs-page .program-discovery-controls { grid-template-columns: minmax(0, 1fr) minmax(210px, .65fr); }
+    .beneficiary-programs-page #programDetailsModal .program-details-dialog { width: 100%; max-width: none !important; }
+    .beneficiary-programs-page .program-details-split { height: calc(100dvh - 16px); }
+    .beneficiary-programs-page .program-details-identity { width: 100%; }
+    .beneficiary-programs-page .program-details-content { width: 100%; }
+    .beneficiary-programs-page .program-details-path { display: none; }
+}
+
+@media (max-width: 620px) {
+    .beneficiary-programs-page .program-discovery-controls { grid-template-columns: 1fr; gap: 5px; }
+    .beneficiary-programs-page .program-schedule-menu { width: 100%; }
 }

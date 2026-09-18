@@ -874,13 +874,13 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=16">
-    <link rel="stylesheet" href="programs.css?v=30">
+    <link rel="stylesheet" href="programs.css?v=31">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-<script src="frontend_polish.js?v=16" defer></script>
+<script src="frontend_polish.js?v=17" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body class="beneficiary-programs-page">
@@ -943,9 +943,9 @@ if ($barangay_summary_result) {
                 <h1 class="welcome-title">Community <span class="welcome-highlight">Programs</span></h1>
                 <p class="welcome-text">Compare official TUPAD, SPES, and MSME listings, review the exact requirements, and apply through one secure service path.</p>
                 <div class="program-hero-assurance" aria-label="Available BENEPESO program categories">
-                    <span><b>T</b><strong>TUPAD</strong><small>Community employment</small></span>
-                    <span><b>S</b><strong>SPES</strong><small>Student employment</small></span>
-                    <span><b>M</b><strong>MSME</strong><small>Livelihood profiling</small></span>
+                    <span><b class="program-hero-icon program-hero-icon--tupad" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18h14M7 15v-2a5 5 0 0 1 10 0v2M9 8.5V7a3 3 0 0 1 6 0v1.5M6 9h12"/></svg></b><strong>TUPAD</strong><small>Community employment</small></span>
+                    <span><b class="program-hero-icon program-hero-icon--spes" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Z"/><path d="M7 12v4c3 2 7 2 10 0v-4M21 9v6"/></svg></b><strong>SPES</strong><small>Student employment</small></span>
+                    <span><b class="program-hero-icon program-hero-icon--msme" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 10v9h14v-9M4 5h16l1 5a3 3 0 0 1-4 0 3 3 0 0 1-5 0 3 3 0 0 1-5 0 3 3 0 0 1-4 0l1-5Z"/><path d="M9 19v-5h6v5"/></svg></b><strong>MSME</strong><small>Livelihood profiling</small></span>
                 </div>
             </div>
         </div>
@@ -966,14 +966,18 @@ if ($barangay_summary_result) {
                         <input type="search" id="searchInput" placeholder="Search TUPAD, SPES, or MSME" autocomplete="off" oninput="filterPrograms()">
                     </div>
                     <div class="schedule-filter-wrap">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
-                        <label class="sr-only" for="scheduleFilter">Filter programs by schedule</label>
-                        <select id="scheduleFilter" class="program-schedule-filter" onchange="filterPrograms()">
-                            <option value="all">All schedules</option>
-                            <option value="open">Open now</option>
-                            <option value="upcoming">Coming soon</option>
-                            <option value="ending">Ending soon</option>
-                        </select>
+                        <input type="hidden" id="scheduleFilter" value="all">
+                        <button type="button" class="program-schedule-toggle" id="scheduleFilterToggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="programScheduleMenu">
+                            <svg class="program-schedule-leading" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
+                            <span id="scheduleFilterLabel">All schedules</span>
+                            <svg class="program-schedule-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"></path></svg>
+                        </button>
+                        <div class="program-schedule-menu" id="programScheduleMenu" role="listbox" aria-label="Filter programs by schedule" hidden>
+                            <button type="button" role="option" data-value="all" aria-selected="true"><span class="program-filter-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span><span><strong>All schedules</strong><small>Show every active listing</small></span><span class="program-filter-check" aria-hidden="true"></span></button>
+                            <button type="button" role="option" data-value="open" aria-selected="false"><span class="program-filter-icon"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></svg></span><span><strong>Open now</strong><small>Currently accepting applications</small></span><span class="program-filter-check" aria-hidden="true"></span></button>
+                            <button type="button" role="option" data-value="upcoming" aria-selected="false"><span class="program-filter-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><strong>Coming soon</strong><small>Programs opening next</small></span><span class="program-filter-check" aria-hidden="true"></span></button>
+                            <button type="button" role="option" data-value="ending" aria-selected="false"><span class="program-filter-icon program-filter-icon--gold"><svg viewBox="0 0 24 24"><path d="M12 3 3 20h18L12 3Z"/><path d="M12 9v5M12 17h.01"/></svg></span><span><strong>Ending soon</strong><small>Deadline within 14 days</small></span><span class="program-filter-check" aria-hidden="true"></span></button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1347,6 +1351,11 @@ if ($barangay_summary_result) {
                     <div class="batch-code" id="detBatch"></div>
                     <span class="slots-badge" id="detBadge"></span>
                 </div>
+                <ol class="program-details-path" aria-label="Application steps">
+                    <li><b>01</b><span><strong>Review</strong><small>Confirm the batch details</small></span></li>
+                    <li><b>02</b><span><strong>Check</strong><small>Verify preliminary eligibility</small></span></li>
+                    <li><b>03</b><span><strong>Apply</strong><small>Submit your official form</small></span></li>
+                </ol>
                 <div class="program-details-trust"><span aria-hidden="true"></span><div><strong>Verified listing</strong><small>Maintained by PESO Vinzons</small></div></div>
             </aside>
 
@@ -2133,6 +2142,50 @@ if ($barangay_summary_result) {
             menuButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         });
     }
+
+    const scheduleFilterWrap = document.querySelector('.schedule-filter-wrap');
+    const scheduleFilterToggle = document.getElementById('scheduleFilterToggle');
+    const scheduleFilterMenu = document.getElementById('programScheduleMenu');
+    const scheduleFilterInput = document.getElementById('scheduleFilter');
+    const scheduleFilterLabel = document.getElementById('scheduleFilterLabel');
+
+    function closeScheduleFilter(restoreFocus = false) {
+        if (!scheduleFilterMenu || !scheduleFilterToggle) return;
+        scheduleFilterMenu.hidden = true;
+        scheduleFilterWrap?.classList.remove('is-open');
+        scheduleFilterToggle.setAttribute('aria-expanded', 'false');
+        if (restoreFocus) scheduleFilterToggle.focus();
+    }
+
+    scheduleFilterToggle?.addEventListener('click', event => {
+        event.stopPropagation();
+        const willOpen = scheduleFilterMenu.hidden;
+        scheduleFilterMenu.hidden = !willOpen;
+        scheduleFilterWrap?.classList.toggle('is-open', willOpen);
+        scheduleFilterToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        if (willOpen) scheduleFilterMenu.querySelector('[aria-selected="true"]')?.focus();
+    });
+
+    scheduleFilterMenu?.querySelectorAll('[role="option"]').forEach(option => {
+        option.addEventListener('click', () => {
+            scheduleFilterInput.value = option.dataset.value || 'all';
+            scheduleFilterLabel.textContent = option.querySelector('strong')?.textContent || 'All schedules';
+            scheduleFilterMenu.querySelectorAll('[role="option"]').forEach(item => item.setAttribute('aria-selected', item === option ? 'true' : 'false'));
+            closeScheduleFilter(true);
+            filterPrograms();
+        });
+        option.addEventListener('keydown', event => {
+            const options = Array.from(scheduleFilterMenu.querySelectorAll('[role="option"]'));
+            const index = options.indexOf(option);
+            if (event.key === 'ArrowDown') { event.preventDefault(); (options[index + 1] || options[0]).focus(); }
+            if (event.key === 'ArrowUp') { event.preventDefault(); (options[index - 1] || options[options.length - 1]).focus(); }
+            if (event.key === 'Escape') { event.preventDefault(); closeScheduleFilter(true); }
+        });
+    });
+
+    document.addEventListener('click', event => {
+        if (scheduleFilterWrap && !scheduleFilterWrap.contains(event.target)) closeScheduleFilter();
+    });
 
     function updateProgramGridBalance() {
         const grid = document.getElementById('programGrid');
