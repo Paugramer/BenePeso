@@ -292,13 +292,13 @@
   display: block;
   margin-bottom: 3px;
   color: var(--bp-green);
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.08em;
 }
 
 .home-page .quick-name { color: var(--bp-ink); font-size: 14px; }
-.home-page .quick-desc { margin-top: 3px; color: var(--bp-muted); font-size: 9px; line-height: 1.45; }
+.home-page .quick-desc { margin-top: 3px; color: var(--bp-muted); font-size: 11px; line-height: 1.5; }
 .home-page .quick-arrow { color: var(--bp-green); font-size: 18px; transition: transform 180ms ease; }
 .home-page .quick-link:hover .quick-arrow { transform: translateX(3px); }
 
@@ -337,9 +337,9 @@
   margin-bottom: 10px;
   border-width: 4px;
 }
-.home-page .service-step-grid li strong { font-size: 11px; }
-.home-page .service-step-grid li p { margin-top: 4px; font-size: 8px; line-height: 1.45; }
-.home-page .service-step-grid li a { display: inline-block; margin-top: 7px; font-size: 8px; font-weight: 800; }
+.home-page .service-step-grid li strong { font-size: 12px; }
+.home-page .service-step-grid li p { margin-top: 4px; font-size: 9px; line-height: 1.5; }
+.home-page .service-step-grid li a { display: inline-block; margin-top: 7px; font-size: 9px; font-weight: 800; }
 
 .home-page .program-area { padding: 54px 0 60px; }
 .home-page .program-area .area-head { margin-bottom: 20px; }
@@ -352,35 +352,36 @@
 }
 
 .home-page .program-image {
-  width: calc(100% + 36px);
+  width: 100%;
   aspect-ratio: 16 / 7;
-  margin: -18px -18px 15px;
+  margin: 0;
+  border: 0;
   border-radius: 13px 13px 0 0;
 }
 
-.home-page .home-program-top {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+.home-page .home-program-media {
+  position: relative;
+  width: calc(100% + 36px);
+  margin: -18px -18px 22px;
+  border-bottom: 1px solid var(--bp-line);
+  border-radius: 13px 13px 0 0;
+  background: #edf5f1;
 }
 
-.home-page .home-program-identity { display: inline-flex; align-items: center; gap: 9px; min-width: 0; }
-.home-page .home-program-identity > span:last-child { display: grid; gap: 1px; text-align: left; }
-.home-page .home-program-identity small { color: #71867c; font-size: 7px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-.home-page .home-program-identity strong { color: var(--bp-ink); font-size: 11px; }
 .home-page .home-program-icon {
-  width: 36px;
-  height: 36px;
+  position: absolute;
+  left: 16px;
+  bottom: -18px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  flex: 0 0 36px;
+  flex: 0 0 40px;
   border: 1px solid #cce2d7;
-  border-radius: 10px;
+  border-radius: 12px;
   color: var(--bp-green-strong);
-  background: var(--bp-mint);
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(10, 70, 48, 0.13);
 }
 .home-page .home-program-icon svg,
 .home-page .home-program-meta svg {
@@ -393,22 +394,27 @@
   stroke-linejoin: round;
 }
 .home-page .home-program-status {
+  position: absolute;
+  top: 13px;
+  right: 13px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 9px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.86);
   border-radius: 999px;
   color: var(--bp-green-strong);
-  background: #edf8f2;
-  font-size: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 7px 18px rgba(7, 54, 37, 0.11);
+  font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
 }
 .home-page .home-program-status i { width: 7px; height: 7px; border-radius: 50%; background: #29ad75; box-shadow: 0 0 0 4px rgba(41, 173, 117, 0.11); }
-.home-page .home-program-status.is-upcoming { color: #7b5a0b; background: #fbf5df; }
+.home-page .home-program-status.is-upcoming { color: #7b5a0b; background: rgba(255, 249, 229, 0.96); }
 .home-page .home-program-status.is-upcoming i { background: var(--bp-gold); box-shadow: 0 0 0 4px rgba(198, 164, 71, 0.14); }
-.home-page .program-title { margin-top: 0; text-align: left; font-size: 20px; }
-.home-page .program-text { min-height: 62px; margin: 7px 0 13px; text-align: left; font-size: 11px; line-height: 1.6; }
+.home-page .program-title { margin: 5px 0 0; text-align: center; font-size: 22px; }
+.home-page .program-text { min-height: 66px; margin: 9px auto 15px; text-align: center; font-size: 13px; line-height: 1.65; }
 .home-page .home-program-meta {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -417,9 +423,10 @@
   padding: 11px 0;
   border-top: 1px solid var(--bp-line);
 }
-.home-page .home-program-meta span { display: flex; align-items: center; gap: 6px; color: #61796e; font-size: 8px; font-weight: 700; }
+.home-page .home-program-meta span { display: flex; align-items: center; justify-content: center; gap: 7px; color: #587166; font-size: 10px; font-weight: 700; }
 .home-page .home-program-meta svg { width: 15px; height: 15px; flex: 0 0 15px; color: var(--bp-green); }
-.home-page .program-btn { display: flex; align-items: center; justify-content: space-between; min-height: 43px; padding: 9px 12px; border-radius: 10px; }
+.home-page .program-btn { position: relative; display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 10px 42px; border-radius: 10px; text-align: center; font-size: 13px; }
+.home-page .program-btn > span { position: absolute; right: 14px; font-size: 16px; }
 
 .home-page .info-area { padding: 52px 0 56px; }
 .home-page .home-readiness-panel {
@@ -456,8 +463,8 @@
 .home-page .home-readiness-list .info-card:hover { transform: none; background: #f7fbf9; box-shadow: none; }
 .home-page .home-readiness-list .info-icon { grid-row: 1 / 3; width: 42px; height: 42px; margin: 0; border-radius: 11px; color: var(--bp-green-strong); background: var(--bp-mint); box-shadow: none; }
 .home-page .readiness-number { grid-row: 1 / 3; display: grid; place-items: center; width: 27px; height: 27px; border-radius: 50%; color: #9b781e; background: #fbf5df; font-size: 8px; font-weight: 900; }
-.home-page .home-readiness-list .info-title { margin: 0; text-align: left; font-size: 13px; }
-.home-page .home-readiness-list .info-text { max-width: none; margin: 2px 0 0; text-align: left; font-size: 9px; line-height: 1.45; }
+.home-page .home-readiness-list .info-title { margin: 0; text-align: left; font-size: 14px; }
+.home-page .home-readiness-list .info-text { max-width: none; margin: 2px 0 0; text-align: left; font-size: 10px; line-height: 1.5; }
 
 /* About: lighter, branded visual language and non-generic service modules */
 .about-page .about-hero-custom {

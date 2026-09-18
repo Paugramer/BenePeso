@@ -113,7 +113,7 @@ try {
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
-    <link rel="stylesheet" href="authenticated_experience.css?v=3">
+    <link rel="stylesheet" href="authenticated_experience.css?v=4">
 <script src="frontend_polish.js?v=16" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -386,10 +386,9 @@ try {
                                 }
                             }
                         ?>
-                        <img class="program-image" src="<?php echo htmlspecialchars($program_image); ?>" alt="<?php echo htmlspecialchars($program_title); ?>" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='img/pesologo.png';">
-                        <div class="program-top home-program-top">
-                            <span class="home-program-identity">
-                                <span class="home-program-icon" aria-hidden="true">
+                        <div class="home-program-media">
+                            <img class="program-image" src="<?php echo htmlspecialchars($program_image); ?>" alt="<?php echo htmlspecialchars($program_title); ?>" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='img/pesologo.png';">
+                            <span class="home-program-icon" aria-hidden="true">
                                     <?php if ($program_type === 'SPES'): ?>
                                         <svg viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Z"></path><path d="M7 12v4c3 2 7 2 10 0v-4M21 9v6"></path></svg>
                                     <?php elseif ($program_type === 'MSME'): ?>
@@ -397,8 +396,6 @@ try {
                                     <?php else: ?>
                                         <svg viewBox="0 0 24 24"><path d="M6 8h12l1 12H5L6 8Z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2M9 13h6"></path></svg>
                                     <?php endif; ?>
-                                </span>
-                                <span><small>Official program</small><strong><?= htmlspecialchars($program_type) ?></strong></span>
                             </span>
                             <span class="home-program-status<?= $program_is_upcoming ? ' is-upcoming' : '' ?>"><i aria-hidden="true"></i> <?= $program_is_upcoming ? 'Coming soon' : 'Open now' ?></span>
                         </div>
