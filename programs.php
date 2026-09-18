@@ -885,7 +885,7 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="programs.css?v=36">
+    <link rel="stylesheet" href="programs.css?v=37">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -992,6 +992,7 @@ if ($barangay_summary_result) {
                     </div>
                 </div>
                 <div class="program-filter-guidance">
+                    <span class="program-results-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></svg></span>
                     <strong id="programFilterStatus" aria-live="polite"></strong>
                 </div>
             </div>
@@ -2270,8 +2271,8 @@ if ($barangay_summary_result) {
         const filterStatus = document.getElementById('programFilterStatus');
         if (filterStatus) {
             filterStatus.textContent = hasMatch
-                ? `Showing ${visibleCount} program ${visibleCount === 1 ? 'type' : 'types'}`
-                : 'No matching program types';
+                ? `${visibleCount} ${visibleCount === 1 ? 'program' : 'programs'} available`
+                : 'No programs match these filters';
         }
         updateProgramGridBalance();
     }
@@ -2381,9 +2382,8 @@ if ($barangay_summary_result) {
             representative.querySelector('.program-category-badge')?.remove();
             const slotBadge = representative.querySelector('.floating-badge');
             if (slotBadge) {
-                const totalSlots = groupCards.reduce((total, card) => total + (Number.parseInt(card.dataset.slots || '0', 10) || 0), 0);
-                slotBadge.classList.toggle('warning', totalSlots <= 5);
-                slotBadge.innerHTML = `<span class="pulse-dot"></span> ${totalSlots} Slots`;
+                slotBadge.className = 'slots-badge floating-badge grouped-batch-badge';
+                slotBadge.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="12" height="12" rx="2"></rect><path d="M8 9h12v10a2 2 0 0 1-2 2H8V9Z"></path></svg><span>Choose batch</span>';
             }
             const schedulePanel = representative.querySelector('.program-card-schedule');
             if (schedulePanel) {
