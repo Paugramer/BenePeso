@@ -834,8 +834,12 @@ if ($result && $result->num_rows > 0) {
         $has_ended = program_has_ended($row['end_date'] ?? null);
         $has_invalid_schedule = !empty($row['start_date']) && !empty($row['end_date'])
             && $row['end_date'] < $row['start_date'];
+        $user_approval = strtolower(trim((string)($row['user_approval_status'] ?? '')));
+        $user_availment = strtolower(trim((string)($row['user_availment_status'] ?? '')));
+        $is_user_current = in_array($user_approval, ['pending', 'approved'], true)
+            && !in_array($user_availment, ['completed', 'not qualified', 'cancelled', 'exam failed'], true);
         
-        if ($is_full || $has_ended || $has_invalid_schedule) {
+        if (($is_full || $has_ended || $has_invalid_schedule) && !$is_user_current) {
             $completed_programs[] = $row;
         } else {
             $active_programs[] = $row;
@@ -874,7 +878,7 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=16">
-    <link rel="stylesheet" href="programs.css?v=32">
+    <link rel="stylesheet" href="programs.css?v=33">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -977,8 +981,14 @@ if ($barangay_summary_result) {
                             <button type="button" role="option" data-value="open" aria-selected="false"><span class="program-filter-icon"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></svg></span><span><strong>Open now</strong><small>Currently accepting applications</small></span><span class="program-filter-check" aria-hidden="true"></span></button>
                             <button type="button" role="option" data-value="upcoming" aria-selected="false"><span class="program-filter-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><strong>Coming soon</strong><small>Programs opening next</small></span><span class="program-filter-check" aria-hidden="true"></span></button>
                             <button type="button" role="option" data-value="ending" aria-selected="false"><span class="program-filter-icon program-filter-icon--gold"><svg viewBox="0 0 24 24"><path d="M12 3 3 20h18L12 3Z"/><path d="M12 9v5M12 17h.01"/></svg></span><span><strong>Ending soon</strong><small>Deadline within 14 days</small></span><span class="program-filter-check" aria-hidden="true"></span></button>
+                            <button type="button" role="option" data-value="current" aria-selected="false"><span class="program-filter-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="m16 13 2 2 3-4"/></svg></span><span><strong>My current program</strong><small>Show your active or pending record</small></span><span class="program-filter-check" aria-hidden="true"></span></button>
                         </div>
                     </div>
+                </div>
+                <div class="program-filter-guidance">
+                    <span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>Search checks program names and TUPAD categories.</span>
+                    <span>“Open now” includes listings that are ending soon.</span>
+                    <strong id="programFilterStatus" aria-live="polite"></strong>
                 </div>
             </div>
 
@@ -1029,8 +1039,8 @@ if ($barangay_summary_result) {
                             }
 
                             $action_type = $user_status ? 'status' : 'apply';
-                            $badge_class = ($remaining_slots <= 5) ? 'slots-badge warning' : 'slots-badge';
-                            $badge_text = $remaining_slots . ' Slots';
+                            $badge_class = $user_status ? 'slots-badge current-program' : (($remaining_slots <= 5) ? 'slots-badge warning' : 'slots-badge');
+                            $badge_text = $user_status ? 'Your Current Program' : $remaining_slots . ' Slots';
                     ?>
                         <article class="program-card" 
                                  style="animation-delay: <?= $delay ?>s;"
@@ -1051,6 +1061,7 @@ if ($barangay_summary_result) {
                                  data-venue="<?= $safe_venue ?>"
                                   data-service-type="<?= h($serviceType) ?>"
                                   data-schedule="<?= h($scheduleState) ?>"
+                                 data-schedules="<?= h($scheduleState . ($user_status ? ' current' : '')) ?>"
                                  data-updated="<?= h(date('M d, Y', strtotime($programUpdatedAt))) ?>"
                                  data-document-schedule="Issued by PESO after application review"
                                  data-incomplete="<?= h(implode(', ', $missingProgramDetails)) ?>"
@@ -1299,6 +1310,10 @@ if ($barangay_summary_result) {
         </div>
         <h2 id="archTitle" class="archive-summary-title"></h2>
         <p id="archBatch" class="archive-summary-batch"></p>
+        <div class="archive-summary-assurance" aria-label="Summary information">
+            <span><i aria-hidden="true"></i>Verified PESO record</span>
+            <span>Aggregate figures only</span>
+        </div>
 
         <div class="archive-summary-metrics">
             <div class="archive-summary-metric">
@@ -1314,7 +1329,7 @@ if ($barangay_summary_result) {
         <section class="archive-breakdown" aria-labelledby="archiveBreakdownTitle">
             <div class="archive-breakdown-heading">
                 <h3 id="archiveBreakdownTitle">Beneficiaries by barangay</h3>
-                <span>Approved participants</span>
+                <span>Approved records · relative scale</span>
             </div>
             <div id="archBarangayList" class="archive-barangay-list"></div>
         </section>
@@ -2207,6 +2222,7 @@ if ($barangay_summary_result) {
         let cards = document.querySelectorAll('.program-card:not(.program-batch-duplicate)');
         let grid = document.getElementById('programGrid');
         let hasMatch = false;
+        let visibleCount = 0;
         
         input.classList.add('searching');
         setTimeout(() => input.classList.remove('searching'), 300);
@@ -2221,11 +2237,14 @@ if ($barangay_summary_result) {
             let title = cards[i].getAttribute('data-title');
             let category = cards[i].getAttribute('data-category') || '';
             let matchesSearch = title && (title.toLowerCase().indexOf(filter) > -1 || category.indexOf(filter) > -1);
-            let schedule = cards[i].getAttribute('data-schedule') || 'open';
-            let matchesSchedule = scheduleFilter === 'all' || schedule === scheduleFilter;
+            const schedules = (cards[i].getAttribute('data-schedules') || cards[i].getAttribute('data-schedule') || 'open').split(/\s+/);
+            const matchesSchedule = scheduleFilter === 'all'
+                || (scheduleFilter === 'open' && (schedules.includes('open') || schedules.includes('ending')))
+                || schedules.includes(scheduleFilter);
             if (matchesSearch && matchesSchedule) {
                 cards[i].style.display = "flex";
                 hasMatch = true;
+                visibleCount++;
             } else {
                 cards[i].style.display = "none";
             }
@@ -2234,6 +2253,12 @@ if ($barangay_summary_result) {
         const noMatchMsg = document.getElementById('noSearchMatch');
         if (noMatchMsg) {
             noMatchMsg.style.display = hasMatch ? "none" : "block";
+        }
+        const filterStatus = document.getElementById('programFilterStatus');
+        if (filterStatus) {
+            filterStatus.textContent = hasMatch
+                ? `Showing ${visibleCount} program ${visibleCount === 1 ? 'type' : 'types'}`
+                : 'No matching program types';
         }
         updateProgramGridBalance();
     }
@@ -2328,32 +2353,63 @@ if ($barangay_summary_result) {
             representative.setAttribute('aria-label', `${representative.dataset.title}: choose from ${groupCards.length} active batches`);
             representative.addEventListener('click', () => openBatchChooser(groupCards));
             representative.dataset.category = groupCards.map(card => card.dataset.category || '').filter(Boolean).join(' ');
+            representative.dataset.schedules = [...new Set(groupCards.flatMap(card => (card.dataset.schedules || card.dataset.schedule || 'open').split(/\s+/)))].join(' ');
 
             const batchLabel = representative.querySelector('.batch-code');
             if (batchLabel) batchLabel.textContent = `${groupCards.length} ACTIVE BATCHES`;
             const categoryLabel = representative.querySelector('.program-category-badge');
-            if (categoryLabel) categoryLabel.textContent = 'Choose a schedule';
+            if (categoryLabel) {
+                const categoryNames = [...new Set(groupCards.map(card => (card.dataset.category || '')
+                    .replace(/tupad/gi, '').trim()).filter(Boolean))];
+                categoryLabel.textContent = categoryNames.length ? categoryNames.join(' + ') : 'Multiple schedules';
+                categoryLabel.title = 'Every active batch remains available in the batch chooser';
+            }
             const slotBadge = representative.querySelector('.floating-badge');
             if (slotBadge) {
                 const totalSlots = groupCards.reduce((total, card) => total + (Number.parseInt(card.dataset.slots || '0', 10) || 0), 0);
                 slotBadge.classList.toggle('warning', totalSlots <= 5);
                 slotBadge.innerHTML = `<span class="pulse-dot"></span> ${totalSlots} Slots`;
             }
-            const actionButton = representative.querySelector('.program-btn, .btn-check-status');
-            if (actionButton) {
-                actionButton.className = 'program-btn';
-                actionButton.textContent = 'Choose Batch';
+            const schedulePanel = representative.querySelector('.program-card-schedule');
+            if (schedulePanel) {
+                schedulePanel.innerHTML = `<span><small>Available schedules</small><strong>${groupCards.length} active batches</strong></span><span><small>Dates & deadlines</small><strong>See batch options</strong></span>`;
             }
-            if (groupCards.some(card => card.dataset.action === 'status')) {
+            const actionButton = representative.querySelector('.program-btn, .btn-check-status');
+            const currentCard = groupCards.find(card => card.dataset.action === 'status');
+            if (actionButton && currentCard) {
+                const actions = document.createElement('div');
+                actions.className = 'program-group-actions';
+                const statusButton = document.createElement('button');
+                statusButton.type = 'button';
+                statusButton.className = 'btn-check-status';
+                statusButton.textContent = 'View Your Status';
+                statusButton.addEventListener('click', event => {
+                    event.stopPropagation();
+                    openProgramDetails(currentCard);
+                });
+                const chooseButton = document.createElement('button');
+                chooseButton.type = 'button';
+                chooseButton.className = 'program-btn program-btn-secondary';
+                chooseButton.textContent = 'Choose Batch';
+                chooseButton.addEventListener('click', event => {
+                    event.stopPropagation();
+                    openBatchChooser(groupCards);
+                });
+                actions.append(statusButton, chooseButton);
+                actionButton.replaceWith(actions);
                 representative.classList.add('has-current-batch');
                 const statusNote = document.createElement('div');
                 statusNote.className = 'program-current-batch-note';
                 statusNote.innerHTML = '<span aria-hidden="true"></span>Your current application is included';
                 representative.querySelector('.card-footer-info')?.before(statusNote);
+            } else if (actionButton) {
+                actionButton.className = 'program-btn';
+                actionButton.textContent = 'Choose Batch';
             }
         });
 
         updateProgramGridBalance();
+        filterPrograms();
 
         initializeArchivePagination();
 
@@ -2371,8 +2427,16 @@ if ($barangay_summary_result) {
         if (!modal || !list || !cards.length) return;
 
         title.textContent = `${cards[0].dataset.title} Batches`;
+        const currentBatch = cards.find(card => card.dataset.action === 'status');
+        const intro = modal.querySelector('.batch-chooser-intro');
+        if (intro) {
+            intro.textContent = currentBatch
+                ? 'Your current batch is highlighted first. You can view its status or review another available schedule.'
+                : 'This program has more than one active batch. Review the dates and remaining slots before continuing.';
+        }
         list.replaceChildren();
-        cards.forEach((card, index) => {
+        const orderedCards = [...cards].sort((first, second) => Number(second.dataset.action === 'status') - Number(first.dataset.action === 'status'));
+        orderedCards.forEach((card, index) => {
             const choice = document.createElement('button');
             choice.type = 'button';
             const hasStatus = card.dataset.action === 'status';
@@ -2798,7 +2862,10 @@ if ($barangay_summary_result) {
             });
         }
 
-        document.getElementById('archiveModal').classList.add('show');
+        const archiveModal = document.getElementById('archiveModal');
+        archiveModal.classList.add('show');
+        archiveModal.setAttribute('aria-hidden', 'false');
+        window.setTimeout(() => archiveModal.querySelector('.modal-close')?.focus(), 80);
     }
 
     function toggleTupadFitnessCertificate() {
