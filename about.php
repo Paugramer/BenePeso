@@ -93,7 +93,7 @@ try {
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
-    <link rel="stylesheet" href="authenticated_experience.css?v=3">
+    <link rel="stylesheet" href="authenticated_experience.css?v=5">
 <script src="frontend_polish.js?v=16" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -263,6 +263,23 @@ try {
                     <span class="community-story-eyebrow">Skills and livelihood support</span>
                     <h2 id="communityStoryTitle">Service that meets residents where they are</h2>
                     <p>PESO Vinzons brings practical employment and micro-enterprise guidance closer to local beneficiaries through coordinated training, clear information, and hands-on assistance.</p>
+                    <div class="community-program-family" aria-label="Core PESO Vinzons programs">
+                        <span class="community-program-family-label">Three connected programs</span>
+                        <div class="community-program-group">
+                            <a href="programs.php?search=TUPAD" class="community-program-chip program-tupad">
+                                <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 8h12l1 12H5L6 8Z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2M9 13h6"></path></svg></span>
+                                <strong>TUPAD</strong><small>Emergency employment</small>
+                            </a>
+                            <a href="programs.php?search=SPES" class="community-program-chip program-spes">
+                                <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Z"></path><path d="M7 12v4c3 2 7 2 10 0v-4M21 9v6"></path></svg></span>
+                                <strong>SPES</strong><small>Student employment</small>
+                            </a>
+                            <a href="programs.php?search=MSME" class="community-program-chip program-msme">
+                                <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v10h16V10M3 10l2-6h14l2 6"></path><path d="M3 10a3 3 0 0 0 5 2 3 3 0 0 0 4 0 3 3 0 0 0 4 0 3 3 0 0 0 5-2M9 20v-5h6v5"></path></svg></span>
+                                <strong>MSME</strong><small>Livelihood support</small>
+                            </a>
+                        </div>
+                    </div>
                     <dl class="community-story-details">
                         <div><dt>Featured activity</dt><dd>Employment/Micro-Enterprise &amp; Development Training</dd></div>
                         <div><dt>Date</dt><dd>August 27, 2026</dd></div>
