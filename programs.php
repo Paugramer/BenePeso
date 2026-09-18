@@ -878,13 +878,13 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=16">
-    <link rel="stylesheet" href="programs.css?v=34">
+    <link rel="stylesheet" href="programs.css?v=35">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-<script src="frontend_polish.js?v=17" defer></script>
+<script src="frontend_polish.js?v=18" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body class="beneficiary-programs-page">
@@ -985,8 +985,6 @@ if ($barangay_summary_result) {
                     </div>
                 </div>
                 <div class="program-filter-guidance">
-                    <span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>Search checks program names and TUPAD categories.</span>
-                    <span>“Open now” includes listings that are ending soon.</span>
                     <strong id="programFilterStatus" aria-live="polite"></strong>
                 </div>
             </div>
@@ -1026,6 +1024,9 @@ if ($barangay_summary_result) {
                             elseif (str_contains($programSearchText, 'tupad') || str_contains($programSearchText, 'livelihood') || str_contains($programSearchText, 'emergency')) $serviceType = 'livelihood';
                             elseif (str_contains($programSearchText, 'training') || str_contains($programSearchText, 'tesda') || str_contains($programSearchText, 'skill')) $serviceType = 'skills';
                             $serviceLabel = $serviceType === 'student' ? 'Employment for Students' : ucfirst($serviceType);
+                            $programFamily = str_contains($programSearchText, 'tupad') ? 'tupad'
+                                : (str_contains($programSearchText, 'spes') ? 'spes'
+                                : (str_contains($programSearchText, 'msme') ? 'msme' : strtolower(trim((string)($row['program_name'] ?? 'program')))));
                             $daysUntilDeadline = !empty($row['end_date']) ? (int)floor((strtotime($row['end_date']) - strtotime(date('Y-m-d'))) / 86400) : 9999;
                             $isClosingSoon = $daysUntilDeadline >= 0 && $daysUntilDeadline <= 14;
                             $daysUntilStart = !empty($row['start_date']) ? (int)floor((strtotime($row['start_date']) - strtotime(date('Y-m-d'))) / 86400) : 0;
@@ -1046,6 +1047,7 @@ if ($barangay_summary_result) {
                                  data-action="<?= $action_type ?>"
                                  data-prog-id="<?= $row['program_id'] ?>"
                                  data-title="<?= $safe_title ?>"
+                                 data-family="<?= h($programFamily) ?>"
                                  data-category="<?= h(strtolower($tupadCategory)) ?>"
                                  data-batch="<?= $safe_batch ?>"
                                  data-desc="<?= $safe_desc ?>"
@@ -2337,10 +2339,10 @@ if ($barangay_summary_result) {
 
         cards.forEach(card => {
             const title = (card.dataset.title || '').trim().toLowerCase();
-            const key = title.includes('tupad') ? 'tupad'
+            const key = card.dataset.family || (title.includes('tupad') ? 'tupad'
                 : title.includes('spes') ? 'spes'
                 : title.includes('msme') ? 'msme'
-                : title;
+                : title);
             if (!groups.has(key)) groups.set(key, []);
             groups.get(key).push(card);
         });

@@ -333,7 +333,7 @@
     if (!input || !searchContainer) return;
 
     const suggestions = Array.from(document.querySelectorAll('#programGrid .program-card:not(.program-batch-duplicate)'))
-      .flatMap(card => [card.dataset.title, card.dataset.category && card.dataset.category !== 'regular tupad' ? card.dataset.category : ''])
+      .map(card => card.dataset.title)
       .map(value => String(value || '').trim())
       .filter(Boolean)
       .filter((value, index, values) => values.findIndex(candidate => candidate.toLowerCase() === value.toLowerCase()) === index);

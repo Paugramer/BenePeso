@@ -2376,19 +2376,16 @@ input[type="number"] { -moz-appearance: textfield; }
 
 .beneficiary-programs-page .program-filter-guidance {
     display: flex;
-    flex-wrap: wrap;
-    gap: 7px 18px;
     margin-top: 10px;
     align-items: center;
+    justify-content: center;
     color: #667b70;
     font-size: 10.5px;
     font-weight: 600;
 }
 
-.beneficiary-programs-page .program-filter-guidance span,
-.beneficiary-programs-page .program-filter-guidance strong { display: inline-flex; gap: 6px; align-items: center; }
-.beneficiary-programs-page .program-filter-guidance svg { width: 15px; height: 15px; fill: none; stroke: #1f8059; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.beneficiary-programs-page .program-filter-guidance strong { margin-left: auto; color: #176b49; font-weight: 800; }
+.beneficiary-programs-page .program-filter-guidance strong { display: inline-flex; align-items: center; }
+.beneficiary-programs-page .program-filter-guidance strong { color: #176b49; font-weight: 800; text-align: center; }
 
 /* Application modal: clear hierarchy, calm form density, and stable navigation. */
 .beneficiary-programs-page #applicationModal { padding: 22px; background: rgba(7, 30, 19, .76); }
@@ -3205,4 +3202,50 @@ input[type="number"] { -moz-appearance: textfield; }
 @media (max-width: 620px) {
     .beneficiary-programs-page .program-discovery-controls { grid-template-columns: 1fr; gap: 5px; }
     .beneficiary-programs-page .program-schedule-menu { width: 100%; }
+}
+
+/* Final alignment and clipping safeguards for the program and application dialogs. */
+.beneficiary-programs-page #programDetailsModal .program-details-identity .details-header {
+    width: 100%;
+    text-align: center;
+}
+
+.beneficiary-programs-page #programDetailsModal .program-details-identity .details-heading-row {
+    justify-content: center;
+    padding: 0;
+}
+
+.beneficiary-programs-page #programDetailsModal .program-details-identity .details-heading-row h2 {
+    width: 100%;
+    text-align: center;
+}
+
+.beneficiary-programs-page #programDetailsModal .program-details-identity .details-header .batch-code {
+    margin: 8px auto 13px;
+    text-align: center;
+}
+
+.beneficiary-programs-page #programDetailsModal .program-details-identity .details-header .slots-badge {
+    margin-inline: auto;
+}
+
+.beneficiary-programs-page #applicationModal #multiStepForm {
+    padding: 20px 18px 16px 4px;
+}
+
+.beneficiary-programs-page #applicationModal .form-actions {
+    bottom: 0;
+    margin: 24px -18px 0 -4px;
+    padding: 14px 18px 12px 4px;
+}
+
+.beneficiary-programs-page #applicationModal .form-group input:not([type="checkbox"]):not([type="file"]):focus,
+.beneficiary-programs-page #applicationModal .form-group select:focus,
+.beneficiary-programs-page #applicationModal .form-group textarea:focus,
+.beneficiary-programs-page #applicationModal .form-group input:not([type="checkbox"]):not([type="file"]):invalid:focus,
+.beneficiary-programs-page #applicationModal .form-group select:invalid:focus,
+.beneficiary-programs-page #applicationModal .form-group textarea:invalid:focus {
+    outline: 0;
+    border-color: #23845d;
+    box-shadow: 0 0 0 3px rgba(35, 132, 93, .13);
 }
