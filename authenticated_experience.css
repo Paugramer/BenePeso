@@ -545,6 +545,174 @@
 .about-page .services-section .service-card h4 { color: var(--bp-ink); }
 .about-page .services-section .service-card p { color: var(--bp-muted); }
 
+/* About: documentary community feature using an official PESO Vinzons activity photo. */
+.about-page .community-story-section { padding-top: 22px; padding-bottom: 72px; }
+
+.about-page .community-story-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.75fr);
+  overflow: hidden;
+  border: 1px solid #c9ddd3;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #fff 0%, #f7fbf8 62%, #fffaf0 100%);
+  box-shadow: 0 24px 58px rgba(8, 75, 52, 0.11);
+}
+
+.about-page .community-story-card::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  width: 140px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--bp-gold), var(--bp-green));
+}
+
+.about-page .community-story-media {
+  position: relative;
+  min-height: 430px;
+  overflow: hidden;
+  background: #dcebe3;
+}
+
+.about-page .community-story-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 62%, rgba(5, 49, 34, 0.16));
+}
+
+.about-page .community-story-media img {
+  width: 100%;
+  height: 100%;
+  min-height: 430px;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  animation: bp-community-breathe 16s ease-in-out infinite alternate;
+  transition: filter 300ms ease;
+}
+
+.about-page .community-story-card:hover .community-story-media img { filter: saturate(1.05) contrast(1.02); }
+
+.about-page .community-story-live {
+  position: absolute;
+  z-index: 3;
+  top: 18px;
+  left: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(5, 54, 37, 0.8);
+  box-shadow: 0 10px 25px rgba(3, 31, 21, 0.18);
+  backdrop-filter: blur(8px);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.about-page .community-story-live i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #50d99b;
+  box-shadow: 0 0 0 5px rgba(80, 217, 155, 0.16);
+  animation: bp-community-pulse 2.2s ease-out infinite;
+}
+
+.about-page .community-story-copy {
+  align-self: center;
+  padding: clamp(30px, 4vw, 54px);
+}
+
+.about-page .community-story-eyebrow {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--bp-green);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.about-page .community-story-copy h2 {
+  margin: 0;
+  color: var(--bp-ink);
+  font-size: clamp(27px, 3vw, 40px);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+
+.about-page .community-story-copy > p {
+  margin: 16px 0 22px;
+  color: var(--bp-muted);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.about-page .community-story-details {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  border-top: 1px solid var(--bp-line);
+}
+
+.about-page .community-story-details > div {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--bp-line);
+}
+
+.about-page .community-story-details dt {
+  color: #7b8f85;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.about-page .community-story-details dd {
+  margin: 0;
+  color: var(--bp-ink);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.about-page .community-story-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 22px;
+  color: var(--bp-green-strong);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.about-page .community-story-link span { transition: transform 180ms ease; }
+.about-page .community-story-link:hover span { transform: translateX(4px); }
+
+@keyframes bp-community-breathe {
+  from { transform: scale(1.001); }
+  to { transform: scale(1.035); }
+}
+
+@keyframes bp-community-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(80, 217, 155, 0.14); }
+  50% { box-shadow: 0 0 0 8px rgba(80, 217, 155, 0); }
+}
+
 /* About: a branded, deliberate location card instead of a raw map embed. */
 .about-page .contact-glass-panel {
   border: 1px solid var(--bp-line);
@@ -904,6 +1072,11 @@
   }
   .about-page .services-section .service-card:last-child { border-bottom: 0; }
 
+  .about-page .community-story-card { grid-template-columns: 1fr; }
+  .about-page .community-story-media,
+  .about-page .community-story-media img { min-height: 360px; }
+  .about-page .community-story-media::after { background: linear-gradient(0deg, rgba(5, 49, 34, 0.12), transparent 40%); }
+
   .about-page .map-card-footer { align-items: stretch; flex-direction: column; }
   .about-page .map-card-footer .map-directions-link { justify-content: center; }
 
@@ -933,6 +1106,13 @@
   .home-page .service-step-grid > li:last-child { border-bottom: 0; }
   .home-page .service-step-grid > li > span { margin-bottom: 0; }
 
+  .about-page .community-story-section { padding-bottom: 50px; }
+  .about-page .community-story-card { border-radius: 18px; }
+  .about-page .community-story-media,
+  .about-page .community-story-media img { min-height: 280px; }
+  .about-page .community-story-copy { padding: 25px 20px 28px; }
+  .about-page .community-story-details > div { grid-template-columns: 1fr; gap: 3px; }
+
   .beneficiary-programs-page .page-wrap > .welcome-area .welcome-inner { min-height: auto; }
   .beneficiary-programs-page .page-wrap > .welcome-area { padding: 42px 0; }
   .beneficiary-programs-page .program-hero-assurance { grid-template-columns: 1fr; }
@@ -959,4 +1139,7 @@
   .beneficiary-profile-page * {
     scroll-behavior: auto !important;
   }
+
+  .about-page .community-story-media img,
+  .about-page .community-story-live i { animation: none !important; }
 }

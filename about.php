@@ -93,7 +93,7 @@ try {
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
-    <link rel="stylesheet" href="authenticated_experience.css?v=2">
+    <link rel="stylesheet" href="authenticated_experience.css?v=3">
 <script src="frontend_polish.js?v=16" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -248,6 +248,29 @@ try {
                     <p>Review recorded status changes, requirements received, official schedules, and your next required action.</p>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- COMMUNITY IN ACTION -->
+    <section class="content-section community-story-section stagger-6" aria-labelledby="communityStoryTitle">
+        <div class="content-wrap">
+            <article class="community-story-card">
+                <div class="community-story-media">
+                    <img src="img/peso-community-medt-2026.png" alt="PESO Vinzons staff facilitating Employment and Micro-Enterprise Development Training with community beneficiaries" loading="lazy" decoding="async">
+                    <span class="community-story-live"><i aria-hidden="true"></i> Community in action</span>
+                </div>
+                <div class="community-story-copy">
+                    <span class="community-story-eyebrow">Skills and livelihood support</span>
+                    <h2 id="communityStoryTitle">Service that meets residents where they are</h2>
+                    <p>PESO Vinzons brings practical employment and micro-enterprise guidance closer to local beneficiaries through coordinated training, clear information, and hands-on assistance.</p>
+                    <dl class="community-story-details">
+                        <div><dt>Featured activity</dt><dd>Employment/Micro-Enterprise &amp; Development Training</dd></div>
+                        <div><dt>Date</dt><dd>August 27, 2026</dd></div>
+                        <div><dt>Location</dt><dd>SB Annex, Vinzons, Camarines Norte</dd></div>
+                    </dl>
+                    <a class="community-story-link" href="https://www.facebook.com/photo.php?fbid=2159020488328476&amp;set=pb.100026616380327.-2207520000&amp;type=3" target="_blank" rel="noopener noreferrer">View the official PESO Vinzons post <span aria-hidden="true">&rarr;</span></a>
+                </div>
+            </article>
         </div>
     </section>
 
