@@ -241,7 +241,7 @@ if ($search_ready) {
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="verification.css?v=10" />
+    <link rel="stylesheet" href="verification.css?v=11" />
 <script src="frontend_polish.js?v=20260919c" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -329,6 +329,19 @@ if ($search_ready) {
                         <li><span>3</span><strong>Review status</strong></li>
                     </ol>
                     <div class="v-input-wrapper">
+                        <div class="v-search-field v-type-field">
+                            <label class="v-search-field-label" for="programTypeFilter">Program</label>
+                            <span class="v-select-shell">
+                                <svg class="v-select-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect></svg>
+                                <select id="programTypeFilter" class="v-select" aria-label="Filter batches by program">
+                                    <option value="">All programs</option>
+                                    <option value="TUPAD">TUPAD</option>
+                                    <option value="SPES">SPES</option>
+                                    <option value="MSME">MSME</option>
+                                </select>
+                            </span>
+                            <small class="v-search-help">Filter the schedules before choosing a batch.</small>
+                        </div>
                         <label class="v-search-field v-program-field" for="programFilter">
                             <span class="v-search-field-label">Program and batch</span>
                             <span class="v-select-shell">
@@ -345,12 +358,13 @@ if ($search_ready) {
                                     <?php endif; ?>
                                     <?php
                                     $batch_code = trim((string)($p_row['program_code'] ?? '')) ?: 'Batch ' . (int)$p_row['program_id'];
+                                    $program_type = stripos((string)$p_row['program_name'], 'SPES') !== false ? 'SPES' : (stripos((string)$p_row['program_name'], 'MSME') !== false ? 'MSME' : 'TUPAD');
                                     $batch_period = '';
                                     if (!empty($p_row['start_date'])) {
                                         $batch_period = ' - ' . date('M Y', strtotime((string)$p_row['start_date']));
                                     }
                                     ?>
-                                    <option value="<?= (int)$p_row['program_id'] ?>" <?= ((string)$filter_program === (string)$p_row['program_id']) ? 'selected' : '' ?>>
+                                    <option value="<?= (int)$p_row['program_id'] ?>" data-program-type="<?= htmlspecialchars($program_type) ?>" <?= ((string)$filter_program === (string)$p_row['program_id']) ? 'selected' : '' ?>>
                                         <?= htmlspecialchars('Batch ' . $batch_code . $batch_period) ?>
                                     </option>
                                 <?php endwhile; ?>
@@ -365,8 +379,7 @@ if ($search_ready) {
                                 <svg class="v-search-entry-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
                                 <input type="text" name="search" id="searchInput" class="v-input" placeholder="Start typing a registered name" value="<?= htmlspecialchars($search_query) ?>" autocomplete="off" minlength="1" required role="combobox" aria-autocomplete="list" aria-controls="nameSuggestions" aria-expanded="false">
                                 <button type="submit" class="v-btn" aria-label="Verify beneficiary record">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                    <span class="v-btn-label">Verify</span>
+                                    <span class="v-btn-default"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="v-btn-label">Verify</span></span>
                                     <span class="v-btn-progress" hidden><i aria-hidden="true"></i>Checking</span>
                                 </button>
                             </span>
@@ -651,9 +664,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Submit one deliberate lookup at a time; do not query while the user types.
     const searchInput = document.getElementById('searchInput');
     const programFilter = document.getElementById('programFilter');
+    const programTypeFilter = document.getElementById('programTypeFilter');
     const resultsArea = document.getElementById('resultsArea');
     const searchForm = document.getElementById('searchForm');
     const submitButton = searchForm ? searchForm.querySelector('.v-btn') : null;
+    const submitDefault = submitButton ? submitButton.querySelector('.v-btn-default') : null;
     const submitLabel = submitButton ? submitButton.querySelector('.v-btn-label') : null;
     const submitProgress = submitButton ? submitButton.querySelector('.v-btn-progress') : null;
     const suggestionList = document.getElementById('nameSuggestions');
@@ -661,6 +676,40 @@ document.addEventListener('DOMContentLoaded', function() {
     let suggestionRequest = null;
     let suggestionButtons = [];
     let activeSuggestion = -1;
+    const suggestionCache = new Map();
+    const initialBatchValue = programFilter.value;
+    const batchCatalog = Array.from(programFilter.querySelectorAll('option[value]:not([value=""])')).map(option => ({
+        value: option.value,
+        label: option.textContent.trim(),
+        type: option.dataset.programType || 'TUPAD',
+        group: option.closest('optgroup')?.label || option.dataset.programType || 'Program'
+    }));
+
+    function rebuildBatchOptions(programType, selectedValue = '') {
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = programType ? `Select a ${programType} batch` : 'Select an exact batch';
+        programFilter.replaceChildren(placeholder);
+        const groups = new Map();
+        batchCatalog.filter(item => !programType || item.type === programType).forEach(item => {
+            if (!groups.has(item.group)) {
+                const group = document.createElement('optgroup');
+                group.label = item.group;
+                groups.set(item.group, group);
+                programFilter.appendChild(group);
+            }
+            const option = document.createElement('option');
+            option.value = item.value;
+            option.textContent = item.label;
+            option.dataset.programType = item.type;
+            option.selected = item.value === selectedValue;
+            groups.get(item.group).appendChild(option);
+        });
+    }
+
+    const initiallySelectedBatch = batchCatalog.find(item => item.value === initialBatchValue);
+    if (initiallySelectedBatch) programTypeFilter.value = initiallySelectedBatch.type;
+    rebuildBatchOptions(programTypeFilter.value, initialBatchValue);
 
     function closeSuggestions() {
         if (!suggestionList) return;
@@ -753,16 +802,30 @@ document.addEventListener('DOMContentLoaded', function() {
             closeSuggestions();
             return;
         }
+        const cacheKey = `${batchId}|${prefix.toLocaleLowerCase()}`;
+        if (suggestionCache.has(cacheKey)) {
+            renderSuggestions(suggestionCache.get(cacheKey));
+            return;
+        }
         if (suggestionRequest) suggestionRequest.abort();
         suggestionRequest = new AbortController();
         showSuggestionMessage('Searching the selected batch...');
         const suggestionUrl = `verification.php?suggest=1&q=${encodeURIComponent(prefix)}&program_filter=${encodeURIComponent(batchId)}`;
-        fetch(suggestionUrl, { credentials: 'same-origin', signal: suggestionRequest.signal })
+        fetch(suggestionUrl, {
+            credentials: 'same-origin',
+            cache: 'no-store',
+            signal: suggestionRequest.signal,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
             .then(response => {
                 if (!response.ok) throw new Error(`Suggestion lookup failed with status ${response.status}`);
                 return response.json();
             })
-            .then(data => renderSuggestions(Array.isArray(data.items) ? data.items : []))
+            .then(data => {
+                const suggestionItems = Array.isArray(data.items) ? data.items : [];
+                suggestionCache.set(cacheKey, suggestionItems);
+                renderSuggestions(suggestionItems);
+            })
             .catch(error => {
                 if (error.name !== 'AbortError') showSuggestionMessage('Suggestions are temporarily unavailable. You can still enter the exact name.');
             });
@@ -770,7 +833,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     searchInput.addEventListener('input', () => {
         window.clearTimeout(suggestionTimer);
-        suggestionTimer = window.setTimeout(requestSuggestions, 240);
+        suggestionTimer = window.setTimeout(requestSuggestions, 160);
     });
     searchInput.addEventListener('focus', () => {
         if (searchInput.value.trim().length >= 1 && programFilter.value) requestSuggestions();
@@ -797,6 +860,12 @@ document.addEventListener('DOMContentLoaded', function() {
         closeSuggestions();
         if (searchInput.value.trim().length >= 1) requestSuggestions();
     });
+    programTypeFilter.addEventListener('change', () => {
+        rebuildBatchOptions(programTypeFilter.value);
+        closeSuggestions();
+        searchInput.value = '';
+        programFilter.focus();
+    });
     document.addEventListener('click', event => {
         if (!event.target.closest('.v-resident-field')) closeSuggestions();
     });
@@ -805,7 +874,8 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsArea.setAttribute('aria-busy', isLoading ? 'true' : 'false');
         if (searchForm) searchForm.setAttribute('aria-busy', isLoading ? 'true' : 'false');
         if (submitButton) submitButton.disabled = isLoading;
-        if (submitLabel) submitLabel.hidden = isLoading;
+        if (submitDefault) submitDefault.hidden = isLoading;
+        else if (submitLabel) submitLabel.hidden = isLoading;
         if (submitProgress) submitProgress.hidden = !isLoading;
         resultsArea.classList.toggle('is-loading', isLoading);
     }
@@ -819,7 +889,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const url = `verification.php?search=${encodeURIComponent(query)}&program_filter=${encodeURIComponent(filter)}`;
 
-        fetch(url, { credentials: 'same-origin' })
+        fetch(url, {
+            credentials: 'same-origin',
+            cache: 'no-store',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
             .then(response => {
                 if (!response.ok) throw new Error(`Lookup failed with status ${response.status}`);
                 return response.text();
@@ -839,7 +913,8 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error fetching search results:', error);
-                resultsArea.innerHTML = '<div class="v-no-results" role="alert"><h3>Verification is temporarily unavailable</h3><p>Your request could not be completed. Please try again or contact PESO Vinzons if the problem continues.</p></div>';
+                // Keep the lookup usable if an enhanced in-page request is blocked or interrupted.
+                window.location.assign(url);
             })
             .finally(() => setLookupLoading(false));
     }

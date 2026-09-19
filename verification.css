@@ -154,9 +154,11 @@
 
 .verification-page .v-search-intro {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
-    text-align: left;
+    gap: 9px;
+    justify-content: center;
+    text-align: center;
 }
 
 .verification-page .v-search-intro-icon {
@@ -181,14 +183,14 @@
     stroke-linejoin: round;
 }
 
-.verification-page .v-search-intro > div { display: grid; gap: 2px; }
+.verification-page .v-search-intro > div { display: grid; justify-items: center; gap: 2px; }
 .verification-page .v-search-intro strong { color: var(--verify-ink); font-size: 14px; }
 .verification-page .v-search-intro small { color: var(--verify-muted); font-size: 11px; line-height: 1.5; }
 
 .verification-page .v-lookup-steps {
     position: relative;
     margin: 17px 0 18px;
-    padding: 13px 14px;
+    padding: 12px 14px 13px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
@@ -212,9 +214,10 @@
     position: relative;
     z-index: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 5px;
     color: #557166;
 }
 
@@ -228,6 +231,7 @@
     border-radius: 50%;
     color: #fff;
     background: var(--verify-green);
+    box-shadow: 0 0 0 4px #f8fbf9;
     font-size: 10px;
     font-weight: 900;
 }
@@ -236,7 +240,7 @@
 
 .verification-page .v-input-wrapper {
     display: grid;
-    grid-template-columns: minmax(260px, .9fr) minmax(390px, 1.35fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
     gap: 13px;
 }
@@ -250,9 +254,12 @@
 }
 
 .verification-page .v-program-field,
+.verification-page .v-type-field,
 .verification-page .v-resident-field {
     grid-template-rows: 12px 54px auto;
 }
+
+.verification-page .v-resident-field { grid-column: 1 / -1; }
 
 .verification-page .v-search-field-label {
     color: #48695b;
@@ -283,7 +290,11 @@
     height: 54px;
 }
 
-.verification-page .v-select-shell .v-select { height: 100%; padding-left: 44px; }
+.verification-page .v-select-shell .v-select {
+    height: 100% !important;
+    padding-left: 46px !important;
+    padding-right: 42px !important;
+}
 
 .verification-page .v-select-icon {
     position: absolute;
@@ -335,6 +346,7 @@
     display: flex;
     align-items: center;
     overflow: hidden;
+    padding: 4px;
 }
 
 .verification-page .v-search-entry-icon {
@@ -352,7 +364,7 @@
     width: 100%;
     min-width: 0;
     height: 100%;
-    padding: 0 10px;
+    padding: 0 12px;
     border: 0;
     outline: 0;
     color: var(--verify-ink);
@@ -424,9 +436,10 @@
 
 .verification-page .v-btn {
     width: auto;
-    height: 44px;
-    min-width: 112px;
-    margin-right: 5px;
+    height: 44px !important;
+    min-width: 128px;
+    flex: 0 0 128px;
+    margin: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -442,6 +455,17 @@
     transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
 }
 
+.verification-page .v-btn-default,
+.verification-page .v-btn-progress {
+    width: 100%;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    line-height: 1;
+}
+
 .verification-page .v-btn:hover:not(:disabled) {
     transform: translateY(-1px);
     background: var(--verify-green-dark);
@@ -451,9 +475,10 @@
 .verification-page .v-btn:focus-visible { outline: 3px solid rgba(23, 116, 81, .2); outline-offset: 2px; }
 .verification-page .v-btn:disabled { cursor: wait; opacity: .84; }
 .verification-page .v-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
-.verification-page .v-btn-progress { display: inline-flex; align-items: center; gap: 7px; }
+.verification-page .v-btn-label { display: inline-flex; align-items: center; line-height: 1; }
 .verification-page .v-btn-progress[hidden],
-.verification-page .v-btn-label[hidden] { display: none; }
+.verification-page .v-btn-default[hidden],
+.verification-page .v-btn-label[hidden] { display: none !important; }
 
 .verification-page .v-btn-progress i {
     width: 13px;
@@ -836,16 +861,16 @@
     .verification-page .verification-route-choice { margin-top: 17px; }
     .verification-page .verification-route-choice > * { text-align: center; }
     .verification-page .v-search-box { margin-top: 17px; padding: 13px; border-radius: 15px; }
-    .verification-page .v-search-intro { align-items: flex-start; }
+    .verification-page .v-search-intro { align-items: center; }
     .verification-page .v-search-intro-icon { width: 38px; height: 38px; flex-basis: 38px; }
     .verification-page .v-lookup-steps { padding: 11px 6px; }
     .verification-page .v-lookup-steps::before { right: 20%; left: 20%; top: 25px; }
-    .verification-page .v-lookup-steps li { flex-direction: column; gap: 4px; }
+    .verification-page .v-lookup-steps li { gap: 4px; }
     .verification-page .v-lookup-steps span { width: 27px; height: 27px; flex-basis: 27px; }
     .verification-page .v-lookup-steps strong { font-size: 8.5px; }
     .verification-page .v-select,
     .verification-page .v-search-entry { height: 52px; min-height: 52px; }
-    .verification-page .v-btn { min-width: 94px; padding: 0 12px; }
+    .verification-page .v-btn { min-width: 104px; flex-basis: 104px; padding: 0 10px; }
     .verification-page .privacy-disclaimer { font-size: 9.5px; }
     .verification-page .v-card-horizontal { padding: 17px; border-radius: 14px; }
     .verification-page .v-card-right { grid-template-columns: 1fr; }
@@ -865,16 +890,16 @@
     .verification-page .nav-btn { min-width: 94px; }
 }
 
-/* Keep account actions visually centered and their SVGs visible on this page. */
+/* Keep account actions aligned like a compact professional menu. */
 .verification-page .account-dropdown-link,
 .verification-page .logout-form .logout-link {
-    justify-content: center;
-    text-align: center;
+    justify-content: flex-start;
+    text-align: left;
 }
 
 .verification-page .account-dropdown-link > span:last-child,
 .verification-page .logout-form .logout-link > span {
-    width: 94px;
+    width: auto;
     text-align: left;
 }
 
@@ -896,6 +921,8 @@
 .verification-page .logout-form .logout-link svg {
     width: 38px;
     height: 38px;
+    flex: 0 0 38px;
+    box-sizing: border-box;
     padding: 9px;
     border: 1px solid #f2cccc;
     border-radius: 10px;
