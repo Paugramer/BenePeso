@@ -1496,6 +1496,10 @@ html.bp-action-loading body {
   background: #fbfdfc;
   font: 700 9px/1.3 Poppins, sans-serif;
 }
+.bp-update-pagination > span {
+  min-width: 118px;
+  text-align: center;
+}
 .bp-update-pagination[hidden] { display: none !important; }
 .bp-update-pagination button {
   min-width: 72px;

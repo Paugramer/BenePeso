@@ -184,12 +184,12 @@ try {
     
     <link rel="stylesheet" href="home.css?v=17">
     <link rel="stylesheet" href="about.css?v=18">
-    <link rel="stylesheet" href="frontend_polish.css?v=18">
+    <link rel="stylesheet" href="frontend_polish.css?v=20260919c">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=7">
-<script src="frontend_polish.js?v=18" defer></script>
+<script src="frontend_polish.js?v=20260919c" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body class="about-page">
