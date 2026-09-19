@@ -49,8 +49,9 @@ $total_programs = 0;
 $barangays_reached = 0;
 
 try {
-    // Count total beneficiaries
-    $b_query = $conn->query("SELECT COUNT(*) as total FROM beneficiaries");
+    // Count approved beneficiary records only; pending and rejected applications
+    // are not presented as residents already served by PESO.
+    $b_query = $conn->query("SELECT COUNT(*) as total FROM beneficiaries WHERE approval_status = 'Approved'");
     if ($b_query) {
         $total_beneficiaries = (int)$b_query->fetch_assoc()['total'];
     }
@@ -67,7 +68,7 @@ try {
     }
 
     // Count the communities represented by beneficiary records.
-    $barangay_query = $conn->query("SELECT COUNT(DISTINCT TRIM(barangay)) as total FROM beneficiaries WHERE barangay IS NOT NULL AND TRIM(barangay) <> ''");
+    $barangay_query = $conn->query("SELECT COUNT(DISTINCT TRIM(barangay)) as total FROM beneficiaries WHERE approval_status = 'Approved' AND barangay IS NOT NULL AND TRIM(barangay) <> ''");
     if ($barangay_query) {
         $barangays_reached = (int)$barangay_query->fetch_assoc()['total'];
     }
@@ -82,13 +83,14 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BENEPESO | About Us</title>
+    <meta name="description" content="Learn how BENEPESO and PESO Vinzons connect residents to official employment, livelihood, student, and MSME support services.">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="home.css?v=16">
-    <link rel="stylesheet" href="about.css?v=12">
+    <link rel="stylesheet" href="home.css?v=17">
+    <link rel="stylesheet" href="about.css?v=13">
     <link rel="stylesheet" href="frontend_polish.css?v=16">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -120,7 +122,7 @@ try {
 
       <div class="account-area" id="accountWrap">
         <?php if($is_logged_in): ?>
-            <button class="account-button" id="accountButton" type="button">
+            <button class="account-button" id="accountButton" type="button" aria-expanded="false" aria-controls="accountDropdown">
             <span class="account-icon">
                 <?php echo htmlspecialchars($first_char); ?>
                 <?php if ($user_profile_src !== ''): ?><img src="<?php echo htmlspecialchars($user_profile_src); ?>" alt="" onerror="this.remove()"><?php endif; ?>
@@ -156,14 +158,19 @@ try {
             <div class="welcome-left stagger-1">
                 <div class="welcome-badge">
                     <span class="badge-dot"></span>
-                    ESTABLISHED TO SERVE
+                    ABOUT BENEPESO &bull; PESO VINZONS
                 </div>
                 <h1 class="welcome-title">
-                    PESO <span class="welcome-highlight">Vinzons</span>
+                    Connecting <span class="welcome-highlight">Vinzons</span> to opportunity
                 </h1>
                 <p class="welcome-text">
-                    Empowering the local workforce by connecting residents with sustainable government programs, skills training, and meaningful employment opportunities.
+                    One trusted resident portal for official PESO programs, secure applications, validated status updates, and clear guidance from the local employment service office.
                 </p>
+                <div class="about-hero-actions" aria-label="About page actions">
+                    <a class="about-hero-primary" href="programs.php">Explore Programs <span aria-hidden="true">&rarr;</span></a>
+                    <a class="about-hero-secondary" href="#peso-office">Visit Our Office</a>
+                </div>
+                <div class="about-hero-assurance"><span aria-hidden="true"></span> Official PESO Vinzons information and resident services</div>
             </div>
         </div>
     </section>
@@ -177,7 +184,7 @@ try {
                         <span class="stat-num counter" data-target="<?php echo $total_beneficiaries; ?>">0</span>
                         <?php if($total_beneficiaries > 1000): ?><span class="stat-plus">+</span><?php endif; ?>
                     </div>
-                    <span class="stat-label">Beneficiaries</span>
+                    <span class="stat-label">Approved Beneficiaries</span>
                 </div>
                 <div class="stat-divider"></div>
                 <div class="stat-item">
@@ -194,7 +201,7 @@ try {
                     <span class="stat-label">Barangays Reached</span>
                 </div>
             </div>
-            <p class="stats-data-note">Live BENEPESO records as of <?= date('F j, Y') ?>. Figures may change as PESO validates and updates program records.</p>
+            <p class="stats-data-note">Live BENEPESO records as of <?= date('F j, Y') ?>. Beneficiary and barangay figures include approved program records only; pending applications are excluded.</p>
         </div>
     </section>
 
@@ -296,8 +303,8 @@ try {
         <div class="content-wrap">
             <div class="section-title-wrap">
                 <span class="section-eyebrow">Public Service</span>
-                <h2>Leadership</h2>
-                <p>Guiding the vision of a prosperous Vinzons.</p>
+                <h2>Leadership &amp; Service Access</h2>
+                <p>Meet the PESO Vinzons office leadership and review the official ways residents can request assistance.</p>
             </div>
             <div class="leadership-grid">
                 <button type="button" class="team-card interactive-card" onclick="openManagerModal()" aria-haspopup="dialog" aria-controls="managerModal">
@@ -348,13 +355,13 @@ try {
         <div class="content-wrap">
             <div class="content-enhancement-heading">
                 <span class="content-enhancement-eyebrow">Public service commitment</span>
-                <h2 id="publicServiceTitle">What You Can Expect from PESO Vinzons</h2>
-                <p>BENEPESO supports the office's employment-service mandate by making program information, applications, and recorded updates easier for residents to access.</p>
+                <h2 id="publicServiceTitle">Our Public Service Commitments</h2>
+                <p>BENEPESO supports the PESO mandate through clear information, responsible record handling, and accessible assistance for every resident.</p>
             </div>
             <div class="public-service-grid">
-                <article><h3>Who we serve</h3><p>Residents of the Municipality of Vinzons seeking employment assistance, temporary livelihood opportunities, student employment, skills support, or MSME profiling.</p></article>
-                <article><h3>How we assist</h3><p>PESO reviews submitted records, coordinates program requirements and schedules, and provides the official decision or next instruction for each application.</p></article>
-                <article><h3>Our service standard</h3><p>Applications are handled using the requirements and schedule of the selected program batch. Processing time may vary when partner-agency validation is required.</p></article>
+                <article><h3>Clear official information</h3><p>Every listing is connected to an approved program batch, including its schedule, eligibility rules, available slots, and documentary requirements.</p></article>
+                <article><h3>Responsible record handling</h3><p>Resident information is used for profiling, eligibility review, application processing, and official PESO follow-up within the authorized service workflow.</p></article>
+                <article><h3>Human review and assistance</h3><p>Automated results remain preliminary. PESO personnel validate records, provide the official decision, and assist residents who need corrections or accessible service channels.</p></article>
             </div>
             <div class="partner-note"><strong>Program coordination:</strong> Services may be delivered with DOLE, TESDA, educational institutions, barangays, employers, and other authorized government partners, depending on the program.</div>
             <div class="service-mandate-note"><strong>Official mandate:</strong> PESO operates as a non-fee employment service facility that supports employment information, referral, placement, and related programs under the <a href="https://lawphil.net/statutes/repacts/ra2000/ra_8759_2000.html" target="_blank" rel="noopener noreferrer">Public Employment Service Office Act of 1999 (Republic Act No. 8759)</a>.</div>
@@ -496,11 +503,13 @@ try {
         if(btn && drop) {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
-                drop.classList.toggle('show');
+                const isOpen = drop.classList.toggle('show');
+                btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             });
             document.addEventListener('click', function(e) {
                 if(!drop.contains(e.target) && !btn.contains(e.target)) {
                     drop.classList.remove('show');
+                    btn.setAttribute('aria-expanded', 'false');
                 }
             });
         }
@@ -572,15 +581,40 @@ try {
         }
 
         document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && drop && btn && drop.classList.contains('show')) {
+                drop.classList.remove('show');
+                btn.setAttribute('aria-expanded', 'false');
+                btn.focus();
+                return;
+            }
+
             if (event.key === 'Escape' && managerModal && managerModal.classList.contains('show')) {
                 closeManagerModal();
+                return;
+            }
+
+            if (event.key === 'Tab' && managerModal && managerModal.classList.contains('show')) {
+                const focusable = Array.from(managerModal.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+                if (!focusable.length) return;
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first.focus();
+                }
             }
         });
     });
 
     // Modal Control Functions
+    let managerModalTrigger = null;
+
     function openManagerModal() {
         const modal = document.getElementById('managerModal');
+        managerModalTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         modal.classList.add('show');
         modal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
@@ -592,6 +626,7 @@ try {
         modal.classList.remove('show');
         modal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+        if (managerModalTrigger && document.contains(managerModalTrigger)) managerModalTrigger.focus();
     }
 </script>
 </body>
