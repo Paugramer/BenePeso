@@ -1498,7 +1498,7 @@ html.bp-action-loading body {
 }
 .bp-update-pagination[hidden] { display: none !important; }
 .bp-update-pagination button {
-  width: 29px;
+  min-width: 72px;
   height: 29px;
   display: grid;
   place-items: center;
@@ -1507,7 +1507,7 @@ html.bp-action-loading body {
   border-radius: 8px;
   color: #176b49;
   background: #fff;
-  font: 800 20px/1 Poppins, sans-serif;
+  font: 800 9px/1 Poppins, sans-serif;
   cursor: pointer;
 }
 .bp-update-pagination button:hover:not(:disabled),

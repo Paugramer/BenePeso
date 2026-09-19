@@ -197,7 +197,7 @@
       '<section class="bp-update-panel" id="bpUpdatePanel" aria-label="Your BENEPESO service updates" hidden>' +
         '<header><div><span>BENEPESO Updates</span><strong>Applications &amp; new programs</strong></div><button type="button" class="bp-update-read">Mark all read</button></header>' +
         '<div class="bp-update-list"><div class="bp-update-empty">Checking your latest application updates...</div></div>' +
-        '<div class="bp-update-pagination" hidden><button type="button" class="bp-update-page-prev" aria-label="Previous notification page">&lsaquo;</button><span aria-live="polite">Page 1 of 1</span><button type="button" class="bp-update-page-next" aria-label="Next notification page">&rsaquo;</button></div>' +
+        '<div class="bp-update-pagination" hidden><button type="button" class="bp-update-page-prev">Previous</button><span aria-live="polite">Page 1 of 1</span><button type="button" class="bp-update-page-next">Next</button></div>' +
         '<a class="bp-update-footer" href="profile.php#my-programs">View complete program progress <span aria-hidden="true">&rarr;</span></a>' +
       '</section>';
     accountArea.parentNode.insertBefore(updateCenter, accountArea);
@@ -288,7 +288,7 @@
         });
         list.appendChild(row);
       });
-      pagination.hidden = pageCount <= 1;
+      pagination.hidden = false;
       pageStatus.textContent = `Page ${currentPage + 1} of ${pageCount} • ${items.length} updates`;
       pagePrevious.disabled = currentPage === 0;
       pageNext.disabled = currentPage >= pageCount - 1;

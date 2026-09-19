@@ -29,10 +29,10 @@ if (isset($_SESSION['role'])) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="home.css?v=16">
-    <link rel="stylesheet" href="frontend_polish.css?v=17">
+    <link rel="stylesheet" href="frontend_polish.css?v=18">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="index.css?v=28">
-<script src="frontend_polish.js?v=17" defer></script>
+<script src="frontend_polish.js?v=18" defer></script>
 </head>
 <body class="public-index-page public-about-page">
 <a class="public-skip-link" href="#mainContent">Skip to main content</a>

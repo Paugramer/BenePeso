@@ -929,19 +929,7 @@
 }
 
 .about-page .map-preview::after {
-  content: "Map preview \00b7  use Get directions to open Google Maps";
-  position: absolute;
-  left: 14px;
-  bottom: 13px;
-  padding: 7px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.82);
-  border-radius: 9px;
-  color: #fff;
-  background: rgba(7, 53, 37, 0.78);
-  box-shadow: 0 8px 20px rgba(3, 31, 21, 0.2);
-  font-size: 9px;
-  font-weight: 700;
-  pointer-events: none;
+  display: none;
 }
 
 .about-page .map-preview iframe {
@@ -950,8 +938,9 @@
   height: 100%;
   min-height: 280px;
   border-radius: 0 !important;
-  filter: saturate(0.72) contrast(0.96);
-  pointer-events: none;
+  filter: none;
+  pointer-events: auto;
+  touch-action: auto;
 }
 
 .about-page .map-card-footer .map-directions-link {
