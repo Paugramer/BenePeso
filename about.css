@@ -1973,7 +1973,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 9px;
+    margin: 18px 0 2px;
     color: #71857b;
     font-size: 11px;
 }
@@ -2007,7 +2007,7 @@ body {
     transform-origin: left center;
 }
 .about-page .activity-gallery-section.is-autoplaying .activity-gallery-progress i {
-    animation: aboutGalleryProgress 3.8s linear infinite;
+    animation: aboutGalleryProgress 2.6s linear infinite;
 }
 
 @keyframes aboutGalleryProgress {
@@ -2084,6 +2084,24 @@ body {
 .about-page .activity-modal-footer svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 .about-page .map-card-actions { display: flex; align-items: center; gap: 8px; }
+.about-page .map-interaction-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #376a55;
+    font-size: 10px;
+    font-weight: 750;
+    white-space: nowrap;
+}
+.about-page .map-interaction-hint svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
 .about-page .map-preview::after { display: none; }
 .about-page .map-preview iframe { pointer-events: auto; filter: none; }
 
@@ -2118,6 +2136,7 @@ body {
     .about-page .activity-modal-content { padding: 22px 20px 24px; }
     .about-page .map-card-actions { width: 100%; display: grid; grid-template-columns: 1fr; }
     .about-page .map-card-footer .map-directions-link { justify-content: center; }
+    .about-page .map-interaction-hint { white-space: normal; line-height: 1.45; }
 }
 
 @media (max-width: 480px) {

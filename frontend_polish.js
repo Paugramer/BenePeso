@@ -197,6 +197,7 @@
       '<section class="bp-update-panel" id="bpUpdatePanel" aria-label="Your BENEPESO service updates" hidden>' +
         '<header><div><span>BENEPESO Updates</span><strong>Applications &amp; new programs</strong></div><button type="button" class="bp-update-read">Mark all read</button></header>' +
         '<div class="bp-update-list"><div class="bp-update-empty">Checking your latest application updates...</div></div>' +
+        '<div class="bp-update-pagination" hidden><button type="button" class="bp-update-page-prev" aria-label="Previous notification page">&lsaquo;</button><span aria-live="polite">Page 1 of 1</span><button type="button" class="bp-update-page-next" aria-label="Next notification page">&rsaquo;</button></div>' +
         '<a class="bp-update-footer" href="profile.php#my-programs">View complete program progress <span aria-hidden="true">&rarr;</span></a>' +
       '</section>';
     accountArea.parentNode.insertBefore(updateCenter, accountArea);
@@ -206,9 +207,31 @@
     const panel = updateCenter.querySelector('.bp-update-panel');
     const list = updateCenter.querySelector('.bp-update-list');
     const markRead = updateCenter.querySelector('.bp-update-read');
+    const pagination = updateCenter.querySelector('.bp-update-pagination');
+    const pagePrevious = updateCenter.querySelector('.bp-update-page-prev');
+    const pageNext = updateCenter.querySelector('.bp-update-page-next');
+    const pageStatus = pagination.querySelector('span');
+    const topbarInner = accountArea.closest('.topbar-inner');
+    const menuButton = topbarInner?.querySelector('.menu-button');
+    const mobileHeader = window.matchMedia('(max-width: 768px)');
+    const syncUpdateCenterPlacement = () => {
+      if (!topbarInner || !menuButton) return;
+      if (mobileHeader.matches) {
+        topbarInner.insertBefore(updateCenter, menuButton);
+        topbarInner.appendChild(panel);
+      } else {
+        accountArea.parentNode.insertBefore(updateCenter, accountArea);
+        updateCenter.appendChild(panel);
+      }
+    };
+    syncUpdateCenterPlacement();
+    if (mobileHeader.addEventListener) mobileHeader.addEventListener('change', syncUpdateCenterPlacement);
+    else mobileHeader.addListener(syncUpdateCenterPlacement);
     const storageKey = 'benepeso-read-service-updates';
+    const pageSize = 4;
     let items = [];
     let readIds = [];
+    let currentPage = 0;
 
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
@@ -223,7 +246,7 @@
 
     const updateBadge = () => {
       const unread = items.filter(item => !readIds.includes(item.id)).length;
-      badge.textContent = unread > 9 ? '9+' : String(unread);
+      badge.textContent = unread > 99 ? '99+' : String(unread);
       badge.hidden = unread === 0;
       button.setAttribute('aria-label', unread ? `Open service updates, ${unread} unread` : 'Open service updates');
       markRead.hidden = unread === 0;
@@ -241,11 +264,16 @@
         empty.className = 'bp-update-empty';
         empty.innerHTML = '<strong>No application updates yet</strong><span>Your approval and program notices will appear here.</span>';
         list.appendChild(empty);
+        pagination.hidden = true;
         updateBadge();
         return;
       }
 
-      items.forEach(item => {
+      const pageCount = Math.ceil(items.length / pageSize);
+      currentPage = Math.max(0, Math.min(currentPage, pageCount - 1));
+      const visibleItems = items.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
+      visibleItems.forEach(item => {
         const row = document.createElement('a');
         row.className = `bp-update-item is-${item.tone || 'info'}` + (readIds.includes(item.id) ? '' : ' is-unread');
         row.href = item.href || 'profile.php#my-programs';
@@ -260,6 +288,10 @@
         });
         list.appendChild(row);
       });
+      pagination.hidden = pageCount <= 1;
+      pageStatus.textContent = `Page ${currentPage + 1} of ${pageCount} • ${items.length} updates`;
+      pagePrevious.disabled = currentPage === 0;
+      pageNext.disabled = currentPage >= pageCount - 1;
       updateBadge();
     };
 
@@ -300,8 +332,22 @@
       renderUpdates();
     });
 
+    pagePrevious.addEventListener('click', () => {
+      if (currentPage === 0) return;
+      currentPage -= 1;
+      renderUpdates();
+      list.scrollTop = 0;
+    });
+
+    pageNext.addEventListener('click', () => {
+      if ((currentPage + 1) * pageSize >= items.length) return;
+      currentPage += 1;
+      renderUpdates();
+      list.scrollTop = 0;
+    });
+
     document.addEventListener('click', event => {
-      if (!updateCenter.contains(event.target)) {
+      if (!updateCenter.contains(event.target) && !panel.contains(event.target)) {
         panel.hidden = true;
         button.setAttribute('aria-expanded', 'false');
       }
@@ -318,6 +364,7 @@
       .then(response => response.ok ? response.json() : Promise.reject(new Error('Updates unavailable')))
       .then(data => {
         items = Array.isArray(data.items) ? data.items : [];
+        currentPage = 0;
         renderUpdates();
         renderSnapshot(data.summary || null);
       })

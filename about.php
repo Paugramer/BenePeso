@@ -183,13 +183,13 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="about.css?v=17">
-    <link rel="stylesheet" href="frontend_polish.css?v=16">
+    <link rel="stylesheet" href="about.css?v=18">
+    <link rel="stylesheet" href="frontend_polish.css?v=17">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-<script src="frontend_polish.js?v=16" defer></script>
+<script src="frontend_polish.js?v=17" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body class="about-page">
@@ -297,7 +297,7 @@ try {
                     <span class="stat-label">Barangays Reached</span>
                 </div>
             </div>
-            <p class="stats-data-note">Live BENEPESO records as of <?= date('F j, Y') ?>. Beneficiary and barangay figures include approved program records only; pending applications are excluded.</p>
+            <p class="stats-data-note">Verified service totals based on approved BENEPESO records maintained by PESO Vinzons.</p>
         </div>
     </section>
 
@@ -369,6 +369,13 @@ try {
                 </div>
             </div>
 
+            <div class="activity-gallery-footer">
+                <div class="activity-gallery-status-wrap">
+                    <span class="activity-gallery-status" id="activityGalleryStatus" aria-live="polite">Activity 1 of <?= count($community_activities) ?></span>
+                    <span class="activity-gallery-progress" aria-hidden="true"><i></i></span>
+                </div>
+            </div>
+
             <div class="activity-gallery-frame">
                 <div class="activity-gallery-track" id="activityTrack" tabindex="0" aria-label="PESO Vinzons activity photographs">
                     <?php foreach ($community_activities as $index => $activity): ?>
@@ -397,12 +404,6 @@ try {
                 </div>
             </div>
 
-            <div class="activity-gallery-footer">
-                <div class="activity-gallery-status-wrap">
-                    <span class="activity-gallery-status" id="activityGalleryStatus" aria-live="polite">Activity 1 of <?= count($community_activities) ?></span>
-                    <span class="activity-gallery-progress" aria-hidden="true"><i></i></span>
-                </div>
-            </div>
         </div>
     </section>
 
@@ -514,7 +515,7 @@ try {
                         <span><strong>PESO Vinzons Office</strong><small>Vinzons Municipal Hall</small></span>
                         <span class="map-official-badge"><i aria-hidden="true"></i> Official location</span>
                     </div>
-                    <div class="map-preview" aria-label="Map preview of the PESO Vinzons office">
+                    <div class="map-preview" aria-label="Interactive Street View of the PESO Vinzons office. Drag to look around and use the controls to zoom.">
                     <iframe
                         src="https://www.google.com/maps/embed?pb=!4v1726740000000!6m8!1m7!1sOvPqPsazfA3AyGTZSu559g!2m2!1d14.1738456!2d122.9076545!3f34.31473476451902!4f0.09888153299029057!5f0.7820865974627469"
                         title="Interactive Street View of Vinzons Municipal Hall on Vinzons Avenue"
@@ -523,15 +524,13 @@ try {
                         style="border:0;"
                         allowfullscreen="" 
                         loading="lazy" 
-                        tabindex="-1"
+                        tabindex="0"
                         referrerpolicy="no-referrer-when-downgrade">
                     </iframe>
                     </div>
                     <div class="map-card-footer">
                         <span>1 Vinzons Avenue &bull; Barangay II (Poblacion)</span>
-                        <span class="map-card-actions">
-                            <a class="map-directions-link" href="https://www.google.com/maps/dir/?api=1&amp;destination=14.1738456%2C122.9076545" target="_blank" rel="noopener noreferrer">Get directions <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"></path></svg></a>
-                        </span>
+                        <span class="map-interaction-hint"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 11V7a2 2 0 0 1 4 0v4-6a2 2 0 0 1 4 0v6-3a2 2 0 0 1 4 0v6c0 4-3 7-7 7h-1c-2.5 0-4.2-1.2-5.5-3L3 13.5a2 2 0 0 1 3-2.6L8 13"></path></svg> Drag to explore &bull; use controls to zoom</span>
                     </div>
                 </div>
             </div>
@@ -725,7 +724,7 @@ try {
         let activityModalTrigger = null;
         let activityAutoTimer = null;
         let galleryScrollFrame = null;
-        const activityAutoDelay = 3800;
+        const activityAutoDelay = 2600;
 
         const updateActivityStatus = (index) => {
             activeActivityIndex = (index + activityCards.length) % activityCards.length;

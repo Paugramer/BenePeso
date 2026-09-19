@@ -149,10 +149,10 @@ if ($updated_stmt) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="home.css?v=17">
     
-    <link rel="stylesheet" href="frontend_polish.css?v=16">
+    <link rel="stylesheet" href="frontend_polish.css?v=17">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="index.css?v=29">
-<script src="frontend_polish.js?v=16" defer></script>
+<script src="frontend_polish.js?v=17" defer></script>
 </head>
 <body class="public-index-page">
 <a class="public-skip-link" href="#mainContent">Skip to main content</a>

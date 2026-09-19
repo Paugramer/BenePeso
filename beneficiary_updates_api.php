@@ -28,7 +28,7 @@ $sql = "SELECT b.beneficiary_id, b.approval_status, b.availment_status,
         JOIN programs p ON p.program_id = b.program_id
         WHERE b.user_id = ? OR (b.user_id IS NULL AND b.email = ?)
         ORDER BY COALESCE(b.updated_at, b.created_at) DESC, b.beneficiary_id DESC
-        LIMIT 12";
+        LIMIT 24";
 $stmt = $conn->prepare($sql);
 $items = [];
 
@@ -122,7 +122,7 @@ $programSql = "SELECT program_id, program_name, program_code, start_date, end_da
                   AND end_date >= CURDATE()
                   AND status IN ('Upcoming', 'Ongoing', 'Active')
                 ORDER BY COALESCE(updated_at, created_at) DESC, program_id DESC
-                LIMIT 5";
+                LIMIT 6";
 $programResult = $conn->query($programSql);
 if ($programResult) {
     while ($programRow = $programResult->fetch_assoc()) {
@@ -156,7 +156,7 @@ if ($programResult) {
 usort($items, static function (array $left, array $right): int {
     return strtotime((string)($right['updated_at'] ?? '')) <=> strtotime((string)($left['updated_at'] ?? ''));
 });
-$items = array_slice($items, 0, 12);
+$items = array_slice($items, 0, 30);
 
 echo json_encode([
     'ok' => true,
