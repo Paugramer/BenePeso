@@ -1737,7 +1737,7 @@ body {
     .about-page .about-hero-primary span { transition: none; }
 }
 
-/* About-page activity gallery, statistics, and location refinements V15. */
+/* About-page activity gallery, statistics, and location refinements V16. */
 .about-page .stat-item { gap: 7px; }
 
 .about-page .stat-icon {
@@ -1812,6 +1812,7 @@ body {
 .about-page .activity-gallery-frame {
     position: relative;
     margin-inline: -10px;
+    perspective: 1200px;
 }
 
 .about-page .activity-gallery-frame::before,
@@ -1831,7 +1832,7 @@ body {
 .about-page .activity-gallery-track {
     display: flex;
     gap: 18px;
-    padding: 12px 10px 20px;
+    padding: 18px 10px 24px;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
     scroll-behavior: smooth;
@@ -1842,6 +1843,7 @@ body {
 .about-page .activity-gallery-track::-webkit-scrollbar { display: none; }
 
 .about-page .activity-gallery-card {
+    position: relative;
     flex: 0 0 calc((100% - 36px) / 3);
     min-width: 0;
     padding: 0;
@@ -1854,14 +1856,45 @@ body {
     text-align: left;
     scroll-snap-align: center;
     cursor: pointer;
-    transition: transform .24s ease, border-color .24s ease, box-shadow .24s ease;
+    opacity: .76;
+    transform: translateY(5px) scale(.965);
+    will-change: transform, opacity;
+    transition: transform .62s cubic-bezier(.2, .78, .2, 1), opacity .48s ease, border-color .42s ease, box-shadow .48s ease;
 }
 
-.about-page .activity-gallery-card:hover,
+.about-page .activity-gallery-card::before {
+    content: "";
+    position: absolute;
+    z-index: 4;
+    top: 0;
+    left: 18%;
+    right: 18%;
+    height: 3px;
+    border-radius: 0 0 999px 999px;
+    background: linear-gradient(90deg, #168158, #45bd87, #d1a63c);
+    opacity: 0;
+    transform: scaleX(.35);
+    transition: opacity .35s ease, transform .55s cubic-bezier(.2, .78, .2, 1);
+}
+
+.about-page .activity-gallery-card.is-before { transform: translateY(5px) scale(.965) rotateY(2.5deg); transform-origin: right center; }
+.about-page .activity-gallery-card.is-after { transform: translateY(5px) scale(.965) rotateY(-2.5deg); transform-origin: left center; }
+
 .about-page .activity-gallery-card.is-active {
+    z-index: 2;
+    opacity: 1;
     border-color: #75b898;
+    box-shadow: 0 24px 52px rgba(8, 74, 50, .18);
+    transform: translateY(-8px) scale(1.015) rotateY(0);
+}
+
+.about-page .activity-gallery-card.is-active::before { opacity: 1; transform: scaleX(1); }
+.about-page .activity-gallery-card:hover:not(.is-active) {
+    z-index: 2;
+    opacity: 1;
+    border-color: #93c7ad;
     box-shadow: 0 20px 44px rgba(8, 74, 50, .14);
-    transform: translateY(-5px);
+    transform: translateY(-4px) scale(.985) rotateY(0);
 }
 
 .about-page .activity-gallery-photo {
@@ -1889,7 +1922,8 @@ body {
     transition: transform .5s ease, filter .3s ease;
 }
 
-.about-page .activity-gallery-card:hover .activity-gallery-photo img { transform: scale(1.025); filter: saturate(1.04) contrast(1.02); }
+.about-page .activity-gallery-card:hover .activity-gallery-photo img,
+.about-page .activity-gallery-card.is-active .activity-gallery-photo img { transform: scale(1.035); filter: saturate(1.05) contrast(1.025); }
 
 .about-page .activity-program-badge {
     position: absolute;
@@ -1938,15 +1972,24 @@ body {
 .about-page .activity-gallery-footer {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-top: 3px;
+    justify-content: center;
+    margin-top: 9px;
     color: #71857b;
     font-size: 11px;
 }
 
 .about-page .activity-gallery-status { color: #116f4c; font-weight: 800; }
-.about-page .activity-gallery-status-wrap { display: inline-flex; align-items: center; gap: 10px; }
+.about-page .activity-gallery-status-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 36px;
+    padding: 7px 14px;
+    border: 1px solid #d1e3da;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .86);
+    box-shadow: 0 9px 24px rgba(8, 68, 47, .07);
+}
 .about-page .activity-gallery-progress {
     width: 82px;
     height: 3px;
@@ -1964,7 +2007,7 @@ body {
     transform-origin: left center;
 }
 .about-page .activity-gallery-section.is-autoplaying .activity-gallery-progress i {
-    animation: aboutGalleryProgress 5.2s linear infinite;
+    animation: aboutGalleryProgress 3.8s linear infinite;
 }
 
 @keyframes aboutGalleryProgress {
@@ -2065,7 +2108,7 @@ body {
     .about-page .activity-gallery-controls { padding-top: 3px; }
     .about-page .activity-gallery-arrow { width: 42px; height: 42px; }
     .about-page .activity-gallery-card { flex-basis: 86%; }
-    .about-page .activity-gallery-footer { align-items: flex-start; flex-direction: column; gap: 4px; }
+    .about-page .activity-gallery-footer { align-items: center; }
     .about-page .activity-modal-overlay { padding: 12px; }
     .about-page .activity-modal { width: 100%; max-height: 94vh; border-radius: 17px; }
     .about-page .activity-modal-close { top: 12px; right: 12px; }
@@ -2089,5 +2132,9 @@ body {
     .about-page .activity-gallery-photo img,
     .about-page .activity-modal-overlay,
     .about-page .activity-modal { transition: none; }
+    .about-page .activity-gallery-card,
+    .about-page .activity-gallery-card.is-before,
+    .about-page .activity-gallery-card.is-after,
+    .about-page .activity-gallery-card.is-active { transform: none; }
     .about-page .activity-gallery-progress i { animation: none !important; }
 }

@@ -51,45 +51,45 @@ $barangays_reached = 0;
 $community_activities = [
     [
         'image' => 'img/peso-community-medt-2026.png',
-        'program' => 'Livelihood',
+        'program' => 'MSME',
         'title' => 'Employment and Micro-Enterprise Development Training',
-        'date' => 'August 27, 2026',
+        'date' => 'August 2026',
         'location' => 'SB Annex, Vinzons, Camarines Norte',
         'summary' => 'PESO Vinzons brought practical employment and micro-enterprise guidance closer to local residents through an organized community training session.',
         'alt' => 'PESO Vinzons facilitator leading Employment and Micro-Enterprise Development Training at the SB Annex'
     ],
     [
-        'image' => 'img/785363258_1417993690237714_6441540593083810708_n.jpg',
-        'program' => 'Livelihood',
-        'title' => 'MEDT Community Participants',
-        'date' => 'August 27, 2026',
-        'location' => 'SB Annex, Vinzons, Camarines Norte',
-        'summary' => 'Participants completed a community-based session focused on financial awareness, employment readiness, and practical livelihood development.',
-        'alt' => 'Community participants during the Employment and Micro-Enterprise Development Training'
-    ],
-    [
-        'image' => 'img/778972762_4361891254024313_1944981044132209406_n.jpg',
-        'program' => 'Social Protection',
-        'title' => 'Positive Coping Strategy Orientation',
-        'date' => 'August 19, 2026',
-        'location' => 'Sula, Vinzons, Camarines Norte',
-        'summary' => 'Residents received an orientation on positive coping strategies and available social-protection benefits through coordinated local assistance.',
-        'alt' => 'PESO Vinzons orientation on positive coping strategies and social protection benefits in Sula'
-    ],
-    [
         'image' => 'img/752659025_2053404155260623_314073346839281248_n.jpg',
         'program' => 'SPES',
         'title' => 'SPES Payout',
-        'date' => 'July 22, 2026',
+        'date' => 'July 2026',
         'location' => '2nd Floor, Vinzons Municipal Hall',
         'summary' => 'Student beneficiaries gathered at the Municipal Hall for the scheduled Special Program for Employment of Students payout.',
         'alt' => 'Student beneficiaries attending the SPES payout at Vinzons Municipal Hall'
     ],
     [
+        'image' => 'img/738512047_895211810293178_8484532229922374617_n.jpg',
+        'program' => 'TUPAD',
+        'title' => 'DOLE TUPAD Payout',
+        'date' => 'July 2026',
+        'location' => 'Vinzons Town Kiosk, Vinzons, Camarines Norte',
+        'summary' => 'PESO Vinzons and DOLE coordinated the scheduled release of assistance to qualified TUPAD beneficiaries.',
+        'alt' => 'DOLE representative addressing beneficiaries during the July TUPAD payout'
+    ],
+    [
+        'image' => 'img/785363258_1417993690237714_6441540593083810708_n.jpg',
+        'program' => 'MSME',
+        'title' => 'MEDT Community Participants',
+        'date' => 'August 2026',
+        'location' => 'SB Annex, Vinzons, Camarines Norte',
+        'summary' => 'Participants completed a community-based session focused on financial awareness, employment readiness, and practical livelihood development.',
+        'alt' => 'Community participants during the Employment and Micro-Enterprise Development Training'
+    ],
+    [
         'image' => 'img/725657050_1033155005802300_8541529917400426415_n.jpg',
         'program' => 'SPES',
         'title' => 'SPES Pre-Deployment Orientation',
-        'date' => '2026 program activity',
+        'date' => '2026',
         'location' => 'SB Annex, Vinzons, Camarines Norte',
         'summary' => 'Student beneficiaries received workplace guidance and program reminders before beginning their assigned employment activities.',
         'alt' => 'SPES beneficiaries attending a pre-deployment orientation at the SB Annex'
@@ -97,26 +97,17 @@ $community_activities = [
     [
         'image' => 'img/729964762_1484262739662441_7283136521651950177_n.jpg',
         'program' => 'SPES',
-        'title' => 'Student Employment in Practice',
-        'date' => '2026 program activity',
+        'title' => 'SPES Workplace Deployment',
+        'date' => '2026',
         'location' => 'Vinzons, Camarines Norte',
         'summary' => 'The SPES program gives qualified students supervised work experience while supporting participating local offices and services.',
         'alt' => 'SPES participant completing an assigned office task using a laptop and records'
     ],
     [
-        'image' => 'img/738512047_895211810293178_8484532229922374617_n.jpg',
-        'program' => 'TUPAD',
-        'title' => 'DOLE TUPAD Payout',
-        'date' => 'July 3, 2026',
-        'location' => 'Vinzons Town Kiosk, Vinzons, Camarines Norte',
-        'summary' => 'PESO Vinzons and DOLE coordinated the scheduled release of assistance to qualified TUPAD beneficiaries.',
-        'alt' => 'DOLE representative addressing beneficiaries during the July TUPAD payout'
-    ],
-    [
         'image' => 'img/717582488_2035524683743332_4339653995246931800_n.jpg',
         'program' => 'TUPAD',
         'title' => 'Brigada TUPAD Community Update',
-        'date' => '2026 program activity',
+        'date' => '2026',
         'location' => 'Vinzons, Camarines Norte',
         'summary' => 'Brigada TUPAD participants supported community and school-readiness work as part of the temporary employment program.',
         'alt' => 'Brigada TUPAD participants gathered with their community work tools'
@@ -125,7 +116,7 @@ $community_activities = [
         'image' => 'img/708502840_2080056692891523_5519123430955868083_n.jpg',
         'program' => 'TUPAD',
         'title' => 'Brigada TUPAD Orientation',
-        'date' => 'May 28, 2026',
+        'date' => 'May 2026',
         'location' => 'Vinzons Town Kiosk, Vinzons, Camarines Norte',
         'summary' => 'Beneficiaries attended an official orientation covering program responsibilities, schedules, and the next steps for their community assignments.',
         'alt' => 'Large group of beneficiaries during the Brigada TUPAD orientation'
@@ -134,7 +125,7 @@ $community_activities = [
         'image' => 'img/709881308_2080055899558269_2853097079095622055_n.jpg',
         'program' => 'TUPAD',
         'title' => 'Brigada TUPAD Registration and Orientation',
-        'date' => 'May 28, 2026',
+        'date' => 'May 2026',
         'location' => 'Vinzons Town Kiosk, Vinzons, Camarines Norte',
         'summary' => 'PESO personnel assisted participants with attendance, registration, and the orientation process before deployment.',
         'alt' => 'Beneficiaries completing registration during the Brigada TUPAD orientation'
@@ -143,7 +134,7 @@ $community_activities = [
         'image' => 'img/688108277_2058533188377207_2499809173069909329_n.jpg',
         'program' => 'TUPAD',
         'title' => 'DOLE TUPAD Payout',
-        'date' => 'April 30, 2026',
+        'date' => 'April 2026',
         'location' => 'Vinzons Town Kiosk, Vinzons, Camarines Norte',
         'summary' => 'Qualified TUPAD beneficiaries assembled for the scheduled payout coordinated by DOLE and PESO Vinzons.',
         'alt' => 'TUPAD beneficiaries and program partners during the April payout'
@@ -192,7 +183,7 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="about.css?v=15">
+    <link rel="stylesheet" href="about.css?v=17">
     <link rel="stylesheet" href="frontend_polish.css?v=16">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -411,7 +402,6 @@ try {
                     <span class="activity-gallery-status" id="activityGalleryStatus" aria-live="polite">Activity 1 of <?= count($community_activities) ?></span>
                     <span class="activity-gallery-progress" aria-hidden="true"><i></i></span>
                 </div>
-                <span>Advances automatically &bull; use the arrows or swipe anytime</span>
             </div>
         </div>
     </section>
@@ -735,11 +725,18 @@ try {
         let activityModalTrigger = null;
         let activityAutoTimer = null;
         let galleryScrollFrame = null;
-        const activityAutoDelay = 5200;
+        const activityAutoDelay = 3800;
 
         const updateActivityStatus = (index) => {
             activeActivityIndex = (index + activityCards.length) % activityCards.length;
-            activityCards.forEach((card, cardIndex) => card.classList.toggle('is-active', cardIndex === activeActivityIndex));
+            activityCards.forEach((card, cardIndex) => {
+                const isActive = cardIndex === activeActivityIndex;
+                card.classList.toggle('is-active', isActive);
+                card.classList.toggle('is-before', cardIndex < activeActivityIndex);
+                card.classList.toggle('is-after', cardIndex > activeActivityIndex);
+                if (isActive) card.setAttribute('aria-current', 'true');
+                else card.removeAttribute('aria-current');
+            });
             if (activityStatus) activityStatus.textContent = `Activity ${activeActivityIndex + 1} of ${activityCards.length}`;
         };
 
@@ -808,6 +805,7 @@ try {
         };
 
         if (activityCards.length) {
+            updateActivityStatus(0);
             activityCards.forEach((card, index) => card.addEventListener('click', () => openActivityModal(index, card)));
             activityPrev.addEventListener('click', () => { showActivityCard(activeActivityIndex - 1); startActivityAutoPlay(); });
             activityNext.addEventListener('click', () => { showActivityCard(activeActivityIndex + 1); startActivityAutoPlay(); });
