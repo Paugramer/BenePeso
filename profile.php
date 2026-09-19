@@ -261,7 +261,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
     </style>
     <link rel="stylesheet" href="profile.css?v=14">
     <link rel="stylesheet" href="spes_form_modal.css?v=20260904c">
-<link rel="stylesheet" href="frontend_polish.css?v=20260919c">
+<link rel="stylesheet" href="frontend_polish.css?v=20260919d">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">

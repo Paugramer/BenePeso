@@ -237,15 +237,21 @@
 .verification-page .v-input-wrapper {
     display: grid;
     grid-template-columns: minmax(260px, .9fr) minmax(390px, 1.35fr);
-    align-items: end;
+    align-items: start;
     gap: 13px;
 }
 
 .verification-page .v-search-field {
+    position: relative;
     min-width: 0;
     display: grid;
     gap: 7px;
     text-align: left;
+}
+
+.verification-page .v-program-field,
+.verification-page .v-resident-field {
+    grid-template-rows: 12px 54px auto;
 }
 
 .verification-page .v-search-field-label {
@@ -259,6 +265,7 @@
 
 .verification-page .v-select,
 .verification-page .v-search-entry {
+    box-sizing: border-box;
     width: 100%;
     height: 54px;
     min-height: 54px;
@@ -267,6 +274,46 @@
     color: var(--verify-ink);
     background: #fff;
     font: 600 13px/1.4 Poppins, sans-serif;
+}
+
+.verification-page .v-select-shell {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 54px;
+}
+
+.verification-page .v-select-shell .v-select { height: 100%; padding-left: 44px; }
+
+.verification-page .v-select-icon {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    left: 15px;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+    fill: none;
+    stroke: var(--verify-green);
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform: translateY(-50%);
+}
+
+.verification-page .v-search-help {
+    min-height: 16px;
+    color: #71877c;
+    font-size: 9.5px;
+    line-height: 1.45;
+}
+
+.verification-page .v-program-field::after {
+    content: "Choose the exact approved schedule.";
+    min-height: 16px;
+    color: #71877c;
+    font-size: 9.5px;
+    line-height: 1.45;
 }
 
 .verification-page .v-select {
@@ -316,6 +363,64 @@
 
 .verification-page .v-input::placeholder { color: #8da097; }
 .verification-page .v-input:focus { border: 0; outline: 0; box-shadow: none; }
+
+.verification-page .v-name-suggestions {
+    position: absolute;
+    z-index: 40;
+    top: 76px;
+    right: 0;
+    left: 0;
+    max-height: 310px;
+    overflow-y: auto;
+    padding: 7px;
+    border: 1px solid #bfd9cc;
+    border-radius: 13px;
+    background: #fff;
+    box-shadow: 0 20px 46px rgba(8, 53, 36, .18);
+}
+
+.verification-page .v-name-suggestions[hidden] { display: none; }
+
+.verification-page .v-suggestion-option {
+    width: 100%;
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 9px;
+    color: var(--verify-ink);
+    text-align: left;
+    background: transparent;
+    cursor: pointer;
+}
+
+.verification-page .v-suggestion-option:hover,
+.verification-page .v-suggestion-option:focus-visible,
+.verification-page .v-suggestion-option.is-active { outline: 0; background: #edf7f2; }
+
+.verification-page .v-suggestion-avatar,
+.verification-page .v-person-avatar {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border: 1px solid #c7dfd3;
+    border-radius: 50%;
+    color: var(--verify-green-dark);
+    background: var(--verify-green-soft);
+    font-weight: 900;
+}
+
+.verification-page .v-suggestion-avatar { width: 40px; height: 40px; font-size: 13px; }
+.verification-page .v-suggestion-avatar img,
+.verification-page .v-person-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.verification-page .v-suggestion-copy { min-width: 0; display: grid; gap: 2px; }
+.verification-page .v-suggestion-copy strong { overflow: hidden; font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+.verification-page .v-suggestion-copy small { color: var(--verify-muted); font-size: 9.5px; }
+.verification-page .v-suggestion-state { padding: 17px 12px; color: var(--verify-muted); text-align: center; font-size: 10.5px; line-height: 1.5; }
 
 .verification-page .v-btn {
     width: auto;
@@ -476,6 +581,9 @@
     letter-spacing: -.025em;
     line-height: 1.25;
 }
+
+.verification-page .v-person { display: flex; min-width: 0; align-items: center; gap: 12px; }
+.verification-page .v-person-avatar { width: 48px; height: 48px; font-size: 16px; }
 
 .verification-page .v-name-lock { flex: 0 0 15px; color: #789185; }
 .verification-page .v-location { display: flex; align-items: center; gap: 7px; color: var(--verify-muted); font-size: 12px; }
@@ -642,7 +750,8 @@
 .verification-page .verification-correction-panel {
     margin-top: 18px;
     padding: 16px 18px;
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(470px, .85fr);
     align-items: center;
     justify-content: space-between;
     gap: 20px;
@@ -654,9 +763,14 @@
 .verification-page .verification-correction-panel > div:first-child { display: grid; gap: 3px; }
 .verification-page .verification-correction-panel strong { color: var(--verify-ink); font-size: 13px; }
 .verification-page .verification-correction-panel p { margin: 0; color: var(--verify-muted); font-size: 11px; line-height: 1.55; }
-.verification-page .verification-correction-panel > div:last-child { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.verification-page .verification-help-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 
 .verification-page .verification-correction-panel a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
     padding: 9px 11px;
     border: 1px solid #c8ded3;
     border-radius: 9px;
@@ -666,6 +780,21 @@
     font-weight: 800;
     text-decoration: none;
 }
+
+.verification-page .verification-correction-panel a svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.verification-page .verification-correction-panel a.is-primary { color: #fff; border-color: var(--verify-green); background: var(--verify-green); }
+.verification-page .verification-correction-panel a.is-primary:hover,
+.verification-page .verification-correction-panel a.is-primary:focus-visible { background: var(--verify-green-dark); }
 
 .verification-page .verification-correction-panel a:hover,
 .verification-page .verification-correction-panel a:focus-visible { color: #fff; border-color: var(--verify-green); background: var(--verify-green); }
@@ -681,8 +810,7 @@
     .verification-page .verification-status-grid article:nth-child(3n) { border-right: 1px solid var(--verify-line); border-bottom: 1px solid var(--verify-line); }
     .verification-page .verification-status-grid article:nth-child(2n) { border-right: 0; }
     .verification-page .verification-status-grid article:nth-last-child(-n + 2) { border-bottom: 0; }
-    .verification-page .verification-correction-panel { align-items: flex-start; flex-direction: column; }
-    .verification-page .verification-correction-panel > div:last-child { justify-content: flex-start; }
+    .verification-page .verification-correction-panel { grid-template-columns: 1fr; align-items: flex-start; }
 }
 
 @media (max-width: 768px) {
@@ -733,8 +861,45 @@
     .verification-page .verification-status-grid article:nth-last-child(-n + 2) { min-height: 0; border-right: 0; border-bottom: 1px solid var(--verify-line); }
     .verification-page .verification-status-grid article:last-child { border-bottom: 0; }
     .verification-page .verification-correction-panel a { width: 100%; text-align: center; }
-    .verification-page .verification-correction-panel > div:last-child { width: 100%; }
+    .verification-page .verification-help-actions { width: 100%; grid-template-columns: 1fr; }
     .verification-page .nav-btn { min-width: 94px; }
+}
+
+/* Keep account actions visually centered and their SVGs visible on this page. */
+.verification-page .account-dropdown-link,
+.verification-page .logout-form .logout-link {
+    justify-content: center;
+    text-align: center;
+}
+
+.verification-page .account-dropdown-link > span:last-child,
+.verification-page .logout-form .logout-link > span {
+    width: 94px;
+    text-align: left;
+}
+
+.verification-page .account-link-icon {
+    display: grid !important;
+    place-items: center;
+}
+
+.verification-page .account-link-icon svg,
+.verification-page .logout-form .logout-link svg {
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.verification-page .logout-form .logout-link svg {
+    width: 38px;
+    height: 38px;
+    padding: 9px;
+    border: 1px solid #f2cccc;
+    border-radius: 10px;
+    background: #fff;
 }
 
 @media (prefers-reduced-motion: reduce) {

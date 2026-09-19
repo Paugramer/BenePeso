@@ -184,7 +184,7 @@ try {
     
     <link rel="stylesheet" href="home.css?v=17">
     <link rel="stylesheet" href="about.css?v=18">
-    <link rel="stylesheet" href="frontend_polish.css?v=20260919c">
+    <link rel="stylesheet" href="frontend_polish.css?v=20260919d">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">

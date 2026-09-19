@@ -1561,7 +1561,8 @@ html.bp-action-loading body {
 .bp-update-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 10px;
   padding: 13px 18px;
   color: #176b49;
   background: #f8fbf9;

@@ -34,6 +34,75 @@ if ($res && $res->num_rows === 1) {
     }
 }
 
+// Privacy-scoped typeahead: only the selected approved batch and the user's barangay.
+if (isset($_GET['suggest']) && $_GET['suggest'] === '1') {
+    header('Content-Type: application/json; charset=UTF-8');
+    header('Cache-Control: private, no-store, max-age=0');
+    header('X-Content-Type-Options: nosniff');
+    $prefix = trim((string)($_GET['q'] ?? ''));
+    $suggestProgramId = ctype_digit((string)($_GET['program_filter'] ?? '')) ? (int)$_GET['program_filter'] : 0;
+
+    if ($suggestProgramId < 1 || mb_strlen($prefix, 'UTF-8') < 1) {
+        echo json_encode(['items' => []]);
+        exit;
+    }
+
+    $suggestIp = auth_request_ip();
+    $suggestLimited = max(
+        auth_rate_limit_hit('beneficiary-suggest-account', (string)$user_id, 60, 300, 300),
+        auth_rate_limit_hit('beneficiary-suggest-ip', $suggestIp, 160, 300, 300)
+    );
+    if ($suggestLimited > 0) {
+        http_response_code(429);
+        echo json_encode(['items' => [], 'message' => 'Please wait before searching again.']);
+        exit;
+    }
+
+    $prefixLike = $prefix . '%';
+    $suggestStmt = $conn->prepare(
+        "SELECT b.first_name, b.last_name, b.full_name, u.profile_pic
+           FROM beneficiaries b
+           JOIN programs p ON p.program_id = b.program_id
+           LEFT JOIN users u ON u.user_id = b.user_id
+          WHERE b.barangay = ?
+            AND b.program_id = ?
+            AND p.approval_status = 'Approved'
+            AND (UPPER(p.program_name) LIKE '%TUPAD%' OR UPPER(p.program_name) LIKE '%SPES%' OR UPPER(p.program_name) LIKE '%MSME%')
+            AND LOWER(TRIM(b.full_name)) LIKE LOWER(?)
+          ORDER BY b.full_name ASC, b.beneficiary_id DESC
+          LIMIT 6"
+    );
+    $suggestStmt->bind_param('sis', $user_barangay, $suggestProgramId, $prefixLike);
+    $suggestStmt->execute();
+    $suggestResult = $suggestStmt->get_result();
+    $suggestions = [];
+    while ($suggestRow = $suggestResult->fetch_assoc()) {
+        $fullName = trim((string)($suggestRow['full_name'] ?? ''));
+        if ($fullName === '') continue;
+        $firstName = trim((string)($suggestRow['first_name'] ?? ''));
+        $lastName = trim((string)($suggestRow['last_name'] ?? ''));
+        if ($firstName !== '' && $lastName !== '') {
+            $lastLength = mb_strlen($lastName, 'UTF-8');
+            $displayName = $firstName . ' ' . mb_substr($lastName, 0, 1, 'UTF-8') . str_repeat('*', max(0, $lastLength - 1));
+        } else {
+            $nameLength = mb_strlen($fullName, 'UTF-8');
+            $displayName = mb_substr($fullName, 0, (int)ceil($nameLength / 2), 'UTF-8') . str_repeat('*', (int)floor($nameLength / 2));
+        }
+        $profileFilename = basename((string)($suggestRow['profile_pic'] ?? ''));
+        $profileImage = $profileFilename !== '' && $profileFilename !== 'default_user.png' && is_file(__DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $profileFilename)
+            ? 'uploads/' . rawurlencode($profileFilename)
+            : '';
+        $suggestions[] = [
+            'value' => $fullName,
+            'label' => $displayName,
+            'initial' => mb_strtoupper(mb_substr($firstName !== '' ? $firstName : $fullName, 0, 1, 'UTF-8'), 'UTF-8'),
+            'photo' => $profileImage,
+        ];
+    }
+    echo json_encode(['items' => $suggestions], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
 // 2. Fetch approved batches for a clear Program > Batch filter.
 $programs_list = $conn->query("SELECT program_id, program_name, program_code, start_date, end_date FROM programs WHERE approval_status = 'Approved' AND (UPPER(program_name) LIKE '%TUPAD%' OR UPPER(program_name) LIKE '%SPES%' OR UPPER(program_name) LIKE '%MSME%') ORDER BY program_name ASC, start_date DESC, program_id DESC");
 
@@ -57,7 +126,7 @@ if (isset($_GET['search'])) {
     $search_query = trim($_GET['search'] ?? "");
     $valid_program_filter = ctype_digit((string)$filter_program) && (int)$filter_program > 0;
     $batch_required = $search_query !== '' && !$valid_program_filter;
-    $search_ready = mb_strlen($search_query) >= 5 && $valid_program_filter;
+    $search_ready = mb_strlen($search_query, 'UTF-8') >= 1 && $valid_program_filter;
     $search_too_short = $search_query !== '' && !$search_ready;
 }
 
@@ -134,9 +203,10 @@ if ($search_ready) {
     // --- B. Fetch the limited data for current page ---
     $sql = "SELECT b.program_id, b.first_name, b.last_name, b.full_name, b.barangay,
                    b.approval_status, b.availment_status, b.created_at, b.updated_at,
-                   p.program_name, p.program_code
+                   p.program_name, p.program_code, u.profile_pic AS user_profile_pic
               FROM beneficiaries b
-              JOIN programs p ON b.program_id = p.program_id " . $where_clause . " ORDER BY b.created_at DESC LIMIT ?, ?";
+              JOIN programs p ON b.program_id = p.program_id
+              LEFT JOIN users u ON u.user_id = b.user_id " . $where_clause . " ORDER BY b.created_at DESC LIMIT ?, ?";
     $stmt = $conn->prepare($sql);
     
     if (!empty($search_query) && !empty($filter_program)) {
@@ -166,12 +236,12 @@ if ($search_ready) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=16" />
-    <link rel="stylesheet" href="frontend_polish.css?v=20260919c">
+    <link rel="stylesheet" href="frontend_polish.css?v=20260919d">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="verification.css?v=9" />
+    <link rel="stylesheet" href="verification.css?v=10" />
 <script src="frontend_polish.js?v=20260919c" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -261,6 +331,8 @@ if ($search_ready) {
                     <div class="v-input-wrapper">
                         <label class="v-search-field v-program-field" for="programFilter">
                             <span class="v-search-field-label">Program and batch</span>
+                            <span class="v-select-shell">
+                            <svg class="v-select-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16"></path></svg>
                             <select name="program_filter" id="programFilter" class="v-select" required aria-describedby="verificationUseNotice">
                             <option value="">Select an exact batch</option>
                             <?php if ($programs_list): ?>
@@ -285,19 +357,22 @@ if ($search_ready) {
                                 <?php if ($program_group !== null): ?></optgroup><?php endif; ?>
                             <?php endif; ?>
                             </select>
+                            </span>
                         </label>
-                        <label class="v-search-field v-resident-field" for="searchInput">
-                            <span class="v-search-field-label">Resident name</span>
+                        <div class="v-search-field v-resident-field">
+                            <label class="v-search-field-label" for="searchInput">Resident name</label>
                             <span class="v-search-entry">
                                 <svg class="v-search-entry-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
-                                <input type="text" name="search" id="searchInput" class="v-input" placeholder="Enter complete registered name" value="<?= htmlspecialchars($search_query) ?>" autocomplete="off" minlength="5" required>
+                                <input type="text" name="search" id="searchInput" class="v-input" placeholder="Start typing a registered name" value="<?= htmlspecialchars($search_query) ?>" autocomplete="off" minlength="1" required role="combobox" aria-autocomplete="list" aria-controls="nameSuggestions" aria-expanded="false">
                                 <button type="submit" class="v-btn" aria-label="Verify beneficiary record">
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                                     <span class="v-btn-label">Verify</span>
                                     <span class="v-btn-progress" hidden><i aria-hidden="true"></i>Checking</span>
                                 </button>
                             </span>
-                        </label>
+                            <div class="v-name-suggestions" id="nameSuggestions" role="listbox" aria-label="Matching beneficiary names" hidden></div>
+                            <small class="v-search-help">Suggestions show only matching records from the selected batch and your barangay.</small>
+                        </div>
                     </div>
                     <div class="privacy-disclaimer" id="verificationUseNotice">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
@@ -347,13 +422,26 @@ if ($search_ready) {
         $secureName = mb_substr($fName, 0, (int)ceil($len / 2), 'UTF-8') . str_repeat('*', (int)floor($len / 2));
     }
 ?>
-<h3 class="v-name" title="Name partially hidden for Data Privacy compliance">
-    <?= htmlspecialchars($secureName) ?>
-    <svg class="v-name-lock" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-    </svg>
-</h3>
+                            <?php
+                            $resultProfileFilename = basename((string)($row['user_profile_pic'] ?? ''));
+                            $resultProfileImage = $resultProfileFilename !== '' && $resultProfileFilename !== 'default_user.png' && is_file(__DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $resultProfileFilename)
+                                ? 'uploads/' . rawurlencode($resultProfileFilename)
+                                : '';
+                            $resultInitial = mb_strtoupper(mb_substr(trim((string)($row['first_name'] ?? $row['full_name'] ?? 'B')), 0, 1, 'UTF-8'), 'UTF-8');
+                            ?>
+                            <div class="v-person">
+                                <span class="v-person-avatar" aria-hidden="true">
+                                    <span><?= htmlspecialchars($resultInitial ?: 'B') ?></span>
+                                    <?php if ($resultProfileImage !== ''): ?><img src="<?= htmlspecialchars($resultProfileImage) ?>" alt="" loading="lazy" onerror="this.remove()"><?php endif; ?>
+                                </span>
+                                <h3 class="v-name" title="Name partially hidden for Data Privacy compliance">
+                                    <?= htmlspecialchars($secureName) ?>
+                                    <svg class="v-name-lock" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                </h3>
+                            </div>
                             <div class="v-location">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                                 <span>Brgy. <?= htmlspecialchars($row['barangay'] ?? $user_barangay) ?>, Vinzons</span>
@@ -486,7 +574,11 @@ if ($search_ready) {
         </div>
         <div class="verification-correction-panel">
             <div><strong>Is a record missing or inaccurate?</strong><p>The concerned resident should use My Profile or contact PESO Vinzons. Do not submit another application solely to correct an existing record.</p></div>
-            <div><a href="profile.php#my-programs">Track my own application</a><a href="privacy_notice.php">Read Privacy Notice</a><a href="mailto:lguvinzonspeso@gmail.com?subject=BENEPESO%20Record%20Inquiry">Contact PESO</a></div>
+            <div class="verification-help-actions">
+                <a href="profile.php#my-programs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9l8-5 8 5v10a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1Z"></path></svg><span>Track my application</span></a>
+                <a href="privacy_notice.php"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 2.8 7.6 7 9 4.2-1.4 7-4.5 7-9V6l-7-3Z"></path><path d="m9 12 2 2 4-4"></path></svg><span>Privacy Notice</span></a>
+                <a class="is-primary" href="mailto:lguvinzonspeso@gmail.com?subject=BENEPESO%20Record%20Inquiry"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"></path><path d="m4 7 8 6 8-6"></path></svg><span>Contact PESO</span></a>
+            </div>
         </div>
     </section>
 </main>
@@ -564,6 +656,150 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitButton = searchForm ? searchForm.querySelector('.v-btn') : null;
     const submitLabel = submitButton ? submitButton.querySelector('.v-btn-label') : null;
     const submitProgress = submitButton ? submitButton.querySelector('.v-btn-progress') : null;
+    const suggestionList = document.getElementById('nameSuggestions');
+    let suggestionTimer = null;
+    let suggestionRequest = null;
+    let suggestionButtons = [];
+    let activeSuggestion = -1;
+
+    function closeSuggestions() {
+        if (!suggestionList) return;
+        suggestionList.hidden = true;
+        suggestionList.replaceChildren();
+        suggestionButtons = [];
+        activeSuggestion = -1;
+        searchInput.setAttribute('aria-expanded', 'false');
+        searchInput.removeAttribute('aria-activedescendant');
+    }
+
+    function setActiveSuggestion(index) {
+        if (!suggestionButtons.length) return;
+        activeSuggestion = (index + suggestionButtons.length) % suggestionButtons.length;
+        suggestionButtons.forEach((button, buttonIndex) => {
+            const isActive = buttonIndex === activeSuggestion;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        const activeButton = suggestionButtons[activeSuggestion];
+        searchInput.setAttribute('aria-activedescendant', activeButton.id);
+        activeButton.scrollIntoView({ block: 'nearest' });
+    }
+
+    function selectSuggestion(item) {
+        searchInput.value = item.value || '';
+        closeSuggestions();
+        searchInput.focus();
+    }
+
+    function showSuggestionMessage(message) {
+        suggestionList.replaceChildren();
+        const state = document.createElement('div');
+        state.className = 'v-suggestion-state';
+        state.textContent = message;
+        suggestionList.appendChild(state);
+        suggestionList.hidden = false;
+        searchInput.setAttribute('aria-expanded', 'true');
+    }
+
+    function renderSuggestions(items) {
+        suggestionList.replaceChildren();
+        suggestionButtons = [];
+        activeSuggestion = -1;
+        if (!items.length) {
+            showSuggestionMessage('No matching record in this batch and barangay.');
+            return;
+        }
+        items.forEach((item, index) => {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.id = `beneficiarySuggestion${index}`;
+            option.className = 'v-suggestion-option';
+            option.setAttribute('role', 'option');
+            option.setAttribute('aria-selected', 'false');
+
+            const avatar = document.createElement('span');
+            avatar.className = 'v-suggestion-avatar';
+            avatar.textContent = item.initial || 'B';
+            if (item.photo) {
+                const image = document.createElement('img');
+                image.src = item.photo;
+                image.alt = '';
+                image.loading = 'lazy';
+                image.addEventListener('error', () => image.remove());
+                avatar.appendChild(image);
+            }
+
+            const copy = document.createElement('span');
+            copy.className = 'v-suggestion-copy';
+            const name = document.createElement('strong');
+            name.textContent = item.label || 'Matching beneficiary';
+            const context = document.createElement('small');
+            context.textContent = 'Matching record in selected batch';
+            copy.append(name, context);
+            option.append(avatar, copy);
+            option.addEventListener('mousedown', event => event.preventDefault());
+            option.addEventListener('click', () => selectSuggestion(item));
+            suggestionList.appendChild(option);
+            suggestionButtons.push(option);
+        });
+        suggestionList.hidden = false;
+        searchInput.setAttribute('aria-expanded', 'true');
+    }
+
+    function requestSuggestions() {
+        const prefix = searchInput.value.trim();
+        const batchId = programFilter.value;
+        if (!batchId || prefix.length < 1) {
+            closeSuggestions();
+            return;
+        }
+        if (suggestionRequest) suggestionRequest.abort();
+        suggestionRequest = new AbortController();
+        showSuggestionMessage('Searching the selected batch...');
+        const suggestionUrl = `verification.php?suggest=1&q=${encodeURIComponent(prefix)}&program_filter=${encodeURIComponent(batchId)}`;
+        fetch(suggestionUrl, { credentials: 'same-origin', signal: suggestionRequest.signal })
+            .then(response => {
+                if (!response.ok) throw new Error(`Suggestion lookup failed with status ${response.status}`);
+                return response.json();
+            })
+            .then(data => renderSuggestions(Array.isArray(data.items) ? data.items : []))
+            .catch(error => {
+                if (error.name !== 'AbortError') showSuggestionMessage('Suggestions are temporarily unavailable. You can still enter the exact name.');
+            });
+    }
+
+    searchInput.addEventListener('input', () => {
+        window.clearTimeout(suggestionTimer);
+        suggestionTimer = window.setTimeout(requestSuggestions, 240);
+    });
+    searchInput.addEventListener('focus', () => {
+        if (searchInput.value.trim().length >= 1 && programFilter.value) requestSuggestions();
+    });
+    searchInput.addEventListener('keydown', event => {
+        if (suggestionList.hidden || !suggestionButtons.length) {
+            if (event.key === 'Escape') closeSuggestions();
+            return;
+        }
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            setActiveSuggestion(activeSuggestion + 1);
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            setActiveSuggestion(activeSuggestion - 1);
+        } else if (event.key === 'Enter' && activeSuggestion >= 0) {
+            event.preventDefault();
+            suggestionButtons[activeSuggestion].click();
+        } else if (event.key === 'Escape') {
+            closeSuggestions();
+        }
+    });
+    programFilter.addEventListener('change', () => {
+        closeSuggestions();
+        if (searchInput.value.trim().length >= 1) requestSuggestions();
+    });
+    document.addEventListener('click', event => {
+        if (!event.target.closest('.v-resident-field')) closeSuggestions();
+    });
 
     function setLookupLoading(isLoading) {
         resultsArea.setAttribute('aria-busy', isLoading ? 'true' : 'false');
@@ -577,7 +813,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function fetchResults() {
         const query = searchInput.value.trim();
         const filter = programFilter.value;
-        if (query.length < 5 || !filter) return;
+        if (query.length < 1 || !filter) return;
         
         setLookupLoading(true);
 
