@@ -241,7 +241,7 @@ if ($search_ready) {
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="verification.css?v=11" />
+    <link rel="stylesheet" href="verification.css?v=12" />
 <script src="frontend_polish.js?v=20260919c" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -372,6 +372,7 @@ if ($search_ready) {
                             <?php endif; ?>
                             </select>
                             </span>
+                            <small class="v-search-help" id="batchFilterHelp">Choose the exact approved schedule.</small>
                         </label>
                         <div class="v-search-field v-resident-field">
                             <label class="v-search-field-label" for="searchInput">Resident name</label>
@@ -665,6 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const programFilter = document.getElementById('programFilter');
     const programTypeFilter = document.getElementById('programTypeFilter');
+    const batchFilterHelp = document.getElementById('batchFilterHelp');
     const resultsArea = document.getElementById('resultsArea');
     const searchForm = document.getElementById('searchForm');
     const submitButton = searchForm ? searchForm.querySelector('.v-btn') : null;
@@ -705,6 +707,12 @@ document.addEventListener('DOMContentLoaded', function() {
             option.selected = item.value === selectedValue;
             groups.get(item.group).appendChild(option);
         });
+        programFilter.dispatchEvent(new Event('bp-select-sync'));
+        if (batchFilterHelp) {
+            batchFilterHelp.textContent = programType
+                ? `Showing ${programType} schedules only. Choose the exact batch.`
+                : 'Choose the exact approved schedule.';
+        }
     }
 
     const initiallySelectedBatch = batchCatalog.find(item => item.value === initialBatchValue);
@@ -864,6 +872,7 @@ document.addEventListener('DOMContentLoaded', function() {
         rebuildBatchOptions(programTypeFilter.value);
         closeSuggestions();
         searchInput.value = '';
+        programFilter.dispatchEvent(new Event('change', { bubbles: true }));
         programFilter.focus();
     });
     document.addEventListener('click', event => {
