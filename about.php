@@ -48,6 +48,108 @@ $total_beneficiaries = 0;
 $total_programs = 0;
 $barangays_reached = 0;
 
+$community_activities = [
+    [
+        'image' => 'img/peso-community-medt-2026.png',
+        'program' => 'Livelihood',
+        'title' => 'Employment and Micro-Enterprise Development Training',
+        'date' => 'August 27, 2026',
+        'location' => 'SB Annex, Vinzons, Camarines Norte',
+        'summary' => 'PESO Vinzons brought practical employment and micro-enterprise guidance closer to local residents through an organized community training session.',
+        'alt' => 'PESO Vinzons facilitator leading Employment and Micro-Enterprise Development Training at the SB Annex'
+    ],
+    [
+        'image' => 'img/785363258_1417993690237714_6441540593083810708_n.jpg',
+        'program' => 'Livelihood',
+        'title' => 'MEDT Community Participants',
+        'date' => 'August 27, 2026',
+        'location' => 'SB Annex, Vinzons, Camarines Norte',
+        'summary' => 'Participants completed a community-based session focused on financial awareness, employment readiness, and practical livelihood development.',
+        'alt' => 'Community participants during the Employment and Micro-Enterprise Development Training'
+    ],
+    [
+        'image' => 'img/778972762_4361891254024313_1944981044132209406_n.jpg',
+        'program' => 'Social Protection',
+        'title' => 'Positive Coping Strategy Orientation',
+        'date' => 'August 19, 2026',
+        'location' => 'Sula, Vinzons, Camarines Norte',
+        'summary' => 'Residents received an orientation on positive coping strategies and available social-protection benefits through coordinated local assistance.',
+        'alt' => 'PESO Vinzons orientation on positive coping strategies and social protection benefits in Sula'
+    ],
+    [
+        'image' => 'img/752659025_2053404155260623_314073346839281248_n.jpg',
+        'program' => 'SPES',
+        'title' => 'SPES Payout',
+        'date' => 'July 22, 2026',
+        'location' => '2nd Floor, Vinzons Municipal Hall',
+        'summary' => 'Student beneficiaries gathered at the Municipal Hall for the scheduled Special Program for Employment of Students payout.',
+        'alt' => 'Student beneficiaries attending the SPES payout at Vinzons Municipal Hall'
+    ],
+    [
+        'image' => 'img/725657050_1033155005802300_8541529917400426415_n.jpg',
+        'program' => 'SPES',
+        'title' => 'SPES Pre-Deployment Orientation',
+        'date' => '2026 program activity',
+        'location' => 'SB Annex, Vinzons, Camarines Norte',
+        'summary' => 'Student beneficiaries received workplace guidance and program reminders before beginning their assigned employment activities.',
+        'alt' => 'SPES beneficiaries attending a pre-deployment orientation at the SB Annex'
+    ],
+    [
+        'image' => 'img/729964762_1484262739662441_7283136521651950177_n.jpg',
+        'program' => 'SPES',
+        'title' => 'Student Employment in Practice',
+        'date' => '2026 program activity',
+        'location' => 'Vinzons, Camarines Norte',
+        'summary' => 'The SPES program gives qualified students supervised work experience while supporting participating local offices and services.',
+        'alt' => 'SPES participant completing an assigned office task using a laptop and records'
+    ],
+    [
+        'image' => 'img/738512047_895211810293178_8484532229922374617_n.jpg',
+        'program' => 'TUPAD',
+        'title' => 'DOLE TUPAD Payout',
+        'date' => 'July 3, 2026',
+        'location' => 'Vinzons Town Kiosk, Vinzons, Camarines Norte',
+        'summary' => 'PESO Vinzons and DOLE coordinated the scheduled release of assistance to qualified TUPAD beneficiaries.',
+        'alt' => 'DOLE representative addressing beneficiaries during the July TUPAD payout'
+    ],
+    [
+        'image' => 'img/717582488_2035524683743332_4339653995246931800_n.jpg',
+        'program' => 'TUPAD',
+        'title' => 'Brigada TUPAD Community Update',
+        'date' => '2026 program activity',
+        'location' => 'Vinzons, Camarines Norte',
+        'summary' => 'Brigada TUPAD participants supported community and school-readiness work as part of the temporary employment program.',
+        'alt' => 'Brigada TUPAD participants gathered with their community work tools'
+    ],
+    [
+        'image' => 'img/708502840_2080056692891523_5519123430955868083_n.jpg',
+        'program' => 'TUPAD',
+        'title' => 'Brigada TUPAD Orientation',
+        'date' => 'May 28, 2026',
+        'location' => 'Vinzons Town Kiosk, Vinzons, Camarines Norte',
+        'summary' => 'Beneficiaries attended an official orientation covering program responsibilities, schedules, and the next steps for their community assignments.',
+        'alt' => 'Large group of beneficiaries during the Brigada TUPAD orientation'
+    ],
+    [
+        'image' => 'img/709881308_2080055899558269_2853097079095622055_n.jpg',
+        'program' => 'TUPAD',
+        'title' => 'Brigada TUPAD Registration and Orientation',
+        'date' => 'May 28, 2026',
+        'location' => 'Vinzons Town Kiosk, Vinzons, Camarines Norte',
+        'summary' => 'PESO personnel assisted participants with attendance, registration, and the orientation process before deployment.',
+        'alt' => 'Beneficiaries completing registration during the Brigada TUPAD orientation'
+    ],
+    [
+        'image' => 'img/688108277_2058533188377207_2499809173069909329_n.jpg',
+        'program' => 'TUPAD',
+        'title' => 'DOLE TUPAD Payout',
+        'date' => 'April 30, 2026',
+        'location' => 'Vinzons Town Kiosk, Vinzons, Camarines Norte',
+        'summary' => 'Qualified TUPAD beneficiaries assembled for the scheduled payout coordinated by DOLE and PESO Vinzons.',
+        'alt' => 'TUPAD beneficiaries and program partners during the April payout'
+    ]
+];
+
 try {
     // Count approved beneficiary records only; pending and rejected applications
     // are not presented as residents already served by PESO.
@@ -90,7 +192,7 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="about.css?v=13">
+    <link rel="stylesheet" href="about.css?v=14">
     <link rel="stylesheet" href="frontend_polish.css?v=16">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -180,6 +282,7 @@ try {
         <div class="content-wrap">
             <div class="stats-glass-panel">
                 <div class="stat-item">
+                    <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="m16 11 2 2 4-4"></path></svg></span>
                     <div class="stat-num-wrap">
                         <span class="stat-num counter" data-target="<?php echo $total_beneficiaries; ?>">0</span>
                         <?php if($total_beneficiaries > 1000): ?><span class="stat-plus">+</span><?php endif; ?>
@@ -188,6 +291,7 @@ try {
                 </div>
                 <div class="stat-divider"></div>
                 <div class="stat-item">
+                    <span class="stat-icon stat-icon-gold" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="15" rx="2"></rect><path d="M8 5V3h8v2M3 11h18M9 11v2h6v-2"></path></svg></span>
                     <div class="stat-num-wrap">
                         <span class="stat-num counter" data-target="<?php echo $total_programs; ?>">0</span>
                     </div>
@@ -195,6 +299,7 @@ try {
                 </div>
                 <div class="stat-divider"></div>
                 <div class="stat-item">
+                    <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 5.5-8 11-8 11S4 15.5 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg></span>
                     <div class="stat-num-wrap">
                         <span class="stat-num counter" data-target="<?php echo $barangays_reached; ?>">0</span>
                     </div>
@@ -258,43 +363,53 @@ try {
         </div>
     </section>
 
-    <!-- COMMUNITY IN ACTION -->
-    <section class="content-section community-story-section stagger-6" aria-labelledby="communityStoryTitle">
+    <!-- COMMUNITY ACTIVITY GALLERY -->
+    <section class="content-section activity-gallery-section stagger-6" aria-labelledby="communityStoryTitle">
         <div class="content-wrap">
-            <article class="community-story-card">
-                <div class="community-story-media">
-                    <img src="img/peso-community-medt-2026.png" alt="PESO Vinzons staff facilitating Employment and Micro-Enterprise Development Training with community beneficiaries" loading="lazy" decoding="async">
-                    <span class="community-story-live"><i aria-hidden="true"></i> Community in action</span>
+            <div class="activity-gallery-heading">
+                <div>
+                    <span class="section-eyebrow">Community in action</span>
+                    <h2 id="communityStoryTitle">Programs delivered with purpose</h2>
+                    <p>Explore documented PESO Vinzons activities. Select any photograph to review its program, date, location, and service context.</p>
                 </div>
-                <div class="community-story-copy">
-                    <span class="community-story-eyebrow">Skills and livelihood support</span>
-                    <h2 id="communityStoryTitle">Service that meets residents where they are</h2>
-                    <p>PESO Vinzons brings practical employment and micro-enterprise guidance closer to local beneficiaries through coordinated training, clear information, and hands-on assistance.</p>
-                    <div class="community-program-family" aria-label="Core PESO Vinzons programs">
-                        <span class="community-program-family-label">Three connected programs</span>
-                        <div class="community-program-group">
-                            <a href="programs.php?search=TUPAD" class="community-program-chip program-tupad">
-                                <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 8h12l1 12H5L6 8Z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2M9 13h6"></path></svg></span>
-                                <strong>TUPAD</strong><small>Emergency employment</small>
-                            </a>
-                            <a href="programs.php?search=SPES" class="community-program-chip program-spes">
-                                <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Z"></path><path d="M7 12v4c3 2 7 2 10 0v-4M21 9v6"></path></svg></span>
-                                <strong>SPES</strong><small>Student employment</small>
-                            </a>
-                            <a href="programs.php?search=MSME" class="community-program-chip program-msme">
-                                <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10v10h16V10M3 10l2-6h14l2 6"></path><path d="M3 10a3 3 0 0 0 5 2 3 3 0 0 0 4 0 3 3 0 0 0 4 0 3 3 0 0 0 5-2M9 20v-5h6v5"></path></svg></span>
-                                <strong>MSME</strong><small>Livelihood support</small>
-                            </a>
-                        </div>
-                    </div>
-                    <dl class="community-story-details">
-                        <div><dt>Featured activity</dt><dd>Employment/Micro-Enterprise &amp; Development Training</dd></div>
-                        <div><dt>Date</dt><dd>August 27, 2026</dd></div>
-                        <div><dt>Location</dt><dd>SB Annex, Vinzons, Camarines Norte</dd></div>
-                    </dl>
-                    <a class="community-story-link" href="https://www.facebook.com/photo.php?fbid=2159020488328476&amp;set=pb.100026616380327.-2207520000&amp;type=3" target="_blank" rel="noopener noreferrer">View the official PESO Vinzons post <span aria-hidden="true">&rarr;</span></a>
+                <div class="activity-gallery-controls" aria-label="Activity gallery controls">
+                    <button type="button" class="activity-gallery-arrow" id="activityPrev" aria-label="Show previous activity"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+                    <button type="button" class="activity-gallery-arrow" id="activityNext" aria-label="Show next activity"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
                 </div>
-            </article>
+            </div>
+
+            <div class="activity-gallery-frame">
+                <div class="activity-gallery-track" id="activityTrack" tabindex="0" aria-label="PESO Vinzons activity photographs">
+                    <?php foreach ($community_activities as $index => $activity): ?>
+                        <button
+                            type="button"
+                            class="activity-gallery-card<?= $index === 0 ? ' is-active' : '' ?>"
+                            data-activity-index="<?= $index ?>"
+                            data-program="<?= htmlspecialchars($activity['program'], ENT_QUOTES, 'UTF-8') ?>"
+                            data-title="<?= htmlspecialchars($activity['title'], ENT_QUOTES, 'UTF-8') ?>"
+                            data-date="<?= htmlspecialchars($activity['date'], ENT_QUOTES, 'UTF-8') ?>"
+                            data-location="<?= htmlspecialchars($activity['location'], ENT_QUOTES, 'UTF-8') ?>"
+                            data-summary="<?= htmlspecialchars($activity['summary'], ENT_QUOTES, 'UTF-8') ?>"
+                            data-image="<?= htmlspecialchars($activity['image'], ENT_QUOTES, 'UTF-8') ?>"
+                            aria-label="View details for <?= htmlspecialchars($activity['title'], ENT_QUOTES, 'UTF-8') ?>">
+                            <span class="activity-gallery-photo">
+                                <img src="<?= htmlspecialchars($activity['image'], ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($activity['alt'], ENT_QUOTES, 'UTF-8') ?>" loading="lazy" decoding="async" width="1080" height="720">
+                                <span class="activity-program-badge"><?= htmlspecialchars($activity['program'], ENT_QUOTES, 'UTF-8') ?></span>
+                                <span class="activity-photo-action" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg> View details</span>
+                            </span>
+                            <span class="activity-gallery-card-copy">
+                                <strong><?= htmlspecialchars($activity['title'], ENT_QUOTES, 'UTF-8') ?></strong>
+                                <small><span><?= htmlspecialchars($activity['date'], ENT_QUOTES, 'UTF-8') ?></span><span><?= htmlspecialchars($activity['location'], ENT_QUOTES, 'UTF-8') ?></span></small>
+                            </span>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <div class="activity-gallery-footer">
+                <span class="activity-gallery-status" id="activityGalleryStatus" aria-live="polite">Activity 1 of <?= count($community_activities) ?></span>
+                <span>Use the arrows or swipe to browse official activity records</span>
+            </div>
         </div>
     </section>
 
@@ -408,7 +523,7 @@ try {
                     </div>
                     <div class="map-preview" aria-label="Map preview of the PESO Vinzons office">
                     <iframe
-                        src="https://maps.google.com/maps?q=Vinzons%20Municipal%20Hall,%20Vinzons%20Avenue,%20Barangay%20II,%20Poblacion,%20Vinzons,%20Camarines%20Norte%204603&t=m&z=18&ie=UTF8&iwloc=&output=embed"
+                        src="https://maps.google.com/maps?q=14.1738456,122.9076545&amp;t=m&amp;z=18&amp;ie=UTF8&amp;iwloc=&amp;output=embed"
                         title="Street map showing Vinzons Municipal Hall on Vinzons Avenue"
                         width="100%" 
                         height="100%" 
@@ -420,8 +535,11 @@ try {
                     </iframe>
                     </div>
                     <div class="map-card-footer">
-                        <span>Barangay II (Poblacion), Vinzons</span>
-                        <a class="map-directions-link" href="https://www.google.com/maps/search/?api=1&amp;query=Vinzons+Municipal+Hall%2C+Vinzons+Avenue%2C+Barangay+II%2C+Poblacion%2C+Vinzons%2C+Camarines+Norte+4603" target="_blank" rel="noopener noreferrer">Get directions <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"></path></svg></a>
+                        <span>1 Vinzons Avenue &bull; Barangay II (Poblacion)</span>
+                        <span class="map-card-actions">
+                            <a class="map-streetview-link" href="https://www.google.com/maps/place/Vinzons+Municipal+Hall,+1+Vinzons+Ave,+Vinzons,+4603+Camarines+Norte/@14.1737907,122.9075918,10a,75y,34.31h,89.9t/data=!3m7!1e1!3m5!1sOvPqPsazfA3AyGTZSu559g!2e0!6shttps:%2F%2Fstreetviewpixels-pa.googleapis.com%2Fv1%2Fthumbnail%3Fcb_client%3Dmaps_sv.tactile%26w%3D900%26h%3D600%26pitch%3D0.09888153299029057%26panoid%3DOvPqPsazfA3AyGTZSu559g%26yaw%3D34.31473476451902!7i16384!8i8192!4m9!1m2!2m1!1sVinzons+Municipal+Hall,+Vinzons+Avenue,+Barangay+II,+Poblacion,+Vinzons,+Camarines+Norte+4603!3m5!1s0x3398b00dc93cf841:0xacbc32d6f21efe11!8m2!3d14.1738456!4d122.9076545!16s%2Fg%2F11ydtl7r7b!5m1!1e1?entry=ttu" target="_blank" rel="noopener noreferrer"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path></svg>Street View</a>
+                            <a class="map-directions-link" href="https://www.google.com/maps/dir/?api=1&amp;destination=14.1738456%2C122.9076545" target="_blank" rel="noopener noreferrer">Get directions <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"></path></svg></a>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -432,6 +550,34 @@ try {
         </div>
     </section>
 </main>
+
+<!-- ACTIVITY DETAIL MODAL -->
+<div class="activity-modal-overlay" id="activityModal" aria-hidden="true">
+    <div class="activity-modal" role="dialog" aria-modal="true" aria-labelledby="activityModalTitle" aria-describedby="activityModalSummary">
+        <button type="button" class="activity-modal-close" id="activityModalClose" aria-label="Close activity details">&times;</button>
+        <div class="activity-modal-media">
+            <img id="activityModalImage" src="img/peso-community-medt-2026.png" alt="PESO Vinzons community activity">
+            <span class="activity-modal-image-note">Official PESO Vinzons activity photograph</span>
+        </div>
+        <div class="activity-modal-content">
+            <span class="activity-modal-program" id="activityModalProgram"></span>
+            <p class="activity-modal-eyebrow">Community activity record</p>
+            <h2 id="activityModalTitle"></h2>
+            <p id="activityModalSummary"></p>
+            <dl class="activity-modal-meta">
+                <div><dt>Date</dt><dd id="activityModalDate"></dd></div>
+                <div><dt>Location</dt><dd id="activityModalLocation"></dd></div>
+            </dl>
+            <div class="activity-modal-footer">
+                <span id="activityModalPosition"></span>
+                <div>
+                    <button type="button" id="activityModalPrev" aria-label="View previous activity"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+                    <button type="button" id="activityModalNext" aria-label="View next activity"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- =========================================
      MANAGER PROFILE MODAL
@@ -573,6 +719,120 @@ try {
             });
         }
 
+        // Activity gallery and detail modal
+        const activityTrack = document.getElementById('activityTrack');
+        const activityCards = activityTrack ? Array.from(activityTrack.querySelectorAll('.activity-gallery-card')) : [];
+        const activityPrev = document.getElementById('activityPrev');
+        const activityNext = document.getElementById('activityNext');
+        const activityStatus = document.getElementById('activityGalleryStatus');
+        const activityModal = document.getElementById('activityModal');
+        const activityModalClose = document.getElementById('activityModalClose');
+        let activeActivityIndex = 0;
+        let activityModalIndex = 0;
+        let activityModalTrigger = null;
+        let activityAutoTimer = null;
+        let galleryScrollFrame = null;
+
+        const updateActivityStatus = (index) => {
+            activeActivityIndex = (index + activityCards.length) % activityCards.length;
+            activityCards.forEach((card, cardIndex) => card.classList.toggle('is-active', cardIndex === activeActivityIndex));
+            if (activityStatus) activityStatus.textContent = `Activity ${activeActivityIndex + 1} of ${activityCards.length}`;
+        };
+
+        const showActivityCard = (index, behavior = 'smooth') => {
+            if (!activityCards.length) return;
+            const nextIndex = (index + activityCards.length) % activityCards.length;
+            updateActivityStatus(nextIndex);
+            activityCards[nextIndex].scrollIntoView({ behavior, block: 'nearest', inline: 'center' });
+        };
+
+        const stopActivityAutoPlay = () => {
+            if (activityAutoTimer) window.clearInterval(activityAutoTimer);
+            activityAutoTimer = null;
+        };
+
+        const startActivityAutoPlay = () => {
+            stopActivityAutoPlay();
+            if (reduceMotion || activityCards.length < 2 || (activityModal && activityModal.classList.contains('show'))) return;
+            activityAutoTimer = window.setInterval(() => showActivityCard(activeActivityIndex + 1), 6500);
+        };
+
+        const renderActivityModal = (index) => {
+            if (!activityCards.length) return;
+            activityModalIndex = (index + activityCards.length) % activityCards.length;
+            const activity = activityCards[activityModalIndex].dataset;
+            const modalImage = document.getElementById('activityModalImage');
+            modalImage.src = activity.image;
+            modalImage.alt = activityCards[activityModalIndex].querySelector('img').alt;
+            document.getElementById('activityModalProgram').textContent = activity.program;
+            document.getElementById('activityModalTitle').textContent = activity.title;
+            document.getElementById('activityModalSummary').textContent = activity.summary;
+            document.getElementById('activityModalDate').textContent = activity.date;
+            document.getElementById('activityModalLocation').textContent = activity.location;
+            document.getElementById('activityModalPosition').textContent = `${activityModalIndex + 1} of ${activityCards.length}`;
+        };
+
+        const openActivityModal = (index, trigger) => {
+            if (!activityModal) return;
+            activityModalTrigger = trigger;
+            renderActivityModal(index);
+            activityModal.classList.add('show');
+            activityModal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            stopActivityAutoPlay();
+            activityModalClose.focus();
+        };
+
+        const closeActivityModal = () => {
+            if (!activityModal) return;
+            activityModal.classList.remove('show');
+            activityModal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            if (activityModalTrigger && document.contains(activityModalTrigger)) activityModalTrigger.focus();
+            startActivityAutoPlay();
+        };
+
+        if (activityCards.length) {
+            activityCards.forEach((card, index) => card.addEventListener('click', () => openActivityModal(index, card)));
+            activityPrev.addEventListener('click', () => { showActivityCard(activeActivityIndex - 1); startActivityAutoPlay(); });
+            activityNext.addEventListener('click', () => { showActivityCard(activeActivityIndex + 1); startActivityAutoPlay(); });
+            activityTrack.addEventListener('keydown', (event) => {
+                if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                    event.preventDefault();
+                    showActivityCard(activeActivityIndex + (event.key === 'ArrowRight' ? 1 : -1));
+                    startActivityAutoPlay();
+                }
+            });
+            activityTrack.addEventListener('scroll', () => {
+                if (galleryScrollFrame) cancelAnimationFrame(galleryScrollFrame);
+                galleryScrollFrame = requestAnimationFrame(() => {
+                    const trackCenter = activityTrack.scrollLeft + (activityTrack.clientWidth / 2);
+                    let nearestIndex = 0;
+                    let nearestDistance = Number.POSITIVE_INFINITY;
+                    activityCards.forEach((card, index) => {
+                        const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
+                        const distance = Math.abs(cardCenter - trackCenter);
+                        if (distance < nearestDistance) { nearestDistance = distance; nearestIndex = index; }
+                    });
+                    updateActivityStatus(nearestIndex);
+                });
+            }, { passive: true });
+            activityTrack.addEventListener('mouseenter', stopActivityAutoPlay);
+            activityTrack.addEventListener('mouseleave', startActivityAutoPlay);
+            activityTrack.addEventListener('focusin', stopActivityAutoPlay);
+            activityTrack.addEventListener('focusout', startActivityAutoPlay);
+            startActivityAutoPlay();
+        }
+
+        if (activityModal) {
+            activityModalClose.addEventListener('click', closeActivityModal);
+            document.getElementById('activityModalPrev').addEventListener('click', () => renderActivityModal(activityModalIndex - 1));
+            document.getElementById('activityModalNext').addEventListener('click', () => renderActivityModal(activityModalIndex + 1));
+            activityModal.addEventListener('click', (event) => {
+                if (event.target === activityModal) closeActivityModal();
+            });
+        }
+
         const managerModal = document.getElementById('managerModal');
         if (managerModal) {
             managerModal.addEventListener('click', function(event) {
@@ -585,6 +845,26 @@ try {
                 drop.classList.remove('show');
                 btn.setAttribute('aria-expanded', 'false');
                 btn.focus();
+                return;
+            }
+
+            if (event.key === 'Escape' && activityModal && activityModal.classList.contains('show')) {
+                closeActivityModal();
+                return;
+            }
+
+            if (event.key === 'Tab' && activityModal && activityModal.classList.contains('show')) {
+                const focusable = Array.from(activityModal.querySelectorAll('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'));
+                if (!focusable.length) return;
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first.focus();
+                }
                 return;
             }
 
