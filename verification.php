@@ -166,12 +166,12 @@ if ($search_ready) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=16" />
-    <link rel="stylesheet" href="verification.css?v=8" />
     <link rel="stylesheet" href="frontend_polish.css?v=20260919c">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
+    <link rel="stylesheet" href="verification.css?v=9" />
 <script src="frontend_polish.js?v=20260919c" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -201,7 +201,7 @@ if ($search_ready) {
       <a class="menu-item" href="about.php">About</a>
 
       <div class="account-area" id="accountWrap">
-        <button class="account-button active" id="accountButton" type="button">
+        <button class="account-button active" id="accountButton" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="accountDropdown">
           <span class="account-icon">
               <?php echo htmlspecialchars($first_char); ?>
               <?php if ($user_profile_src !== ''): ?><img src="<?php echo htmlspecialchars($user_profile_src); ?>" alt="" onerror="this.remove()"><?php endif; ?>
@@ -253,6 +253,11 @@ if ($search_ready) {
                         <span class="v-search-intro-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.5 2.8 7.6 7 9 4.2-1.4 7-4.5 7-9V6l-7-3Z"></path><path d="m9 12 2 2 4-4"></path></svg></span>
                         <div><strong>Find a beneficiary record</strong><small>Select the exact batch, then enter the resident's complete registered name.</small></div>
                     </div>
+                    <ol class="v-lookup-steps" aria-label="Verification steps">
+                        <li><span>1</span><strong>Choose batch</strong></li>
+                        <li><span>2</span><strong>Enter exact name</strong></li>
+                        <li><span>3</span><strong>Review status</strong></li>
+                    </ol>
                     <div class="v-input-wrapper">
                         <label class="v-search-field v-program-field" for="programFilter">
                             <span class="v-search-field-label">Program and batch</span>
@@ -288,7 +293,8 @@ if ($search_ready) {
                                 <input type="text" name="search" id="searchInput" class="v-input" placeholder="Enter complete registered name" value="<?= htmlspecialchars($search_query) ?>" autocomplete="off" minlength="5" required>
                                 <button type="submit" class="v-btn" aria-label="Verify beneficiary record">
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                    <span>Verify</span>
+                                    <span class="v-btn-label">Verify</span>
+                                    <span class="v-btn-progress" hidden><i aria-hidden="true"></i>Checking</span>
                                 </button>
                             </span>
                         </label>
@@ -306,10 +312,10 @@ if ($search_ready) {
     </section>
 
     <!-- RESULTS AREA WITH ID FOR AJAX TARGETING -->
-    <section id="resultsArea" class="content-wrap results-area stagger-2">
+    <section id="resultsArea" class="content-wrap results-area stagger-2" aria-live="polite" aria-busy="false" tabindex="-1">
         <?php if ($search_result && $search_result->num_rows > 0): ?>
             <div class="results-header">
-                <h3>Verification Results</h3>
+                <h2>Verification Results</h2>
                 <p>Limited matching records from the selected batch and your registered barangay are shown below.</p>
             </div>
             
@@ -396,25 +402,27 @@ if ($search_ready) {
                 if(isset($_GET['program_filter'])) $qs .= "&program_filter=".urlencode($_GET['program_filter']);
                 if(isset($_GET['search'])) $qs .= "&search=".urlencode($_GET['search']);
                 ?>
-                <div class="pagination-wrapper">
+                <nav class="pagination-wrapper" aria-label="Verification result pages">
                     <?php if($current_page > 1): ?>
-                        <a href="?page=<?= $current_page - 1 ?><?= $qs ?>" class="page-btn nav-btn">
+                        <a href="?page=<?= $current_page - 1 ?><?= $qs ?>" class="page-btn nav-btn" aria-label="Previous results page">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            <span>Previous</span>
                         </a>
                     <?php endif; ?>
 
                     <?php for($i = 1; $i <= $total_pages; $i++): ?>
-                        <a href="?page=<?= $i ?><?= $qs ?>" class="page-btn <?= ($i == $current_page) ? 'active' : '' ?>">
+                        <a href="?page=<?= $i ?><?= $qs ?>" class="page-btn <?= ($i == $current_page) ? 'active' : '' ?>" <?= ($i == $current_page) ? 'aria-current="page"' : '' ?> aria-label="Results page <?= $i ?>">
                             <?= $i ?>
                         </a>
                     <?php endfor; ?>
 
                     <?php if($current_page < $total_pages): ?>
-                        <a href="?page=<?= $current_page + 1 ?><?= $qs ?>" class="page-btn nav-btn">
+                        <a href="?page=<?= $current_page + 1 ?><?= $qs ?>" class="page-btn nav-btn" aria-label="Next results page">
+                            <span>Next</span>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </a>
                     <?php endif; ?>
-                </div>
+                </nav>
             <?php endif; ?>
             
         <?php elseif ($rate_limited): ?>
@@ -528,11 +536,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if(btn && drop) {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
-            drop.classList.toggle('show');
+            const isOpen = drop.classList.toggle('show');
+            btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         });
         document.addEventListener('click', function(e) {
             if(!drop.contains(e.target) && !btn.contains(e.target)) {
                 drop.classList.remove('show');
+                btn.setAttribute('aria-expanded', 'false');
             }
         });
     }
@@ -550,13 +560,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const programFilter = document.getElementById('programFilter');
     const resultsArea = document.getElementById('resultsArea');
+    const searchForm = document.getElementById('searchForm');
+    const submitButton = searchForm ? searchForm.querySelector('.v-btn') : null;
+    const submitLabel = submitButton ? submitButton.querySelector('.v-btn-label') : null;
+    const submitProgress = submitButton ? submitButton.querySelector('.v-btn-progress') : null;
+
+    function setLookupLoading(isLoading) {
+        resultsArea.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+        if (searchForm) searchForm.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+        if (submitButton) submitButton.disabled = isLoading;
+        if (submitLabel) submitLabel.hidden = isLoading;
+        if (submitProgress) submitProgress.hidden = !isLoading;
+        resultsArea.classList.toggle('is-loading', isLoading);
+    }
+
     function fetchResults() {
         const query = searchInput.value.trim();
         const filter = programFilter.value;
         if (query.length < 5 || !filter) return;
         
-        resultsArea.style.opacity = '0.5'; // Visual loading cue
-        resultsArea.style.pointerEvents = 'none';
+        setLookupLoading(true);
 
         const url = `verification.php?search=${encodeURIComponent(query)}&program_filter=${encodeURIComponent(filter)}`;
 
@@ -575,19 +598,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Inject the new results seamlessly
                 resultsArea.innerHTML = newResults;
-                resultsArea.style.opacity = '1';
-                resultsArea.style.pointerEvents = 'auto';
                 history.replaceState(null, '', url);
+                resultsArea.focus({ preventScroll: true });
             })
             .catch(error => {
                 console.error('Error fetching search results:', error);
                 resultsArea.innerHTML = '<div class="v-no-results" role="alert"><h3>Verification is temporarily unavailable</h3><p>Your request could not be completed. Please try again or contact PESO Vinzons if the problem continues.</p></div>';
-                resultsArea.style.opacity = '1';
-                resultsArea.style.pointerEvents = 'auto';
-            });
+            })
+            .finally(() => setLookupLoading(false));
     }
 
-    const searchForm = document.getElementById('searchForm');
     if (searchForm) {
         searchForm.addEventListener('submit', function(event) {
             if (!searchForm.checkValidity()) return;
