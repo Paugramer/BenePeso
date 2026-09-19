@@ -192,7 +192,7 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="about.css?v=14">
+    <link rel="stylesheet" href="about.css?v=15">
     <link rel="stylesheet" href="frontend_polish.css?v=16">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -407,8 +407,11 @@ try {
             </div>
 
             <div class="activity-gallery-footer">
-                <span class="activity-gallery-status" id="activityGalleryStatus" aria-live="polite">Activity 1 of <?= count($community_activities) ?></span>
-                <span>Use the arrows or swipe to browse official activity records</span>
+                <div class="activity-gallery-status-wrap">
+                    <span class="activity-gallery-status" id="activityGalleryStatus" aria-live="polite">Activity 1 of <?= count($community_activities) ?></span>
+                    <span class="activity-gallery-progress" aria-hidden="true"><i></i></span>
+                </div>
+                <span>Advances automatically &bull; use the arrows or swipe anytime</span>
             </div>
         </div>
     </section>
@@ -523,8 +526,8 @@ try {
                     </div>
                     <div class="map-preview" aria-label="Map preview of the PESO Vinzons office">
                     <iframe
-                        src="https://maps.google.com/maps?q=14.1738456,122.9076545&amp;t=m&amp;z=18&amp;ie=UTF8&amp;iwloc=&amp;output=embed"
-                        title="Street map showing Vinzons Municipal Hall on Vinzons Avenue"
+                        src="https://www.google.com/maps/embed?pb=!4v1726740000000!6m8!1m7!1sOvPqPsazfA3AyGTZSu559g!2m2!1d14.1738456!2d122.9076545!3f34.31473476451902!4f0.09888153299029057!5f0.7820865974627469"
+                        title="Interactive Street View of Vinzons Municipal Hall on Vinzons Avenue"
                         width="100%" 
                         height="100%" 
                         style="border:0;"
@@ -537,7 +540,6 @@ try {
                     <div class="map-card-footer">
                         <span>1 Vinzons Avenue &bull; Barangay II (Poblacion)</span>
                         <span class="map-card-actions">
-                            <a class="map-streetview-link" href="https://www.google.com/maps/place/Vinzons+Municipal+Hall,+1+Vinzons+Ave,+Vinzons,+4603+Camarines+Norte/@14.1737907,122.9075918,10a,75y,34.31h,89.9t/data=!3m7!1e1!3m5!1sOvPqPsazfA3AyGTZSu559g!2e0!6shttps:%2F%2Fstreetviewpixels-pa.googleapis.com%2Fv1%2Fthumbnail%3Fcb_client%3Dmaps_sv.tactile%26w%3D900%26h%3D600%26pitch%3D0.09888153299029057%26panoid%3DOvPqPsazfA3AyGTZSu559g%26yaw%3D34.31473476451902!7i16384!8i8192!4m9!1m2!2m1!1sVinzons+Municipal+Hall,+Vinzons+Avenue,+Barangay+II,+Poblacion,+Vinzons,+Camarines+Norte+4603!3m5!1s0x3398b00dc93cf841:0xacbc32d6f21efe11!8m2!3d14.1738456!4d122.9076545!16s%2Fg%2F11ydtl7r7b!5m1!1e1?entry=ttu" target="_blank" rel="noopener noreferrer"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path></svg>Street View</a>
                             <a class="map-directions-link" href="https://www.google.com/maps/dir/?api=1&amp;destination=14.1738456%2C122.9076545" target="_blank" rel="noopener noreferrer">Get directions <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"></path></svg></a>
                         </span>
                     </div>
@@ -556,8 +558,8 @@ try {
     <div class="activity-modal" role="dialog" aria-modal="true" aria-labelledby="activityModalTitle" aria-describedby="activityModalSummary">
         <button type="button" class="activity-modal-close" id="activityModalClose" aria-label="Close activity details">&times;</button>
         <div class="activity-modal-media">
-            <img id="activityModalImage" src="img/peso-community-medt-2026.png" alt="PESO Vinzons community activity">
             <span class="activity-modal-image-note">Official PESO Vinzons activity photograph</span>
+            <img id="activityModalImage" src="img/peso-community-medt-2026.png" alt="PESO Vinzons community activity">
         </div>
         <div class="activity-modal-content">
             <span class="activity-modal-program" id="activityModalProgram"></span>
@@ -721,6 +723,7 @@ try {
 
         // Activity gallery and detail modal
         const activityTrack = document.getElementById('activityTrack');
+        const activitySection = document.querySelector('.activity-gallery-section');
         const activityCards = activityTrack ? Array.from(activityTrack.querySelectorAll('.activity-gallery-card')) : [];
         const activityPrev = document.getElementById('activityPrev');
         const activityNext = document.getElementById('activityNext');
@@ -732,6 +735,7 @@ try {
         let activityModalTrigger = null;
         let activityAutoTimer = null;
         let galleryScrollFrame = null;
+        const activityAutoDelay = 5200;
 
         const updateActivityStatus = (index) => {
             activeActivityIndex = (index + activityCards.length) % activityCards.length;
@@ -743,18 +747,29 @@ try {
             if (!activityCards.length) return;
             const nextIndex = (index + activityCards.length) % activityCards.length;
             updateActivityStatus(nextIndex);
-            activityCards[nextIndex].scrollIntoView({ behavior, block: 'nearest', inline: 'center' });
+            const targetCard = activityCards[nextIndex];
+            const centeredLeft = targetCard.offsetLeft - ((activityTrack.clientWidth - targetCard.offsetWidth) / 2);
+            const maximumLeft = Math.max(0, activityTrack.scrollWidth - activityTrack.clientWidth);
+            activityTrack.scrollTo({
+                left: Math.max(0, Math.min(centeredLeft, maximumLeft)),
+                behavior
+            });
         };
 
         const stopActivityAutoPlay = () => {
             if (activityAutoTimer) window.clearInterval(activityAutoTimer);
             activityAutoTimer = null;
+            if (activitySection) activitySection.classList.remove('is-autoplaying');
         };
 
         const startActivityAutoPlay = () => {
             stopActivityAutoPlay();
             if (reduceMotion || activityCards.length < 2 || (activityModal && activityModal.classList.contains('show'))) return;
-            activityAutoTimer = window.setInterval(() => showActivityCard(activeActivityIndex + 1), 6500);
+            if (activitySection) {
+                void activitySection.offsetWidth;
+                activitySection.classList.add('is-autoplaying');
+            }
+            activityAutoTimer = window.setInterval(() => showActivityCard(activeActivityIndex + 1), activityAutoDelay);
         };
 
         const renderActivityModal = (index) => {
@@ -821,6 +836,10 @@ try {
             activityTrack.addEventListener('mouseleave', startActivityAutoPlay);
             activityTrack.addEventListener('focusin', stopActivityAutoPlay);
             activityTrack.addEventListener('focusout', startActivityAutoPlay);
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) stopActivityAutoPlay();
+                else startActivityAutoPlay();
+            });
             startActivityAutoPlay();
         }
 
