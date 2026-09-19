@@ -241,7 +241,7 @@ if ($search_ready) {
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="verification.css?v=12" />
+    <link rel="stylesheet" href="verification.css?v=13" />
 <script src="frontend_polish.js?v=20260919c" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -686,6 +686,40 @@ document.addEventListener('DOMContentLoaded', function() {
         type: option.dataset.programType || 'TUPAD',
         group: option.closest('optgroup')?.label || option.dataset.programType || 'Program'
     }));
+    const verificationMenuIcons = {
+        programs: '<rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect>',
+        TUPAD: '<rect x="3" y="7" width="18" height="12" rx="2"></rect><path d="M8 7V5h8v2M3 12h18M10 12v2h4v-2"></path>',
+        SPES: '<path d="m3 9 9-5 9 5-9 5-9-5Z"></path><path d="M7 12v4c3 2 7 2 10 0v-4M21 9v6"></path>',
+        MSME: '<path d="M4 10v10h16V10M3 10l2-6h14l2 6"></path><path d="M3 10c1 2 3 2 4 0 1 2 3 2 5 0 2 2 4 2 5 0 1 2 3 2 4 0M9 20v-5h6v5"></path>',
+        batch: '<rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16"></path>'
+    };
+
+    function decorateVerificationSelectMenu(menu) {
+        const trigger = document.querySelector(`[aria-controls="${menu.id}"]`);
+        const select = trigger?.closest('.v-select-shell')?.querySelector('select');
+        if (!select || !['programTypeFilter', 'programFilter'].includes(select.id)) return;
+        menu.classList.add('v-verification-select-menu');
+        menu.querySelectorAll('.bp-select-option').forEach(item => {
+            if (item.querySelector('.v-menu-option-icon')) return;
+            const option = select.options[Number(item.dataset.index)];
+            if (!option) return;
+            const iconKey = select.id === 'programFilter' ? 'batch' : (option.value || 'programs');
+            const icon = document.createElement('span');
+            icon.className = 'v-menu-option-icon';
+            icon.setAttribute('aria-hidden', 'true');
+            icon.innerHTML = `<svg viewBox="0 0 24 24">${verificationMenuIcons[iconKey] || verificationMenuIcons.programs}</svg>`;
+            item.prepend(icon);
+        });
+    }
+
+    const verificationSelectMenuObserver = new MutationObserver(records => {
+        records.forEach(record => record.addedNodes.forEach(node => {
+            if (node instanceof Element && node.matches('.bp-select-menu')) {
+                decorateVerificationSelectMenu(node);
+            }
+        }));
+    });
+    verificationSelectMenuObserver.observe(document.body, { childList: true });
 
     function rebuildBatchOptions(programType, selectedValue = '') {
         const placeholder = document.createElement('option');
