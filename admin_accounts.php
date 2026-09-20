@@ -276,7 +276,9 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="admin_accounts.css">
     <link rel="stylesheet" href="shared_sidebar.css">
-    <link rel="stylesheet" href="admin_accounts_polish.css?v=10">
+    <link rel="stylesheet" href="activity_filter_polish.css?v=4">
+    <script src="activity_filter_polish.js?v=4" defer></script>
+    <link rel="stylesheet" href="admin_accounts_polish.css?v=11">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
@@ -386,11 +388,14 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
             <input type="hidden" name="view" value="<?= e($view) ?>">
             
             <?php if($view === 'banned'): ?>
-            <div class="account-filter-select-wrap"><i class="ph ph-funnel-simple"></i><select name="banned_filter" class="banned-filter-select" onchange="this.form.submit()">
-                <option value="all" <?= $banned_filter === 'all' ? 'selected' : '' ?>>All Account Types</option>
-                <option value="staff" <?= $banned_filter === 'staff' ? 'selected' : '' ?>>PESO Staff Only</option>
-                <option value="user" <?= $banned_filter === 'user' ? 'selected' : '' ?>>Registered Users Only</option>
-            </select></div>
+            <?php $accountTypeLabels = ['all' => 'All Account Types', 'staff' => 'PESO Staff Only', 'user' => 'Registered Users Only']; ?>
+            <input type="hidden" name="banned_filter" value="<?= e($banned_filter) ?>" data-filter-input="account_type">
+            <div class="activity-filter-menu account-type-menu" data-filter-menu="account_type">
+                <button type="button" class="activity-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span class="activity-trigger-label"><i class="ph ph-funnel-simple"></i><?= e($accountTypeLabels[$banned_filter]) ?></span><i class="ph ph-caret-down"></i></button>
+                <div class="activity-filter-options" role="listbox" aria-label="Filter by account type" hidden>
+                    <?php foreach($accountTypeLabels as $typeValue => $typeLabel): ?><button type="button" role="option" data-filter-value="<?= e($typeValue) ?>" aria-selected="<?= $banned_filter === $typeValue ? 'true' : 'false' ?>"><span><?= e($typeLabel) ?></span><?php if($banned_filter === $typeValue): ?><i class="ph-bold ph-check"></i><?php endif; ?></button><?php endforeach; ?>
+                </div>
+            </div>
             <?php endif; ?>
 
             <div class="account-search-field"><i class="ph ph-magnifying-glass search-icon"></i><input type="text" name="search" class="search-input" id="liveSearchInput" placeholder="Search accounts by name, email, or barangay..." value="<?= e($search) ?>"></div>
