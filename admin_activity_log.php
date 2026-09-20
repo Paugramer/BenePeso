@@ -195,8 +195,8 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <link rel="stylesheet" href="admin_activity_log.css">
 <link rel="stylesheet" href="shared_sidebar.css">
-<link rel="stylesheet" href="activity_filter_polish.css?v=2">
-<script src="activity_filter_polish.js?v=2" defer></script>
+<link rel="stylesheet" href="activity_filter_polish.css?v=3">
+<script src="activity_filter_polish.js?v=3" defer></script>
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
@@ -303,7 +303,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
                 </div>
 
                 <form method="GET" class="advanced-filter-row" id="filterForm">
-                    <div class="system-search" style="position: relative; flex: 1; min-width: 200px; border-radius: 14px;">
+                    <div class="activity-search-wrap">
                         <i class="ph ph-magnifying-glass search-input-icon"></i>
                         <input type="text" name="search" class="filter-input-search" id="liveSearchInput" placeholder="Search module, action, desc..." value="<?= h($search) ?>">
                     </div>

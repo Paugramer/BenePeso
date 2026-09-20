@@ -276,7 +276,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="admin_accounts.css">
     <link rel="stylesheet" href="shared_sidebar.css">
-    <link rel="stylesheet" href="admin_accounts_polish.css?v=9">
+    <link rel="stylesheet" href="admin_accounts_polish.css?v=10">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
@@ -382,19 +382,18 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
             <a href="?view=banned&page=1" class="segment-btn <?= $view==='banned'?'active':'' ?>">Banned Accounts</a>
         </div>
         
-        <form class="filter-form system-search" method="GET">
+        <form class="filter-form account-filter-bar <?= $view === 'banned' ? 'has-type-filter' : '' ?>" method="GET">
             <input type="hidden" name="view" value="<?= e($view) ?>">
             
             <?php if($view === 'banned'): ?>
-            <select name="banned_filter" class="banned-filter-select" onchange="this.form.submit()">
-                <option value="all" <?= $banned_filter === 'all' ? 'selected' : '' ?>>All Types</option>
-                <option value="staff" <?= $banned_filter === 'staff' ? 'selected' : '' ?>>Staff Only</option>
-                <option value="user" <?= $banned_filter === 'user' ? 'selected' : '' ?>>Users Only</option>
-            </select>
+            <div class="account-filter-select-wrap"><i class="ph ph-funnel-simple"></i><select name="banned_filter" class="banned-filter-select" onchange="this.form.submit()">
+                <option value="all" <?= $banned_filter === 'all' ? 'selected' : '' ?>>All Account Types</option>
+                <option value="staff" <?= $banned_filter === 'staff' ? 'selected' : '' ?>>PESO Staff Only</option>
+                <option value="user" <?= $banned_filter === 'user' ? 'selected' : '' ?>>Registered Users Only</option>
+            </select></div>
             <?php endif; ?>
-            
-            <i class="ph ph-magnifying-glass search-icon"></i>
-            <input type="text" name="search" class="search-input" id="liveSearchInput" placeholder="Search accounts by name, email, or barangay..." value="<?= e($search) ?>">
+
+            <div class="account-search-field"><i class="ph ph-magnifying-glass search-icon"></i><input type="text" name="search" class="search-input" id="liveSearchInput" placeholder="Search accounts by name, email, or barangay..." value="<?= e($search) ?>"></div>
         </form>
 
         <?php if($view === 'staff'): ?>

@@ -252,8 +252,8 @@ if ($stmt) {
   
   <link rel="stylesheet" href="peso_staff_activity_log.css?v=20260905">
   <link rel="stylesheet" href="shared_sidebar.css">
-  <link rel="stylesheet" href="activity_filter_polish.css?v=2">
-  <script src="activity_filter_polish.js?v=2" defer></script>
+  <link rel="stylesheet" href="activity_filter_polish.css?v=3">
+  <script src="activity_filter_polish.js?v=3" defer></script>
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
@@ -368,7 +368,7 @@ if ($stmt) {
         <form method="GET" class="toolbar-form" id="filterForm">
           <input type="hidden" name="page" value="1"> 
           <div class="toolbar-grid">
-            <div class="system-search activity-search-wrap"><i class="ph ph-magnifying-glass search-input-icon"></i><input type="text" name="search" value="<?php echo h($search); ?>" class="toolbar-input system-search-input" placeholder="Search module, action, target, description..."></div>
+            <div class="activity-search-wrap"><i class="ph ph-magnifying-glass search-input-icon"></i><input type="text" name="search" value="<?php echo h($search); ?>" class="toolbar-input" placeholder="Search module, action, target, description..."></div>
 
             <input type="hidden" name="module" value="<?php echo h($moduleFilter); ?>" data-filter-input="module">
             <div class="activity-filter-menu" data-filter-menu="module">
