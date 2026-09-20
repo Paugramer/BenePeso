@@ -10,11 +10,14 @@ $embedded = isset($_GET['embedded']) && $_GET['embedded'] === '1';
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Notice | BenePeso</title>
   <link rel="icon" href="img/pesologo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root { --green:#1f6a49; --green-light:#eaf5ef; --dark:#123d2b; --ink:#22332a; --line:#dce8e1; --gold:#c8a64b; }
     * { box-sizing:border-box; }
     html { scroll-behavior:smooth; }
-    body { margin:0; font-family:Arial,Helvetica,sans-serif; color:var(--ink); background:linear-gradient(180deg,#eef6f1 0,#f8fbf9 420px); line-height:1.65; }
+    body { margin:0; font-family:Poppins,Arial,sans-serif; color:var(--ink); background:linear-gradient(180deg,#eef6f1 0,#f8fbf9 420px); line-height:1.65; }
     header { position:relative; overflow:hidden; padding:18px 20px 74px; background:linear-gradient(135deg,#103c2a 0%,#1f6a49 72%,#267b58 100%); color:#fff; }
     header::after { content:""; position:absolute; width:420px; height:420px; right:-120px; bottom:-290px; border:1px solid rgba(255,255,255,.12); border-radius:50%; box-shadow:0 0 0 55px rgba(255,255,255,.035),0 0 0 110px rgba(255,255,255,.025); }
     .wrap { width:min(1040px,calc(100% - 32px)); margin:auto; }

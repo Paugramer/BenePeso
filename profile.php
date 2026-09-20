@@ -259,7 +259,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
             .log-premium-right { text-align: left; align-items: flex-start; }
         }
     </style>
-    <link rel="stylesheet" href="profile.css?v=15">
+    <link rel="stylesheet" href="profile.css?v=16">
     <link rel="stylesheet" href="spes_form_modal.css?v=20260904c">
 <link rel="stylesheet" href="frontend_polish.css?v=20260919d">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
@@ -654,7 +654,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
                 </div>
                 <div class="profile-data-rights-actions">
                     <a href="privacy_notice.php">Read Privacy Notice</a>
-                    <a href="mailto:lguvinzonspeso@gmail.com?subject=BENEPESO%20Record%20Correction%20Request">Request a correction</a>
+                    <button type="button" onclick="openCorrectionModal()">Request a correction</button>
                 </div>
             </div>
         </div>
@@ -688,6 +688,38 @@ while ($row = $activity_logs_result->fetch_assoc()) {
         </div>
         <div id="statusModalBody" class="status-modal-body"></div>
         <button type="button" class="status-modal-action" onclick="closeModal('statusModal')">Done</button>
+    </div>
+</div>
+
+<div class="modal status-modal profile-correction-modal" id="correctionModal" role="dialog" aria-modal="true" aria-labelledby="correctionModalTitle" aria-describedby="correctionModalDescription" aria-hidden="true">
+    <div class="modal-content status-modal-dialog">
+        <button type="button" class="modal-close" onclick="closeModal('correctionModal')" aria-label="Close correction guidance">&times;</button>
+        <div class="status-modal-header">
+            <div class="modal-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4L16.5 3.5Z"></path></svg>
+            </div>
+            <div class="status-modal-heading">
+                <span class="status-modal-eyebrow">Official record support</span>
+                <h2 id="correctionModalTitle">Request a correction</h2>
+            </div>
+        </div>
+        <div class="status-modal-body correction-modal-body" id="correctionModalDescription">
+            <p class="status-message">Use this service when an approved identity field, application status, batch record, or verification result is inaccurate.</p>
+            <div class="correction-guidance">
+                <section><span>1</span><div><strong>Identify the record</strong><small>Include the program, exact batch code, and the information that needs correction.</small></div></section>
+                <section><span>2</span><div><strong>Protect your information</strong><small>Do not send passwords or unnecessary identity documents by public message.</small></div></section>
+                <section><span>3</span><div><strong>Wait for PESO confirmation</strong><small>Your displayed record changes only after authorized staff review the request.</small></div></section>
+            </div>
+            <div class="correction-contact-card">
+                <span>Official contact</span>
+                <strong>lguvinzonspeso@gmail.com</strong>
+                <small>+63 947 997 1186 &bull; Monday–Friday, 8:00 AM–5:00 PM</small>
+            </div>
+        </div>
+        <div class="correction-modal-actions">
+            <button type="button" class="correction-secondary" onclick="closeModal('correctionModal')">Not now</button>
+            <a class="status-modal-action" href="mailto:lguvinzonspeso@gmail.com?subject=BENEPESO%20Record%20Correction%20Request">Compose email</a>
+        </div>
     </div>
 </div>
 
@@ -782,6 +814,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.querySelectorAll('[data-log-filter]').forEach(button => {
         button.addEventListener('click', () => setLogFilter(button.dataset.logFilter, button));
+    });
+
+    document.querySelectorAll('.modal, .modal-overlay').forEach(modal => {
+        modal.addEventListener('mousedown', event => {
+            if (event.target === modal && modal.classList.contains('show')) closeModal(modal.id);
+        });
+    });
+
+    document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        const openDialog = document.querySelector('.modal.show, .modal-overlay.show');
+        if (openDialog) closeModal(openDialog.id);
     });
 
     document.querySelectorAll('[data-numeric-only]').forEach(input => {
@@ -910,6 +954,14 @@ function closeModal(modalId) {
     if (modal.hasAttribute('aria-hidden')) modal.setAttribute('aria-hidden', 'true');
     currentFormToSubmit = null;
     if (lastModalTrigger instanceof HTMLElement) lastModalTrigger.focus();
+}
+
+function openCorrectionModal() {
+    const modal = document.getElementById('correctionModal');
+    lastModalTrigger = document.activeElement;
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+    modal.querySelector('.modal-close')?.focus();
 }
 document.getElementById('modalConfirmBtn').addEventListener('click', function() {
     if (currentFormToSubmit) currentFormToSubmit.submit();
@@ -1047,6 +1099,26 @@ function shouldShowApplicationSchedule(item) {
         && ['orientation', 'examination', 'ongoing', 'salary distribution'].includes(availment);
 }
 
+function getProgramVisual(programName) {
+    const program = String(programName || '').toUpperCase();
+    if (program.includes('SPES')) {
+        return {
+            type: 'spes',
+            icon: '<svg viewBox="0 0 24 24"><path d="m2 9 10-5 10 5-10 5L2 9Z"></path><path d="M6 11.5V16c3.5 2.7 8.5 2.7 12 0v-4.5M22 9v6"></path></svg>'
+        };
+    }
+    if (program.includes('MSME')) {
+        return {
+            type: 'msme',
+            icon: '<svg viewBox="0 0 24 24"><path d="M4 10v10h16V10"></path><path d="M3 4h18l-1 6a3 3 0 0 1-5 1 3 3 0 0 1-6 0 3 3 0 0 1-5-1L3 4Z"></path><path d="M9 20v-5h6v5"></path></svg>'
+        };
+    }
+    return {
+        type: 'tupad',
+        icon: '<svg viewBox="0 0 24 24"><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M3 12h18M10 12v2h4v-2"></path></svg>'
+    };
+}
+
 function buildProgramProgress(item) {
     const approval = String(item.approval_status || 'Pending').toLowerCase();
     const availment = String(item.availment_status || 'Not Yet Availed').toLowerCase();
@@ -1180,6 +1252,7 @@ function renderPrograms() {
 
     pageItems.forEach(item => {
         const statusKey = getStatusKey(item.display_status);
+        const programVisual = getProgramVisual(item.program_name);
         const safeTitle = escapeHtml(item.program_name);
         const safeBatch = escapeHtml(item.program_code || `Program ${item.program_id}`);
         const safeReason = escapeHtml(item.approval_note);
@@ -1213,8 +1286,8 @@ function renderPrograms() {
                  onclick="handleCardClick(this)">
                   
                 <div class="card-left">
-                    <div class="program-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M9 5h6"></path><path d="M9 9h6"></path><path d="M9 13h4"></path><path d="M7 3h10a2 2 0 0 1 2 2v16H5V5a2 2 0 0 1 2-2Z"></path></svg>
+                    <div class="program-icon program-icon--${programVisual.type}" aria-hidden="true">
+                        ${programVisual.icon}
                     </div>
                     <div class="program-copy">
                         <span class="program-kicker">Batch ${safeBatch}</span>

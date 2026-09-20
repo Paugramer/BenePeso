@@ -770,3 +770,68 @@ body.auth-page::before {
   .auth-signup .signup-progress-copy { margin-bottom: 5px; }
   .auth-signup .password-checks { display: grid; grid-template-columns: 1fr; gap: 3px; }
 }
+
+/* Account recovery: one consistent three-step dialog experience. */
+.auth-login .recovery-step {
+  display: inline-flex;
+  align-items: center;
+  min-height: 25px;
+  margin: -4px 0 9px;
+  padding: 4px 10px;
+  border: 1px solid #cbe2d5;
+  border-radius: 999px;
+  background: #f0f8f4;
+  color: var(--auth-green);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.auth-login .recovery-form {
+  margin-top: 18px;
+  text-align: left;
+}
+
+.auth-login .recovery-form--code { margin-top: 12px; text-align: center; }
+.auth-login .recovery-form--reset { margin-top: 0; }
+.auth-login .recovery-password-guidance { margin-bottom: 15px !important; text-align: left; }
+
+.auth-login .recovery-password-strength {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid #dce9e2;
+  border-radius: 8px;
+  background: #f8fbf9;
+}
+
+.auth-login .recovery-password-strength > span {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #dfe9e4;
+}
+
+.auth-login .recovery-password-strength i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: #b66a3c;
+  transition: width .2s ease, background-color .2s ease;
+}
+
+.auth-login .recovery-password-strength i[data-score="3"],
+.auth-login .recovery-password-strength i[data-score="4"] { background: #c99a2e; }
+.auth-login .recovery-password-strength i[data-score="5"] { background: var(--auth-green); }
+.auth-login .recovery-password-strength small { color: var(--auth-muted); font-size: 10.5px; line-height: 1.4; }
+.auth-login .recovery-client-error[hidden] { display: none; }
+.auth-login .recovery-client-error { margin-top: 12px; text-align: left; }
+.auth-login .recovery-submit { margin-top: 16px !important; }
+
+@media (max-width: 480px) {
+  .auth-login .recovery-step { margin-top: 0; }
+  .auth-login .recovery-password-strength { padding: 9px 10px; }
+}

@@ -389,6 +389,144 @@ select.form-input:not(.editing) { background-image: none; }
     .modal-actions { flex-direction: column; }
 }
 
+/* Personal-details hierarchy and program identity */
+.beneficiary-profile-page #profileForm .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 24px 0 2px;
+    padding: 0 0 11px;
+    border-bottom: 1px solid #dce8e1;
+    background: transparent !important;
+    color: #176b49;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    line-height: 1.3;
+}
+
+.beneficiary-profile-page #profileForm .section-divider::before {
+    width: 4px;
+    height: 18px;
+    flex: 0 0 4px;
+    border-radius: 999px;
+    background: #1f7a54;
+    content: "";
+}
+
+#my-programs .program-icon--spes { background: #eef5e3; color: #587d2f; }
+#my-programs .program-icon--msme { background: #fff5dc; color: #916a18; }
+#my-programs .program-icon--tupad { background: #e7f3ec; color: #1f7a54; }
+
+.beneficiary-profile-page .profile-data-rights-actions button {
+    display: inline-flex;
+    min-height: 38px;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 13px;
+    border: 1px solid #c8ded0;
+    border-radius: 10px;
+    background: #f7fbf8;
+    color: #1f5d3f;
+    font: 700 11.5px Poppins, sans-serif;
+    cursor: pointer;
+    transition: color .2s ease, background .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+.beneficiary-profile-page .profile-data-rights-actions button:hover {
+    border-color: #176b49;
+    background: #176b49;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.profile-correction-modal .correction-modal-body {
+    margin: 0;
+    padding: 24px 28px 0 !important;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    text-align: left;
+}
+
+.correction-guidance {
+    display: grid;
+    gap: 10px;
+}
+
+.correction-guidance section {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 11px;
+    padding: 12px;
+    border: 1px solid #dce8e1;
+    border-radius: 8px;
+    background: #fbfdfc;
+}
+
+.correction-guidance section > span {
+    display: grid;
+    width: 30px;
+    height: 30px;
+    place-items: center;
+    border-radius: 50%;
+    background: #1f7a54;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.correction-guidance section div { display: grid; gap: 3px; }
+.correction-guidance strong { color: #173c2b; font-size: 12.5px; }
+.correction-guidance small { color: #60766a; font-size: 11.5px; line-height: 1.5; }
+
+.correction-contact-card {
+    display: grid;
+    gap: 3px;
+    margin-top: 14px;
+    padding: 13px 14px;
+    border-left: 3px solid #c99a2e;
+    border-radius: 0 7px 7px 0;
+    background: #fff9e9;
+}
+
+.correction-contact-card span { color: #7c671f; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.correction-contact-card strong { overflow-wrap: anywhere; color: #173c2b; font-size: 13px; }
+.correction-contact-card small { color: #65766d; font-size: 11.5px; }
+
+.correction-modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 22px 28px 28px;
+}
+
+.profile-correction-modal .correction-modal-actions .status-modal-action,
+.correction-secondary {
+    display: inline-flex;
+    width: 100%;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    border: 1px solid #cfe0d6;
+    border-radius: 7px;
+    font: 800 13px Poppins, sans-serif;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.correction-secondary { background: #f5f8f6; color: #4c6659; }
+.profile-correction-modal .correction-modal-actions .status-modal-action { border-color: #1f7a54; background: #1f7a54; color: #fff; }
+
+.beneficiary-profile-page .status-modal .status-modal-dialog,
+.beneficiary-profile-page .profile-confirm-dialog {
+    border-radius: 14px !important;
+}
+
+@media (max-width: 520px) {
+    .correction-modal-actions { grid-template-columns: 1fr; padding: 18px; }
+}
+
 /* Profile page refinement */
 body {
     background: #f4f8f5;

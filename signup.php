@@ -234,18 +234,18 @@ $barangays = beneficiary_barangay_options();
                 <div class="form-group">
                   <label for="passwordInput">Password</label>
                   <div class="password-wrap">
-                    <input type="password" name="password" id="passwordInput" placeholder="Create password" autocomplete="new-password" minlength="8" aria-describedby="passwordHint" required>
+                    <input type="password" name="password" id="passwordInput" placeholder="Create password" autocomplete="new-password" minlength="10" aria-describedby="passwordHint" required>
                     <button type="button" class="toggle-pass" id="togglePass1" name="toggle_pass_1" data-target="passwordInput" aria-label="Show password">
                       <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 5c5.5 0 9.5 5.5 9.5 7s-4 7-9.5 7S2.5 13.5 2.5 12S6.5 5 12 5Zm0 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"/></svg>
                     </button>
                   </div>
-                  <small class="field-hint" id="passwordHint">Use at least 8 characters that are difficult to guess.</small>
+                  <small class="field-hint" id="passwordHint">Use at least 10 characters with uppercase, lowercase, a number, and a symbol.</small>
                 </div>
 
                 <div class="form-group">
                   <label for="confirmPasswordInput">Confirm Password</label>
                   <div class="password-wrap">
-                    <input type="password" name="confirm_password" id="confirmPasswordInput" placeholder="Retype password" autocomplete="new-password" minlength="8" required>
+                    <input type="password" name="confirm_password" id="confirmPasswordInput" placeholder="Retype password" autocomplete="new-password" minlength="10" required>
                     <button type="button" class="toggle-pass" id="togglePass2" name="toggle_pass_2" data-target="confirmPasswordInput" aria-label="Show password">
                       <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 5c5.5 0 9.5 5.5 9.5 7s-4 7-9.5 7S2.5 13.5 2.5 12S6.5 5 12 5Zm0 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"/></svg>
                     </button>
@@ -256,9 +256,10 @@ $barangays = beneficiary_barangay_options();
                 <div class="password-strength-head"><span>Stronger password</span><strong id="passwordStrengthLabel">Start typing</strong></div>
                 <div class="password-strength-track" aria-hidden="true"><span id="passwordStrengthBar"></span></div>
                 <div class="password-checks">
-                  <span data-password-check="length">8 or more characters</span>
+                  <span data-password-check="length">10 or more characters</span>
                   <span data-password-check="case">Upper and lowercase letters</span>
-                  <span data-password-check="variety">A number or symbol</span>
+                  <span data-password-check="number">At least one number</span>
+                  <span data-password-check="symbol">At least one symbol</span>
                 </div>
               </div>
               <?php endif; ?>
@@ -534,9 +535,9 @@ $barangays = beneficiary_barangay_options();
                   confirmInput.focus({ preventScroll: true });
                   return;
               }
-              if (passInput && pass.length < 8) {
-                  setFieldError(passInput, 'Use at least 8 characters.');
-                  showSignupAlert('Choose a longer account password.');
+              if (passInput && (pass.length < 10 || !/[a-z]/.test(pass) || !/[A-Z]/.test(pass) || !/[0-9]/.test(pass) || !/[^A-Za-z0-9]/.test(pass))) {
+                  setFieldError(passInput, 'Use 10+ characters with uppercase, lowercase, a number, and a symbol.');
+                  showSignupAlert('Please meet all password security requirements.');
                   passInput.focus({ preventScroll: true });
                   return;
               }
@@ -593,17 +594,18 @@ $barangays = beneficiary_barangay_options();
       if (!pass1) return;
       const value = pass1.value;
       const checks = {
-          length: value.length >= 8,
+          length: value.length >= 10,
           case: /[a-z]/.test(value) && /[A-Z]/.test(value),
-          variety: /[0-9]|[^A-Za-z0-9]/.test(value)
+          number: /[0-9]/.test(value),
+          symbol: /[^A-Za-z0-9]/.test(value)
       };
       const score = Object.values(checks).filter(Boolean).length;
       const bar = document.getElementById('passwordStrengthBar');
       const label = document.getElementById('passwordStrengthLabel');
-      const labels = value ? ['Needs work', 'Fair', 'Good', 'Strong'] : ['Start typing'];
+      const labels = value ? ['Needs work', 'Needs work', 'Fair', 'Good', 'Strong'] : ['Start typing'];
       if (bar) {
-          bar.style.width = value ? `${Math.max(18, score * 33.333)}%` : '0';
-          bar.style.backgroundColor = score >= 3 ? '#26835b' : (score === 2 ? '#c09a35' : '#b85b4f');
+          bar.style.width = value ? `${Math.max(18, score * 25)}%` : '0';
+          bar.style.backgroundColor = score >= 4 ? '#26835b' : (score >= 2 ? '#c09a35' : '#b85b4f');
       }
       if (label) label.textContent = labels[value ? score : 0];
       Object.entries(checks).forEach(([key, met]) => {
@@ -617,7 +619,7 @@ $barangays = beneficiary_barangay_options();
           clearFieldError(pass2);
           return;
       }
-      if(pass1.value === pass2.value && pass1.value.length >= 8) {
+      if(pass1.value === pass2.value && pass1.value.length >= 10) {
           clearFieldError(pass2, true);
       } else {
           setFieldError(pass2, 'Passwords do not match.');
@@ -626,7 +628,9 @@ $barangays = beneficiary_barangay_options();
 
   pass1?.addEventListener('input', () => {
       updatePasswordStrength();
-      clearFieldError(pass1, pass1.value.length >= 8);
+      const value = pass1.value;
+      const isStrong = value.length >= 10 && /[a-z]/.test(value) && /[A-Z]/.test(value) && /[0-9]/.test(value) && /[^A-Za-z0-9]/.test(value);
+      clearFieldError(pass1, isStrong);
       checkPasswordMatch();
   });
   pass2?.addEventListener('input', checkPasswordMatch);

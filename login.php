@@ -91,7 +91,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="stylesheet" href="style.css?v=31" />
   <link rel="stylesheet" href="frontend_polish.css?v=16">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=10">
+  <link rel="stylesheet" href="auth_refresh.css?v=11">
 <script src="frontend_polish.js?v=15" defer></script>
   <?php if (benepeso_turnstile_enabled()): ?>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -268,15 +268,16 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
     <div class="modal-icon-header">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
     </div>
-    <div class="modal-title" id="forgotTitle">Forgot Password</div>
+    <div class="recovery-step">Step 1 of 3</div>
+    <div class="modal-title" id="forgotTitle">Recover your account</div>
     <p class="modal-subtitle">Enter your email address and we will send you a 6-digit recovery code.</p>
 
-    <form action="forgot_send.php" method="POST" style="margin-top:20px; text-align:left;" autocomplete="off"
+    <form action="forgot_send.php" method="POST" class="recovery-form" autocomplete="off"
           onsubmit="showLoading('Sending Code', 'Sending verification code securely...')">
       <?= auth_csrf_input() ?>
       <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" name="email" placeholder="e.g. juan@email.com" value="<?php echo htmlspecialchars($fp_email); ?>" required>
+          <label for="recoveryEmail">Email Address</label>
+          <input type="email" id="recoveryEmail" name="email" placeholder="e.g. juan@email.com" value="<?php echo htmlspecialchars($fp_email); ?>" autocomplete="email" required>
       </div>
       <button class="modal-btn" style="margin-top:15px;" type="submit">Send Recovery Code</button>
     </form>
@@ -293,10 +294,11 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
     <div class="modal-icon-header">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
     </div>
-    <div class="modal-title" id="codeTitle">Enter Security Code</div>
+    <div class="recovery-step">Step 2 of 3</div>
+    <div class="modal-title" id="codeTitle">Enter security code</div>
     <p class="modal-subtitle">We sent a 6-digit verification code to <b><?php echo htmlspecialchars($masked_email ?: $fp_email); ?></b></p>
 
-    <form action="forgot_verify.php" method="POST" id="verifyCodeForm" style="margin-top:10px;" autocomplete="off">
+    <form action="forgot_verify.php" method="POST" id="verifyCodeForm" class="recovery-form recovery-form--code" autocomplete="off">
       <?= auth_csrf_input() ?>
       
       <div class="otp-container">
@@ -331,7 +333,8 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
     <div class="modal-icon-header">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
     </div>
-    <div class="modal-title" id="resetTitle">Create New Password</div>
+    <div class="recovery-step">Step 3 of 3</div>
+    <div class="modal-title" id="resetTitle">Create new password</div>
     
     <div class="reset-account-badge">
         <div class="reset-avatar"><?php echo strtoupper(substr($reset_name, 0, 1) ?: 'U'); ?></div>
@@ -342,16 +345,15 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
         </div>
     </div>
 
-    <p class="modal-subtitle" style="text-align:left; margin-bottom:15px;">Your new password must be at least 8 characters long.</p>
+    <p class="modal-subtitle recovery-password-guidance">Use at least 10 characters with uppercase, lowercase, a number, and a symbol.</p>
 
-    <form action="forgot_reset.php" method="POST" style="text-align:left;" autocomplete="off"
-          onsubmit="showLoading('Updating Password', 'Updating your password securely...')">
+    <form action="forgot_reset.php" method="POST" id="recoveryResetForm" class="recovery-form recovery-form--reset" autocomplete="off">
       <?= auth_csrf_input() ?>
       
       <div class="form-group">
-          <label>New Password</label>
+          <label for="newPassFp">New Password</label>
           <div class="password-wrap">
-              <input type="password" name="new_password" id="newPassFp" placeholder="Enter new password" required>
+              <input type="password" name="new_password" id="newPassFp" placeholder="Enter new password" minlength="10" autocomplete="new-password" aria-describedby="recoveryStrengthText" required>
               <button type="button" class="toggle-pass" data-target="newPassFp" aria-label="Show password">
                   <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 5c5.5 0 9.5 5.5 9.5 7s-4 7-9.5 7S2.5 13.5 2.5 12S6.5 5 12 5Zm0 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"/></svg>
               </button>
@@ -359,16 +361,21 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
       </div>
 
       <div class="form-group" style="margin-top:12px;">
-          <label>Confirm Password</label>
+          <label for="confPassFp">Confirm Password</label>
           <div class="password-wrap">
-              <input type="password" name="confirm_password" id="confPassFp" placeholder="Retype new password" required>
+              <input type="password" name="confirm_password" id="confPassFp" placeholder="Retype new password" minlength="10" autocomplete="new-password" required>
               <button type="button" class="toggle-pass" data-target="confPassFp" aria-label="Show password">
                   <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 5c5.5 0 9.5 5.5 9.5 7s-4 7-9.5 7S2.5 13.5 2.5 12S6.5 5 12 5Zm0 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"/></svg>
               </button>
           </div>
       </div>
 
-      <button class="modal-btn" style="margin-top:20px;" type="submit">Update Password</button>
+      <div class="recovery-password-strength" aria-live="polite">
+        <span><i id="recoveryStrengthBar"></i></span>
+        <small id="recoveryStrengthText">Enter a new password to check its strength.</small>
+      </div>
+      <div class="alert-msg error recovery-client-error" id="recoveryClientError" role="alert" hidden></div>
+      <button class="modal-btn recovery-submit" type="submit">Update Password</button>
     </form>
 
     <?php if ($fp_msg && $fp_step === "reset"): ?>
@@ -525,7 +532,57 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
       if (!target) return;
       target.type = target.type === "password" ? "text" : "password";
       btn.style.color = target.type === "text" ? "var(--green)" : "#9ab0a3";
+      btn.setAttribute('aria-label', `${target.type === 'text' ? 'Hide' : 'Show'} password`);
     });
+  });
+
+  const recoveryPassword = document.getElementById('newPassFp');
+  const recoveryResetForm = document.getElementById('recoveryResetForm');
+  const recoveryPasswordIsStrong = value => value.length >= 10
+    && /[a-z]/.test(value)
+    && /[A-Z]/.test(value)
+    && /\d/.test(value)
+    && /[^A-Za-z0-9]/.test(value);
+
+  recoveryPassword?.addEventListener('input', () => {
+    const value = recoveryPassword.value;
+    const checks = [value.length >= 10, /[a-z]/.test(value), /[A-Z]/.test(value), /\d/.test(value), /[^A-Za-z0-9]/.test(value)];
+    const score = checks.filter(Boolean).length;
+    const bar = document.getElementById('recoveryStrengthBar');
+    const text = document.getElementById('recoveryStrengthText');
+    bar.style.width = `${score * 20}%`;
+    bar.dataset.score = String(score);
+    text.textContent = value === '' ? 'Enter a new password to check its strength.' : (score === 5 ? 'Strong password — all requirements are met.' : `${score} of 5 password requirements met.`);
+    const error = document.getElementById('recoveryClientError');
+    if (error && !error.hidden) error.hidden = true;
+  });
+
+  document.getElementById('confPassFp')?.addEventListener('input', () => {
+    const error = document.getElementById('recoveryClientError');
+    if (error && !error.hidden) error.hidden = true;
+  });
+
+  recoveryResetForm?.addEventListener('submit', event => {
+    const password = recoveryPassword.value;
+    const confirmation = document.getElementById('confPassFp').value;
+    const error = document.getElementById('recoveryClientError');
+    const showRecoveryError = message => {
+      error.textContent = message;
+      error.hidden = false;
+      error.scrollIntoView({ block: 'nearest' });
+    };
+    if (!recoveryPasswordIsStrong(password)) {
+      event.preventDefault();
+      showRecoveryError('Use at least 10 characters with uppercase, lowercase, a number, and a symbol.');
+      return;
+    }
+    if (password !== confirmation) {
+      event.preventDefault();
+      showRecoveryError('The new passwords do not match. Please retype them carefully.');
+      return;
+    }
+    error.hidden = true;
+    showLoading('Updating Password', 'Updating your password securely...');
   });
 </script>
 

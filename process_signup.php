@@ -136,8 +136,14 @@ if (!$google_registration && $password !== $confirm_pass) {
     exit();
 }
 
-if (!$google_registration && strlen($password) < 8) {
-    $_SESSION["flash"] = "Password must be at least 8 characters.";
+if (!$google_registration && (
+    strlen($password) < 10
+    || !preg_match('/[a-z]/', $password)
+    || !preg_match('/[A-Z]/', $password)
+    || !preg_match('/\d/', $password)
+    || !preg_match('/[^A-Za-z0-9]/', $password)
+)) {
+    $_SESSION["flash"] = "Use at least 10 characters with uppercase, lowercase, a number, and a symbol.";
     $_SESSION["form_data"] = $_POST; 
     header("Location: signup.php");
     exit();
