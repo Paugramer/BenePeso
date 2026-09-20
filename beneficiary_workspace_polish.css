@@ -117,7 +117,39 @@
   gap: 14px;
 }
 
+:is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) :is(.modal-head-alt, .modal-head-sm):has(.beneficiary-modal-icon) {
+  position: relative;
+  display: flex !important;
+  justify-content: center !important;
+  padding: 24px 82px !important;
+  text-align: center;
+}
+
+:is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) :is(.modal-head-alt, .modal-head-sm):has(.beneficiary-modal-icon) > div {
+  flex: 0 1 auto;
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+}
+
+:is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) :is(.modal-head-alt, .modal-head-sm):has(.beneficiary-modal-icon) .modal-title {
+  margin: 0;
+  font-size: clamp(21px, 2vw, 25px) !important;
+  line-height: 1.2;
+  letter-spacing: -.35px;
+}
+
+:is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) :is(.modal-head-alt, .modal-head-sm):has(.beneficiary-modal-icon) .modal-sub {
+  max-width: 540px;
+  margin: 5px auto 0;
+  line-height: 1.45;
+}
+
 .beneficiary-modal-icon {
+  position: absolute;
+  left: 28px;
+  top: 50%;
+  transform: translateY(-50%);
   flex: 0 0 48px;
   width: 48px;
   height: 48px;
@@ -130,7 +162,69 @@
   font-size: 23px;
 }
 
-.beneficiary-modal-icon + div { flex: 1 1 auto; min-width: 0; }
+.beneficiary-modal-icon + div { min-width: 0; }
+
+:is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) :is(.modal-head-alt, .modal-head-sm):has(.beneficiary-modal-icon) .modal-close-icon {
+  position: absolute !important;
+  right: 28px !important;
+  top: 50% !important;
+  margin: 0 !important;
+  transform: translateY(-50%);
+}
+
+:is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) :is(.modal-head-alt, .modal-head-sm):has(.beneficiary-modal-icon) .modal-close-icon:hover {
+  transform: translateY(-50%) rotate(90deg) scale(1.03);
+}
+
+:is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #bulkUploadModal .modal-dialog {
+  width: min(500px, calc(100vw - 28px));
+  border: 1px solid rgba(31, 122, 84, .16);
+  border-radius: 22px !important;
+  box-shadow: 0 28px 70px rgba(10, 45, 31, .24) !important;
+}
+
+:is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #bulkUploadModal .modal-form {
+  padding: 24px 30px 0 !important;
+}
+
+:is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #bulkUploadModal .form-group {
+  margin-bottom: 18px !important;
+}
+
+:is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #bulkUploadModal .file-upload-box-dashed {
+  min-height: 116px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-width: 1.5px !important;
+  border-radius: 14px !important;
+  background: #fbfdfc;
+  transition: border-color .2s ease, background .2s ease, transform .2s ease;
+}
+
+:is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #bulkUploadModal .file-upload-box-dashed:hover {
+  border-color: #1f7a54 !important;
+  background: #eff8f3;
+  transform: translateY(-1px);
+}
+
+:is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #bulkUploadModal .modal-actions-flex {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 22px -30px 0 !important;
+  padding: 16px 30px 22px !important;
+  border-top: 1px solid #deebe4 !important;
+  border-radius: 0 !important;
+  background: #f8fbf9;
+}
+
+:is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #bulkUploadModal .modal-actions-flex > button {
+  width: 100% !important;
+  min-height: 52px;
+  margin: 0 !important;
+}
 
 .bulk-selection-copy { min-width: 0; }
 .bulk-selection-copy > div:first-child { display: flex; align-items: baseline; flex-wrap: wrap; }
@@ -200,6 +294,11 @@
   .beneficiary-secondary-filters { grid-template-columns: 1fr; }
   .beneficiary-active-filters { margin-top: -10px; }
   .beneficiary-modal-icon { flex-basis: 42px; width: 42px; height: 42px; }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) :is(.modal-head-alt, .modal-head-sm):has(.beneficiary-modal-icon) { min-height: 104px; padding: 20px 60px !important; }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) :is(.modal-head-alt, .modal-head-sm):has(.beneficiary-modal-icon) .beneficiary-modal-icon { left: 14px; }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) :is(.modal-head-alt, .modal-head-sm):has(.beneficiary-modal-icon) .modal-close-icon { right: 14px !important; }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #bulkUploadModal .modal-form { padding: 20px 18px 0 !important; }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #bulkUploadModal .modal-actions-flex { margin: 20px -18px 0 !important; padding: 14px 18px 18px !important; }
   .bulk-selected-person { grid-template-columns: 34px minmax(0, 1fr); }
   .bulk-selected-actions { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; }
   .bulk-selected-preview { white-space: normal; }

@@ -1282,7 +1282,7 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="frontend_polish.css?v=16">
   <link rel="stylesheet" href="peso_staff_responsive.css?v=24">
   <link rel="stylesheet" href="system_search_polish.css?v=1">
-  <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=2">
+  <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
 <script src="frontend_polish.js?v=15" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
 </head>
