@@ -490,7 +490,7 @@ try {
             <p>Contact PESO Vinzons for record corrections, requirement questions, and official schedule confirmation.</p>
         </div>
         <div class="service-help-actions">
-            <a href="mailto:lguvinzonspeso@gmail.com">Email PESO</a>
+            <a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=lguvinzonspeso@gmail.com" target="_blank" rel="noopener noreferrer">Email PESO</a>
             <a href="tel:+639479971186">Call +63 947 997 1186</a>
             <a href="about.php#peso-office">Office details</a>
         </div>
@@ -521,8 +521,8 @@ try {
             <div class="footer-head">Office</div>
             <div class="footer-text">Municipality of Vinzons, Camarines Norte</div>
             <div class="footer-text">Public Employment Service Office (PESO)</div>
-            <a class="footer-contact-link" href="#peso-contact" data-contact-kind="email"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span>lguvinzonspeso@gmail.com</span></a>
-            <a class="footer-contact-link" href="#peso-contact" data-contact-kind="phone"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>+63 947 997 1186</span></a>
+            <a class="footer-contact-link" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=lguvinzonspeso@gmail.com" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span>lguvinzonspeso@gmail.com</span></a>
+            <a class="footer-contact-link" href="tel:+639479971186"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>+63 947 997 1186</span></a>
             <a class="footer-contact-link" href="https://www.facebook.com/peso.vinzons" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook" aria-hidden="true"></i><span>PESO Vinzons on Facebook</span></a>
         </div>
     </div>

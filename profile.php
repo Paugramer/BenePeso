@@ -718,7 +718,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
         </div>
         <div class="correction-modal-actions">
             <button type="button" class="correction-secondary" onclick="closeModal('correctionModal')">Not now</button>
-            <a class="status-modal-action" href="mailto:lguvinzonspeso@gmail.com?subject=BENEPESO%20Record%20Correction%20Request">Compose email</a>
+            <a class="status-modal-action" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=lguvinzonspeso@gmail.com&amp;su=BENEPESO%20Record%20Correction%20Request" target="_blank" rel="noopener noreferrer">Open Gmail</a>
         </div>
     </div>
 </div>
@@ -758,8 +758,8 @@ while ($row = $activity_logs_result->fetch_assoc()) {
       <div class="footer-head">Office</div>
       <div class="footer-text">Municipality of Vinzons, Camarines Norte</div>
       <div class="footer-text">Public Employment Service Office (PESO)</div>
-      <a class="footer-contact-link" href="#peso-contact" data-contact-kind="email"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span>lguvinzonspeso@gmail.com</span></a>
-      <a class="footer-contact-link" href="#peso-contact" data-contact-kind="phone"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>+63 947 997 1186</span></a>
+      <a class="footer-contact-link" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=lguvinzonspeso@gmail.com" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span>lguvinzonspeso@gmail.com</span></a>
+      <a class="footer-contact-link" href="tel:+639479971186"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>+63 947 997 1186</span></a>
       <a class="footer-contact-link" href="https://www.facebook.com/peso.vinzons" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook" aria-hidden="true"></i><span>PESO Vinzons on Facebook</span></a>
     </div>
   </div>

@@ -160,7 +160,7 @@ if (isset($_SESSION['role'])) {
                     <a href="signup.php">Create an Account</a>
                 </div>
                 <div class="public-about-help-links">
-                    <a href="mailto:lguvinzonspeso@gmail.com">Email PESO</a>
+                    <a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=lguvinzonspeso@gmail.com" target="_blank" rel="noopener noreferrer">Email PESO</a>
                     <a href="tel:+639479971186">Call +63 947 997 1186</a>
                     <a href="https://www.facebook.com/peso.vinzons" target="_blank" rel="noopener noreferrer">Facebook</a>
                 </div>
@@ -189,7 +189,7 @@ if (isset($_SESSION['role'])) {
                 <div class="footer-head">Office</div>
                 <div class="footer-text">Municipality of Vinzons, Camarines Norte</div>
                 <div class="footer-text">Public Employment Service Office (PESO)</div>
-                <a class="footer-contact-link" href="mailto:lguvinzonspeso@gmail.com"><span>lguvinzonspeso@gmail.com</span></a>
+                <a class="footer-contact-link" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=lguvinzonspeso@gmail.com" target="_blank" rel="noopener noreferrer"><span>lguvinzonspeso@gmail.com</span></a>
                 <a class="footer-contact-link" href="tel:+639479971186"><span>+63 947 997 1186</span></a>
                 <a class="footer-contact-link" href="https://www.facebook.com/peso.vinzons" target="_blank" rel="noopener noreferrer"><span>PESO Vinzons on Facebook</span></a>
             </div>

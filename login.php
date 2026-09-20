@@ -228,7 +228,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
         <p class="small auth-privacy-link stagger-4">
           By signing in, you acknowledge the <a href="privacy_notice.php">Privacy Notice</a>.
         </p>
-        <a class="auth-support-link stagger-4" href="mailto:lguvinzonspeso@gmail.com?subject=BENEPESO%20Account%20Access%20Help">Need help? Contact PESO Vinzons</a>
+        <a class="auth-support-link stagger-4" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=lguvinzonspeso@gmail.com&amp;su=BENEPESO%20Account%20Access%20Help" target="_blank" rel="noopener noreferrer">Need help? Contact PESO Vinzons</a>
 
       </div>
     </div>

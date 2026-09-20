@@ -43,13 +43,18 @@ if (!function_exists('time_ago')) {
 }
 
 function table_exists(mysqli $conn, string $table): bool {
+  static $cache = [];
+  if (array_key_exists($table, $cache)) return $cache[$table];
+  $cacheKey = $table;
   $table = $conn->real_escape_string($table);
   $sql = "SHOW TABLES LIKE '$table'";
   $res = $conn->query($sql);
-  return $res && $res->num_rows > 0;
+  return $cache[$cacheKey] = (bool)($res && $res->num_rows > 0);
 }
 
 function get_columns(mysqli $conn, string $table): array {
+  static $cache = [];
+  if (isset($cache[$table])) return $cache[$table];
   $cols = [];
   if (!table_exists($conn, $table)) return $cols;
   $tableSafe = "`" . str_replace("`", "``", $table) . "`";
@@ -59,7 +64,7 @@ function get_columns(mysqli $conn, string $table): array {
       $cols[] = $row["Field"];
     }
   }
-  return $cols;
+  return $cache[$table] = $cols;
 }
 
 function first_existing_column(array $columns, array $choices): ?string {
@@ -140,7 +145,6 @@ if (table_exists($conn, "admins")) {
   }
 }
 
-$admin_name = "PESO VINZONS";
 $pic_path = "uploads/admin_pics/" . $admin_pic; 
 if (!file_exists($pic_path) || empty($admin_pic)) { $pic_path = "img/default_avatar.png"; }
 
@@ -153,9 +157,7 @@ $totalBeneficiaries = get_unique_beneficiary_count($conn);
 $activePrograms = get_count_by_status($conn, "programs", ["status", "program_status"], ["Active", "Ongoing", "Open", "Running"]);
 $pendingReviews = get_count_by_status($conn, "beneficiaries", ["status", "approval_status", "review_status"], ["Pending", "For Review", "Review"]);
 
-if ($pendingReviews === 0) {
-  $pendingReviews = get_count_by_status($conn, "programs", ["status", "approval_status"], ["Pending", "For Review", "Review"]);
-}
+$dashboardRefreshedAt = date("M j, Y, g:i A");
 
 /* Live dashboard charts: registrations by month and current review status. */
 $chartLabels = [];
@@ -308,7 +310,7 @@ if (table_exists($conn, "activity_logs")) {
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="admin_dashboard.css">
   <link rel="stylesheet" href="shared_sidebar.css">
-  <link rel="stylesheet" href="dashboard_polish.css?v=4">
+  <link rel="stylesheet" href="dashboard_polish.css?v=5">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
 <script src="frontend_polish.js?v=15" defer></script>
@@ -376,28 +378,40 @@ if (table_exists($conn, "activity_logs")) {
       </div>
     </header>
 
+    <section class="dashboard-command-bar animate-fade-in" aria-label="Dashboard actions">
+      <div class="dashboard-command-copy">
+        <span class="dashboard-live-dot" aria-hidden="true"></span>
+        <div><strong>System-wide operations</strong><small>Refreshed <?php echo h($dashboardRefreshedAt); ?></small></div>
+      </div>
+      <nav class="dashboard-quick-actions" aria-label="Quick actions">
+        <a href="admin_beneficiaries.php"><i class="ph ph-clipboard-text" aria-hidden="true"></i><span>Review applications</span></a>
+        <a href="admin_program.php"><i class="ph ph-calendar-plus" aria-hidden="true"></i><span>Manage batches</span></a>
+        <a href="admin_accounts.php"><i class="ph ph-user-circle-gear" aria-hidden="true"></i><span>Manage accounts</span></a>
+      </nav>
+    </section>
+
     <section class="stats-grid">
-      <div class="stat-card animate-fade-in" style="animation-delay: 0.1s;">
+      <a href="admin_program.php" class="stat-card stat-card-link animate-fade-in" style="animation-delay: 0.1s;">
         <div class="stat-top">
-          <div class="stat-label">Total Programs</div>
+          <div class="stat-label">Program Batches</div>
           <div class="stat-icon"><i class="ph-fill ph-briefcase"></i></div>
         </div>
         <div class="stat-value"><?php echo (int)$totalPrograms; ?></div>
-        <div class="stat-trend trend-neutral"><i class="ph-bold ph-database"></i> All programs</div>
-        <div class="stat-note">Programs listed in BENEPESO.</div>
-      </div>
+        <div class="stat-trend trend-neutral"><i class="ph-bold ph-database"></i> All schedules</div>
+        <div class="stat-note">Published and recorded program batches.</div>
+      </a>
 
-      <div class="stat-card animate-fade-in" style="animation-delay: 0.2s;">
+      <a href="admin_program.php" class="stat-card stat-card-link animate-fade-in" style="animation-delay: 0.2s;">
         <div class="stat-top">
-          <div class="stat-label">Active Programs</div>
+          <div class="stat-label">Active Batches</div>
           <div class="stat-icon"><i class="ph-fill ph-check-circle"></i></div>
         </div>
         <div class="stat-value"><?php echo (int)$activePrograms; ?></div>
         <div class="stat-trend trend-neutral"><i class="ph-bold ph-activity"></i> Running now</div>
-        <div class="stat-note">Programs currently in progress.</div>
-      </div>
+        <div class="stat-note">Approved batches currently in progress.</div>
+      </a>
 
-      <div class="stat-card animate-fade-in" style="animation-delay: 0.3s;">
+      <a href="admin_beneficiaries.php" class="stat-card stat-card-link animate-fade-in" style="animation-delay: 0.3s;">
         <div class="stat-top">
           <div class="stat-label">Unique Beneficiaries</div>
           <div class="stat-icon"><i class="ph-fill ph-users-three"></i></div>
@@ -405,17 +419,17 @@ if (table_exists($conn, "activity_logs")) {
         <div class="stat-value"><?php echo (int)$totalBeneficiaries; ?></div>
         <div class="stat-trend trend-neutral"><i class="ph-bold ph-files"></i> <?php echo (int)$totalBeneficiaryRecords; ?> total enrollments</div>
         <div class="stat-note">Each person is counted once.</div>
-      </div>
+      </a>
 
-      <div class="stat-card animate-fade-in" style="animation-delay: 0.4s;">
+      <a href="admin_beneficiaries.php" class="stat-card stat-card-link animate-fade-in" style="animation-delay: 0.4s;">
         <div class="stat-top">
           <div class="stat-label">Pending Reviews</div>
           <div class="stat-icon"><i class="ph-fill ph-clock-countdown"></i></div>
         </div>
         <div class="stat-value"><?php echo (int)$pendingReviews; ?></div>
-        <div class="stat-trend trend-down"><i class="ph-bold ph-clock"></i> For review</div>
+        <div class="stat-trend <?php echo $pendingReviews > 0 ? 'trend-down' : 'trend-neutral'; ?>"><i class="ph-bold ph-clock"></i> For review</div>
         <div class="stat-note">Applications waiting for admin review.</div>
-      </div>
+      </a>
     </section>
 
     <section class="chart-section animate-fade-in" style="animation-delay: 0.5s;" aria-label="Dashboard analytics">
@@ -467,14 +481,15 @@ if (table_exists($conn, "activity_logs")) {
       <div class="panel-card animate-fade-in" style="animation-delay: 0.6s; padding-bottom: 20px;">
         <div class="panel-head">
           <div>
-            <div class="panel-title">All Recent Programs</div>
-            <div class="panel-sub">Latest records from the global programs table</div>
+            <div class="panel-title">Recent Program Batches</div>
+            <div class="panel-sub">Latest schedules across all three BENEPESO programs</div>
           </div>
           <a href="admin_program.php" class="panel-link">View all</a>
         </div>
 
         <div class="table-wrap">
           <table class="data-table">
+            <caption class="dashboard-sr-only">Recent BENEPESO program batches, capacity, status, and available actions</caption>
             <thead>
               <tr>
                 <th>Program Name</th>

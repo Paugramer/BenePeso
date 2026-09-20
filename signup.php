@@ -323,7 +323,7 @@ $barangays = beneficiary_barangay_options();
             <a href="login.php" id="loginLink">Log in securely</a>
           </p>
           <span aria-hidden="true">&bull;</span>
-          <a class="auth-support-link" href="mailto:lguvinzonspeso@gmail.com?subject=BENEPESO%20Registration%20Help">Contact PESO</a>
+          <a class="auth-support-link" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=lguvinzonspeso@gmail.com&amp;su=BENEPESO%20Registration%20Help" target="_blank" rel="noopener noreferrer">Contact PESO</a>
         </div>
 
       </div>

@@ -500,7 +500,7 @@ try {
                         </li>
                         <li>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"></path><path d="m4 6 8 7 8-7"></path></svg>
-                            <a href="mailto:lguvinzonspeso@gmail.com">lguvinzonspeso@gmail.com</a>
+                            <a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=lguvinzonspeso@gmail.com" target="_blank" rel="noopener noreferrer">lguvinzonspeso@gmail.com</a>
                         </li>
                         <li>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 0-10.4 8.9V14.6H8.3V12h2.3v-2c0-2.3 1.4-3.6 3.5-3.6 1 0 2.1.2 2.1.2v2.3H15c-1.1 0-1.5.7-1.5 1.4V12H16l-.4 2.6h-2.1v6.3A9 9 0 0 0 21 12Z"></path></svg>
@@ -619,8 +619,8 @@ try {
       <div class="footer-head">Office</div>
       <div class="footer-text">Municipality of Vinzons, Camarines Norte</div>
       <div class="footer-text">Public Employment Service Office (PESO)</div>
-      <a class="footer-contact-link" href="#peso-contact" data-contact-kind="email"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span>lguvinzonspeso@gmail.com</span></a>
-      <a class="footer-contact-link" href="#peso-contact" data-contact-kind="phone"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>+63 947 997 1186</span></a>
+      <a class="footer-contact-link" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=lguvinzonspeso@gmail.com" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span>lguvinzonspeso@gmail.com</span></a>
+      <a class="footer-contact-link" href="tel:+639479971186"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>+63 947 997 1186</span></a>
       <a class="footer-contact-link" href="https://www.facebook.com/peso.vinzons" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook" aria-hidden="true"></i><span>PESO Vinzons on Facebook</span></a>
     </div>
   </div>
