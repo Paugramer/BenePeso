@@ -207,7 +207,7 @@ if ($active_program) {
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="peso_staff_program.css?v=20260905-card-responsive">
     <link rel="stylesheet" href="shared_sidebar.css">
-<link rel="stylesheet" href="program_filter_polish.css?v=5">
+<link rel="stylesheet" href="program_filter_polish.css?v=6">
     <script src="program_filter_polish.js?v=2" defer></script>
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=23">
@@ -321,6 +321,7 @@ if ($active_program) {
                 <div>
                     <div class="panel-title"><?php echo $active_program ? e($active_program) . ' Directory' : 'Program Directories'; ?></div>
                 </div>
+                <?php if ($active_program): ?><a class="directory-beneficiary-link" href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($active_program); ?>"><i class="ph ph-users-three"></i> Find beneficiaries</a><?php endif; ?>
             </div>
 
             <div class="custom-tabs">
@@ -365,16 +366,6 @@ if ($active_program) {
                 </div>
             </form>
 
-            <?php if ($active_program): ?>
-            <form class="beneficiary-directory-search" method="GET" action="peso_staff_beneficiaries.php">
-                <input type="hidden" name="program_name" value="<?php echo e($active_program); ?>">
-                <span class="beneficiary-search-icon"><i class="ph ph-users-three"></i></span>
-                <label for="beneficiaryDirectorySearch">Find a beneficiary in <?php echo e($active_program); ?></label>
-                <input id="beneficiaryDirectorySearch" type="search" name="search" placeholder="Search by beneficiary name or email" autocomplete="off">
-                <button type="submit"><i class="ph ph-magnifying-glass"></i><span>Search beneficiaries</span></button>
-            </form>
-            <?php endif; ?>
-
             <?php if (!$active_program): 
                 $sql = "SELECT c.*, 
                         (SELECT COUNT(*) FROM programs p WHERE p.program_name = c.program_name AND $whereStr) as batch_count,
@@ -385,7 +376,7 @@ if ($active_program) {
             ?>
                 <div class="program-grid">
                     <?php if($res): while ($dir = $res->fetch_assoc()): if ($tabFilter !== 'All' && $dir['batch_count'] == 0) continue; ?>
-                    <article class="program-card-shell">
+                    <article class="program-card-shell<?php echo (int)$dir['pending_application_count'] > 0 ? ' has-pending-applications' : ''; ?>">
                         <a href="?program=<?php echo urlencode($dir['program_name']); ?>" style="display:block; text-decoration:none; color:inherit;">
                             <div class="program-image-wrap">
                                 <div class="program-image-bg" style="background-image: url('<?php echo $dir['image_path'] ?: 'img/pesobgs.jpg'; ?>');"></div>

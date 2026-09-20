@@ -25,6 +25,11 @@ $peso_staff_id = (int) $_SESSION["staff_id"];
 function h($value){
   return htmlspecialchars((string)$value, ENT_QUOTES, "UTF-8");
 }
+function dashboard_program_icon(string $programName): string {
+  if (stripos($programName, 'SPES') !== false) return 'ph-student';
+  if (stripos($programName, 'MSME') !== false) return 'ph-storefront';
+  return 'ph-hammer';
+}
 
 if (!function_exists('time_ago')) {
     function time_ago($datetime, $full = false) {
@@ -227,8 +232,8 @@ if (table_exists($conn, "beneficiaries")) {
                            FROM beneficiaries
                            WHERE barangay IS NOT NULL AND TRIM(barangay) <> ''
                            GROUP BY TRIM(barangay)
-                           ORDER BY total_records DESC, barangay_name ASC
-                           LIMIT 5");
+                           HAVING pending_reviews > 0
+                           ORDER BY pending_reviews DESC, total_records DESC, barangay_name ASC");
     if ($result) {
       while ($row = $result->fetch_assoc()) {
         $row['total_records'] = (int)$row['total_records'];
@@ -238,20 +243,15 @@ if (table_exists($conn, "beneficiaries")) {
       }
     }
     if ($barangayWorkload && in_array('approval_status', $beneficiaryColumns, true)) {
-      $detailStmt = $conn->prepare("SELECT b.full_name, b.program_id, p.program_name, p.program_code
+      foreach ($barangayWorkload as $barangay) $barangayPendingDetails[(string)$barangay['barangay_name']] = [];
+      $detailResult = $conn->query("SELECT TRIM(b.barangay) AS barangay_name, b.full_name, b.program_id, p.program_name, p.program_code
                                     FROM beneficiaries b
                                     JOIN programs p ON p.program_id = b.program_id
-                                    WHERE TRIM(b.barangay) = ? AND b.approval_status = 'Pending'
-                                    ORDER BY b.created_at DESC, b.beneficiary_id DESC
-                                    LIMIT 5");
-      if ($detailStmt) {
-        foreach ($barangayWorkload as $barangay) {
-          $barangayName = (string)$barangay['barangay_name'];
-          $detailStmt->bind_param('s', $barangayName);
-          $detailStmt->execute();
-          $barangayPendingDetails[$barangayName] = $detailStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        }
-        $detailStmt->close();
+                                    WHERE b.approval_status = 'Pending' AND b.barangay IS NOT NULL AND TRIM(b.barangay) <> ''
+                                    ORDER BY TRIM(b.barangay), b.created_at DESC, b.beneficiary_id DESC");
+      if ($detailResult) while ($detail = $detailResult->fetch_assoc()) {
+        $key = (string)$detail['barangay_name'];
+        if (isset($barangayPendingDetails[$key]) && count($barangayPendingDetails[$key]) < 5) $barangayPendingDetails[$key][] = $detail;
       }
     }
   }
@@ -354,7 +354,7 @@ if (table_exists($conn, "activity_logs")) {
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="peso_staff_dashboard.css">
   <link rel="stylesheet" href="shared_sidebar.css">
-  <link rel="stylesheet" href="dashboard_polish.css?v=7">
+  <link rel="stylesheet" href="dashboard_polish.css?v=8">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=17">
 <script src="frontend_polish.js?v=15" defer></script>
@@ -526,7 +526,7 @@ if (table_exists($conn, "activity_logs")) {
       <div class="panel-head">
         <div>
           <div class="panel-title" id="barangayWorkloadTitle">Barangay Workload</div>
-          <div class="panel-sub">Top 5 barangays &bull; open a card to preview up to 5 pending applications</div>
+          <div class="panel-sub">All barangays with pending applications &bull; preview limited to 5 records per card</div>
         </div>
         <a href="peso_staff_beneficiaries.php" class="panel-link">View beneficiaries</a>
       </div>
@@ -538,7 +538,7 @@ if (table_exists($conn, "activity_logs")) {
           <?php foreach ($barangayWorkload as $index => $barangay):
             $coverageWidth = $barangayMaxRecords > 0 ? max(8, round(($barangay['total_records'] / $barangayMaxRecords) * 100)) : 0;
           ?>
-            <button type="button" class="barangay-workload-row" data-barangay-card data-barangay="<?php echo h($barangay['barangay_name']); ?>" data-pending-total="<?php echo (int)$barangay['pending_reviews']; ?>" aria-label="View pending beneficiaries in <?php echo h($barangay['barangay_name']); ?>">
+            <button type="button" class="barangay-workload-row has-pending" data-barangay-card data-barangay="<?php echo h($barangay['barangay_name']); ?>" data-pending-total="<?php echo (int)$barangay['pending_reviews']; ?>" aria-label="View pending beneficiaries in <?php echo h($barangay['barangay_name']); ?>">
               <span class="barangay-rank" aria-hidden="true"><?php echo $index + 1; ?></span>
               <span class="barangay-workload-copy">
                 <strong><?php echo h($barangay['barangay_name']); ?></strong>
@@ -626,7 +626,7 @@ if (table_exists($conn, "activity_logs")) {
                 ?>
                   <tr>
                     <td>
-                        <div style="font-weight: 800; color: var(--green-dark); font-size: 15px;"><?php echo h($program["name"]); ?></div>
+                        <div class="dashboard-program-name"><span class="dashboard-program-icon"><i class="ph <?php echo dashboard_program_icon($program["name"]); ?>"></i></span><?php echo h($program["name"]); ?></div>
                         <div style="font-size: 12px; color: var(--muted); margin-top: 4px;"><i class="ph ph-clock"></i> Updated <?php echo h($program["updated"]); ?></div>
                     </td>
                     <td>

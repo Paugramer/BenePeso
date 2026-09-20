@@ -243,6 +243,8 @@
 }
 .barangay-workload-row:hover,
 .barangay-workload-row:focus-visible { border-color: #79b99a; box-shadow: 0 12px 26px rgba(20,83,57,.11); outline: 0; transform: translateY(-3px); }
+.barangay-workload-row.has-pending { border-top: 3px solid #d3a52e; }
+.barangay-workload-row.has-pending .barangay-rank { color: #855900; background: #fff6d9; }
 .barangay-rank {
   width: 32px;
   height: 32px;
@@ -292,12 +294,14 @@
 .barangay-carousel-control.is-previous { left: 0; }
 .barangay-carousel-control.is-next { right: 0; }
 .barangay-carousel-dots { position: absolute; inset: auto 42px 2px; display: flex; justify-content: center; gap: 7px; }
-.barangay-carousel-dots button { width: 7px; height: 7px; padding: 0; border: 0; border-radius: 999px; background: #c9ddd2; cursor: pointer; transition: width .2s ease, background .2s ease; }
-.barangay-carousel-dots button.is-active { width: 24px; background: #1f7a54; }
+.barangay-carousel-dots button { appearance: none !important; flex: 0 0 7px !important; width: 7px !important; min-width: 0 !important; max-width: 7px !important; height: 7px !important; min-height: 0 !important; max-height: 7px !important; margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 999px; background: #c9ddd2; box-shadow: none !important; cursor: pointer; line-height: 0 !important; transition: flex-basis .2s ease, max-width .2s ease, background .2s ease; }
+.barangay-carousel-dots button.is-active { flex-basis: 24px !important; width: 24px !important; max-width: 24px !important; background: #1f7a54; }
 .barangay-carousel.is-static { padding-inline: 0; }
 .barangay-carousel.is-static .barangay-carousel-control,
 .barangay-carousel.is-static .barangay-carousel-dots { display: none; }
 .barangay-empty { min-height: 130px; }
+.dashboard-program-name { display: flex; align-items: center; gap: 9px; color: var(--green-dark, #145339); font-size: 15px; font-weight: 800; }
+.dashboard-program-icon { width: 30px; height: 30px; display: inline-grid; flex: 0 0 30px; place-items: center; border: 1px solid #cce2d6; border-radius: 9px; color: #1f7a54; background: #edf7f2; font-size: 16px; }
 
 .workload-modal { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
 .workload-modal.is-open { opacity: 1; pointer-events: auto; }

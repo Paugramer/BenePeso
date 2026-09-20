@@ -285,11 +285,10 @@
 .program-category-options > button[aria-selected="true"] { color: #fff; background: #1f7a54; }
 .program-category-options > button[aria-selected="true"] span i { color: #fff; }
 
-.modal-head:has(.program-modal-heading) { display: grid !important; grid-template-columns: 42px minmax(0,1fr) 42px; align-items: center; gap: 12px; }
-.modal-head:has(.program-modal-heading) .program-modal-heading { display: contents; }
-.modal-head:has(.program-modal-heading) .program-modal-icon { grid-column: 1; }
-.modal-head:has(.program-modal-heading) .program-modal-heading > div { grid-column: 2; text-align: center; }
-.modal-head:has(.program-modal-heading) .modal-close { grid-column: 3; }
+.modal-head:has(.program-modal-heading) { display: flex !important; align-items: center; justify-content: center; min-height: 122px; padding-inline: 68px; position: relative; }
+.modal-head:has(.program-modal-heading) .program-modal-heading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; text-align: center; }
+.modal-head:has(.program-modal-heading) .program-modal-heading > div { text-align: center; }
+.modal-head:has(.program-modal-heading) .modal-close { position: absolute; right: 28px; top: 28px; }
 
 .beneficiary-directory-search { display: grid; grid-template-columns: 42px minmax(190px,.72fr) minmax(240px,1fr) auto; align-items: center; gap: 10px; margin: 14px 0 18px; padding: 10px; border: 1px solid #d8e7df; border-radius: 15px; background: linear-gradient(135deg,#f8fcfa,#edf7f2); }
 .beneficiary-search-icon { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid #cae2d5; border-radius: 11px; color: #1f7a54; background: #fff; font-size: 19px; }
@@ -302,6 +301,11 @@
 .batch-table .batch-title-td > i:first-child { font-size: 17px; }
 .modal-form label i,
 .program-bullet-section > label i { margin-right: 5px; color: #1f7a54; font-size: 15px; vertical-align: -2px; }
+.directory-beneficiary-link { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 14px; border: 1px solid #cbe1d5; border-radius: 11px; color: #176b49; background: #f3faf6; font-size: 12px; font-weight: 800; text-decoration: none; transition: background .2s ease, border-color .2s ease, transform .2s ease; }
+.directory-beneficiary-link:hover,
+.directory-beneficiary-link:focus-visible { border-color: #78b596; background: #e8f5ee; outline: 0; transform: translateY(-1px); }
+.program-card-shell.has-pending-applications { border-top: 3px solid #d3a52e; }
+.program-card-shell.has-pending-applications .directory-application-queue { color: #956100; }
 
 @media (max-width: 760px) {
   .program-category-menu { flex-basis: 100%; min-width: 0; width: 100%; }
@@ -312,5 +316,7 @@
 }
 
 @media (max-width: 600px) {
-  .modal-head:has(.program-modal-heading) { grid-template-columns: 38px minmax(0,1fr) 38px; gap: 8px; }
+  .modal-head:has(.program-modal-heading) { min-height: 114px; padding-inline: 54px; }
+  .modal-head:has(.program-modal-heading) .modal-close { right: 16px; top: 16px; }
+  .directory-beneficiary-link { min-height: 38px; padding-inline: 10px; }
 }
