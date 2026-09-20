@@ -733,7 +733,15 @@ body::before {
 
 .modal-icon { color: var(--green) !important; }
 .modal-box h3, .modal-content h2 { letter-spacing: 0; }
-.modal-close { top: 14px; right: 14px; }
+.modal-close {
+    top: 14px;
+    right: 14px;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #dce9e2;
+    background: #f3f7f5;
+}
+.modal-close:hover { transform: rotate(90deg); }
 .toast-notification { border-radius: 8px; }
 
 @media (max-width: 760px) {

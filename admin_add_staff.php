@@ -38,11 +38,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if ($pass !== $cpass) {
         $error = "Passwords do not match.";
-    } elseif (strlen($pass) < 8) {
-        $error = "Password must be at least 8 characters long.";
+    } elseif (strlen($pass) < 10
+        || !preg_match('/[a-z]/', $pass)
+        || !preg_match('/[A-Z]/', $pass)
+        || !preg_match('/\d/', $pass)
+        || !preg_match('/[^A-Za-z0-9]/', $pass)) {
+        $error = "Use at least 10 characters with uppercase, lowercase, a number, and a symbol.";
     } else {
-        $stmt = $conn->prepare("SELECT email FROM peso_staff WHERE email = ? UNION SELECT email FROM users WHERE email = ?");
-        $stmt->bind_param("ss", $email, $email);
+        $stmt = $conn->prepare("SELECT email FROM peso_staff WHERE email = ? UNION SELECT email FROM users WHERE email = ? UNION SELECT email FROM admins WHERE email = ?");
+        $stmt->bind_param("sss", $email, $email, $email);
         $stmt->execute();
         if ($stmt->get_result()->num_rows > 0) {
             $error = "This email address is already in use.";
@@ -430,7 +434,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 </style>
 <link rel="stylesheet" href="admin_accounts_polish.css?v=5">
-<link rel="stylesheet" href="frontend_polish.css?v=16">
+<link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
 <script src="frontend_polish.js?v=15" defer></script>
 </head>
@@ -586,7 +590,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                 <div class="form-group">
                                     <label for="password">Account Password <span style="color:#e11d48;">*</span></label>
                                     <div class="password-wrap">
-                                        <input type="password" id="password" name="password" placeholder="Create a strong password" required minlength="8">
+                                        <input type="password" id="password" name="password" placeholder="10+ characters with number and symbol" required minlength="10" maxlength="128" autocomplete="new-password" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{10,}" title="Use at least 10 characters with uppercase, lowercase, a number, and a symbol.">
                                         <button type="button" class="toggle-pass" data-target="password" aria-label="Show password">
                                             <i class="ph-bold ph-eye-slash"></i>
                                         </button>
@@ -596,7 +600,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                 <div class="form-group">
                                     <label for="confirm_password">Confirm Password <span style="color:#e11d48;">*</span></label>
                                     <div class="password-wrap">
-                                        <input type="password" id="confirm_password" name="confirm_password" placeholder="Retype password" required minlength="8">
+                                        <input type="password" id="confirm_password" name="confirm_password" placeholder="Retype password" required minlength="10" maxlength="128" autocomplete="new-password">
                                         <button type="button" class="toggle-pass" data-target="confirm_password" aria-label="Show password">
                                             <i class="ph-bold ph-eye-slash"></i>
                                         </button>

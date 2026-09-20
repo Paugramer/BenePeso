@@ -17,9 +17,9 @@ function auth_role_account_is_active(string $role): bool
     if ($role === 'admin') {
         $stmt = $conn->prepare('SELECT admin_id FROM admins WHERE admin_id = ? LIMIT 1');
     } elseif ($role === 'peso_staff') {
-        $stmt = $conn->prepare("SELECT staff_id FROM peso_staff WHERE staff_id = ? AND COALESCE(status, 'Active') <> 'Banned' LIMIT 1");
+        $stmt = $conn->prepare("SELECT staff_id FROM peso_staff WHERE staff_id = ? AND COALESCE(status, 'Active') = 'Active' LIMIT 1");
     } elseif ($role === 'user') {
-        $stmt = $conn->prepare("SELECT user_id FROM users WHERE user_id = ? AND COALESCE(status, 'Active') <> 'Banned' LIMIT 1");
+        $stmt = $conn->prepare("SELECT user_id FROM users WHERE user_id = ? AND COALESCE(status, 'Active') = 'Active' LIMIT 1");
     } else {
         return false;
     }
@@ -50,4 +50,29 @@ function check_user_role(string $required_role): void
 
     header('Location: login.php');
     exit();
+}
+
+/**
+ * Resolve the first allowed role that is both present in the session and still
+ * active in the database. Secondary endpoints use this instead of trusting a
+ * session identifier alone, so a banned account loses access immediately.
+ */
+function auth_first_active_role(array $allowed_roles): ?string
+{
+    foreach ($allowed_roles as $role) {
+        if (!is_string($role) || !in_array($role, ['admin', 'peso_staff', 'user'], true)) {
+            continue;
+        }
+
+        if (auth_has_role($role) && auth_role_account_is_active($role)) {
+            auth_activate_role($role);
+            return $role;
+        }
+
+        if (auth_has_role($role)) {
+            auth_clear_role($role);
+        }
+    }
+
+    return null;
 }

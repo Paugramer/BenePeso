@@ -108,9 +108,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $log_description = $actor_name . ' changed their account password.';
                 
                 // Keep beneficiary security events visible in the beneficiary activity log.
-                $log_stmt = $conn->prepare("INSERT INTO activity_logs (action_type, module_name, description, actor_name, actor_role, created_at) VALUES ('Security', 'Profile', ?, ?, 'Registered User', NOW())");
+                $log_stmt = $conn->prepare("INSERT INTO activity_logs (user_id, action_type, module_name, description, actor_name, actor_role, created_at) VALUES (?, 'Security', 'Profile', ?, ?, 'Registered User', NOW())");
                 if ($log_stmt) {
-                    $log_stmt->bind_param("ss", $log_description, $actor_name);
+                    $log_stmt->bind_param("iss", $user_id, $log_description, $actor_name);
                     $log_stmt->execute();
                     $log_stmt->close();
                 }

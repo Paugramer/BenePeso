@@ -81,14 +81,15 @@ while ($row = $availed_programs_result->fetch_assoc()) {
     $availed_programs[] = $row;
 }
 
-// STRICT UNIFIED LOG FILTER (Registered User Only)
+// Activity history is account-owned. Names are display values and are not
+// reliable authorization identifiers because multiple residents can share one.
 $log_stmt = $conn->prepare("
     SELECT action_type, module_name, description, created_at 
     FROM activity_logs 
-    WHERE (actor_name = ? OR actor_name = ?) AND actor_role = 'Registered User'
+    WHERE user_id = ? AND actor_role = 'Registered User'
     ORDER BY created_at DESC 
 ");
-$log_stmt->bind_param("ss", $user_display_name, $basic_name);
+$log_stmt->bind_param("i", $user_id);
 $log_stmt->execute();
 $activity_logs_result = $log_stmt->get_result();
 
@@ -109,7 +110,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="home.css?v=16">
+    <link rel="stylesheet" href="home.css?v=17">
     <style>
         .status-card-horizontal {
             background: #ffffff;
@@ -259,9 +260,9 @@ while ($row = $activity_logs_result->fetch_assoc()) {
             .log-premium-right { text-align: left; align-items: flex-start; }
         }
     </style>
-    <link rel="stylesheet" href="profile.css?v=16">
+<link rel="stylesheet" href="profile.css?v=17">
     <link rel="stylesheet" href="spes_form_modal.css?v=20260904c">
-<link rel="stylesheet" href="frontend_polish.css?v=20260919d">
+    <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">

@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth.php';
 require_once 'db.php';
 
 const MSME_FORM_PDF = __DIR__ . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'forms' . DIRECTORY_SEPARATOR . 'MSME Profiling Form.pdf';
@@ -14,15 +14,13 @@ function msme_error(string $message, int $status = 400): void {
 $beneficiaryId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$beneficiaryId) msme_error('A valid MSME beneficiary record is required.');
 
-$role = '';
+$role = auth_first_active_role(['admin', 'peso_staff', 'user']) ?? '';
 $userId = 0;
-if (!empty($_SESSION['admin_id'])) $role = 'admin';
-elseif (!empty($_SESSION['staff_id'])) $role = 'peso_staff';
-elseif (!empty($_SESSION['user_id'])) { $role = 'user'; $userId = (int)$_SESSION['user_id']; }
-else msme_error('Your session has expired. Please sign in again.', 401);
+if ($role === 'user') $userId = (int)$_SESSION['user_id'];
+if ($role === '') msme_error('Your session has expired. Please sign in again.', 401);
 
 $sql = "SELECT b.*, p.program_name FROM beneficiaries b JOIN programs p ON p.program_id=b.program_id WHERE b.beneficiary_id=?";
-if ($role === 'user') $sql .= " AND (b.user_id=? OR b.email=(SELECT email FROM users WHERE user_id=? LIMIT 1))";
+if ($role === 'user') $sql .= " AND (b.user_id=? OR (b.user_id IS NULL AND b.email=(SELECT email FROM users WHERE user_id=? LIMIT 1)))";
 $sql .= ' LIMIT 1';
 $stmt = $conn->prepare($sql);
 if (!$stmt) msme_error('The MSME record could not be loaded.', 500);

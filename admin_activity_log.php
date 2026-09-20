@@ -197,7 +197,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
 <link rel="stylesheet" href="shared_sidebar.css">
 <link rel="stylesheet" href="activity_filter_polish.css?v=3">
 <script src="activity_filter_polish.js?v=3" defer></script>
-<link rel="stylesheet" href="frontend_polish.css?v=16">
+<link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
 <script src="frontend_polish.js?v=15" defer></script>

@@ -147,3 +147,10 @@ function auth_remaining_roles(): array
 }
 
 start_secure_session();
+
+// Authenticated pages contain personal and operational data and must not be
+// stored in shared browser/proxy caches. Public pages remain cacheable.
+if (auth_remaining_roles() !== [] && !headers_sent()) {
+    header('Cache-Control: private, no-store, max-age=0');
+    header('Pragma: no-cache');
+}

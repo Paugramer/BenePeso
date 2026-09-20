@@ -88,11 +88,17 @@ if (!$current_user) {
 }
 $old_email = (string)$current_user['email'];
 
-$email_stmt = $conn->prepare('SELECT user_id FROM users WHERE email = ? AND user_id <> ? LIMIT 1');
+$email_stmt = $conn->prepare(
+    "SELECT account_id FROM (
+        SELECT user_id AS account_id FROM users WHERE email = ? AND user_id <> ?
+        UNION ALL SELECT staff_id FROM peso_staff WHERE email = ?
+        UNION ALL SELECT admin_id FROM admins WHERE email = ?
+    ) duplicate_email LIMIT 1"
+);
 if (!$email_stmt) {
     return_to_profile('System Error: Could not verify the email address at this time.');
 }
-$email_stmt->bind_param('si', $email, $user_id);
+$email_stmt->bind_param('siss', $email, $user_id, $email, $email);
 $email_stmt->execute();
 $email_in_use = $email_stmt->get_result()->num_rows > 0;
 $email_stmt->close();
@@ -211,11 +217,11 @@ try {
     $actor_name = trim($first_name . ' ' . $last_name);
     $actor_role = 'Registered User';
     $log_description = $actor_name . ' updated their personal profile information.';
-    $log_stmt = $conn->prepare("INSERT INTO activity_logs (action_type, module_name, description, actor_name, actor_role, created_at) VALUES ('Update', 'Profile', ?, ?, ?, NOW())");
+    $log_stmt = $conn->prepare("INSERT INTO activity_logs (user_id, action_type, module_name, description, actor_name, actor_role, created_at) VALUES (?, 'Update', 'Profile', ?, ?, ?, NOW())");
     if (!$log_stmt) {
         throw new RuntimeException('Unable to prepare activity log.');
     }
-    $log_stmt->bind_param('sss', $log_description, $actor_name, $actor_role);
+    $log_stmt->bind_param('isss', $user_id, $log_description, $actor_name, $actor_role);
     if (!$log_stmt->execute()) {
         throw new RuntimeException('Unable to record profile activity.');
     }

@@ -1,10 +1,10 @@
 <?php
-require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth.php';
 require 'db.php';
 require_once 'tupad_household_helper.php';
 header('Content-Type: application/json; charset=utf-8');
 
-if (empty($_SESSION['admin_id']) && empty($_SESSION['staff_id'])) {
+if (auth_first_active_role(['admin', 'peso_staff']) === null) {
     http_response_code(403);
     echo json_encode(['found' => false, 'message' => 'Unauthorized.']);
     exit();

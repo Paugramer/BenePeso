@@ -783,7 +783,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   $_SESSION["modal_icon"] = "✓";
               } else {
                   $_SESSION["show_error_modal"] = true;
-                  $_SESSION["error_modal_message"] = "Database error: " . $stmt->error;
+                  error_log('Admin beneficiary status update failed: ' . $stmt->error);
+                  $_SESSION["error_modal_message"] = "The beneficiary status could not be saved. Please try again.";
               }
               $stmt->close();
           }
@@ -1227,7 +1228,8 @@ $stmt->bind_param($bindTypes, ...$bindParams);
                   $_SESSION["modal_icon"] = "✓";
               } else {
                   $_SESSION["show_error_modal"] = true;
-                  $_SESSION["error_modal_message"] = "Database error: " . $stmt->error;
+                  error_log('Admin beneficiary record save failed: ' . $stmt->error);
+                  $_SESSION["error_modal_message"] = "The beneficiary record could not be saved. Please try again.";
               }
               $stmt->close();
           }
@@ -1714,7 +1716,7 @@ if ($selectedProgramName !== "") {
       .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #ccc; padding: 6px 3px; font-size: 9px; white-space: normal; overflow-wrap: anywhere; }
       .spreadsheet-table thead th { background: #e6f4ed; color: #0d2618; position: sticky; top: 0; z-index: 10; font-weight: 700;}
   </style>
-<link rel="stylesheet" href="frontend_polish.css?v=16">
+<link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
 <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">

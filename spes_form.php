@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth.php';
 require_once 'db.php';
 
 const SPES_FORM_2_PDF = __DIR__ . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'forms' . DIRECTORY_SEPARATOR . 'SPES Form 2 - Application Form.pdf';
@@ -15,15 +15,13 @@ function spes_error(string $message, int $status = 400): void {
 $beneficiaryId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$beneficiaryId) spes_error('A valid SPES beneficiary record is required.');
 
-$role = '';
+$role = auth_first_active_role(['admin', 'peso_staff', 'user']) ?? '';
 $userId = 0;
-if (!empty($_SESSION['admin_id'])) $role = 'admin';
-elseif (!empty($_SESSION['staff_id'])) $role = 'peso_staff';
-elseif (!empty($_SESSION['user_id'])) { $role = 'user'; $userId = (int)$_SESSION['user_id']; }
-else spes_error('Your session has expired. Please sign in again.', 401);
+if ($role === 'user') $userId = (int)$_SESSION['user_id'];
+if ($role === '') spes_error('Your session has expired. Please sign in again.', 401);
 
 $sql = "SELECT b.*, p.program_name FROM beneficiaries b JOIN programs p ON p.program_id=b.program_id WHERE b.beneficiary_id=?";
-if ($role === 'user') $sql .= " AND (b.user_id=? OR b.email=(SELECT email FROM users WHERE user_id=? LIMIT 1))";
+if ($role === 'user') $sql .= " AND (b.user_id=? OR (b.user_id IS NULL AND b.email=(SELECT email FROM users WHERE user_id=? LIMIT 1)))";
 $sql .= ' LIMIT 1';
 $stmt = $conn->prepare($sql);
 if (!$stmt) spes_error('The SPES record could not be loaded.', 500);

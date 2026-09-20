@@ -95,8 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'log_v
     $desc = ($log_type === 'status') ? "Opened status details for $prog_name." : "Viewed details for $prog_name.";
     $mod = "Programs";
     
-    $log_stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, 'Registered User', ?, 'VIEW', ?, ?, NOW())");
-    $log_stmt->bind_param("ssss", $user_display_name, $mod, $prog_name, $desc);
+    $log_stmt = $conn->prepare("INSERT INTO activity_logs (user_id, actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, ?, 'Registered User', ?, 'VIEW', ?, ?, NOW())");
+    $log_stmt->bind_param("issss", $user_id, $user_display_name, $mod, $prog_name, $desc);
     $log_stmt->execute();
     $_SESSION['last_program_view_log'] = ['fingerprint' => $logFingerprint, 'time' => time()];
     echo json_encode(['status' => 'success']);
@@ -757,8 +757,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
             }
 
             $log_desc = "Successfully applied for " . $p_name . ".";
-            $l_stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, 'Registered User', 'Programs', 'APPLY', ?, ?, NOW())");
-            $l_stmt->bind_param("sss", $user_display_name, $p_name, $log_desc);
+            $l_stmt = $conn->prepare("INSERT INTO activity_logs (user_id, actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, ?, 'Registered User', 'Programs', 'APPLY', ?, ?, NOW())");
+            $l_stmt->bind_param("isss", $user_id, $user_display_name, $p_name, $log_desc);
             $l_stmt->execute();
 
         } else {
@@ -885,9 +885,9 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="programs.css?v=38">
-<link rel="stylesheet" href="frontend_polish.css?v=20260919d">
-<link rel="stylesheet" href="beneficiary_responsive.css?v=10">
+    <link rel="stylesheet" href="programs.css?v=39">
+    <link rel="stylesheet" href="frontend_polish.css?v=20260921">
+    <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
@@ -1110,18 +1110,18 @@ if ($barangay_summary_result) {
                         endforeach; 
                     ?>
                     <?php else: ?>
-                        <div style="grid-column: 1/-1; text-align:center; padding:40px; background:#fff; border-radius:20px; box-shadow: var(--shadow-soft);">
-                            <p style="font-weight:600; color:var(--text-muted);">No active programs available at the moment. Please check back later!</p>
+                        <div class="bp-program-empty-state">
+                            <p>No active programs are available at the moment. Please check back later.</p>
                         </div>
                     <?php endif; ?>
                 </div>
                 
-                <div id="noSearchMatch" style="display:none; grid-column: 1/-1; text-align:center; padding:50px; background:#fff; border-radius:20px; box-shadow: var(--shadow-soft); margin-top:20px;">
-                    <div style="color:#a0b0a6; display:flex; justify-content:center; margin-bottom:15px;">
+                <div id="noSearchMatch" class="bp-program-empty-state bp-program-empty-state--search">
+                    <div class="bp-program-empty-icon" aria-hidden="true">
                         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     </div>
-                    <h3 style="color:var(--green-dark); font-weight:800; margin-bottom:5px;">No active programs match your search</h3>
-                    <p style="color:var(--text-muted); font-size:14.5px;">Try using different keywords like "TUPAD" or "SPES".</p>
+                    <h3>No active programs match your search</h3>
+                    <p>Try using different keywords like "TUPAD" or "SPES".</p>
                 </div>
             </div>
         </div>

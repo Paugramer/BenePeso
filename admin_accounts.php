@@ -125,11 +125,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit();
         }
 
-        $emailCheck = $conn->prepare('SELECT staff_id FROM peso_staff WHERE email = ? AND staff_id <> ? LIMIT 1');
-        $emailCheck->bind_param('si', $email, $id);
+        $emailCheck = $conn->prepare(
+            "SELECT account_id FROM (
+                SELECT staff_id AS account_id FROM peso_staff WHERE email = ? AND staff_id <> ?
+                UNION ALL SELECT user_id FROM users WHERE email = ?
+                UNION ALL SELECT admin_id FROM admins WHERE email = ?
+            ) duplicate_email LIMIT 1"
+        );
+        $emailCheck->bind_param('siss', $email, $id, $email, $email);
         $emailCheck->execute();
         if ($emailCheck->get_result()->num_rows > 0) {
-            $_SESSION['flash'] = 'That email address is already assigned to another staff account.';
+            $_SESSION['flash'] = 'That email address is already assigned to another system account.';
             $_SESSION['flash_type'] = 'warning';
             header('Location: admin_accounts.php?view=' . urlencode($view));
             exit();
@@ -279,7 +285,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
     <link rel="stylesheet" href="activity_filter_polish.css?v=4">
     <script src="activity_filter_polish.js?v=4" defer></script>
     <link rel="stylesheet" href="admin_accounts_polish.css?v=12">
-<link rel="stylesheet" href="frontend_polish.css?v=16">
+<link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
 <script src="frontend_polish.js?v=15" defer></script>

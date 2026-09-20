@@ -70,9 +70,10 @@ if ($role !== null) {
         $desc = $actor_name . " logged out securely.";
         
         // Added target_name to query and bind_param
-        $stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+        $user_id = (int)($_SESSION['user_id'] ?? 0);
+        $stmt = $conn->prepare("INSERT INTO activity_logs (user_id, actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
         if ($stmt) {
-            $stmt->bind_param("ssssss", $actor_name, $actor_role, $module, $action, $target, $desc);
+            $stmt->bind_param("issssss", $user_id, $actor_name, $actor_role, $module, $action, $target, $desc);
             $stmt->execute();
             $stmt->close();
         }

@@ -1,11 +1,11 @@
 <?php
-require_once 'auth_session.php';
+require_once 'auth.php';
 require_once 'db.php';
 require_once 'tupad_document_helper.php';
 ensure_tupad_document_schema($conn);
 
-$role = auth_has_role('admin') ? 'admin' : (auth_has_role('peso_staff') ? 'peso_staff' : '');
-if ($role === '') { http_response_code(403); exit('Authorized PESO reviewers only.'); }
+$role = auth_first_active_role(['admin', 'peso_staff']);
+if ($role === null) { http_response_code(403); exit('Authorized PESO reviewers only.'); }
 $reviewerId = (int)$_SESSION[auth_role_id_key($role)];
 $beneficiaryId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT) ?: (int)($_POST['beneficiary_id'] ?? 0);
 

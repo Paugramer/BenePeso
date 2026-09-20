@@ -123,11 +123,11 @@ function google_auth_activate_beneficiary(mysqli $conn, array $user): void
     $description = $fullName . ' logged in securely using Google.';
     $log = $conn->prepare(
         "INSERT INTO activity_logs
-            (actor_name, actor_role, module_name, action_type, target_name, description, created_at)
-         VALUES (?, 'Registered User', 'Auth', 'LOGIN', 'System', ?, NOW())"
+            (user_id, actor_name, actor_role, module_name, action_type, target_name, description, created_at)
+         VALUES (?, ?, 'Registered User', 'Auth', 'LOGIN', 'System', ?, NOW())"
     );
     if ($log) {
-        $log->bind_param('ss', $fullName, $description);
+        $log->bind_param('iss', $userId, $fullName, $description);
         $log->execute();
         $log->close();
     }

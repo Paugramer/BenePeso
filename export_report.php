@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth.php';
 require "db.php";
 require_once "report_columns.php";
 require_once "xlsx_report_helper.php";
@@ -16,11 +16,7 @@ if (!isset($conn) || !($conn instanceof mysqli)) {
 }
 
 // Allow BOTH Admins and PESO Staff to export the report.
-if (
-    empty($_SESSION["admin_id"]) &&
-    empty($_SESSION["peso_staff_id"]) &&
-    empty($_SESSION["staff_id"])
-) {
+if (auth_first_active_role(['admin', 'peso_staff']) === null) {
     http_response_code(403);
     exit("Unauthorized access. Please log in.");
 }
