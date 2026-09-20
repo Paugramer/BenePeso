@@ -31,6 +31,22 @@ function available_tupad_categories(mysqli $conn): array
     return array_keys($categories);
 }
 
+function active_tupad_categories(mysqli $conn): array
+{
+    $categories = [];
+    $result = $conn->query("SELECT DISTINCT COALESCE(NULLIF(TRIM(tupad_category), ''), 'Regular TUPAD') AS category FROM programs WHERE program_name LIKE '%TUPAD%' ORDER BY category");
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $category = trim((string)($row['category'] ?? ''));
+            if ($category !== '') {
+                $categories[$category] = true;
+            }
+        }
+    }
+
+    return array_keys($categories);
+}
+
 function submitted_tupad_category(array $source, string $programName): ?string
 {
     if (stripos($programName, 'TUPAD') === false) {

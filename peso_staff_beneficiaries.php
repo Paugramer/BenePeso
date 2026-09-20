@@ -1103,6 +1103,10 @@ $selectedProgramName = isset($_GET["program_name"]) ? trim($_GET["program_name"]
 $reportProgramTitle = getReportProgramTitle($selectedProgramName);
 $selectedProgramId = isset($_GET["program_id"]) ? (int)$_GET["program_id"] : 0; 
 $selectedTupadCategory = trim($_GET["tupad_category"] ?? "All");
+$activeTupadCategories = active_tupad_categories($conn);
+if ($selectedTupadCategory !== 'All' && !in_array($selectedTupadCategory, $activeTupadCategories, true)) {
+    $selectedTupadCategory = 'All';
+}
 $selectedBarangay = trim($_GET["barangay"] ?? "All");
 $search = trim($_GET["search"] ?? "");
 $sort = trim($_GET["sort"] ?? "newest");
@@ -1278,7 +1282,9 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="frontend_polish.css?v=16">
   <link rel="stylesheet" href="peso_staff_responsive.css?v=24">
   <link rel="stylesheet" href="system_search_polish.css?v=1">
+  <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=1">
 <script src="frontend_polish.js?v=15" defer></script>
+<script src="beneficiary_workspace_polish.js?v=1" defer></script>
 </head>
 <body class="peso-staff-beneficiaries-page">
   <div class="page-wrap">
@@ -1449,7 +1455,13 @@ if ($selectedProgramName !== "") {
               <i class="ph-bold ph-magnifying-glass search-icon"></i>
               <input type="search" name="search" value="<?php echo h($search); ?>" placeholder="Search by name or email..." class="search-input" id="liveSearchInput" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Search beneficiaries">
             </div>
-            
+            <button type="button" class="beneficiary-filter-toggle" aria-expanded="false" aria-controls="beneficiarySecondaryFilters">
+              <i class="ph ph-faders-horizontal"></i>
+              <span>More filters</span>
+              <span class="beneficiary-filter-count" hidden>0</span>
+              <i class="ph ph-caret-down beneficiary-filter-caret"></i>
+            </button>
+            <div class="beneficiary-secondary-filters" id="beneficiarySecondaryFilters">
             <select name="program_id" class="filter-select auto-submit">
                 <option value="0">All Batches</option>
                 <?php foreach($batches as $b): ?><option value="<?php echo $b['program_id']; ?>" <?php echo $selectedProgramId == $b['program_id'] ? 'selected' : ''; ?>><?php echo h($b['program_code']); ?></option><?php endforeach; ?>
@@ -1457,7 +1469,7 @@ if ($selectedProgramName !== "") {
             <?php if (stripos($selectedProgramName, 'TUPAD') !== false): ?>
             <select name="tupad_category" class="filter-select auto-submit" aria-label="Filter beneficiaries by TUPAD category">
               <option value="All">All TUPAD Categories</option>
-              <?php foreach (available_tupad_categories($conn) as $category): ?><option value="<?php echo h($category); ?>" <?php echo $selectedTupadCategory === $category ? 'selected' : ''; ?>><?php echo h($category); ?></option><?php endforeach; ?>
+              <?php foreach ($activeTupadCategories as $category): ?><option value="<?php echo h($category); ?>" <?php echo $selectedTupadCategory === $category ? 'selected' : ''; ?>><?php echo h($category); ?></option><?php endforeach; ?>
             </select>
             <?php endif; ?>
             <select name="barangay" class="filter-select auto-submit">
@@ -1486,6 +1498,7 @@ if ($selectedProgramName !== "") {
               <?php endforeach; ?>
             </select>
             <?php endif; ?>
+            </div>
         </form>
 
         <?php if ($beneficiaries): ?>

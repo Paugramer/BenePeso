@@ -89,6 +89,7 @@ function build_query(array $overrides = []): string {
 // ROUTING STATE
 $active_program = isset($_GET['program']) ? trim($_GET['program']) : null;
 $tupadCategoryOptions = available_tupad_categories($conn);
+$activeTupadCategoryOptions = active_tupad_categories($conn);
 
 // ====== POST ACTIONS ======
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -237,6 +238,9 @@ $allowedTabs = ['All', 'Pending', 'Ongoing', 'Completed'];
 if (!in_array($tabFilter, $allowedTabs, true)) $tabFilter = 'All';
 $search = trim($_GET["search"] ?? "");
 $tupadCategoryFilter = trim($_GET["tupad_category"] ?? "All");
+if ($tupadCategoryFilter !== 'All' && !in_array($tupadCategoryFilter, $activeTupadCategoryOptions, true)) {
+    $tupadCategoryFilter = 'All';
+}
 $sort = trim($_GET["sort"] ?? "newest");
 $page = max(1, (int)($_GET["p"] ?? 1));
 $limit = 5; 
@@ -295,7 +299,7 @@ if ($active_program) {
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <link rel="stylesheet" href="admin_program.css?v=20260905-card-responsive">
     <link rel="stylesheet" href="shared_sidebar.css">
-<link rel="stylesheet" href="program_filter_polish.css?v=6">
+<link rel="stylesheet" href="program_filter_polish.css?v=7">
     <script src="program_filter_polish.js?v=2" defer></script>
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
@@ -407,7 +411,7 @@ if ($active_program) {
         </section>
 
         <section class="panel-card animate-fade-in" style="animation-delay: 0.2s;">
-            <div class="panel-head">
+            <div class="panel-head program-directory-head">
                 <div>
                     <div class="panel-title"><?php echo $active_program ? e($active_program) . ' Directory' : 'Program Directories'; ?></div>
                 </div>
@@ -433,7 +437,7 @@ if ($active_program) {
                     <button type="button" class="program-category-trigger" aria-haspopup="listbox" aria-expanded="false"><i class="ph <?php echo $tupadCategoryFilter === 'All' ? 'ph-squares-four' : tupad_category_icon($tupadCategoryFilter); ?>"></i><span><?php echo e($tupadCategoryFilter === 'All' ? 'All TUPAD Categories' : $tupadCategoryFilter); ?></span><i class="ph ph-caret-down program-category-caret"></i></button>
                     <div class="program-category-options" role="listbox" aria-label="Filter by TUPAD category" hidden>
                         <button type="button" role="option" data-category-value="All" aria-selected="<?php echo $tupadCategoryFilter === 'All' ? 'true' : 'false'; ?>"><span><i class="ph ph-squares-four"></i>All TUPAD Categories</span><?php if ($tupadCategoryFilter === 'All'): ?><i class="ph-bold ph-check"></i><?php endif; ?></button>
-                        <?php foreach ($tupadCategoryOptions as $category): ?><button type="button" role="option" data-category-value="<?php echo e($category); ?>" aria-selected="<?php echo $tupadCategoryFilter === $category ? 'true' : 'false'; ?>"><span><i class="ph <?php echo tupad_category_icon($category); ?>"></i><?php echo e($category); ?></span><?php if ($tupadCategoryFilter === $category): ?><i class="ph-bold ph-check"></i><?php endif; ?></button><?php endforeach; ?>
+                        <?php foreach ($activeTupadCategoryOptions as $category): ?><button type="button" role="option" data-category-value="<?php echo e($category); ?>" aria-selected="<?php echo $tupadCategoryFilter === $category ? 'true' : 'false'; ?>"><span><i class="ph <?php echo tupad_category_icon($category); ?>"></i><?php echo e($category); ?></span><?php if ($tupadCategoryFilter === $category): ?><i class="ph-bold ph-check"></i><?php endif; ?></button><?php endforeach; ?>
                     </div>
                 </div>
                 <?php endif; ?>

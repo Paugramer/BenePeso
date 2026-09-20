@@ -267,7 +267,7 @@
 }
 
 /* Unified directory controls and modal branding. */
-.program-category-menu { flex: 0 1 390px; min-width: 230px; position: relative; z-index: 36; }
+.program-category-menu { flex: 0 0 250px; width: 250px; min-width: 250px; position: relative; z-index: 36; }
 .program-category-trigger { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border: 1px solid #d4e5dc; border-radius: 11px; color: #173728; background: #f7fbf9; cursor: pointer; font: 700 12.5px/1.25 "Poppins", sans-serif; text-align: left; transition: border-color .2s ease, background .2s ease, box-shadow .2s ease; }
 .program-category-trigger > i:first-child { flex: 0 0 auto; color: #1f7a54; font-size: 19px; }
 .program-category-trigger > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -304,11 +304,18 @@
 .directory-beneficiary-link { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 14px; border: 1px solid #cbe1d5; border-radius: 11px; color: #176b49; background: #f3faf6; font-size: 12px; font-weight: 800; text-decoration: none; transition: background .2s ease, border-color .2s ease, transform .2s ease; }
 .directory-beneficiary-link:hover,
 .directory-beneficiary-link:focus-visible { border-color: #78b596; background: #e8f5ee; outline: 0; transform: translateY(-1px); }
+.program-directory-head { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 16px; margin-bottom: 18px; }
+.program-directory-head > div { min-width: 0; }
+.program-directory-head .directory-beneficiary-link { flex: 0 0 auto; margin-left: auto; }
+.filter-form .program-sort-menu { flex: 0 0 250px; width: 250px; min-width: 250px; margin-right: 0; }
+.filter-form .program-sort-trigger { width: 100%; min-width: 0; min-height: 52px; }
+.filter-form .program-sort-options { width: 100%; min-width: 100%; }
 .program-card-shell.has-pending-applications { border-top: 3px solid #d3a52e; }
 .program-card-shell.has-pending-applications .directory-application-queue { color: #956100; }
 
 @media (max-width: 760px) {
-  .program-category-menu { flex-basis: 100%; min-width: 0; width: 100%; }
+  .program-category-menu,
+  .filter-form .program-sort-menu { flex-basis: 100%; min-width: 0; width: 100%; }
   .program-category-options { min-width: 100%; }
   .beneficiary-directory-search { grid-template-columns: 42px minmax(0,1fr); }
   .beneficiary-directory-search input[type="search"],
@@ -319,4 +326,6 @@
   .modal-head:has(.program-modal-heading) { min-height: 114px; padding-inline: 54px; }
   .modal-head:has(.program-modal-heading) .modal-close { right: 16px; top: 16px; }
   .directory-beneficiary-link { min-height: 38px; padding-inline: 10px; }
+  .program-directory-head { align-items: stretch !important; flex-direction: column; }
+  .program-directory-head .directory-beneficiary-link { width: 100%; margin-left: 0; }
 }
