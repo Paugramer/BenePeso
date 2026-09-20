@@ -57,6 +57,11 @@ unset($_SESSION["flash"], $_SESSION["flash_type"]);
 if (!function_exists('e')) {
     function e($s){ return htmlspecialchars((string)($s ?? ""), ENT_QUOTES, "UTF-8"); }
 }
+function program_directory_icon(string $programName): string {
+    if (stripos($programName, 'SPES') !== false) return 'ph-student';
+    if (stripos($programName, 'MSME') !== false) return 'ph-storefront';
+    return 'ph-hammer';
+}
 function build_query(array $overrides = []): string {
     $query = array_merge($_GET, $overrides);
     foreach ($query as $k => $v) { if ($v === null || $v === "") unset($query[$k]); }
@@ -151,9 +156,6 @@ if ($search !== "") {
     $s = $conn->real_escape_string($search);
     $whereParts[] = "(program_code LIKE '%$s%' OR program_name LIKE '%$s%')";
 }
-$programTemplates = [];
-$templateResult = $conn->query("SELECT program_name, description, eligibility, requirements, eligible_sex, minimum_age, maximum_age, one_per_household FROM program_categories ORDER BY program_name");
-if ($templateResult) while ($template = $templateResult->fetch_assoc()) $programTemplates[] = $template;
 $activeCategoryRules = ['eligible_sex' => 'Any', 'minimum_age' => 18, 'maximum_age' => '', 'one_per_household' => 0];
 if ($active_program) {
     $ruleStmt = $conn->prepare("SELECT eligible_sex, minimum_age, maximum_age, one_per_household FROM program_categories WHERE program_name = ? LIMIT 1");
@@ -197,7 +199,7 @@ if ($active_program) {
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="peso_staff_program.css?v=20260905-card-responsive">
     <link rel="stylesheet" href="shared_sidebar.css">
-    <link rel="stylesheet" href="program_filter_polish.css?v=3">
+    <link rel="stylesheet" href="program_filter_polish.css?v=4">
     <script src="program_filter_polish.js?v=1" defer></script>
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=23">
@@ -354,7 +356,8 @@ if ($active_program) {
             <?php if (!$active_program): 
                 $sql = "SELECT c.*, 
                         (SELECT COUNT(*) FROM programs p WHERE p.program_name = c.program_name AND $whereStr) as batch_count,
-                        (SELECT SUM(IF(approval_status='Pending',1,0)) FROM programs p WHERE p.program_name = c.program_name) as pending_count 
+                        (SELECT SUM(IF(approval_status='Pending',1,0)) FROM programs p WHERE p.program_name = c.program_name) as pending_count,
+                        (SELECT COUNT(*) FROM beneficiaries b JOIN programs bp ON bp.program_id = b.program_id WHERE bp.program_name = c.program_name AND b.approval_status = 'Pending') as pending_application_count
                         FROM program_categories c";
                 $res = $conn->query($sql);
             ?>
@@ -365,6 +368,7 @@ if ($active_program) {
                             <div class="program-image-wrap">
                                 <div class="program-image-bg" style="background-image: url('<?php echo $dir['image_path'] ?: 'img/pesobgs.jpg'; ?>');"></div>
                                 <div class="program-image-overlay"></div>
+                                <span class="program-icon-badge" title="<?php echo e($dir['program_name']); ?> program"><i class="ph <?php echo program_directory_icon($dir['program_name']); ?>" aria-hidden="true"></i></span>
                                 
                                 <?php if($dir['pending_count'] > 0): ?>
                                     <div class="pill pending" style="position: absolute; top: 16px; right: 16px; z-index: 2; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
@@ -390,6 +394,17 @@ if ($active_program) {
                                 <div class="meta-item" style="color: var(--muted); opacity: 0.7;">
                                     <i class="ph-fill ph-check-circle" style="color: var(--green);"></i>
                                     <span>All batches updated</span>
+                                </div>
+                                <?php endif; ?>
+                                <?php if((int)$dir['pending_application_count'] > 0): ?>
+                                <div class="meta-item directory-application-queue">
+                                    <i class="ph-fill ph-clipboard-text"></i>
+                                    <span><strong><?php echo (int)$dir['pending_application_count']; ?></strong> Applications to Review</span>
+                                </div>
+                                <?php else: ?>
+                                <div class="meta-item directory-application-clear">
+                                    <i class="ph-fill ph-users-three"></i>
+                                    <span>Application queues clear</span>
                                 </div>
                                 <?php endif; ?>
                             </div>
@@ -582,62 +597,11 @@ if ($active_program) {
     </main>
 </div>
 
-<div class="modal" id="addProgModal">
-    <div class="modal-backdrop" data-close-modal="addProgModal"></div>
-    <div class="modal-dialog landscape-modal">
-        <div class="modal-head">
-            <div><div class="modal-title">New Program</div><div class="modal-sub">Create a new program category.</div></div>
-            <button type="button" class="modal-close" data-close-modal="addProgModal"><i class="ph ph-x"></i></button>
-        </div>
-        <form method="POST" enctype="multipart/form-data" class="modal-form">
-            <input type="hidden" name="action" value="add_category">
-            
-            <div class="landscape-form-grid">
-                <div class="form-col">
-                    <div class="form-group"><label>Name *</label><input type="text" name="program_name" id="add_program_name" list="programTemplateNames" required placeholder="e.g. TUPAD"><datalist id="programTemplateNames"><?php foreach ($programTemplates as $template): ?><option value="<?php echo e($template['program_name']); ?>"><?php endforeach; ?></datalist><small>Select an existing LGU program name to fill its official details automatically.</small></div>
-                    <div class="form-group"><label>Description *</label><textarea name="description" id="add_program_description" rows="2" required></textarea></div>
-                    <div class="form-group"><label>Eligibility *</label><textarea name="eligibility" id="add_program_eligibility" rows="2" required></textarea></div>
-                    <div class="form-group"><label>Eligible Sex *</label><select name="eligible_sex" id="add_program_sex" required><option value="Any">Any sex</option><option value="Male">Male only</option><option value="Female">Female only</option></select></div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="form-group"><label>Minimum Age *</label><input type="number" name="minimum_age" id="add_program_min_age" min="0" max="120" value="18" required></div><div class="form-group"><label>Maximum Age</label><input type="number" name="maximum_age" id="add_program_max_age" min="0" max="120" placeholder="No maximum"></div></div>
-                    <label style="display:flex;gap:9px;align-items:flex-start;font-size:13px"><input type="checkbox" name="one_per_household" id="add_program_one_household" value="1" style="width:auto;margin-top:3px"> Allow only one pending or active beneficiary per household</label>
-                    <div class="form-group"><label>Requirements *</label><textarea name="requirements" id="add_program_requirements" rows="2" required></textarea></div>
-                </div>
-                <div class="form-col">
-                    <div class="form-group" style="height: 100%; display: flex; flex-direction: column;">
-                        <label>Cover Image *</label>
-                        <label class="upload-zone" id="uploadZone">
-                            <input type="file" name="image_path" id="imageInput" accept=".jpg,.jpeg,.png,.webp" style="display: none;" required>
-                            
-                            <div id="uploadContent" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%;">
-                                <div class="upload-icon-wrap"><i class="ph ph-upload-simple"></i></div>
-                                <span class="upload-text-main">CLICK OR DRAG IMAGE</span>
-                                <span class="upload-text-sub">JPEG, PNG, OR WEBP (MAX 5MB)</span>
-                            </div>
-                            
-                            <div id="imagePreview" style="display: none; width: 100%; height: 100%; position: relative;">
-                                <img id="previewImg" src="" alt="Preview" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
-                                <div class="preview-overlay">
-                                    <i class="ph ph-arrows-clockwise"></i> Click to change
-                                </div>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-actions">
-                <button type="button" class="btn-light" data-close-modal="addProgModal">Cancel</button>
-                <button type="submit" class="btn-main">Save Program</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <div class="modal" id="addBatchModal">
     <div class="modal-backdrop" data-close-modal="addBatchModal"></div>
     <div class="modal-dialog landscape-modal" style="max-width: 700px;">
         <div class="modal-head">
-            <div><div class="modal-title">Add Batch</div><div class="modal-sub">Schedule a rollout for <?php echo e($active_program); ?></div></div>
+            <div class="program-modal-heading"><span class="program-modal-icon"><i class="ph ph-calendar-plus" aria-hidden="true"></i></span><div><div class="modal-title">Add Batch</div><div class="modal-sub">Schedule a rollout for <?php echo e($active_program); ?></div></div></div>
             <button type="button" class="modal-close" data-close-modal="addBatchModal"><i class="ph ph-x"></i></button>
         </div>
         <form method="POST" class="modal-form">
@@ -671,7 +635,7 @@ if ($active_program) {
     <div class="modal-backdrop" data-close-modal="viewBatchModal"></div>
     <div class="modal-dialog" style="max-width: 500px;">
         <div class="modal-head">
-            <div><div class="modal-title">Batch Details</div><div class="modal-sub">Complete scheduling and capacity info.</div></div>
+            <div class="program-modal-heading"><span class="program-modal-icon"><i class="ph ph-info" aria-hidden="true"></i></span><div><div class="modal-title">Batch Details</div><div class="modal-sub">Complete scheduling and capacity info.</div></div></div>
             <button type="button" class="modal-close" data-close-modal="viewBatchModal"><i class="ph ph-x"></i></button>
         </div>
         <div class="modal-form">
@@ -700,23 +664,6 @@ if ($active_program) {
 <?php endif; ?>
 
 <script>
-const programTemplates = <?php echo json_encode($programTemplates, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
-const addProgramName = document.getElementById('add_program_name');
-function autofillProgramTemplate() {
-    if (!addProgramName) return;
-    const selected = programTemplates.find(item => item.program_name.toLowerCase() === addProgramName.value.trim().toLowerCase());
-    if (!selected) return;
-    document.getElementById('add_program_description').value = selected.description || '';
-    document.getElementById('add_program_eligibility').value = selected.eligibility || '';
-    document.getElementById('add_program_requirements').value = selected.requirements || '';
-    document.getElementById('add_program_sex').value = selected.eligible_sex || 'Any';
-    document.getElementById('add_program_min_age').value = selected.minimum_age ?? 18;
-    document.getElementById('add_program_max_age').value = selected.maximum_age ?? '';
-    document.getElementById('add_program_one_household').checked = Number(selected.one_per_household) === 1;
-}
-addProgramName?.addEventListener('input', autofillProgramTemplate);
-addProgramName?.addEventListener('change', autofillProgramTemplate);
-
 const menuToggle = document.getElementById('menuToggle');
 const sideArea = document.getElementById('sideArea');
 const sideClose = document.getElementById('sideClose');
@@ -841,48 +788,6 @@ if(searchInput) {
         searchTimeout = setTimeout(() => {
             this.form.submit();
         }, 600); 
-    });
-}
-
-const imageInput = document.getElementById('imageInput');
-const uploadContent = document.getElementById('uploadContent');
-const imagePreview = document.getElementById('imagePreview');
-const previewImg = document.getElementById('previewImg');
-const uploadZone = document.getElementById('uploadZone');
-
-if(imageInput) {
-    imageInput.addEventListener('change', function(e) {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImg.src = e.target.result;
-                uploadContent.style.display = 'none';
-                imagePreview.style.display = 'block';
-                uploadZone.classList.add('has-image');
-            }
-            reader.readAsDataURL(file);
-        }
-    });
-
-    uploadZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadZone.style.borderColor = 'var(--green)';
-        uploadZone.style.background = '#f0fdf4';
-    });
-    uploadZone.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        uploadZone.style.borderColor = '#cbd5e1';
-        uploadZone.style.background = '#f8fafc';
-    });
-    uploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadZone.style.borderColor = '#cbd5e1';
-        uploadZone.style.background = '#f8fafc';
-        if (e.dataTransfer.files.length) {
-            imageInput.files = e.dataTransfer.files;
-            imageInput.dispatchEvent(new Event('change'));
-        }
     });
 }
 

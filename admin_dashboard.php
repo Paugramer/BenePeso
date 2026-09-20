@@ -214,6 +214,34 @@ if (table_exists($conn, "beneficiaries")) {
   }
 }
 
+/* Operational barangay workload: records and applications still awaiting review. */
+$barangayWorkload = [];
+$barangayMaxRecords = 0;
+if (table_exists($conn, "beneficiaries")) {
+  $beneficiaryColumns = $beneficiaryColumns ?? get_columns($conn, "beneficiaries");
+  if (in_array('barangay', $beneficiaryColumns, true)) {
+    $pendingExpression = in_array('approval_status', $beneficiaryColumns, true)
+      ? "SUM(CASE WHEN approval_status = 'Pending' THEN 1 ELSE 0 END)"
+      : "0";
+    $result = $conn->query("SELECT TRIM(barangay) AS barangay_name,
+                                  COUNT(*) AS total_records,
+                                  $pendingExpression AS pending_reviews
+                           FROM beneficiaries
+                           WHERE barangay IS NOT NULL AND TRIM(barangay) <> ''
+                           GROUP BY TRIM(barangay)
+                           ORDER BY total_records DESC, barangay_name ASC
+                           LIMIT 5");
+    if ($result) {
+      while ($row = $result->fetch_assoc()) {
+        $row['total_records'] = (int)$row['total_records'];
+        $row['pending_reviews'] = (int)$row['pending_reviews'];
+        $barangayMaxRecords = max($barangayMaxRecords, $row['total_records']);
+        $barangayWorkload[] = $row;
+      }
+    }
+  }
+}
+
 /* =========================
    RECENT PROGRAMS (SYSTEM WIDE)
 ========================= */
@@ -310,7 +338,7 @@ if (table_exists($conn, "activity_logs")) {
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="admin_dashboard.css">
   <link rel="stylesheet" href="shared_sidebar.css">
-  <link rel="stylesheet" href="dashboard_polish.css?v=5">
+  <link rel="stylesheet" href="dashboard_polish.css?v=6">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
 <script src="frontend_polish.js?v=15" defer></script>
@@ -384,7 +412,7 @@ if (table_exists($conn, "activity_logs")) {
         <div><strong>Administrative command center</strong><small>Live system records &bull; Updated <?php echo h($dashboardRefreshedAt); ?></small></div>
       </div>
       <nav class="dashboard-quick-actions" aria-label="Quick actions">
-        <a href="admin_beneficiaries.php?approval=Pending"><i class="ph ph-clipboard-text" aria-hidden="true"></i><span>Review applications</span></a>
+        <a href="admin_program.php"><i class="ph ph-clipboard-text" aria-hidden="true"></i><span>Review by batch</span></a>
         <a href="admin_program.php"><i class="ph ph-calendar-plus" aria-hidden="true"></i><span>Manage batches</span></a>
         <a href="admin_accounts.php"><i class="ph ph-user-circle-gear" aria-hidden="true"></i><span>Manage accounts</span></a>
       </nav>
@@ -421,7 +449,7 @@ if (table_exists($conn, "activity_logs")) {
         <div class="stat-note">Each person is counted once.</div>
       </a>
 
-      <a href="admin_beneficiaries.php?approval=Pending" class="stat-card stat-card-link animate-fade-in" style="animation-delay: 0.4s;">
+      <a href="admin_program.php" class="stat-card stat-card-link animate-fade-in" style="animation-delay: 0.4s;">
         <div class="stat-top">
           <div class="stat-label">Pending Reviews</div>
           <div class="stat-icon"><i class="ph-fill ph-clock-countdown"></i></div>
@@ -464,7 +492,7 @@ if (table_exists($conn, "activity_logs")) {
             <div class="panel-title">Review Status</div>
             <div class="panel-sub">Current beneficiary records grouped by review status</div>
           </div>
-          <a href="admin_beneficiaries.php?approval=Pending" class="panel-link">Review</a>
+          <a href="admin_program.php" class="panel-link">Review by batch</a>
         </div>
         <div class="dashboard-chart-canvas dashboard-chart-canvas--donut">
           <?php if (array_sum($statusValues) > 0): ?>
@@ -475,6 +503,37 @@ if (table_exists($conn, "activity_logs")) {
         </div>
       </div>
       </div>
+    </section>
+
+    <section class="panel-card barangay-workload-panel animate-fade-in" style="animation-delay: 0.58s;" aria-labelledby="barangayWorkloadTitle">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title" id="barangayWorkloadTitle">Barangay Workload</div>
+          <div class="panel-sub">Top barangays by beneficiary records, with pending reviews highlighted</div>
+        </div>
+        <a href="admin_beneficiaries.php" class="panel-link">View beneficiaries</a>
+      </div>
+      <?php if ($barangayWorkload): ?>
+        <div class="barangay-workload-list" role="list">
+          <?php foreach ($barangayWorkload as $index => $barangay):
+            $coverageWidth = $barangayMaxRecords > 0 ? max(8, round(($barangay['total_records'] / $barangayMaxRecords) * 100)) : 0;
+          ?>
+            <div class="barangay-workload-row" role="listitem">
+              <span class="barangay-rank" aria-hidden="true"><?php echo $index + 1; ?></span>
+              <span class="barangay-workload-copy">
+                <strong><?php echo h($barangay['barangay_name']); ?></strong>
+                <span class="barangay-meter" aria-hidden="true"><span style="width:<?php echo $coverageWidth; ?>%"></span></span>
+              </span>
+              <span class="barangay-workload-metrics">
+                <strong><?php echo (int)$barangay['total_records']; ?></strong><small>records</small>
+                <span class="barangay-pending <?php echo $barangay['pending_reviews'] > 0 ? 'has-pending' : ''; ?>"><i class="ph ph-clock" aria-hidden="true"></i><?php echo (int)$barangay['pending_reviews']; ?> pending</span>
+              </span>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      <?php else: ?>
+        <div class="chart-empty barangay-empty"><i class="ph ph-map-pin-area"></i><span>No barangay records yet</span></div>
+      <?php endif; ?>
     </section>
 
     <section class="split-grid">
