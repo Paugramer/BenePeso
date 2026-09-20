@@ -63,7 +63,7 @@ $profile_pic = !empty($user['profile_pic']) ? "uploads/" . htmlspecialchars($use
 $first_char = !empty($fn) ? strtoupper(substr($fn, 0, 1)) : "U";
 
 $prog_stmt = $conn->prepare("
-    SELECT b.beneficiary_id, p.program_name, p.requirements, p.venue,
+    SELECT b.beneficiary_id, p.program_id, p.program_code, p.program_name, p.requirements, p.venue,
            p.status AS program_status, p.start_date AS program_start_date, p.end_date AS program_end_date,
            b.availment_status, b.approval_status, b.approval_note,
            b.date_completed, b.date_availed, b.created_at, b.updated_at
@@ -259,7 +259,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
             .log-premium-right { text-align: left; align-items: flex-start; }
         }
     </style>
-    <link rel="stylesheet" href="profile.css?v=14">
+    <link rel="stylesheet" href="profile.css?v=15">
     <link rel="stylesheet" href="spes_form_modal.css?v=20260904c">
 <link rel="stylesheet" href="frontend_polish.css?v=20260919d">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
@@ -401,6 +401,10 @@ while ($row = $activity_logs_result->fetch_assoc()) {
                     Edit Details
                 </button>
             </div>
+            <div class="profile-record-note" role="note">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path><path d="M12 8v4M12 16h.01"></path></svg>
+                <div><strong>Account details are not an approval badge.</strong><span>Saving updates keeps pending applications aligned with your profile. Approved identity and decision details remain unchanged; request a PESO correction when an official record is inaccurate.</span></div>
+            </div>
             
             <form id="profileForm" action="update_profile_process.php" method="POST">
                 <?= auth_csrf_input() ?>
@@ -500,7 +504,16 @@ while ($row = $activity_logs_result->fetch_assoc()) {
                     <span><?= count($availed_programs) === 1 ? 'Application' : 'Applications' ?></span>
                 </div>
             </div>
-            
+            <?php if (count($availed_programs) > 0): ?>
+                <div class="profile-filter-bar" role="group" aria-label="Filter applications">
+                    <button type="button" class="profile-filter-chip active" data-program-filter="all" aria-pressed="true">All</button>
+                    <button type="button" class="profile-filter-chip" data-program-filter="current" aria-pressed="false">Current</button>
+                    <button type="button" class="profile-filter-chip" data-program-filter="pending" aria-pressed="false">Under review</button>
+                    <button type="button" class="profile-filter-chip" data-program-filter="completed" aria-pressed="false">Completed</button>
+                    <button type="button" class="profile-filter-chip" data-program-filter="rejected" aria-pressed="false">Not approved</button>
+                </div>
+            <?php endif; ?>
+
             <div class="results-grid" id="availedProgramsContainer"></div>
             
             <div class="pagination-controls" id="progPaginationControls" style="display: none;">
@@ -532,7 +545,15 @@ while ($row = $activity_logs_result->fetch_assoc()) {
                     <span><?= count($activity_logs) === 1 ? 'Activity' : 'Activities' ?></span>
                 </div>
             </div>
-            
+            <?php if (count($activity_logs) > 0): ?>
+                <div class="profile-filter-bar" role="group" aria-label="Filter activity">
+                    <button type="button" class="profile-filter-chip active" data-log-filter="all" aria-pressed="true">All activity</button>
+                    <button type="button" class="profile-filter-chip" data-log-filter="security" aria-pressed="false">Security</button>
+                    <button type="button" class="profile-filter-chip" data-log-filter="application" aria-pressed="false">Applications</button>
+                    <button type="button" class="profile-filter-chip" data-log-filter="profile" aria-pressed="false">Profile</button>
+                </div>
+            <?php endif; ?>
+
             <div class="log-timeline" id="activityLogContainer"></div>
 
             <div class="pagination-controls" id="logPaginationControls" style="display: none;">
@@ -572,8 +593,8 @@ while ($row = $activity_logs_result->fetch_assoc()) {
                     <h4>Keep your account secure</h4>
                     <p>Use a strong password that is difficult to guess and unique to BENEPESO.</p>
                     <ul class="security-checklist">
-                        <li><span>At least 8 characters</span></li>
-                        <li><span>Mix letters, numbers, and symbols</span></li>
+                        <li><span>At least 10 characters</span></li>
+                        <li><span>Uppercase, lowercase, number, and symbol</span></li>
                         <li><span>Avoid personal information</span></li>
                     </ul>
                     <div class="security-history" aria-label="Recent account security activity">
@@ -589,13 +610,18 @@ while ($row = $activity_logs_result->fetch_assoc()) {
                     </div>
                     <div class="info-group security-field">
                         <label for="currentPass">Current Password</label>
-                        <input type="password" name="current_pass" id="currentPass" required autocomplete="current-password" class="form-input" placeholder="Enter current password">
+                        <div class="password-wrap">
+                            <input type="password" name="current_pass" id="currentPass" required autocomplete="current-password" class="form-input" placeholder="Enter current password">
+                            <button type="button" class="toggle-pass" data-target="currentPass" aria-label="Show current password">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5c5.5 0 9.5 5.5 9.5 7s-4 7-9.5 7S2.5 13.5 2.5 12S6.5 5 12 5Zm0 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"/></svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="info-group security-field">
                         <label for="newPass">New Password</label>
                         <div class="password-wrap">
-                            <input type="password" name="new_pass" id="newPass" required minlength="8" autocomplete="new-password" class="form-input" placeholder="Enter new password" aria-describedby="passwordSecurityHint">
-                            <button type="button" class="toggle-pass" data-target="newPass" aria-label="Show or hide new password">
+                            <input type="password" name="new_pass" id="newPass" required minlength="10" autocomplete="new-password" class="form-input" placeholder="Enter new password" aria-describedby="passwordSecurityHint passwordStrengthText">
+                            <button type="button" class="toggle-pass" data-target="newPass" aria-label="Show new password">
                                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5c5.5 0 9.5 5.5 9.5 7s-4 7-9.5 7S2.5 13.5 2.5 12S6.5 5 12 5Zm0 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"/></svg>
                             </button>
                         </div>
@@ -603,11 +629,15 @@ while ($row = $activity_logs_result->fetch_assoc()) {
                     <div class="info-group security-field">
                         <label for="confPass">Confirm New Password</label>
                         <div class="password-wrap">
-                            <input type="password" name="confirm_new_pass" id="confPass" required minlength="8" autocomplete="new-password" class="form-input" placeholder="Retype new password">
-                            <button type="button" class="toggle-pass" data-target="confPass" aria-label="Show or hide confirmed password">
+                            <input type="password" name="confirm_new_pass" id="confPass" required minlength="10" autocomplete="new-password" class="form-input" placeholder="Retype new password">
+                            <button type="button" class="toggle-pass" data-target="confPass" aria-label="Show confirmed password">
                                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5c5.5 0 9.5 5.5 9.5 7s-4 7-9.5 7S2.5 13.5 2.5 12S6.5 5 12 5Zm0 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"/></svg>
                             </button>
                         </div>
+                    </div>
+                    <div class="password-strength" aria-live="polite">
+                        <span class="password-strength-track"><span id="passwordStrengthBar"></span></span>
+                        <small id="passwordStrengthText">Use 10+ characters with uppercase, lowercase, a number, and a symbol.</small>
                     </div>
                     <small class="security-hint" id="passwordSecurityHint">You will use this password the next time you sign in.</small>
                     <button type="submit" class="btn-security">
@@ -632,16 +662,16 @@ while ($row = $activity_logs_result->fetch_assoc()) {
     </section>
 </main>
 
-<div id="confirmModal" class="modal-overlay modal">
-    <div class="modal-content alert-box" style="padding-top: 40px; max-width: 450px; margin: 0 auto; top: 20%;">
-        <div class="modal-icon" style="margin: 0 auto 20px; display: flex; justify-content: center; align-items: center; color: #1f4d38;">
+<div id="confirmModal" class="modal-overlay modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalMessage" aria-hidden="true">
+    <div class="modal-content alert-box profile-confirm-dialog">
+        <div class="modal-icon profile-confirm-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="60" height="60"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
         </div>
-        <h2 id="modalTitle" style="margin-bottom:10px; font-weight:800; color: #1f4d38;">Confirm Action</h2>
-        <p id="modalMessage" style="font-size:14px; color:#5e6f66; margin-bottom:25px; font-weight:500;">Are you sure you want to proceed with this update?</p>
-        <div style="display: flex; gap: 10px; justify-content: center;">
-            <button type="button" class="btn-cancel" onclick="closeModal('confirmModal')" style="border:none; padding:12px 24px; border-radius:10px; background:#f0f4f2; color:#5e6f66; font-weight:700; cursor:pointer; width: 100%;">Cancel</button>
-            <button type="button" class="btn-save" id="modalConfirmBtn" style="border:none; padding:12px 24px; border-radius:10px; background:#2f6b4f; color:#fff; font-weight:700; cursor:pointer; width: 100%;">Yes, Proceed</button>
+        <h2 id="modalTitle">Confirm Action</h2>
+        <p id="modalMessage">Are you sure you want to proceed with this update?</p>
+        <div class="profile-confirm-actions">
+            <button type="button" class="btn-cancel" onclick="closeModal('confirmModal')">Cancel</button>
+            <button type="button" class="btn-save" id="modalConfirmBtn">Yes, Proceed</button>
         </div>
     </div>
 </div>
@@ -661,7 +691,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
     </div>
 </div>
 
-<div id="toastNotification" class="toast-notification">
+<div id="toastNotification" class="toast-notification" role="status" aria-live="polite" aria-atomic="true">
     <div class="toast-icon">
         <svg id="toastIconSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
     </div>
@@ -740,7 +770,18 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!target) return;
             target.type = target.type === "password" ? "text" : "password";
             btn.style.color = target.type === "text" ? "var(--green)" : "#9ab0a3";
+            btn.setAttribute('aria-label', `${target.type === 'text' ? 'Hide' : 'Show'} ${target.id === 'currentPass' ? 'current' : target.id === 'newPass' ? 'new' : 'confirmed'} password`);
         });
+    });
+
+    document.getElementById('newPass')?.addEventListener('input', updatePasswordStrength);
+
+    document.querySelectorAll('[data-program-filter]').forEach(button => {
+        button.addEventListener('click', () => setProgramFilter(button.dataset.programFilter, button));
+    });
+
+    document.querySelectorAll('[data-log-filter]').forEach(button => {
+        button.addEventListener('click', () => setLogFilter(button.dataset.logFilter, button));
     });
 
     document.querySelectorAll('[data-numeric-only]').forEach(input => {
@@ -852,17 +893,23 @@ function closeToast() { document.getElementById('toastNotification').classList.r
 <?php endif; ?>
 
 let currentFormToSubmit = null;
+let lastModalTrigger = null;
 function openModal(title, message, formId) {
     document.getElementById('modalTitle').innerText = title;
     document.getElementById('modalMessage').innerText = message;
     currentFormToSubmit = document.getElementById(formId);
-    document.getElementById('confirmModal').classList.add('show');
+    const modal = document.getElementById('confirmModal');
+    lastModalTrigger = document.activeElement;
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+    document.getElementById('modalConfirmBtn').focus();
 }
 function closeModal(modalId) {
     const modal = document.getElementById(modalId || 'confirmModal');
     modal.classList.remove('show');
     if (modal.hasAttribute('aria-hidden')) modal.setAttribute('aria-hidden', 'true');
     currentFormToSubmit = null;
+    if (lastModalTrigger instanceof HTMLElement) lastModalTrigger.focus();
 }
 document.getElementById('modalConfirmBtn').addEventListener('click', function() {
     if (currentFormToSubmit) currentFormToSubmit.submit();
@@ -882,29 +929,44 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
         return;
     }
 
-    openModal('Save Profile Changes?', 'Confirm these changes to update your account and official beneficiary records.', 'profileForm');
+    openModal('Save Profile Changes?', 'Confirm these changes to update your account and any pending application records.', 'profileForm');
 });
 document.getElementById('securityForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const pass1 = document.getElementById('newPass').value;
     const pass2 = document.getElementById('confPass').value;
     if(pass1 !== pass2) { showToast("Password Mismatch", "Your new passwords do not match. Please retype them carefully.", "error"); return; }
-    if(pass1.length < 8) { showToast("Security Warning", "Your password must be at least 8 characters long for safety.", "error"); return; }
+    if (!isStrongPassword(pass1)) { showToast("Security Warning", "Use at least 10 characters with uppercase, lowercase, a number, and a symbol.", "error"); return; }
     openModal('Update Password?', 'This will securely change your account password. You will be required to use this new password on your next login.', 'securityForm');
 });
+
+function isStrongPassword(password) {
+    return password.length >= 10
+        && /[a-z]/.test(password)
+        && /[A-Z]/.test(password)
+        && /\d/.test(password)
+        && /[^A-Za-z0-9]/.test(password);
+}
+
+function updatePasswordStrength() {
+    const password = document.getElementById('newPass').value;
+    const checks = [password.length >= 10, /[a-z]/.test(password), /[A-Z]/.test(password), /\d/.test(password), /[^A-Za-z0-9]/.test(password)];
+    const score = checks.filter(Boolean).length;
+    const bar = document.getElementById('passwordStrengthBar');
+    const label = document.getElementById('passwordStrengthText');
+    bar.style.width = `${score * 20}%`;
+    bar.dataset.score = String(score);
+    label.textContent = password === '' ? 'Use 10+ characters with uppercase, lowercase, a number, and a symbol.' : (score === 5 ? 'Strong password — all requirements are met.' : `${score} of 5 password requirements met.`);
+}
 
 const allPrograms = <?php 
     $formatted_programs = array_map(function($p) {
         $p['formatted_date'] = date("M d, Y", strtotime($p['created_at']));
-        $programEnded = !empty($p['program_end_date']) && $p['program_end_date'] < date('Y-m-d');
         $isCompleted = strtolower(trim((string)($p['availment_status'] ?? ''))) === 'completed'
-            || strtolower(trim((string)($p['program_status'] ?? ''))) === 'completed'
-            || $programEnded;
+            || !empty($p['date_completed']);
         $p['display_status'] = $isCompleted ? 'completed' : strtolower($p['approval_status'] ?? 'pending');
+        if ($isCompleted) $p['availment_status'] = 'Completed';
         $completedDate = $p['date_completed'] ?? '';
-        if ($completedDate === '' && $isCompleted) {
-            $completedDate = $p['program_end_date'] ?? ($p['date_availed'] ?? '');
-        }
         $p['formatted_completed_date'] = $completedDate !== ''
             ? date("M d, Y", strtotime($completedDate))
             : '';
@@ -923,7 +985,7 @@ const allPrograms = <?php
 
 const progItemsPerPage = 5;
 let currentProgPage = 1;
-const totalProgPages = Math.ceil(allPrograms.length / progItemsPerPage);
+let activeProgramFilter = 'all';
 
 function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>'"]/g, character => ({
@@ -1097,16 +1159,29 @@ function renderPrograms() {
     const controls = document.getElementById('progPaginationControls');
     if (allPrograms.length === 0) return; 
 
-    if (allPrograms.length > progItemsPerPage) { controls.style.display = 'flex'; }
+    const filteredPrograms = allPrograms.filter(item => {
+        const status = getStatusKey(item.display_status);
+        if (activeProgramFilter === 'all') return true;
+        if (activeProgramFilter === 'current') return status === 'approved';
+        return status === activeProgramFilter;
+    });
+    const totalProgPages = Math.max(1, Math.ceil(filteredPrograms.length / progItemsPerPage));
+    currentProgPage = Math.min(currentProgPage, totalProgPages);
+    controls.style.display = filteredPrograms.length > progItemsPerPage ? 'flex' : 'none';
 
     container.innerHTML = '';
+    if (filteredPrograms.length === 0) {
+        container.innerHTML = '<div class="profile-filter-empty"><strong>No matching applications</strong><span>Choose another status to review your records.</span></div>';
+        return;
+    }
     const startIdx = (currentProgPage - 1) * progItemsPerPage;
     const endIdx = startIdx + progItemsPerPage;
-    const pageItems = allPrograms.slice(startIdx, endIdx);
+    const pageItems = filteredPrograms.slice(startIdx, endIdx);
 
     pageItems.forEach(item => {
         const statusKey = getStatusKey(item.display_status);
         const safeTitle = escapeHtml(item.program_name);
+        const safeBatch = escapeHtml(item.program_code || `Program ${item.program_id}`);
         const safeReason = escapeHtml(item.approval_note);
         const safeReqs = escapeHtml(item.requirements);
         const safeVenue = escapeHtml(item.venue);
@@ -1130,6 +1205,7 @@ function renderPrograms() {
             <div class="status-card-horizontal bp-has-journey"
                  data-status="${statusKey}"
                  data-title="${safeTitle}"
+                 data-batch="${safeBatch}"
                  data-reason="${safeReason}"
                  data-reqs="${safeReqs}"
                  data-venue="${safeVenue}"
@@ -1141,7 +1217,7 @@ function renderPrograms() {
                         <svg viewBox="0 0 24 24"><path d="M9 5h6"></path><path d="M9 9h6"></path><path d="M9 13h4"></path><path d="M7 3h10a2 2 0 0 1 2 2v16H5V5a2 2 0 0 1 2-2Z"></path></svg>
                     </div>
                     <div class="program-copy">
-                        <span class="program-kicker">PESO Program</span>
+                        <span class="program-kicker">Batch ${safeBatch}</span>
                         <h4>${safeTitle}</h4>
                         <span class="date-applied">${statusKey === 'completed' && safeCompletedDate ? `Completed on ${safeCompletedDate}` : `Applied on ${safeDate}`}</span>
                     </div>
@@ -1170,6 +1246,17 @@ function renderPrograms() {
     document.getElementById('progNextBtn').disabled = currentProgPage === totalProgPages;
 }
 
+function setProgramFilter(filter, button) {
+    activeProgramFilter = filter;
+    currentProgPage = 1;
+    document.querySelectorAll('[data-program-filter]').forEach(chip => {
+        const active = chip === button;
+        chip.classList.toggle('active', active);
+        chip.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    renderPrograms();
+}
+
 function changeProgPage(direction) {
     currentProgPage += direction;
     renderPrograms();
@@ -1195,19 +1282,33 @@ const allLogs = <?php
 
 const logItemsPerPage = 5; 
 let currentLogPage = 1;
-const totalLogPages = Math.ceil(allLogs.length / logItemsPerPage);
+let activeLogFilter = 'all';
 
 function renderLogs() {
     const container = document.getElementById('activityLogContainer');
     const controls = document.getElementById('logPaginationControls');
     if (allLogs.length === 0) return; 
 
-    if (allLogs.length > logItemsPerPage) { controls.style.display = 'flex'; }
+    const filteredLogs = allLogs.filter(log => {
+        if (activeLogFilter === 'all') return true;
+        const module = String(log.module_name || '').toLowerCase();
+        const action = String(log.action_type || '').toLowerCase();
+        if (activeLogFilter === 'security') return module.includes('security') || ['login', 'logout', 'security'].includes(action);
+        if (activeLogFilter === 'application') return module.includes('program') || module.includes('application') || action === 'apply';
+        return module.includes(activeLogFilter);
+    });
+    const totalLogPages = Math.max(1, Math.ceil(filteredLogs.length / logItemsPerPage));
+    currentLogPage = Math.min(currentLogPage, totalLogPages);
+    controls.style.display = filteredLogs.length > logItemsPerPage ? 'flex' : 'none';
 
     container.innerHTML = '';
+    if (filteredLogs.length === 0) {
+        container.innerHTML = '<div class="profile-filter-empty"><strong>No matching activity</strong><span>Choose another category to review your account history.</span></div>';
+        return;
+    }
     const startIdx = (currentLogPage - 1) * logItemsPerPage;
     const endIdx = startIdx + logItemsPerPage;
-    const pageItems = allLogs.slice(startIdx, endIdx);
+    const pageItems = filteredLogs.slice(startIdx, endIdx);
 
     pageItems.forEach(log => {
         let actionTitle = log.action_type ? log.action_type.toUpperCase() : 'LOG';
@@ -1250,6 +1351,17 @@ function renderLogs() {
     document.getElementById('logNextBtn').disabled = currentLogPage === totalLogPages;
 }
 
+function setLogFilter(filter, button) {
+    activeLogFilter = filter;
+    currentLogPage = 1;
+    document.querySelectorAll('[data-log-filter]').forEach(chip => {
+        const active = chip === button;
+        chip.classList.toggle('active', active);
+        chip.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    renderLogs();
+}
+
 function changeLogPage(direction) {
     currentLogPage += direction;
     renderLogs();
@@ -1283,6 +1395,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function handleCardClick(element) {
     const status = getStatusKey(element.getAttribute('data-status'));
     const title = element.getAttribute('data-title');
+    const batch = element.getAttribute('data-batch') || 'Not recorded';
     const reason = element.getAttribute('data-reason');
     const reqs = element.getAttribute('data-reqs');
     const venue = element.getAttribute('data-venue');
@@ -1302,6 +1415,7 @@ function handleCardClick(element) {
         modalTitle.innerText = "Application Approved";
         modalBody.innerHTML = `
             <p class="status-message">Your application for <strong>${escapeHtml(title)}</strong> has been approved.</p>
+            <div class="status-batch-reference"><span>Exact batch</span><strong>${escapeHtml(batch)}</strong></div>
             <div class="status-detail-panel">
                 <section class="status-detail-section">
                     <h4>Requirements to submit</h4>
@@ -1324,6 +1438,7 @@ function handleCardClick(element) {
         modalTitle.innerText = "Program Completed";
         modalBody.innerHTML = `
             <p class="status-message">Your participation in <strong>${escapeHtml(title)}</strong> is complete.</p>
+            <div class="status-batch-reference"><span>Exact batch</span><strong>${escapeHtml(batch)}</strong></div>
             <div class="status-detail-panel">
                 <section class="status-detail-section">
                     <h4>Completion status</h4>
@@ -1339,6 +1454,7 @@ function handleCardClick(element) {
         modalTitle.innerText = "Application Not Approved";
         modalBody.innerHTML = `
             <p class="status-message">Your application for <strong>${escapeHtml(title)}</strong> was not approved.</p>
+            <div class="status-batch-reference"><span>Exact batch</span><strong>${escapeHtml(batch)}</strong></div>
             <div class="status-detail-panel">
                 <section class="status-detail-section">
                     <h4>Review note</h4>
@@ -1353,7 +1469,8 @@ function handleCardClick(element) {
         modalIcon.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>`;
         modalTitle.innerText = "Application Under Review";
         modalBody.innerHTML = `
-            <p class="status-message">Your application for <strong>${escapeHtml(title)}</strong> is being reviewed by the PESO Staff.</p>
+            <p class="status-message">Your application for <strong>${escapeHtml(title)}</strong> is being reviewed by PESO staff.</p>
+            <div class="status-batch-reference"><span>Exact batch</span><strong>${escapeHtml(batch)}</strong></div>
             <div class="status-detail-panel">
                 <section class="status-detail-section">
                     <h4>What happens next</h4>
@@ -1366,6 +1483,8 @@ function handleCardClick(element) {
 
     modal.classList.add('show');
     modal.setAttribute('aria-hidden', 'false');
+    lastModalTrigger = document.activeElement;
+    modal.querySelector('.modal-close')?.focus();
 }
 </script>
 <script src="spes_form_modal.js?v=20260813y"></script>

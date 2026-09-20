@@ -149,6 +149,18 @@ try {
     }
     $stmt->close();
 
+    // Attach legacy email-matched records to the authenticated account so
+    // they remain visible even if the resident updates their email address.
+    $link_stmt = $conn->prepare('UPDATE beneficiaries SET user_id = ? WHERE user_id IS NULL AND email = ?');
+    if (!$link_stmt) {
+        throw new RuntimeException('Unable to prepare linked record ownership update.');
+    }
+    $link_stmt->bind_param('is', $user_id, $old_email);
+    if (!$link_stmt->execute()) {
+        throw new RuntimeException('Unable to link existing beneficiary records.');
+    }
+    $link_stmt->close();
+
     if (strcasecmp($old_email, $email) !== 0) {
         $beneficiary_stmt = $conn->prepare('UPDATE beneficiaries SET email = ? WHERE user_id = ?');
         if (!$beneficiary_stmt) {
@@ -160,6 +172,41 @@ try {
         }
         $beneficiary_stmt->close();
     }
+
+    // Keep editable applications consistent with the resident profile while
+    // preserving approved records as an official point-in-time record.
+    $full_name = trim($first_name . ' ' . ($middle_name !== '' ? $middle_name . ' ' : '') . $last_name . ($ext_name !== '' ? ' ' . $ext_name : ''));
+    $pending_stmt = $conn->prepare(
+        "UPDATE beneficiaries
+         SET first_name = ?, middle_name = ?, last_name = ?, ext_name = ?, full_name = ?,
+             birthdate = ?, age = ?, sex = ?, civil_status = ?, contact_no = ?,
+             street_purok_zone = ?, barangay = ?, email = ?
+         WHERE user_id = ? AND approval_status = 'Pending'"
+    );
+    if (!$pending_stmt) {
+        throw new RuntimeException('Unable to prepare pending application update.');
+    }
+    $pending_stmt->bind_param(
+        'ssssssissssssi',
+        $first_name,
+        $middle_name,
+        $last_name,
+        $ext_name,
+        $full_name,
+        $birthdate,
+        $age,
+        $sex,
+        $civil_status,
+        $contact_no,
+        $street,
+        $barangay,
+        $email_db,
+        $user_id
+    );
+    if (!$pending_stmt->execute()) {
+        throw new RuntimeException('Unable to update pending applications.');
+    }
+    $pending_stmt->close();
 
     $actor_name = trim($first_name . ' ' . $last_name);
     $actor_role = 'Registered User';
