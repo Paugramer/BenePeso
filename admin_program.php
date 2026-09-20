@@ -65,6 +65,14 @@ function program_directory_icon(string $programName): string {
     if (stripos($programName, 'MSME') !== false) return 'ph-storefront';
     return 'ph-hammer';
 }
+function tupad_category_icon(string $category): string {
+    $category = strtolower($category);
+    if (strpos($category, 'brigada') !== false) return 'ph-broom';
+    if (strpos($category, 'clean') !== false) return 'ph-leaf';
+    if (strpos($category, 'calamity') !== false) return 'ph-first-aid-kit';
+    if (strpos($category, 'regular') !== false) return 'ph-briefcase';
+    return 'ph-tag';
+}
 
 // Nav class helper imported from Dashboard
 function navClass($fileName){
@@ -287,8 +295,8 @@ if ($active_program) {
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <link rel="stylesheet" href="admin_program.css?v=20260905-card-responsive">
     <link rel="stylesheet" href="shared_sidebar.css">
-    <link rel="stylesheet" href="program_filter_polish.css?v=4">
-    <script src="program_filter_polish.js?v=1" defer></script>
+<link rel="stylesheet" href="program_filter_polish.css?v=5">
+    <script src="program_filter_polish.js?v=2" defer></script>
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
@@ -417,12 +425,16 @@ if ($active_program) {
                 <?php if($active_program): ?><input type="hidden" name="program" value="<?php echo e($active_program); ?>"><?php endif; ?>
                 
                 <i class="ph ph-magnifying-glass search-icon"></i>
-                <input class="search-input" id="liveSearchInput" type="text" name="search" placeholder="Search records..." value="<?php echo e($search); ?>">
+                <input class="search-input" id="liveSearchInput" type="text" name="search" placeholder="<?php echo $active_program ? 'Search batch code or venue...' : 'Search program directories...'; ?>" value="<?php echo e($search); ?>">
                 <?php if ($active_program && stripos($active_program, 'TUPAD') !== false): ?>
-                <select name="tupad_category" class="program-category-select" aria-label="Filter by TUPAD category" onchange="this.form.submit()">
-                    <option value="All">All TUPAD Categories</option>
-                    <?php foreach ($tupadCategoryOptions as $category): ?><option value="<?php echo e($category); ?>" <?php echo $tupadCategoryFilter === $category ? 'selected' : ''; ?>><?php echo e($category); ?></option><?php endforeach; ?>
-                </select>
+                <input type="hidden" name="tupad_category" value="<?php echo e($tupadCategoryFilter); ?>" data-category-input>
+                <div class="program-category-menu" data-category-menu>
+                    <button type="button" class="program-category-trigger" aria-haspopup="listbox" aria-expanded="false"><i class="ph <?php echo $tupadCategoryFilter === 'All' ? 'ph-squares-four' : tupad_category_icon($tupadCategoryFilter); ?>"></i><span><?php echo e($tupadCategoryFilter === 'All' ? 'All TUPAD Categories' : $tupadCategoryFilter); ?></span><i class="ph ph-caret-down program-category-caret"></i></button>
+                    <div class="program-category-options" role="listbox" aria-label="Filter by TUPAD category" hidden>
+                        <button type="button" role="option" data-category-value="All" aria-selected="<?php echo $tupadCategoryFilter === 'All' ? 'true' : 'false'; ?>"><span><i class="ph ph-squares-four"></i>All TUPAD Categories</span><?php if ($tupadCategoryFilter === 'All'): ?><i class="ph-bold ph-check"></i><?php endif; ?></button>
+                        <?php foreach ($tupadCategoryOptions as $category): ?><button type="button" role="option" data-category-value="<?php echo e($category); ?>" aria-selected="<?php echo $tupadCategoryFilter === $category ? 'true' : 'false'; ?>"><span><i class="ph <?php echo tupad_category_icon($category); ?>"></i><?php echo e($category); ?></span><?php if ($tupadCategoryFilter === $category): ?><i class="ph-bold ph-check"></i><?php endif; ?></button><?php endforeach; ?>
+                    </div>
+                </div>
                 <?php endif; ?>
                 
                 <input type="hidden" name="sort" value="<?php echo e($sort); ?>" data-sort-input>
@@ -442,6 +454,16 @@ if ($active_program) {
                     </div>
                 </div>
             </form>
+
+            <?php if ($active_program): ?>
+            <form class="beneficiary-directory-search" method="GET" action="admin_beneficiaries.php">
+                <input type="hidden" name="program_name" value="<?php echo e($active_program); ?>">
+                <span class="beneficiary-search-icon"><i class="ph ph-users-three"></i></span>
+                <label for="beneficiaryDirectorySearch">Find a beneficiary in <?php echo e($active_program); ?></label>
+                <input id="beneficiaryDirectorySearch" type="search" name="search" placeholder="Search by beneficiary name or email" autocomplete="off">
+                <button type="submit"><i class="ph ph-magnifying-glass"></i><span>Search beneficiaries</span></button>
+            </form>
+            <?php endif; ?>
 
             <?php if (!$active_program): 
                 $sql = "SELECT c.*, 
@@ -549,11 +571,11 @@ if ($active_program) {
                     <table class="data-table batch-table">
                         <thead>
                             <tr>
-                                <th>Batch Details</th>
-                                <th>Capacity Details</th>
-                                <th>Schedule & Details</th>
-                                <th class="col-status">STATUS</th>
-                                <th class="col-action">ACTION</th>
+                                <th><i class="ph ph-identification-card"></i> Batch Details</th>
+                                <th><i class="ph ph-users-three"></i> Capacity Details</th>
+                                <th><i class="ph ph-calendar-blank"></i> Schedule & Details</th>
+                                <th class="col-status"><i class="ph ph-activity"></i> Status</th>
+                                <th class="col-action"><i class="ph ph-cursor-click"></i> Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -607,7 +629,7 @@ if ($active_program) {
                                     <?php if(!$isPending): ?>
                                         <a href="admin_beneficiaries.php?program_name=<?php echo urlencode($b['program_name']); ?>&program_id=<?php echo (int)$b['program_id']; ?>" class="batch-title-link" title="Open Applicants">
                                             <div class="batch-title-td" style="color: var(--green); display:flex; align-items:center; gap:6px;">
-                                                <?php echo e($b['program_name']); ?> <i class="ph-bold ph-link" style="font-size: 14px;"></i>
+                                                <i class="ph <?php echo program_directory_icon($b['program_name']); ?>" aria-hidden="true"></i><?php echo e($b['program_name']); ?> <i class="ph-bold ph-link" style="font-size: 14px;"></i>
                                             </div>
                                             <div class="batch-code-td" style="color: var(--green-dark);">Batch Code: <?php echo e($b['program_code']); ?></div>
                                             <?php if (stripos($b['program_name'], 'TUPAD') !== false): ?><div class="batch-code-td" style="color:var(--green); margin-top:3px;"><i class="ph ph-tag"></i> <?php echo e($b['tupad_category'] ?: 'Regular TUPAD'); ?></div><?php endif; ?>
@@ -615,7 +637,7 @@ if ($active_program) {
                                     <?php else: ?>
                                         <div style="cursor: not-allowed; opacity: 0.7;" title="Pending Approval">
                                             <div class="batch-title-td" style="color: var(--muted); display:flex; align-items:center; gap:6px;">
-                                                <?php echo e($b['program_name']); ?> <i class="ph-bold ph-lock-key" style="font-size: 14px;"></i>
+                                                <i class="ph <?php echo program_directory_icon($b['program_name']); ?>" aria-hidden="true"></i><?php echo e($b['program_name']); ?> <i class="ph-bold ph-lock-key" style="font-size: 14px;"></i>
                                             </div>
                                             <div class="batch-code-td">Batch Code: <?php echo e($b['program_code']); ?></div>
                                             <?php if (stripos($b['program_name'], 'TUPAD') !== false): ?><div class="batch-code-td" style="margin-top:3px;"><i class="ph ph-tag"></i> <?php echo e($b['tupad_category'] ?: 'Regular TUPAD'); ?></div><?php endif; ?>
@@ -851,15 +873,15 @@ if ($active_program) {
         </div>
         <div class="modal-form">
             <div class="form-grid" style="gap: 12px; padding-bottom: 24px;">
-                <div class="form-group span-2"><label>Program Name</label><div class="view-data" id="view_title"></div></div>
-                <div class="form-group span-2"><label>Batch Code</label><div class="view-data" id="view_code"></div></div>
-                <div class="form-group"><label>Start Date</label><div class="view-data" id="view_start"></div></div>
-                <div class="form-group"><label>End Date</label><div class="view-data" id="view_end"></div></div>
-                <div class="form-group"><label>Venue</label><div class="view-data" id="view_venue"></div></div>
-                <div class="form-group"><label>Total Slots</label><div class="view-data" id="view_slots"></div></div>
+                <div class="form-group span-2"><label><i class="ph ph-briefcase"></i> Program Name</label><div class="view-data" id="view_title"></div></div>
+                <div class="form-group span-2"><label><i class="ph ph-barcode"></i> Batch Code</label><div class="view-data" id="view_code"></div></div>
+                <div class="form-group"><label><i class="ph ph-calendar"></i> Start Date</label><div class="view-data" id="view_start"></div></div>
+                <div class="form-group"><label><i class="ph ph-calendar-check"></i> End Date</label><div class="view-data" id="view_end"></div></div>
+                <div class="form-group"><label><i class="ph ph-map-pin"></i> Venue</label><div class="view-data" id="view_venue"></div></div>
+                <div class="form-group"><label><i class="ph ph-users"></i> Total Slots</label><div class="view-data" id="view_slots"></div></div>
             </div>
-            <div class="program-bullet-section"><label>Eligibility</label><ul class="program-detail-list" id="view_eligibility"></ul></div>
-            <div class="program-bullet-section"><label>Requirements</label><ul class="program-detail-list" id="view_requirements"></ul></div>
+            <div class="program-bullet-section"><label><i class="ph ph-seal-check"></i> Eligibility</label><ul class="program-detail-list" id="view_eligibility"></ul></div>
+            <div class="program-bullet-section"><label><i class="ph ph-files"></i> Requirements</label><ul class="program-detail-list" id="view_requirements"></ul></div>
             <div class="modal-actions">
                 <button type="button" class="btn-light" data-close-modal="viewBatchModal">Close</button>
             </div>

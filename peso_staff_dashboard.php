@@ -214,6 +214,7 @@ if (table_exists($conn, "beneficiaries")) {
 /* Operational barangay workload: records and applications still awaiting review. */
 $barangayWorkload = [];
 $barangayMaxRecords = 0;
+$barangayPendingDetails = [];
 if (table_exists($conn, "beneficiaries")) {
   $beneficiaryColumns = $beneficiaryColumns ?? get_columns($conn, "beneficiaries");
   if (in_array('barangay', $beneficiaryColumns, true)) {
@@ -234,6 +235,23 @@ if (table_exists($conn, "beneficiaries")) {
         $row['pending_reviews'] = (int)$row['pending_reviews'];
         $barangayMaxRecords = max($barangayMaxRecords, $row['total_records']);
         $barangayWorkload[] = $row;
+      }
+    }
+    if ($barangayWorkload && in_array('approval_status', $beneficiaryColumns, true)) {
+      $detailStmt = $conn->prepare("SELECT b.full_name, b.program_id, p.program_name, p.program_code
+                                    FROM beneficiaries b
+                                    JOIN programs p ON p.program_id = b.program_id
+                                    WHERE TRIM(b.barangay) = ? AND b.approval_status = 'Pending'
+                                    ORDER BY b.created_at DESC, b.beneficiary_id DESC
+                                    LIMIT 5");
+      if ($detailStmt) {
+        foreach ($barangayWorkload as $barangay) {
+          $barangayName = (string)$barangay['barangay_name'];
+          $detailStmt->bind_param('s', $barangayName);
+          $detailStmt->execute();
+          $barangayPendingDetails[$barangayName] = $detailStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        }
+        $detailStmt->close();
       }
     }
   }
@@ -336,10 +354,11 @@ if (table_exists($conn, "activity_logs")) {
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="peso_staff_dashboard.css">
   <link rel="stylesheet" href="shared_sidebar.css">
-  <link rel="stylesheet" href="dashboard_polish.css?v=6">
+  <link rel="stylesheet" href="dashboard_polish.css?v=7">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=17">
 <script src="frontend_polish.js?v=15" defer></script>
+<script src="dashboard_workload.js?v=1" defer></script>
 </head>
 <body>
 
@@ -507,16 +526,19 @@ if (table_exists($conn, "activity_logs")) {
       <div class="panel-head">
         <div>
           <div class="panel-title" id="barangayWorkloadTitle">Barangay Workload</div>
-          <div class="panel-sub">Top barangays by beneficiary records, with pending reviews highlighted</div>
+          <div class="panel-sub">Top 5 barangays &bull; open a card to preview up to 5 pending applications</div>
         </div>
         <a href="peso_staff_beneficiaries.php" class="panel-link">View beneficiaries</a>
       </div>
       <?php if ($barangayWorkload): ?>
-        <div class="barangay-workload-list" role="list">
+        <div class="barangay-carousel" data-barangay-carousel>
+          <button type="button" class="barangay-carousel-control is-previous" data-carousel-previous aria-label="Previous barangays"><i class="ph ph-caret-left"></i></button>
+          <div class="barangay-carousel-viewport">
+          <div class="barangay-workload-list">
           <?php foreach ($barangayWorkload as $index => $barangay):
             $coverageWidth = $barangayMaxRecords > 0 ? max(8, round(($barangay['total_records'] / $barangayMaxRecords) * 100)) : 0;
           ?>
-            <div class="barangay-workload-row" role="listitem">
+            <button type="button" class="barangay-workload-row" data-barangay-card data-barangay="<?php echo h($barangay['barangay_name']); ?>" data-pending-total="<?php echo (int)$barangay['pending_reviews']; ?>" aria-label="View pending beneficiaries in <?php echo h($barangay['barangay_name']); ?>">
               <span class="barangay-rank" aria-hidden="true"><?php echo $index + 1; ?></span>
               <span class="barangay-workload-copy">
                 <strong><?php echo h($barangay['barangay_name']); ?></strong>
@@ -526,13 +548,32 @@ if (table_exists($conn, "activity_logs")) {
                 <strong><?php echo (int)$barangay['total_records']; ?></strong><small>records</small>
                 <span class="barangay-pending <?php echo $barangay['pending_reviews'] > 0 ? 'has-pending' : ''; ?>"><i class="ph ph-clock" aria-hidden="true"></i><?php echo (int)$barangay['pending_reviews']; ?> pending</span>
               </span>
-            </div>
+              <span class="barangay-open-hint"><i class="ph ph-arrow-up-right"></i> View pending</span>
+            </button>
           <?php endforeach; ?>
+          </div>
+          </div>
+          <button type="button" class="barangay-carousel-control is-next" data-carousel-next aria-label="Next barangays"><i class="ph ph-caret-right"></i></button>
+          <div class="barangay-carousel-dots" data-carousel-dots aria-label="Barangay carousel pages"></div>
         </div>
       <?php else: ?>
         <div class="chart-empty barangay-empty"><i class="ph ph-map-pin-area"></i><span>No barangay records yet</span></div>
       <?php endif; ?>
     </section>
+
+    <div class="workload-modal" id="barangayWorkloadModal" aria-hidden="true">
+      <button type="button" class="workload-modal-backdrop" data-workload-close aria-label="Close pending beneficiary preview"></button>
+      <section class="workload-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="workloadModalTitle">
+        <header class="workload-modal-head">
+          <span class="workload-modal-icon"><i class="ph ph-map-pin-area"></i></span>
+          <div><span class="workload-modal-kicker">Barangay workload</span><h2 id="workloadModalTitle">Pending beneficiaries</h2><p data-workload-summary></p></div>
+          <button type="button" class="workload-modal-close" data-workload-close aria-label="Close"><i class="ph ph-x"></i></button>
+        </header>
+        <div class="workload-modal-list" data-workload-list></div>
+        <footer class="workload-modal-foot"><span><i class="ph ph-info"></i> Preview limited to 5 records.</span><a href="peso_staff_beneficiaries.php">Open beneficiary directory <i class="ph ph-arrow-right"></i></a></footer>
+      </section>
+    </div>
+    <script type="application/json" id="barangayPendingData"><?php echo json_encode($barangayPendingDetails, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
 
     <section class="split-grid">
       <div class="panel-card animate-fade-in" style="animation-delay: 0.6s; padding-bottom: 20px;">
