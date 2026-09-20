@@ -114,6 +114,81 @@
   align-items: center;
   background: linear-gradient(110deg, #ffffff 0%, #edf8f2 100%) !important;
   border-bottom: 2px solid rgba(31, 122, 84, .2) !important;
+  gap: 14px;
+}
+
+.beneficiary-modal-icon {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #c8e1d4;
+  border-radius: 13px;
+  color: #1f7a54;
+  background: #eaf6f0;
+  font-size: 23px;
+}
+
+.beneficiary-modal-icon + div { flex: 1 1 auto; min-width: 0; }
+
+.bulk-selection-copy { min-width: 0; }
+.bulk-selection-copy > div:first-child { display: flex; align-items: baseline; flex-wrap: wrap; }
+.bulk-selected-preview {
+  max-width: 620px;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #315444;
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bulk-selected-review {
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid #d8e7df;
+  border-radius: 13px;
+  background: #f8fcfa;
+}
+
+.bulk-selected-review-head strong { display: block; color: #173d2d; font-size: 13px; }
+.bulk-selected-review-head span { display: block; margin-top: 2px; color: #6a7e73; font-size: 10.5px; }
+.bulk-selected-people { max-height: 190px; margin-top: 11px; overflow-y: auto; display: grid; gap: 7px; }
+.bulk-selected-person {
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  border: 1px solid #deebe4;
+  border-radius: 10px;
+  background: #fff;
+}
+.bulk-selected-avatar { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #1f7a54; font-size: 12px; font-weight: 800; }
+.bulk-selected-identity { min-width: 0; }
+.bulk-selected-identity strong,
+.bulk-selected-identity small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bulk-selected-identity strong { color: #173d2d; font-size: 11.5px; }
+.bulk-selected-identity small { margin-top: 2px; color: #708178; font-size: 9.5px; }
+.bulk-selected-actions { display: flex; gap: 5px; }
+.bulk-person-action { min-height: 32px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 9px; border: 1px solid #d3e4db; border-radius: 8px; color: #176b49; background: #f5faf7; cursor: pointer; font: 700 9.5px/1 "Poppins", sans-serif; }
+.bulk-person-action:hover { border-color: #84bca0; background: #eaf6f0; }
+.bulk-person-remove { color: #a13b3b; border-color: #efd1d1; background: #fff7f7; }
+.bulk-selection-guidance { display: flex; align-items: flex-start; gap: 7px; margin-top: 10px; padding: 9px 10px; border-radius: 9px; color: #34604a; background: #eaf6f0; font-size: 10px; line-height: 1.45; }
+.bulk-selection-guidance i { flex: 0 0 auto; margin-top: 1px; font-size: 15px; }
+.bulk-selection-guidance.is-warning { color: #825900; background: #fff7df; }
+
+:is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .beneficiary-edit-record {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 11px;
+  white-space: nowrap;
 }
 
 @media (max-width: 760px) {
@@ -124,4 +199,8 @@
   .beneficiary-filter-toggle { width: 100%; }
   .beneficiary-secondary-filters { grid-template-columns: 1fr; }
   .beneficiary-active-filters { margin-top: -10px; }
+  .beneficiary-modal-icon { flex-basis: 42px; width: 42px; height: 42px; }
+  .bulk-selected-person { grid-template-columns: 34px minmax(0, 1fr); }
+  .bulk-selected-actions { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; }
+  .bulk-selected-preview { white-space: normal; }
 }

@@ -1717,9 +1717,9 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="beneficiary_workspace_polish.css?v=1">
+<link rel="stylesheet" href="beneficiary_workspace_polish.css?v=2">
 <script src="frontend_polish.js?v=15" defer></script>
-<script src="beneficiary_workspace_polish.js?v=1" defer></script>
+<script src="beneficiary_workspace_polish.js?v=2" defer></script>
 </head>
 <body class="admin-beneficiaries-page">
   <div class="page-wrap">
@@ -1874,7 +1874,7 @@ if ($selectedProgramName !== "") {
         </div>
 
         <div class="bulk-selection-bar" id="bulkSelectionBar" hidden>
-          <div><strong id="bulkSelectedCount">0</strong> selected <span>Choose a bulk action for these beneficiaries.</span></div>
+          <div class="bulk-selection-copy"><div><strong id="bulkSelectedCount">0</strong> selected <span>Choose a bulk action for these beneficiaries.</span></div><div class="bulk-selected-preview" id="bulkSelectedPreview" aria-live="polite"></div></div>
           <div class="bulk-selection-actions">
             <button type="button" class="btn-light" id="clearBulkSelection">Clear</button>
             <button type="button" class="btn-main" id="openBulkStatusModal"><i class="ph-bold ph-arrows-clockwise"></i> Update Availment & Email</button>
@@ -1998,7 +1998,7 @@ if ($selectedProgramName !== "") {
                           $profileData = json_encode($bData, JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_INVALID_UTF8_SUBSTITUTE);
                       ?>
                       <tr class="table-row-animate clickable-row" data-profile='<?php echo h($profileData); ?>' onclick="window.openProfileModal(this)">
-                          <td style="text-align: center; font-weight: 700; color: var(--muted); font-size: 13px;" onclick="event.stopPropagation();"><label class="bulk-row-check"><input type="checkbox" class="beneficiary-select" value="<?php echo $bId; ?>" aria-label="Select <?php echo h($dispName); ?>"><span><?php echo $counter++; ?></span></label></td>
+                          <td style="text-align: center; font-weight: 700; color: var(--muted); font-size: 13px;" onclick="event.stopPropagation();"><label class="bulk-row-check"><input type="checkbox" class="beneficiary-select" value="<?php echo $bId; ?>" data-beneficiary-name="<?php echo h($dispName); ?>" data-beneficiary-status="<?php echo h($availmentDisplay); ?>" aria-label="Select <?php echo h($dispName); ?>"><span><?php echo $counter++; ?></span></label></td>
                           <td>
                               <div style="display: flex; align-items: center; gap: 12px;">
                                   <div class="avatar-circle beneficiary-table-avatar" style="width: 40px; height: 40px; font-size: 15px;">
@@ -2068,7 +2068,7 @@ if ($selectedProgramName !== "") {
 
 <?php if ($selectedProgramName !== ""): ?>
 
-<div class="modal" id="bulkStatusActionModal" aria-hidden="true">
+<div class="modal" id="bulkStatusActionModal" data-program="<?php echo h($selectedProgramName); ?>" aria-hidden="true">
   <div class="modal-backdrop" data-close-bulk-status></div>
   <div class="modal-dialog modal-dialog-sm bulk-status-dialog">
     <div class="modal-head-alt">
@@ -2080,6 +2080,11 @@ if ($selectedProgramName !== "") {
       <input type="hidden" name="program_name" value="<?php echo h($selectedProgramName); ?>">
       <input type="hidden" name="program_id" value="<?php echo (int)$selectedProgramId; ?>">
       <div id="bulkSelectedInputs"></div>
+      <section class="bulk-selected-review" aria-labelledby="bulkSelectedReviewTitle">
+        <div class="bulk-selected-review-head"><div><strong id="bulkSelectedReviewTitle">Selected beneficiaries</strong><span>Review, remove, or edit a record before applying the bulk update.</span></div></div>
+        <div class="bulk-selected-people" id="bulkSelectedPeople"></div>
+        <div class="bulk-selection-guidance" id="bulkSelectionGuidance"></div>
+      </section>
       <div class="form-grid">
         <div class="form-group span-2"><label>New Availment Status *</label>
           <select name="availment_status" id="bulkAvailmentStatus" required>
