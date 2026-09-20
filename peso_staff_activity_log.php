@@ -40,6 +40,19 @@ function format_date_input($value): string {
   return $ts ? date("Y-m-d", $ts) : "";
 }
 
+function format_activity_datetime($value): string {
+  if (!$value) return 'Not specified';
+  $ts = strtotime((string)$value);
+  return $ts ? date('M d, Y', $ts) . ' • ' . date('h:i A', $ts) : (string)$value;
+}
+
+function activity_label($value): string {
+  $raw = trim((string)$value);
+  $key = strtolower($raw);
+  $labels = ['program' => 'Programs', 'programs' => 'Programs', 'authentication' => 'Authentication', 'auth' => 'Authentication', 'account' => 'Manage Accounts', 'accounts' => 'Manage Accounts'];
+  return $labels[$key] ?? ($raw !== '' ? ucwords(str_replace('_', ' ', $raw)) : 'Not specified');
+}
+
 // UPDATED: Now returns a dot color class instead of a full badge class
 function action_dot_class(string $action): string {
   $a = strtolower(trim($action));
@@ -116,6 +129,11 @@ $moduleFilter = trim($_GET["module"] ?? "All");
 $actionFilter = trim($_GET["action"] ?? "All");
 $dateFrom = trim($_GET["date_from"] ?? "");
 $dateTo = trim($_GET["date_to"] ?? "");
+$dateRangeError = '';
+if ($dateFrom !== '' && $dateTo !== '' && $dateFrom > $dateTo) {
+  $dateRangeError = 'The start date cannot be later than the end date.';
+  $dateTo = $dateFrom;
+}
 
 // Pagination logic: 5 items per page
 $limit = 5;
@@ -135,7 +153,7 @@ if ($res && ($row = $res->fetch_assoc())) $totalLogs = (int)($row["total"] ?? 0)
 $res = $conn->query("SELECT COUNT(*) AS total FROM activity_logs WHERE staff_id = {$peso_staff_id} AND DATE(created_at) = CURDATE()");
 if ($res && ($row = $res->fetch_assoc())) $todayLogs = (int)($row["total"] ?? 0);
 
-$res = $conn->query("SELECT COUNT(*) AS total FROM activity_logs WHERE staff_id = {$peso_staff_id} AND module_name = 'Program'");
+$res = $conn->query("SELECT COUNT(*) AS total FROM activity_logs WHERE staff_id = {$peso_staff_id} AND LOWER(module_name) IN ('program', 'programs')");
 if ($res && ($row = $res->fetch_assoc())) $programLogs = (int)($row["total"] ?? 0);
 
 /* =========================
@@ -234,8 +252,8 @@ if ($stmt) {
   
   <link rel="stylesheet" href="peso_staff_activity_log.css?v=20260905">
   <link rel="stylesheet" href="shared_sidebar.css">
-  <link rel="stylesheet" href="activity_filter_polish.css?v=1">
-  <script src="activity_filter_polish.js?v=1" defer></script>
+  <link rel="stylesheet" href="activity_filter_polish.css?v=2">
+  <script src="activity_filter_polish.js?v=2" defer></script>
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
@@ -344,54 +362,39 @@ if ($stmt) {
       <div class="panel-head panel-head-stack">
         <div>
           <div class="panel-title">Activity Records</div>
-          <div class="panel-sub">Search and filter the activity history.</div>
+          <div class="panel-sub"><?php echo number_format($totalFilteredLogs); ?> matching record<?php echo $totalFilteredLogs === 1 ? '' : 's'; ?> in your private activity history.</div>
         </div>
 
         <form method="GET" class="toolbar-form" id="filterForm">
           <input type="hidden" name="page" value="1"> 
           <div class="toolbar-grid">
-            <input
-              type="text"
-              name="search"
-              value="<?php echo h($search); ?>"
-              class="toolbar-input system-search-input"
-              placeholder="Search module, action, target, desc..."
-            >
+            <div class="system-search activity-search-wrap"><i class="ph ph-magnifying-glass search-input-icon"></i><input type="text" name="search" value="<?php echo h($search); ?>" class="toolbar-input system-search-input" placeholder="Search module, action, target, description..."></div>
 
             <input type="hidden" name="module" value="<?php echo h($moduleFilter); ?>" data-filter-input="module">
             <div class="activity-filter-menu" data-filter-menu="module">
-              <button type="button" class="activity-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span><?php echo h($moduleFilter === 'All' ? 'All Modules' : $moduleFilter); ?></span><i class="ph ph-caret-down"></i></button>
+              <button type="button" class="activity-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span class="activity-trigger-label"><i class="ph ph-squares-four"></i><?php echo h($moduleFilter === 'All' ? 'All Modules' : activity_label($moduleFilter)); ?></span><i class="ph ph-caret-down"></i></button>
               <div class="activity-filter-options" role="listbox" aria-label="Filter by module" hidden>
                 <button type="button" role="option" data-filter-value="All" aria-selected="<?php echo $moduleFilter === 'All' ? 'true' : 'false'; ?>"><span>All Modules</span><?php if($moduleFilter === 'All'): ?><i class="ph-bold ph-check"></i><?php endif; ?></button>
-                <?php foreach ($modules as $module): ?><button type="button" role="option" data-filter-value="<?php echo h($module); ?>" aria-selected="<?php echo $moduleFilter === $module ? 'true' : 'false'; ?>"><span><?php echo h($module); ?></span><?php if($moduleFilter === $module): ?><i class="ph-bold ph-check"></i><?php endif; ?></button><?php endforeach; ?>
+                <?php foreach ($modules as $module): ?><button type="button" role="option" data-filter-value="<?php echo h($module); ?>" aria-selected="<?php echo $moduleFilter === $module ? 'true' : 'false'; ?>"><span><?php echo h(activity_label($module)); ?></span><?php if($moduleFilter === $module): ?><i class="ph-bold ph-check"></i><?php endif; ?></button><?php endforeach; ?>
               </div>
             </div>
 
             <input type="hidden" name="action" value="<?php echo h($actionFilter); ?>" data-filter-input="action">
             <div class="activity-filter-menu" data-filter-menu="action">
-              <button type="button" class="activity-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span><?php echo h($actionFilter === 'All' ? 'All Actions' : $actionFilter); ?></span><i class="ph ph-caret-down"></i></button>
+              <button type="button" class="activity-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span class="activity-trigger-label"><i class="ph ph-lightning"></i><?php echo h($actionFilter === 'All' ? 'All Actions' : activity_label($actionFilter)); ?></span><i class="ph ph-caret-down"></i></button>
               <div class="activity-filter-options" role="listbox" aria-label="Filter by action" hidden>
                 <button type="button" role="option" data-filter-value="All" aria-selected="<?php echo $actionFilter === 'All' ? 'true' : 'false'; ?>"><span>All Actions</span><?php if($actionFilter === 'All'): ?><i class="ph-bold ph-check"></i><?php endif; ?></button>
                 <?php foreach ($actions as $action): ?><button type="button" role="option" data-filter-value="<?php echo h($action); ?>" aria-selected="<?php echo $actionFilter === $action ? 'true' : 'false'; ?>"><span><?php echo h($action); ?></span><?php if($actionFilter === $action): ?><i class="ph-bold ph-check"></i><?php endif; ?></button><?php endforeach; ?>
               </div>
             </div>
 
-            <input
-              type="date"
-              name="date_from"
-              value="<?php echo h(format_date_input($dateFrom)); ?>"
-              class="toolbar-input auto-submit"
-            >
-
-            <input
-              type="date"
-              name="date_to"
-              value="<?php echo h(format_date_input($dateTo)); ?>"
-              class="toolbar-input auto-submit"
-            >
+            <label class="activity-date-field"><span>From</span><input type="date" name="date_from" value="<?php echo h(format_date_input($dateFrom)); ?>" max="<?php echo h(format_date_input($dateTo)); ?>" class="toolbar-input auto-submit"></label>
+            <label class="activity-date-field"><span>To</span><input type="date" name="date_to" value="<?php echo h(format_date_input($dateTo)); ?>" min="<?php echo h(format_date_input($dateFrom)); ?>" class="toolbar-input auto-submit"></label>
+            <?php if($search !== '' || $moduleFilter !== 'All' || $actionFilter !== 'All' || $dateFrom !== '' || $dateTo !== ''): ?><a href="peso_staff_activity_log.php" class="btn-light activity-clear-btn"><i class="ph ph-x"></i><span>Clear</span></a><?php endif; ?>
           </div>
         </form>
       </div>
+      <?php if($dateRangeError): ?><div class="activity-filter-alert"><i class="ph ph-warning-circle"></i><?php echo h($dateRangeError); ?></div><?php endif; ?>
 
       <?php if (!$logs): ?>
         <div class="empty-state">
@@ -412,8 +415,8 @@ if ($stmt) {
             </thead>
             <tbody>
               <?php foreach ($logs as $log): ?>
-                <tr>
-                  <td class="datetime-col"><?php echo h(format_datetime_value($log["created_at"] ?? "")); ?></td>
+                <tr class="activity-log-row" tabindex="0" data-date="<?php echo h(format_activity_datetime($log['created_at'] ?? '')); ?>" data-actor="<?php echo h($staff_name); ?>" data-role="PESO Staff" data-module="<?php echo h(activity_label($log['module_name'] ?? '')); ?>" data-action="<?php echo h(activity_label($log['action_type'] ?? '')); ?>" data-target="<?php echo h($log['target_name'] ?? 'Not specified'); ?>" data-description="<?php echo h($log['description'] ?? 'Not specified'); ?>">
+                  <td class="datetime-col"><?php echo h(format_activity_datetime($log["created_at"] ?? "")); ?></td>
                   <td class="module-col text-center"><?php echo h($log["module_name"] ?? "—"); ?></td>
                   
                   <!-- UPDATED TO PERFECTLY MATCH DASHBOARD DOT STYLE -->
@@ -457,6 +460,15 @@ if ($stmt) {
   </main>
 </div>
 
+<div class="activity-detail-modal" id="activityDetailModal" aria-hidden="true">
+  <div class="activity-detail-backdrop" data-close-activity-modal></div>
+  <section class="activity-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="activityDetailTitle">
+    <header class="activity-detail-head"><div class="activity-detail-icon"><i class="ph ph-clock-counter-clockwise"></i></div><div><div class="activity-detail-kicker">MY ACTIVITY</div><h2 id="activityDetailTitle">Activity details</h2></div><button type="button" class="activity-detail-close" data-close-activity-modal aria-label="Close details"><i class="ph ph-x"></i></button></header>
+    <div class="activity-detail-body"><div class="activity-detail-grid"><div><span>Date and time</span><strong data-detail="date"></strong></div><div><span>Actor</span><strong data-detail="actor"></strong><small data-detail="role"></small></div><div><span>Module</span><strong data-detail="module"></strong></div><div><span>Action</span><strong data-detail="action"></strong></div><div class="activity-detail-wide"><span>Target</span><strong data-detail="target"></strong></div><div class="activity-detail-wide"><span>Description</span><p data-detail="description"></p></div></div></div>
+    <footer class="activity-detail-footer"><button type="button" class="activity-detail-done" data-close-activity-modal>Done</button></footer>
+  </section>
+</div>
+
 <script src="peso_staff_activity_log.js"></script>
 
 <script>
@@ -487,6 +499,36 @@ if ($stmt) {
         document.getElementById('filterForm').submit();
       });
     });
+
+    const detailModal = document.getElementById('activityDetailModal');
+    const closeDetail = () => { detailModal.classList.remove('show'); detailModal.setAttribute('aria-hidden', 'true'); };
+    document.querySelectorAll('.activity-log-row').forEach(row => {
+      const moduleCell = row.querySelector('.module-col');
+      const targetCell = row.querySelector('.target-col');
+      const descriptionCell = row.querySelector('.desc-col');
+      const actionPill = row.querySelector('.pill');
+      if (moduleCell) moduleCell.textContent = row.dataset.module || 'Not specified';
+      if (targetCell) targetCell.textContent = row.dataset.target || 'Not specified';
+      if (descriptionCell) descriptionCell.textContent = row.dataset.description || 'Not specified';
+      if (actionPill) {
+        const dot = actionPill.querySelector('.pulse-dot');
+        actionPill.textContent = '';
+        if (dot) actionPill.appendChild(dot);
+        actionPill.appendChild(document.createTextNode(' ' + (row.dataset.action || 'Not specified')));
+      }
+      const openDetail = () => {
+        ['date','actor','role','module','action','target','description'].forEach(key => {
+          const node = detailModal.querySelector(`[data-detail="${key}"]`);
+          if (node) node.textContent = row.dataset[key] || 'Not specified';
+        });
+        detailModal.classList.add('show'); detailModal.setAttribute('aria-hidden', 'false');
+        detailModal.querySelector('.activity-detail-close').focus();
+      };
+      row.addEventListener('click', openDetail);
+      row.addEventListener('keydown', event => { if (event.key === 'Enter') openDetail(); });
+    });
+    document.querySelectorAll('[data-close-activity-modal]').forEach(button => button.addEventListener('click', closeDetail));
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && detailModal.classList.contains('show')) closeDetail(); });
   });
 </script>
 

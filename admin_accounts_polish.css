@@ -3,6 +3,12 @@ body {
   background-color: #e8eeea;
   background-image: linear-gradient(135deg, rgba(232,238,234,.92), rgba(215,228,222,.96));
 }
+
+/* Account access confirmations use the same centered, branded modal language as the rest of the admin workspace. */
+.account-status-dialog{width:min(540px,calc(100vw - 32px))!important;margin:auto!important;padding:34px!important;text-align:center;border:1px solid rgba(31,122,84,.16);border-radius:24px!important;box-shadow:0 28px 80px rgba(8,48,34,.24)!important}.account-status-dialog .warning-icon{margin:0 auto 18px}.account-status-dialog .success-text{max-width:440px;margin-left:auto!important;margin-right:auto!important}.account-reason-field{display:block;margin:0 0 22px;text-align:left}.account-reason-field>span{display:block;margin-bottom:8px;color:#244438;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.045em}.account-reason-field b{color:#c53838}.account-reason-field textarea{display:block;width:100%;min-height:94px;resize:vertical;padding:13px 14px;border:1px solid #cfe1d8;border-radius:13px;background:#fbfdfc;color:#163c2e;font:600 13px/1.55 Poppins,sans-serif;box-sizing:border-box}.account-reason-field textarea:focus{outline:0;border-color:#1f855e;box-shadow:0 0 0 3px rgba(31,133,94,.12);background:#fff}.account-reason-field small{display:block;margin-top:7px;color:#71847b;font-size:11px;font-weight:600}.account-status-danger{border-top:4px solid #d93838}.account-status-success{border-top:4px solid #1f855e}
+.admin-accounts-page .landscape-modal .modal-head{display:grid!important;grid-template-columns:52px 1fr 52px!important;align-items:center!important;gap:14px!important}.admin-accounts-page .modal-head-icon{width:52px;height:52px;display:grid;place-items:center;border:1px solid #cce4d8;border-radius:15px;background:#eaf7f0;color:#1f855e;font-size:24px}.admin-accounts-page .modal-head-copy{text-align:center}.admin-accounts-page .landscape-modal .modal-close{justify-self:end}
+.account-activity-link{display:inline-flex!important;align-items:center;justify-content:center;gap:7px;text-decoration:none!important}
+@media(max-width:600px){.account-status-dialog{padding:25px 20px!important}.account-status-dialog form>div:last-child{flex-direction:column}.account-status-dialog form>div:last-child button{width:100%}}
 .main-area { padding: 24px 28px 34px !important; gap: 18px !important; background: transparent !important; }
 .top-area {
   position: relative;

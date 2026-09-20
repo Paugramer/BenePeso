@@ -18,6 +18,8 @@ if (!file_exists($pic_path) || empty($admin_pic)) { $pic_path = "img/default_ava
 $view = $_GET['view'] ?? 'staff';
 $search = trim($_GET['search'] ?? '');
 $banned_filter = $_GET['banned_filter'] ?? 'all';
+if (!in_array($view, ['staff', 'user', 'banned'], true)) $view = 'staff';
+if (!in_array($banned_filter, ['all', 'staff', 'user'], true)) $banned_filter = 'all';
 
 $flash = $_SESSION["flash"] ?? "";
 $flash_type = $_SESSION["flash_type"] ?? "success";
@@ -57,107 +59,54 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     auth_require_csrf();
     $action = $_POST['action'] ?? '';
 
-    if ($action === 'ban_account') {
-        $id = (int)$_POST['ban_id'];
-        $type = $_POST['account_type'];
-        $banned_status = 'Banned';
+    if ($action === 'ban_account' || $action === 'unban_account') {
+        $isBan = $action === 'ban_account';
+        $id = (int)($_POST[$isBan ? 'ban_id' : 'unban_id'] ?? 0);
+        $type = $_POST['account_type'] ?? '';
+        $reason = trim($_POST['status_reason'] ?? '');
+        $redirectView = $isBan ? $view : 'banned';
 
-        if ($type === 'staff') {
-            $get = $conn->prepare("SELECT * FROM peso_staff WHERE staff_id = ?");
-            $get->bind_param("i", $id);
-            $get->execute();
-            $res = $get->get_result()->fetch_assoc();
-            $name = $res ? getDisplayName($res) : 'Unknown Staff';
-
-            // Direct SQL Logging for Banning Staff
-            $log_desc = "Banned PESO Staff account: $name";
-            $log_stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, description, created_at) VALUES (?, 'Administrator', 'Manage Accounts', 'BAN', ?, NOW())");
-            if ($log_stmt) {
-                $log_stmt->bind_param("ss", $admin_name, $log_desc);
-                $log_stmt->execute();
-                $log_stmt->close();
-            }
-
-            $stmt = $conn->prepare("UPDATE peso_staff SET status = ? WHERE staff_id = ?");
-            $stmt->bind_param("si", $banned_status, $id);
-            $stmt->execute();
-
-        } elseif ($type === 'user') {
-            $get = $conn->prepare("SELECT * FROM users WHERE user_id = ?");
-            $get->bind_param("i", $id);
-            $get->execute();
-            $res = $get->get_result()->fetch_assoc();
-            $name = $res ? getDisplayName($res) : 'Unknown User';
-
-            // Direct SQL Logging for Banning User
-            $log_desc = "Banned User account: $name";
-            $log_stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, description, created_at) VALUES (?, 'Administrator', 'Manage Accounts', 'BAN', ?, NOW())");
-            if ($log_stmt) {
-                $log_stmt->bind_param("ss", $admin_name, $log_desc);
-                $log_stmt->execute();
-                $log_stmt->close();
-            }
-
-            $stmt = $conn->prepare("UPDATE users SET status = ? WHERE user_id = ?");
-            $stmt->bind_param("si", $banned_status, $id);
-            $stmt->execute();
+        if ($id < 1 || !in_array($type, ['staff', 'user'], true) || strlen($reason) < 5) {
+            $_SESSION['flash'] = strlen($reason) < 5 ? 'Please provide a clear reason of at least 5 characters.' : 'The selected account action is invalid.';
+            $_SESSION['flash_type'] = 'warning';
+            header('Location: admin_accounts.php?view=' . urlencode($redirectView));
+            exit();
         }
 
-        $_SESSION["flash"] = ucfirst($type) . " account banned successfully.";
-        $_SESSION["flash_type"] = "warning";
-        header("Location: admin_accounts.php?view=$view");
-        exit();
-    }
+        $table = $type === 'staff' ? 'peso_staff' : 'users';
+        $idColumn = $type === 'staff' ? 'staff_id' : 'user_id';
+        $status = $isBan ? 'Banned' : 'Active';
+        $verb = $isBan ? 'Banned' : 'Restored';
 
-    if ($action === 'unban_account') {
-        $id = (int)$_POST['unban_id'];
-        $type = $_POST['account_type'];
-        $active_status = 'Active';
-
-        if ($type === 'staff') {
-            $get = $conn->prepare("SELECT * FROM peso_staff WHERE staff_id = ?");
-            $get->bind_param("i", $id);
+        try {
+            $conn->begin_transaction();
+            $get = $conn->prepare("SELECT first_name, last_name FROM $table WHERE $idColumn = ? FOR UPDATE");
+            $get->bind_param('i', $id);
             $get->execute();
-            $res = $get->get_result()->fetch_assoc();
-            $name = $res ? getDisplayName($res) : 'Unknown Staff';
+            $account = $get->get_result()->fetch_assoc();
+            if (!$account) throw new RuntimeException('Account not found.');
+            $name = getDisplayName($account);
 
-            // Direct SQL Logging for Unbanning Staff
-            $log_desc = "Unbanned PESO Staff account: $name";
-            $log_stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, description, created_at) VALUES (?, 'Administrator', 'Manage Accounts', 'UNBAN', ?, NOW())");
-            if ($log_stmt) {
-                $log_stmt->bind_param("ss", $admin_name, $log_desc);
-                $log_stmt->execute();
-                $log_stmt->close();
-            }
+            $stmt = $conn->prepare("UPDATE $table SET status = ? WHERE $idColumn = ?");
+            $stmt->bind_param('si', $status, $id);
+            if (!$stmt->execute() || $stmt->affected_rows < 1) throw new RuntimeException('The account status was not changed.');
 
-            $stmt = $conn->prepare("UPDATE peso_staff SET status = ? WHERE staff_id = ?");
-            $stmt->bind_param("si", $active_status, $id);
-            $stmt->execute();
+            $logAction = $isBan ? 'BAN' : 'UNBAN';
+            $log_desc = "$verb " . ($type === 'staff' ? 'PESO Staff' : 'User') . " account: $name. Reason: $reason";
+            $log_stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, 'Administrator', 'Manage Accounts', ?, ?, ?, NOW())");
+            $log_stmt->bind_param('ssss', $admin_name, $logAction, $name, $log_desc);
+            if (!$log_stmt->execute()) throw new RuntimeException('The audit record could not be created.');
 
-        } elseif ($type === 'user') {
-            $get = $conn->prepare("SELECT * FROM users WHERE user_id = ?");
-            $get->bind_param("i", $id);
-            $get->execute();
-            $res = $get->get_result()->fetch_assoc();
-            $name = $res ? getDisplayName($res) : 'Unknown User';
-
-            // Direct SQL Logging for Unbanning User
-            $log_desc = "Unbanned User account: $name";
-            $log_stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, description, created_at) VALUES (?, 'Administrator', 'Manage Accounts', 'UNBAN', ?, NOW())");
-            if ($log_stmt) {
-                $log_stmt->bind_param("ss", $admin_name, $log_desc);
-                $log_stmt->execute();
-                $log_stmt->close();
-            }
-
-            $stmt = $conn->prepare("UPDATE users SET status = ? WHERE user_id = ?");
-            $stmt->bind_param("si", $active_status, $id);
-            $stmt->execute();
+            $conn->commit();
+            $_SESSION['flash'] = ($type === 'staff' ? 'Staff' : 'User') . ($isBan ? ' account banned successfully.' : ' account access restored successfully.');
+            $_SESSION['flash_type'] = $isBan ? 'warning' : 'success';
+        } catch (Throwable $error) {
+            $conn->rollback();
+            error_log('Account status update failed: ' . $error->getMessage());
+            $_SESSION['flash'] = 'The account status could not be updated. Please try again.';
+            $_SESSION['flash_type'] = 'warning';
         }
-
-        $_SESSION["flash"] = ucfirst($type) . " account restored successfully.";
-        $_SESSION["flash_type"] = "success";
-        header("Location: admin_accounts.php?view=$view");
+        header('Location: admin_accounts.php?view=' . urlencode($redirectView));
         exit();
     }
 
@@ -169,10 +118,28 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $new_pass = trim($_POST['new_password'] ?? '');
         $confirm_pass = trim($_POST['confirm_password'] ?? '');
 
-        if ($new_pass !== '' && ($new_pass !== $confirm_pass || strlen($new_pass) < 8)) {
+        if ($id < 1 || $fname === '' || $lname === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['flash'] = 'Enter a valid first name, last name, and email address.';
+            $_SESSION['flash_type'] = 'warning';
+            header('Location: admin_accounts.php?view=' . urlencode($view));
+            exit();
+        }
+
+        $emailCheck = $conn->prepare('SELECT staff_id FROM peso_staff WHERE email = ? AND staff_id <> ? LIMIT 1');
+        $emailCheck->bind_param('si', $email, $id);
+        $emailCheck->execute();
+        if ($emailCheck->get_result()->num_rows > 0) {
+            $_SESSION['flash'] = 'That email address is already assigned to another staff account.';
+            $_SESSION['flash_type'] = 'warning';
+            header('Location: admin_accounts.php?view=' . urlencode($view));
+            exit();
+        }
+
+        $strongPassword = $new_pass === '' || (strlen($new_pass) >= 10 && preg_match('/[A-Z]/', $new_pass) && preg_match('/[a-z]/', $new_pass) && preg_match('/\d/', $new_pass) && preg_match('/[^A-Za-z0-9]/', $new_pass));
+        if ($new_pass !== '' && ($new_pass !== $confirm_pass || !$strongPassword)) {
             $_SESSION["flash"] = $new_pass !== $confirm_pass
                 ? "The new password and confirmation do not match."
-                : "The new password must be at least 8 characters long.";
+                : "Use at least 10 characters with uppercase, lowercase, a number, and a symbol.";
             $_SESSION["flash_type"] = "warning";
             header("Location: admin_accounts.php?view=" . urlencode($view));
             exit();
@@ -190,11 +157,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 && in_array($detected_mime, $allowed_mimes, true)) {
                 $new_name = uniqid("staff_") . "." . $ext_file;
                 $dest_dir = "uploads/staff_pics/";
-                if (!is_dir($dest_dir)) mkdir($dest_dir, 0777, true);
+                if (!is_dir($dest_dir)) mkdir($dest_dir, 0755, true);
                 if (move_uploaded_file($_FILES['profile_pic']['tmp_name'], $dest_dir . $new_name)) {
                     $pic_param = $new_name;
                 }
+            } else {
+                $_SESSION['flash'] = 'Profile photo must be a JPG or PNG file no larger than 5 MB.';
+                $_SESSION['flash_type'] = 'warning';
+                header('Location: admin_accounts.php?view=' . urlencode($view));
+                exit();
             }
+        } elseif (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $_SESSION['flash'] = 'The profile photo could not be uploaded. Please select the file again.';
+            $_SESSION['flash_type'] = 'warning';
+            header('Location: admin_accounts.php?view=' . urlencode($view));
+            exit();
         }
 
         $update_sql = "UPDATE peso_staff SET first_name=?, last_name=?, email=?";
@@ -299,7 +276,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="admin_accounts.css">
     <link rel="stylesheet" href="shared_sidebar.css">
-    <link rel="stylesheet" href="admin_accounts_polish.css?v=8">
+    <link rel="stylesheet" href="admin_accounts_polish.css?v=9">
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
@@ -368,22 +345,22 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
 <section class="stats-grid">
     <div class="stat-card animate-fade-in" style="animation-delay: 0.1s;">
         <div class="stat-top">
-            <div class="stat-label">Total Accounts</div>
+            <div class="stat-label">Managed Accounts</div>
             <div class="stat-icon" style="color: #64748b; background: #f1f5f9;"><i class="ph-fill ph-database"></i></div>
         </div>
         <div class="stat-value"><?= (int)$globalTotal ?></div>
-        <div class="stat-trend trend-neutral"><i class="ph-bold ph-folder-notch"></i> All accounts</div>
-        <div class="stat-note">Staff and beneficiary accounts.</div>
+        <div class="stat-trend trend-neutral"><i class="ph-bold ph-folder-notch"></i> Staff + users</div>
+        <div class="stat-note">Accounts managed from this directory.</div>
     </div>
     
     <div class="stat-card animate-fade-in" style="animation-delay: 0.2s;">
         <div class="stat-top">
-            <div class="stat-label">System Staff</div>
+            <div class="stat-label">PESO Staff</div>
             <div class="stat-icon"><i class="ph-fill ph-user-circle-gear"></i></div>
         </div>
         <div class="stat-value"><?= (int)$globalStaff ?></div>
         <div class="stat-trend trend-up"><i class="ph-bold ph-user-check"></i> Staff accounts</div>
-        <div class="stat-note">Administrator and PESO staff accounts.</div>
+        <div class="stat-note">PESO staff accounts only.</div>
     </div>
     
     <div class="stat-card animate-fade-in" style="animation-delay: 0.3s;">
@@ -392,8 +369,8 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
             <div class="stat-icon" style="color: #0f766e; background: #ccfbf1;"><i class="ph-fill ph-users-three"></i></div>
         </div>
         <div class="stat-value"><?= (int)$globalUsers ?></div>
-        <div class="stat-trend trend-up"><i class="ph-bold ph-check-circle"></i> Verified users</div>
-        <div class="stat-note">Verified beneficiary accounts.</div>
+        <div class="stat-trend trend-up"><i class="ph-bold ph-users"></i> Beneficiary users</div>
+        <div class="stat-note">All registered beneficiary accounts.</div>
     </div>
 </section>
 
@@ -747,6 +724,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
        </div>
        <div class="id-details-grid" id="idDetailsGrid"></div>
        <div class="id-actions" style="margin-top: auto; padding-top: 24px; border-top: 1px solid var(--line);">
+          <a class="btn-light account-activity-link" id="idBtnActivity" href="admin_activity_log.php"><i class="ph ph-clock-counter-clockwise"></i> View Activity</a>
           <button type="button" class="btn-main" id="idBtnEdit" style="display:none;"><i class="ph-bold ph-pencil-simple" style="margin-right: 6px;"></i> Edit Account</button>
           <button type="button" class="btn-ghost-danger" id="idBtnBan" style="display:none;"><i class="ph-bold ph-prohibit" style="margin-right: 6px;"></i> Ban Account</button>
           <button type="button" class="btn-main" id="idBtnUnban" style="display:none; background: #059669; box-shadow: 0 8px 20px rgba(5, 150, 105, 0.25);"><i class="ph-bold ph-arrow-counter-clockwise" style="margin-right: 6px;"></i> Unban Account</button>
@@ -759,7 +737,8 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
     <div class="modal-backdrop" onclick="closeEditModal()"></div>
     <div class="modal-dialog landscape-modal">
         <div class="modal-head">
-            <div><div class="modal-title">Edit Staff Account</div><div class="modal-sub">Update profile details and system credentials.</div></div>
+            <div class="modal-head-icon"><i class="ph ph-user-circle-gear"></i></div>
+            <div class="modal-head-copy"><div class="modal-title">Edit Staff Account</div><div class="modal-sub">Update profile details and system credentials.</div></div>
             <button type="button" class="modal-close" onclick="closeEditModal()"><i class="ph-bold ph-x"></i></button>
         </div>
         <form method="POST" class="modal-form" enctype="multipart/form-data">
@@ -793,12 +772,12 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
                         
                         <div class="form-group" style="margin-bottom: 16px;">
                             <label>New Password</label>
-                            <input type="password" name="new_password" id="edit_new_password" placeholder="At least 8 characters" minlength="8" autocomplete="new-password">
+                            <input type="password" name="new_password" id="edit_new_password" placeholder="10+ characters with number and symbol" minlength="10" autocomplete="new-password">
                         </div>
                         
                         <div class="form-group">
                             <label>Confirm New Password</label>
-                            <input type="password" name="confirm_password" id="edit_confirm_password" placeholder="Retype the new password" minlength="8" autocomplete="new-password">
+                            <input type="password" name="confirm_password" id="edit_confirm_password" placeholder="Retype the new password" minlength="10" autocomplete="new-password">
                         </div>
                         
                         <p style="font-size: 11px; color: var(--muted); margin-top: 14px; font-weight: 500; line-height: 1.4;">Leave password fields blank if you do not wish to change the system credentials.</p>
@@ -816,7 +795,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
 
 <div class="modal" id="banModal" aria-hidden="true">
   <div class="modal-backdrop" onclick="closeBanModal()"></div>
-  <div class="success-dialog" style="text-align:center; padding: 40px; margin-top: 10vh;">
+  <div class="success-dialog account-status-dialog account-status-danger">
     <div class="warning-icon" style="background:linear-gradient(135deg, #ff6b6b, #d93838); color:#fff; box-shadow:0 16px 32px rgba(217, 56, 56, 0.25); border:none;">
         <i class="ph-bold ph-prohibit" style="font-size: 36px;"></i>
     </div>
@@ -827,6 +806,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
         <input type="hidden" name="action" value="ban_account">
         <input type="hidden" name="ban_id" id="ban_id">
         <input type="hidden" name="account_type" id="ban_account_type">
+        <label class="account-reason-field"><span>Reason for restricting access <b>*</b></span><textarea name="status_reason" minlength="5" maxlength="300" required placeholder="Example: Repeated policy violation or account ownership concern"></textarea><small>This reason is saved in the system activity log.</small></label>
         <div style="display:flex; gap:12px; justify-content:center;">
             <button type="button" class="btn-light" style="flex:1;" onclick="closeBanModal()">Cancel</button>
             <button type="submit" class="btn-danger" style="flex:1;">Yes, Ban Account</button>
@@ -837,7 +817,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
 
 <div class="modal" id="unbanModal" aria-hidden="true">
   <div class="modal-backdrop" onclick="closeUnbanModal()"></div>
-  <div class="success-dialog" style="text-align:center; padding: 40px; margin-top: 10vh;">
+  <div class="success-dialog account-status-dialog account-status-success">
     <div class="warning-icon" style="background:linear-gradient(135deg, #22c55e, #16a34a); color:#fff; box-shadow:0 16px 32px rgba(34, 197, 94, 0.25); border: 4px solid #86efac;">
         <i class="ph-bold ph-arrow-counter-clockwise" style="font-size: 36px;"></i>
     </div>
@@ -848,6 +828,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
         <input type="hidden" name="action" value="unban_account">
         <input type="hidden" name="unban_id" id="unban_id">
         <input type="hidden" name="account_type" id="unban_account_type">
+        <label class="account-reason-field"><span>Reason for restoring access <b>*</b></span><textarea name="status_reason" minlength="5" maxlength="300" required placeholder="Example: Account ownership verified and access approved"></textarea><small>This reason is saved in the system activity log.</small></label>
         <div style="display:flex; gap:12px; justify-content:center;">
             <button type="button" class="btn-light" style="flex:1;" onclick="closeUnbanModal()">Cancel</button>
             <button type="submit" class="btn-main" style="flex:1; background:#059669;">Yes, Unban Account</button>
@@ -872,6 +853,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
         const data = row.dataset;
         document.getElementById('idName').textContent = data.name;
         document.getElementById('idJoined').textContent = "Joined: " + data.joined;
+        document.getElementById('idBtnActivity').href = 'admin_activity_log.php?search=' + encodeURIComponent(data.name);
 
         const modalImg = document.getElementById('modalAvatarImg');
         const imgSource = data.img && data.img.trim() !== '' ? data.img : data.fallback;
@@ -968,6 +950,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
     function triggerBanConfirmation(id, type) {
         document.getElementById('ban_id').value = id;
         document.getElementById('ban_account_type').value = type;
+        document.querySelector('#banModal textarea[name="status_reason"]').value = '';
         document.getElementById('banModal').classList.add('show');
     }
     function closeBanModal() { document.getElementById('banModal').classList.remove('show'); }
@@ -975,6 +958,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
     function triggerUnbanConfirmation(id, type) {
         document.getElementById('unban_id').value = id;
         document.getElementById('unban_account_type').value = type;
+        document.querySelector('#unbanModal textarea[name="status_reason"]').value = '';
         document.getElementById('unbanModal').classList.add('show');
     }
     function closeUnbanModal() { document.getElementById('unbanModal').classList.remove('show'); }

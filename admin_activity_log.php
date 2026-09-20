@@ -56,18 +56,25 @@ $offset = ($page - 1) * $limit;
 $search = trim($_GET['search'] ?? '');
 $filter_role = $_GET['role'] ?? '';
 $filter_module = $_GET['module'] ?? '';
+$filter_action = trim($_GET['action'] ?? '');
 $date_from = $_GET['date_from'] ?? '';
 $date_to = $_GET['date_to'] ?? '';
+$date_error = '';
+
+if ($date_from !== '' && $date_to !== '' && $date_from > $date_to) {
+    $date_error = 'The start date cannot be later than the end date.';
+    $date_to = $date_from;
+}
 
 $whereParts = ["1=1"];
 $params = [];
 $types = "";
 
 if ($search !== '') {
-    $whereParts[] = "(description LIKE ? OR actor_name LIKE ? OR target_name LIKE ?)";
+    $whereParts[] = "(description LIKE ? OR actor_name LIKE ? OR target_name LIKE ? OR module_name LIKE ? OR action_type LIKE ?)";
     $s = "%$search%";
-    array_push($params, $s, $s, $s);
-    $types .= "sss";
+    array_push($params, $s, $s, $s, $s, $s);
+    $types .= "sssss";
 }
 
 if ($filter_role !== '') {
@@ -110,6 +117,22 @@ if ($date_to !== '') {
 
 $whereClause = "WHERE " . implode(" AND ", $whereParts);
 
+if (($_GET['export'] ?? '') === 'csv') {
+    $exportSql = "SELECT created_at, actor_name, actor_role, module_name, action_type, target_name, ip_address, description FROM activity_logs $whereClause ORDER BY created_at DESC LIMIT 5000";
+    $exportStmt = $conn->prepare($exportSql);
+    if (!empty($params)) $exportStmt->bind_param($types, ...$params);
+    $exportStmt->execute();
+    $exportResult = $exportStmt->get_result();
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="benepeso-activity-log-' . date('Y-m-d') . '.csv"');
+    $output = fopen('php://output', 'w');
+    fwrite($output, "\xEF\xBB\xBF");
+    fputcsv($output, ['Date and Time', 'Actor', 'Role', 'Module', 'Action', 'Target', 'IP Address', 'Description']);
+    while ($exportRow = $exportResult->fetch_assoc()) fputcsv($output, $exportRow);
+    fclose($output);
+    exit();
+}
+
 $countSql = "SELECT COUNT(*) as total FROM activity_logs $whereClause";
 $stmtC = $conn->prepare($countSql);
 if (!empty($params)) {
@@ -142,6 +165,12 @@ if ($staff_name_result) {
     }
 }
 
+if ($filter_action !== '') {
+    $whereParts[] = "action_type = ?";
+    $params[] = $filter_action;
+    $types .= "s";
+}
+
 $clean_modules = [
     'Auth' => 'Authentication',
     'Accounts' => 'Manage Accounts',
@@ -149,6 +178,9 @@ $clean_modules = [
     'Programs' => 'Programs',
     'Profile' => 'Profile'
 ];
+$action_options = [];
+$action_result = $conn->query("SELECT DISTINCT action_type FROM activity_logs WHERE action_type IS NOT NULL AND action_type <> '' ORDER BY action_type ASC");
+if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_options[] = (string)$action_row['action_type'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -163,8 +195,8 @@ $clean_modules = [
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <link rel="stylesheet" href="admin_activity_log.css">
 <link rel="stylesheet" href="shared_sidebar.css">
-<link rel="stylesheet" href="activity_filter_polish.css?v=1">
-<script src="activity_filter_polish.js?v=1" defer></script>
+<link rel="stylesheet" href="activity_filter_polish.css?v=2">
+<script src="activity_filter_polish.js?v=2" defer></script>
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
@@ -265,8 +297,9 @@ $clean_modules = [
                 <div class="panel-head">
                     <div>
                         <div class="panel-title">Activity Records</div>
-                        <div class="panel-sub">Search and filter the complete activity history.</div>
+                        <div class="panel-sub"><?= number_format($totalRecords) ?> matching record<?= (int)$totalRecords === 1 ? '' : 's' ?>. Search, review, or export the current view.</div>
                     </div>
+                    <a href="<?= h(buildQuery(['export' => 'csv', 'page' => null])) ?>" class="activity-export-btn"><i class="ph-bold ph-download-simple"></i> Export CSV</a>
                 </div>
 
                 <form method="GET" class="advanced-filter-row" id="filterForm">
@@ -278,7 +311,7 @@ $clean_modules = [
                     <?php $roleLabels = ['' => 'All Roles', 'Admin' => 'Admin Only', 'Staff' => 'PESO Staff Only', 'User' => 'Users Only']; ?>
                     <input type="hidden" name="role" value="<?= h($filter_role) ?>" data-filter-input="role">
                     <div class="activity-filter-menu" data-filter-menu="role">
-                        <button type="button" class="activity-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span><?= h($roleLabels[$filter_role] ?? 'All Roles') ?></span><i class="ph ph-caret-down"></i></button>
+                        <button type="button" class="activity-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span class="activity-trigger-label"><i class="ph ph-users"></i><?= h($roleLabels[$filter_role] ?? 'All Roles') ?></span><i class="ph ph-caret-down"></i></button>
                         <div class="activity-filter-options" role="listbox" aria-label="Filter by role" hidden>
                             <?php foreach($roleLabels as $val => $label): ?><button type="button" role="option" data-filter-value="<?= h($val) ?>" aria-selected="<?= $filter_role === $val ? 'true' : 'false' ?>"><span><?= h($label) ?></span><?php if($filter_role === $val): ?><i class="ph-bold ph-check"></i><?php endif; ?></button><?php endforeach; ?>
                         </div>
@@ -286,20 +319,30 @@ $clean_modules = [
 
                     <input type="hidden" name="module" value="<?= h($filter_module) ?>" data-filter-input="module">
                     <div class="activity-filter-menu" data-filter-menu="module">
-                        <button type="button" class="activity-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span><?= h($clean_modules[$filter_module] ?? 'All Modules') ?></span><i class="ph ph-caret-down"></i></button>
+                        <button type="button" class="activity-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span class="activity-trigger-label"><i class="ph ph-squares-four"></i><?= h($clean_modules[$filter_module] ?? 'All Modules') ?></span><i class="ph ph-caret-down"></i></button>
                         <div class="activity-filter-options" role="listbox" aria-label="Filter by module" hidden>
                             <button type="button" role="option" data-filter-value="" aria-selected="<?= $filter_module === '' ? 'true' : 'false' ?>"><span>All Modules</span><?php if($filter_module === ''): ?><i class="ph-bold ph-check"></i><?php endif; ?></button>
                             <?php foreach($clean_modules as $val => $label): ?><button type="button" role="option" data-filter-value="<?= h($val) ?>" aria-selected="<?= $filter_module === $val ? 'true' : 'false' ?>"><span><?= h($label) ?></span><?php if($filter_module === $val): ?><i class="ph-bold ph-check"></i><?php endif; ?></button><?php endforeach; ?>
                         </div>
                     </div>
 
-                    <input type="date" name="date_from" class="filter-date" value="<?= h($date_from) ?>" onchange="this.form.submit()" title="Start Date">
-                    <input type="date" name="date_to" class="filter-date" value="<?= h($date_to) ?>" onchange="this.form.submit()" title="End Date">
+                    <input type="hidden" name="action" value="<?= h($filter_action) ?>" data-filter-input="action">
+                    <div class="activity-filter-menu" data-filter-menu="action">
+                        <button type="button" class="activity-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span class="activity-trigger-label"><i class="ph ph-lightning"></i><?= h($filter_action !== '' ? $filter_action : 'All Actions') ?></span><i class="ph ph-caret-down"></i></button>
+                        <div class="activity-filter-options" role="listbox" aria-label="Filter by action" hidden>
+                            <button type="button" role="option" data-filter-value="" aria-selected="<?= $filter_action === '' ? 'true' : 'false' ?>"><span>All Actions</span><?php if($filter_action === ''): ?><i class="ph-bold ph-check"></i><?php endif; ?></button>
+                            <?php foreach($action_options as $action_option): ?><button type="button" role="option" data-filter-value="<?= h($action_option) ?>" aria-selected="<?= $filter_action === $action_option ? 'true' : 'false' ?>"><span><?= h(ucwords(strtolower($action_option))) ?></span><?php if($filter_action === $action_option): ?><i class="ph-bold ph-check"></i><?php endif; ?></button><?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <label class="activity-date-field"><span>From</span><input type="date" name="date_from" class="filter-date" value="<?= h($date_from) ?>" max="<?= h($date_to) ?>" onchange="this.form.submit()"></label>
+                    <label class="activity-date-field"><span>To</span><input type="date" name="date_to" class="filter-date" value="<?= h($date_to) ?>" min="<?= h($date_from) ?>" onchange="this.form.submit()"></label>
                     
-                    <?php if($search || $filter_role || $filter_module || $date_from || $date_to): ?>
-                        <a href="admin_activity_log.php" class="btn-clear" title="Clear Filters"><i class="ph-bold ph-x"></i></a>
+                    <?php if($search || $filter_role || $filter_module || $filter_action || $date_from || $date_to): ?>
+                        <a href="admin_activity_log.php" class="btn-clear activity-clear-btn" title="Clear filters"><i class="ph-bold ph-x"></i><span>Clear</span></a>
                     <?php endif; ?>
                 </form>
+                <?php if($date_error): ?><div class="activity-filter-alert"><i class="ph ph-warning-circle"></i><?= h($date_error) ?></div><?php endif; ?>
 
                 <div class="table-wrap">
                     <table class="data-table">
@@ -366,7 +409,7 @@ $clean_modules = [
                                         $pillClass = "pill-red";
                                     }
                                 ?>
-                                <tr class="table-row-animate">
+                                <tr class="table-row-animate activity-log-row" tabindex="0" data-date="<?= h(date('M d, Y h:i A', strtotime($row['created_at']))) ?>" data-actor="<?= $actor_name ?>" data-role="<?= $display_role ?>" data-module="<?= $module_name ?>" data-action="<?= $action_title ?>" data-target="<?= h($row['target_name'] ?? 'Not specified') ?>" data-ip="<?= h($row['ip_address'] ?? 'Not recorded') ?>" data-description="<?= $desc ?>">
                                     <td>
                                         <div style="font-weight: 800; color: var(--text); font-size: 13px;"><?= date("M d, Y", strtotime($row['created_at'])) ?> <span style="color:var(--muted); font-weight:600; font-size:12px; margin-left:4px;">&bull; <?= date("h:i A", strtotime($row['created_at'])) ?></span></div>
                                     </td>
@@ -381,7 +424,7 @@ $clean_modules = [
                                         <span class="action-pill <?= $pillClass ?>"><span class="pill-dot"></span> <?= $action_title ?></span>
                                     </td>
                                     <td>
-                                        <div style="font-size: 13.5px; color: var(--muted); font-weight: 500; line-height: 1.5;"><?= $desc ?></div>
+                                        <div class="activity-description-cell"><span><?= $desc ?></span><button type="button" class="activity-detail-btn" aria-label="View activity details"><i class="ph ph-arrow-square-out"></i></button></div>
                                     </td>
                                 </tr>
                                 <?php endwhile; ?>
@@ -415,6 +458,27 @@ $clean_modules = [
     </main>
 </div>
 
+<div class="activity-detail-modal" id="activityDetailModal" aria-hidden="true">
+    <div class="activity-detail-backdrop" data-close-activity-modal></div>
+    <section class="activity-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="activityDetailTitle">
+        <header class="activity-detail-head">
+            <div class="activity-detail-icon"><i class="ph ph-clock-counter-clockwise"></i></div>
+            <div><div class="activity-detail-kicker">AUDIT RECORD</div><h2 id="activityDetailTitle">Activity details</h2></div>
+            <button type="button" class="activity-detail-close" data-close-activity-modal aria-label="Close details"><i class="ph ph-x"></i></button>
+        </header>
+        <div class="activity-detail-body"><div class="activity-detail-grid">
+            <div><span>Date and time</span><strong data-detail="date"></strong></div>
+            <div><span>Actor</span><strong data-detail="actor"></strong><small data-detail="role"></small></div>
+            <div><span>Module</span><strong data-detail="module"></strong></div>
+            <div><span>Action</span><strong data-detail="action"></strong></div>
+            <div class="activity-detail-wide"><span>IP address</span><strong data-detail="ip"></strong></div>
+            <div class="activity-detail-wide"><span>Target</span><strong data-detail="target"></strong></div>
+            <div class="activity-detail-wide"><span>Description</span><p data-detail="description"></p></div>
+        </div></div>
+        <footer class="activity-detail-footer"><button type="button" class="activity-detail-done" data-close-activity-modal>Done</button></footer>
+    </section>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const menuToggle = document.getElementById('menuToggle');
@@ -439,6 +503,24 @@ $clean_modules = [
                 searchTimeout = setTimeout(() => { this.form.submit(); }, 600); 
             });
         }
+
+        const detailModal = document.getElementById('activityDetailModal');
+        const closeDetail = () => { detailModal.classList.remove('show'); detailModal.setAttribute('aria-hidden', 'true'); };
+        document.querySelectorAll('.activity-log-row').forEach(row => {
+            const openDetail = () => {
+                ['date','actor','role','module','action','target','ip','description'].forEach(key => {
+                    const node = detailModal.querySelector(`[data-detail="${key}"]`);
+                    if (node) node.textContent = row.dataset[key] || 'Not specified';
+                });
+                detailModal.classList.add('show');
+                detailModal.setAttribute('aria-hidden', 'false');
+                detailModal.querySelector('.activity-detail-close').focus();
+            };
+            row.addEventListener('click', openDetail);
+            row.addEventListener('keydown', event => { if (event.key === 'Enter') openDetail(); });
+        });
+        document.querySelectorAll('[data-close-activity-modal]').forEach(button => button.addEventListener('click', closeDetail));
+        document.addEventListener('keydown', event => { if (event.key === 'Escape' && detailModal.classList.contains('show')) closeDetail(); });
     });
 </script>
 
