@@ -381,10 +381,10 @@ if (table_exists($conn, "activity_logs")) {
     <section class="dashboard-command-bar animate-fade-in" aria-label="Dashboard actions">
       <div class="dashboard-command-copy">
         <span class="dashboard-live-dot" aria-hidden="true"></span>
-        <div><strong>System-wide operations</strong><small>Refreshed <?php echo h($dashboardRefreshedAt); ?></small></div>
+        <div><strong>Administrative command center</strong><small>Live system records &bull; Updated <?php echo h($dashboardRefreshedAt); ?></small></div>
       </div>
       <nav class="dashboard-quick-actions" aria-label="Quick actions">
-        <a href="admin_beneficiaries.php"><i class="ph ph-clipboard-text" aria-hidden="true"></i><span>Review applications</span></a>
+        <a href="admin_beneficiaries.php?approval=Pending"><i class="ph ph-clipboard-text" aria-hidden="true"></i><span>Review applications</span></a>
         <a href="admin_program.php"><i class="ph ph-calendar-plus" aria-hidden="true"></i><span>Manage batches</span></a>
         <a href="admin_accounts.php"><i class="ph ph-user-circle-gear" aria-hidden="true"></i><span>Manage accounts</span></a>
       </nav>
@@ -421,7 +421,7 @@ if (table_exists($conn, "activity_logs")) {
         <div class="stat-note">Each person is counted once.</div>
       </a>
 
-      <a href="admin_beneficiaries.php" class="stat-card stat-card-link animate-fade-in" style="animation-delay: 0.4s;">
+      <a href="admin_beneficiaries.php?approval=Pending" class="stat-card stat-card-link animate-fade-in" style="animation-delay: 0.4s;">
         <div class="stat-top">
           <div class="stat-label">Pending Reviews</div>
           <div class="stat-icon"><i class="ph-fill ph-clock-countdown"></i></div>
@@ -464,7 +464,7 @@ if (table_exists($conn, "activity_logs")) {
             <div class="panel-title">Review Status</div>
             <div class="panel-sub">Current beneficiary records grouped by review status</div>
           </div>
-          <a href="admin_beneficiaries.php" class="panel-link">Review</a>
+          <a href="admin_beneficiaries.php?approval=Pending" class="panel-link">Review</a>
         </div>
         <div class="dashboard-chart-canvas dashboard-chart-canvas--donut">
           <?php if (array_sum($statusValues) > 0): ?>

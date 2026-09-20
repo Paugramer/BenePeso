@@ -197,7 +197,7 @@ if ($active_program) {
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="peso_staff_program.css?v=20260905-card-responsive">
     <link rel="stylesheet" href="shared_sidebar.css">
-    <link rel="stylesheet" href="program_filter_polish.css?v=2">
+    <link rel="stylesheet" href="program_filter_polish.css?v=3">
     <script src="program_filter_polish.js?v=1" defer></script>
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=23">
@@ -257,7 +257,7 @@ if ($active_program) {
                             <span class="current"><?php echo e($active_program); ?></span>
                         </nav>
                         <div class="top-big"><?php echo e($active_program); ?> Batches</div>
-                        <div class="top-sub">Submit scheduling adding for this program.</div>
+                        <div class="top-sub">Create and monitor batch requests for this program.</div>
                     <?php else: ?>
                         <div class="eyebrow">Program Management</div>
                         <div class="top-big">PESO Staff Programs</div>
@@ -271,7 +271,7 @@ if ($active_program) {
                         <i class="ph ph-plus-circle" style="font-size: 1.2rem; margin-right: 6px;"></i> Add New Batch
                     </button>
                 <?php else: ?>
-                    <span class="top-sub">Master programs are managed by administrators.</span>
+                    <span class="program-scope-badge"><i class="ph ph-seal-check" aria-hidden="true"></i> 3 official programs</span>
                 <?php endif; ?>
                 <div class="top-chip">
                     <img src="<?php echo e($pic_path); ?>" alt="" class="chip-img" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<?php echo urlencode($staff_name); ?>&background=2f6b4f&color=fff';">
@@ -416,6 +416,7 @@ if ($active_program) {
 
                 $sql = "SELECT p.*, 
                         (SELECT COUNT(*) FROM beneficiaries b WHERE b.program_id = p.program_id AND b.approval_status = 'Approved') as beneficiary_count,
+                        (SELECT COUNT(*) FROM beneficiaries b WHERE b.program_id = p.program_id AND b.approval_status = 'Pending') as pending_beneficiary_count,
                         (SELECT CONCAT(first_name, ' ', last_name) FROM peso_staff WHERE staff_id = p.created_by) as staff_creator
                         FROM programs p 
                         WHERE $batchWhereStr 
@@ -501,6 +502,11 @@ if ($active_program) {
                                     <div class="slim-progress">
                                         <div class="slim-fill <?php echo $pct >= 100 ? 'full' : ($pct >= 80 ? 'warning' : 'safe'); ?>" style="width: <?php echo $pct; ?>%;"></div>
                                     </div>
+                                    <?php if ((int)$b['pending_beneficiary_count'] > 0): ?>
+                                        <a class="application-queue-link" href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($b['program_name']); ?>&amp;program_id=<?php echo (int)$b['program_id']; ?>&amp;approval=Pending" title="Review pending applications for this batch"><i class="ph ph-hourglass-medium" aria-hidden="true"></i><?php echo (int)$b['pending_beneficiary_count']; ?> awaiting review</a>
+                                    <?php else: ?>
+                                        <span class="application-queue-clear"><i class="ph ph-check-circle" aria-hidden="true"></i>No pending applications</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <div style="font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px; margin-bottom:4px; white-space: nowrap;">
@@ -526,8 +532,8 @@ if ($active_program) {
                                                 <i class="ph-bold ph-lock-key"></i> Applicants
                                             </span>
                                         <?php else: ?>
-                                            <a href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($b['program_name']); ?>&program_id=<?php echo (int)$b['program_id']; ?>" class="btn-action-view">
-                                                <i class="ph-bold ph-users"></i> Applicants
+                                            <a href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($b['program_name']); ?>&amp;program_id=<?php echo (int)$b['program_id']; ?><?php echo (int)$b['pending_beneficiary_count'] > 0 ? '&amp;approval=Pending' : ''; ?>" class="btn-action-view">
+                                                <i class="ph-bold <?php echo (int)$b['pending_beneficiary_count'] > 0 ? 'ph-clipboard-text' : 'ph-users'; ?>"></i> <?php echo (int)$b['pending_beneficiary_count'] > 0 ? 'Review ' . (int)$b['pending_beneficiary_count'] : 'Applicants'; ?>
                                             </a>
                                         <?php endif; ?>
 

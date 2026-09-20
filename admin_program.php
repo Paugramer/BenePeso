@@ -57,8 +57,6 @@ if ($admin_info) {
     }
     $admin_info->close();
 }
-$admin_name = "PESO VINZONS";
-
 if (!function_exists('e')) {
     function e($s){ return htmlspecialchars((string)($s ?? ""), ENT_QUOTES, "UTF-8"); }
 }
@@ -317,7 +315,7 @@ if ($active_program) {
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <link rel="stylesheet" href="admin_program.css?v=20260905-card-responsive">
     <link rel="stylesheet" href="shared_sidebar.css">
-    <link rel="stylesheet" href="program_filter_polish.css?v=2">
+    <link rel="stylesheet" href="program_filter_polish.css?v=3">
     <script src="program_filter_polish.js?v=1" defer></script>
 <link rel="stylesheet" href="frontend_polish.css?v=16">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
@@ -383,7 +381,7 @@ if ($active_program) {
                     <?php else: ?>
                         <div class="eyebrow">Program Management</div>
                         <div class="top-big">Admin Programs</div>
-                        <div class="top-sub">Approve, manage, and oversee system records.</div>
+                        <div class="top-sub">Manage the official TUPAD, SPES, and MSME program directories.</div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -393,9 +391,7 @@ if ($active_program) {
                         <i class="ph ph-plus-circle" style="font-size: 1.2rem; margin-right: 6px;"></i> Add New Batch
                     </button>
                 <?php else: ?>
-                    <button type="button" class="btn-main" onclick="document.getElementById('addProgModal').classList.add('show');">
-                        <i class="ph ph-plus-circle" style="font-size: 1.2rem; margin-right: 6px;"></i> Add Program
-                    </button>
+                    <span class="program-scope-badge"><i class="ph ph-seal-check" aria-hidden="true"></i> 3 official programs</span>
                 <?php endif; ?>
                 <div class="top-chip">
                     <img src="<?php echo e($pic_path); ?>" alt="" class="chip-img" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<?php echo urlencode($admin_name); ?>&background=1f7a54&color=fff';">
@@ -483,13 +479,6 @@ if ($active_program) {
                 $res = $conn->query($sql);
             ?>
                 <div class="program-grid">
-                    <article class="program-card-shell add-program-card" onclick="document.getElementById('addProgModal').classList.add('show');">
-                        <div class="add-card-content">
-                            <div class="add-icon"><i class="ph ph-plus"></i></div>
-                            <h3>Add Program</h3>
-                            <p style="color:var(--muted); font-size:12px; margin-top:4px;">Define a new category</p>
-                        </div>
-                    </article>
                     <?php if($res): while ($dir = $res->fetch_assoc()): if ($tabFilter !== 'All' && $dir['batch_count'] == 0) continue; ?>
                     <article class="program-card-shell">
                         <div class="program-image-wrap">
@@ -550,6 +539,7 @@ if ($active_program) {
 
                 $sql = "SELECT p.*, 
                         (SELECT COUNT(*) FROM beneficiaries b WHERE b.program_id = p.program_id AND b.approval_status = 'Approved') as beneficiary_count,
+                        (SELECT COUNT(*) FROM beneficiaries b WHERE b.program_id = p.program_id AND b.approval_status = 'Pending') as pending_beneficiary_count,
                         (SELECT NULLIF(TRIM(al.actor_name), '')
                            FROM activity_logs al
                           WHERE al.actor_role = 'PESO Staff'
@@ -654,6 +644,11 @@ if ($active_program) {
                                     <div class="slim-progress">
                                         <div class="slim-fill <?php echo $pct >= 100 ? 'full' : ($pct >= 80 ? 'warning' : 'safe'); ?>" style="width: <?php echo $pct; ?>%;"></div>
                                     </div>
+                                    <?php if ((int)$b['pending_beneficiary_count'] > 0): ?>
+                                        <a class="application-queue-link" href="admin_beneficiaries.php?program_name=<?php echo urlencode($b['program_name']); ?>&amp;program_id=<?php echo (int)$b['program_id']; ?>&amp;approval=Pending" title="Review pending applications for this batch"><i class="ph ph-hourglass-medium" aria-hidden="true"></i><?php echo (int)$b['pending_beneficiary_count']; ?> awaiting review</a>
+                                    <?php else: ?>
+                                        <span class="application-queue-clear"><i class="ph ph-check-circle" aria-hidden="true"></i>No pending applications</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <div style="font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px; margin-bottom:4px; white-space: nowrap;">
@@ -699,8 +694,8 @@ if ($active_program) {
                                                 </div>
                                             </div>
                                         <?php else: ?>
-                                            <a href="admin_beneficiaries.php?program_name=<?php echo urlencode($b['program_name']); ?>&program_id=<?php echo (int)$b['program_id']; ?>" class="btn-action-view">
-                                                <i class="ph-bold ph-users"></i> Applicants
+                                            <a href="admin_beneficiaries.php?program_name=<?php echo urlencode($b['program_name']); ?>&amp;program_id=<?php echo (int)$b['program_id']; ?><?php echo (int)$b['pending_beneficiary_count'] > 0 ? '&amp;approval=Pending' : ''; ?>" class="btn-action-view">
+                                                <i class="ph-bold <?php echo (int)$b['pending_beneficiary_count'] > 0 ? 'ph-clipboard-text' : 'ph-users'; ?>"></i> <?php echo (int)$b['pending_beneficiary_count'] > 0 ? 'Review ' . (int)$b['pending_beneficiary_count'] : 'Applicants'; ?>
                                             </a>
                                             <div class="dropdown-wrapper">
                                                 <button class="btn-icon" onclick="toggleDropdown(this)" type="button" title="More Options">
