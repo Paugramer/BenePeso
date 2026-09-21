@@ -1,0 +1,289 @@
+/* Final phone layer for BENEPESO admin and PESO staff workspaces.
+   Loaded after every page-specific stylesheet so 320-600px layouts remain
+   consistent even when older desktop polish files use stronger selectors. */
+
+@media (max-width: 600px) {
+  html,
+  body.admin-mobile-page,
+  body.staff-mobile-page {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  :is(.admin-mobile-page, .staff-mobile-page),
+  :is(.admin-mobile-page, .staff-mobile-page) *,
+  :is(.admin-mobile-page, .staff-mobile-page) *::before,
+  :is(.admin-mobile-page, .staff-mobile-page) *::after { box-sizing: border-box; }
+
+  :is(.admin-mobile-page, .staff-mobile-page) {
+    min-width: 0;
+    font-size: 13px;
+  }
+
+  :is(.admin-mobile-page, .staff-mobile-page) :where(h1, h2, h3, h4, p, span, strong, small, a, button, label, td) {
+    overflow-wrap: break-word;
+  }
+
+  :is(.admin-mobile-page, .staff-mobile-page) :where(img, svg, canvas, iframe) { max-width: 100%; }
+
+  :is(.admin-mobile-page, .staff-mobile-page) .page-wrap {
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  :is(.admin-mobile-page, .staff-mobile-page) .side-area {
+    width: min(286px, 86vw) !important;
+    min-width: 0 !important;
+    max-width: 86vw !important;
+  }
+
+  :is(.admin-mobile-page, .staff-mobile-page) .side-top { padding: 16px 14px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .side-user { padding: 14px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .nav-area { padding: 10px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .nav-item { min-height: 42px !important; padding: 9px 11px !important; font-size: 12px !important; }
+
+  :is(.admin-mobile-page, .staff-mobile-page) .main-area {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    min-height: 100dvh;
+    padding: 10px !important;
+    gap: 10px !important;
+    overflow-x: hidden !important;
+  }
+
+  :is(.admin-mobile-page, .staff-mobile-page) .top-area {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+    padding: 15px !important;
+    border-radius: 14px !important;
+  }
+
+  :is(.admin-mobile-page, .staff-mobile-page) .top-left,
+  :is(.admin-mobile-page, .staff-mobile-page) .top-title { width: 100% !important; min-width: 0 !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .menu-toggle {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    flex: 0 0 40px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .eyebrow { font-size: 8px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .top-big { font-size: 21px !important; line-height: 1.2 !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .top-sub { margin-top: 4px !important; font-size: 10.5px !important; line-height: 1.45 !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .breadcrumb {
+    max-width: 100%;
+    overflow-x: auto;
+    font-size: 9px !important;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+
+  :is(.admin-mobile-page, .staff-mobile-page) .top-actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .top-actions > :where(a, button, .btn-main, .btn-light, .btn-soft) {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 42px !important;
+    margin: 0 !important;
+    padding: 8px 10px !important;
+    justify-content: center !important;
+    font-size: 10.5px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .top-chip,
+  :is(.admin-mobile-page, .staff-mobile-page) .program-scope-badge { display: none !important; }
+
+  /* Compact two-column metrics prevent a phone dashboard from becoming a
+     series of oversized desktop cards. */
+  :is(.admin-mobile-page, .staff-mobile-page) .stats-grid {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .stats-grid > .stat-card,
+  :is(.admin-mobile-page, .staff-mobile-page) .stat-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 118px !important;
+    padding: 12px !important;
+    border-radius: 13px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .stat-label { font-size: 8px !important; line-height: 1.35 !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .stat-value { margin-top: 7px !important; font-size: 25px !important; line-height: 1 !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.stat-icon, .stat-icon-sm) { width: 34px !important; height: 34px !important; font-size: 17px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .stat-trend { margin-top: 8px !important; font-size: 8px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .stat-note { display: none !important; }
+
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.panel-card, .dashboard-command-bar) {
+    min-width: 0 !important;
+    padding: 14px !important;
+    border-radius: 14px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.panel-title, .section-title) { font-size: 16px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.panel-sub, .section-subtitle) { font-size: 9.5px !important; line-height: 1.45 !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.panel-head, .panel-head-flex, .records-toolbar) {
+    min-width: 0 !important;
+    gap: 10px !important;
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.panel-head, .panel-head-flex) > * { max-width: 100%; }
+
+  :is(.admin-mobile-page, .staff-mobile-page) .dashboard-command-bar { gap: 12px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .dashboard-quick-actions { width: 100%; display: grid !important; grid-template-columns: 1fr !important; gap: 6px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .dashboard-quick-actions a { min-height: 42px; padding: 9px 11px !important; font-size: 10.5px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .dashboard-chart-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 10px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .dashboard-chart-canvas { min-height: 220px !important; height: 220px !important; }
+
+  :is(.admin-mobile-page, .staff-mobile-page) .program-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 10px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .program-card-shell { width: 100% !important; min-width: 0 !important; border-radius: 13px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .program-image-wrap { min-height: 145px !important; height: 145px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .program-body { padding: 13px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.program-card-title, .program-title) { font-size: 17px !important; }
+
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.custom-tabs, .profile-tabs) {
+    width: 100% !important;
+    max-width: 100%;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 5px !important;
+    overflow-x: auto !important;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.tab-item, .profile-tab) {
+    min-height: 38px !important;
+    flex: 0 0 auto !important;
+    padding: 8px 11px !important;
+    font-size: 9.5px !important;
+    white-space: nowrap;
+  }
+
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.filter-form, .filter-container, .toolbar-grid, .advanced-filter-row, .controls-row, .account-filter-bar) {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 7px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.filter-search, .system-search, .search-box, .search-wrap, .activity-search-wrap),
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.search-input, .filter-select, .toolbar-input, .toolbar-select, .activity-filter-trigger, .activity-date-field) {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.search-input, .filter-select, .toolbar-input, .toolbar-select, .activity-filter-trigger, .activity-date-field) {
+    min-height: 44px !important;
+    height: auto !important;
+    font-size: 11px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .beneficiary-secondary-filters { grid-template-columns: minmax(0, 1fr) !important; gap: 7px !important; }
+
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.table-wrap, .table-wrapper, .table-container, .scrollable-table-wrap, .dynamic-table-wrap) {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.data-table, .activity-table, .dynamic-table) { font-size: 11px !important; }
+
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.pagination, .pagination-wrapper, .pagination-controls) {
+    max-width: 100%;
+    justify-content: flex-start !important;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+
+  /* Dialogs stay inset so rounded corners and a visible backdrop communicate
+     context on a phone, while their contents scroll independently. */
+  :is(.admin-mobile-page, .staff-mobile-page) .modal {
+    padding: 8px !important;
+    align-items: center !important;
+    overflow: hidden !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-dialog, .modal-content, .modal-box, .success-dialog, .id-card-dialog, .split-layout) {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    min-width: 0 !important;
+    overflow-y: auto !important;
+    border-radius: 14px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .success-dialog {
+    padding: 18px 15px !important;
+    text-align: center;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .success-dialog :where(.success-title, .modal-title) {
+    font-size: 18px !important;
+    line-height: 1.25 !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .success-dialog :where(.modal-text, p) {
+    font-size: 12px !important;
+    line-height: 1.55 !important;
+    overflow-wrap: anywhere;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-head, .modal-head-alt, .modal-head-sm) { padding: 15px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .modal-title { padding-right: 40px; font-size: 18px !important; line-height: 1.25 !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-form, .modal-body, .modal-body-sm) { padding: 15px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.form-grid, .landscape-form-grid, .details-grid) { grid-template-columns: minmax(0, 1fr) !important; gap: 10px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.form-grid, .landscape-form-grid, .details-grid) > * { grid-column: auto !important; min-width: 0 !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(input, select, textarea) { max-width: 100%; font-size: 13px; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-actions, .modal-actions-flex, .modal-actions-sm, .modal-footer-sticky) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 7px !important;
+    padding: 12px 15px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-actions, .modal-actions-flex, .modal-actions-sm, .modal-footer-sticky) > * {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 43px !important;
+    margin: 0 !important;
+  }
+
+  :is(.admin-mobile-page, .staff-mobile-page) .bulk-selection-bar {
+    right: 8px !important;
+    bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+    left: 8px !important;
+    width: auto !important;
+    max-width: none !important;
+    gap: 8px !important;
+    padding: 11px !important;
+    border-radius: 13px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .bulk-selection-actions { width: 100%; display: grid !important; grid-template-columns: 1fr !important; gap: 6px !important; }
+}
+
+@media (max-width: 340px) {
+  :is(.admin-mobile-page, .staff-mobile-page) .stats-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .top-actions { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  :is(.admin-mobile-page, .staff-mobile-page) .modal { align-items: flex-start !important; overflow-y: auto !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.admin-mobile-page, .staff-mobile-page) *,
+  :is(.admin-mobile-page, .staff-mobile-page) *::before,
+  :is(.admin-mobile-page, .staff-mobile-page) *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

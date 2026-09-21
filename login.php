@@ -92,6 +92,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="stylesheet" href="frontend_polish.css?v=20260921">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
   <link rel="stylesheet" href="auth_refresh.css?v=12">
+  <link rel="stylesheet" href="beneficiary_mobile.css?v=1">
 <script src="frontend_polish.js?v=20260921" defer></script>
   <?php if (benepeso_turnstile_enabled()): ?>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>

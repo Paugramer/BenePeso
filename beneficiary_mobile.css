@@ -1,0 +1,529 @@
+/*
+ * BENEPESO beneficiary phone layout
+ *
+ * This file is intentionally loaded last.  The project has several page-level
+ * polish layers, so phone rules kept here must win the cascade consistently.
+ * The 600px breakpoint covers common 320-430 CSS-pixel phones (including the
+ * Realme 6i in portrait) while retaining the existing tablet/desktop design.
+ */
+
+@media (max-width: 600px) {
+  html {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    font-size: 14px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  img, svg, video, iframe { max-width: 100%; }
+
+  :where(h1, h2, h3, h4, p, a, button, label, span, strong, small) {
+    overflow-wrap: break-word;
+  }
+
+  :where(input, select, textarea, button) {
+    max-width: 100%;
+    font-family: inherit;
+  }
+
+  :where(.content-wrap, .content-container, .welcome-inner, .topbar-inner) {
+    width: calc(100% - 24px) !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin-inline: auto !important;
+  }
+
+  /* Shared beneficiary header */
+  .topbar { min-height: 64px; }
+  .topbar-inner { min-height: 64px; padding-block: 8px; }
+  .brand-area { min-width: 0; gap: 9px; }
+  .brand-logo {
+    width: 40px !important;
+    height: 40px !important;
+    flex: 0 0 40px !important;
+  }
+  .brand-title { font-size: 18px !important; line-height: 1.1; }
+  .brand-subtitle { margin-top: 2px; font-size: 8px !important; letter-spacing: .08em; }
+  .menu-button {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px;
+    padding: 10px !important;
+    border-radius: 11px !important;
+  }
+  .menu-area {
+    top: calc(100% + 8px) !important;
+    right: 12px !important;
+    left: 12px !important;
+    width: auto !important;
+    max-height: calc(100dvh - 82px);
+    padding: 10px !important;
+    overflow-y: auto;
+    border-radius: 14px !important;
+  }
+  .menu-area .menu-item,
+  .menu-area .btn-login { min-height: 43px; padding: 10px 12px !important; font-size: 13px !important; }
+  .menu-area .account-area,
+  .menu-area .account-button { width: 100% !important; }
+
+  /* Public index */
+  .public-index-page .public-home-hero.search-hero.welcome-area {
+    min-height: 0 !important;
+    padding: 42px 0 30px !important;
+  }
+  .public-index-page .public-home-hero-grid { gap: 22px !important; }
+  .public-index-page .public-hero-copy,
+  .public-index-page .public-home-hero .centered-text { text-align: center !important; }
+  .public-index-page .public-hero-copy .welcome-badge { margin-inline: auto !important; }
+  .public-index-page .public-home-hero .welcome-title {
+    margin: 14px auto 12px !important;
+    font-size: clamp(29px, 9.3vw, 38px) !important;
+    line-height: 1.08 !important;
+    letter-spacing: -.035em;
+  }
+  .public-index-page .public-home-hero .centered-text {
+    margin-inline: auto !important;
+    font-size: 13px !important;
+    line-height: 1.62 !important;
+  }
+  .public-index-page .public-hero-actions { gap: 8px !important; margin-top: 20px !important; }
+  .public-index-page .public-hero-actions a {
+    width: 100%;
+    min-height: 44px !important;
+    padding: 10px 14px !important;
+    font-size: 11.5px !important;
+  }
+  .public-index-page .public-program-shortcuts { margin-top: 18px !important; text-align: center; }
+  .public-index-page .public-program-shortcuts > div { justify-content: center; }
+  /* The summary already repeats these three shortcuts on a phone. */
+  .public-index-page:not(.public-about-page) .public-program-shortcuts { display: none !important; }
+  .public-index-page .public-hero-summary { padding: 15px !important; border-radius: 15px !important; }
+  .public-index-page .public-summary-count strong { font-size: 34px !important; }
+  .public-index-page .public-summary-programs a { min-height: 44px; padding: 6px 8px !important; }
+  .public-index-page .public-summary-programs small { display: none !important; }
+  .public-index-page .public-summary-foot { gap: 7px; align-items: flex-start !important; flex-direction: column; }
+
+  .public-index-page .public-home-hero .v-search-box-centered { margin-top: 16px !important; }
+  .public-index-page .public-home-hero .v-search-box-centered .input-wrapper {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 7px !important;
+    padding: 7px !important;
+    border-radius: 13px !important;
+  }
+  .public-index-page .public-home-hero .input-wrapper > .search-icon { display: none !important; }
+  .public-index-page .public-home-hero .v-search-box-centered input {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    padding: 9px 12px !important;
+    font-size: 13px !important;
+  }
+  .public-index-page .public-home-hero .public-schedule-select,
+  .public-index-page .public-home-hero .public-schedule-toggle,
+  .public-index-page .public-home-hero .v-search-box-centered .btn-main { width: 100% !important; }
+  .public-index-page .public-home-hero .public-schedule-toggle,
+  .public-index-page .public-home-hero .v-search-box-centered .btn-main { min-height: 44px !important; }
+
+  .public-index-page .public-trust-strip .content-wrap { width: calc(100% - 24px) !important; }
+  .public-index-page .public-trust-strip .content-wrap > span { padding: 11px 8px !important; }
+  .public-index-page .public-route { width: calc(100% - 24px) !important; padding: 16px !important; }
+  .public-index-page .public-route-heading h2 { font-size: 21px !important; }
+  .public-index-page .public-route-flow li { min-height: 0 !important; padding: 9px !important; }
+  .public-index-page .public-directory-toolbar form { padding: 7px !important; }
+  .public-index-page .public-directory-toolbar input,
+  .public-index-page .public-directory-toolbar button,
+  .public-index-page .public-directory-toolbar .public-schedule-toggle { min-height: 44px !important; height: auto !important; }
+  .public-index-page .section-heading h2 { font-size: 26px !important; }
+  .public-index-page .program-card { width: 100% !important; }
+
+  /* Public About page */
+  .public-about-page .public-about-hero.search-hero.welcome-area {
+    min-height: 0 !important;
+    padding: 40px 0 30px !important;
+  }
+  .public-about-page .public-about-hero-inner { width: calc(100% - 24px) !important; gap: 20px !important; }
+  .public-about-page .public-about-hero-copy { text-align: center !important; }
+  .public-about-page .public-about-hero-copy .welcome-badge { margin-inline: auto !important; }
+  .public-about-page .public-about-hero .welcome-title {
+    margin: 13px 0 11px !important;
+    font-size: clamp(29px, 9.4vw, 38px) !important;
+    line-height: 1.08 !important;
+  }
+  .public-about-page .public-about-hero .centered-text { font-size: 13px !important; line-height: 1.6 !important; text-align: center !important; }
+  .public-about-page .public-about-hero .public-hero-actions { display: grid !important; grid-template-columns: 1fr; gap: 8px !important; }
+  .public-about-page .public-about-hero .public-hero-actions a { width: 100%; min-height: 44px !important; padding: 10px 14px !important; font-size: 11.5px !important; }
+  .public-about-page .public-about-identity { width: 100% !important; padding: 16px !important; }
+  .public-about-page .public-about-seal { width: 66px !important; height: 66px !important; }
+  .public-about-page .public-about-overview { width: calc(100% - 24px) !important; padding: 36px 0 40px !important; }
+  .public-about-page .public-about-heading h2,
+  .public-about-page .public-about-standards h2,
+  .public-about-page .public-about-contact h2,
+  .public-about-page .public-purpose-copy h2 { font-size: 24px !important; }
+  .public-about-page .public-about-grid article { padding: 16px !important; }
+  .public-about-page .public-about-purpose { padding: 36px 0 !important; }
+  .public-about-page .public-purpose-visual { transform: scale(.88); margin-block: -20px; }
+  .public-about-page .public-about-standards { padding: 34px 0 !important; }
+  .public-about-page .public-about-contact { width: calc(100% - 24px) !important; padding: 16px !important; }
+
+  /* Small, readable in-app notices instead of desktop-width toasts. */
+  .toast-notification {
+    right: 12px !important;
+    bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+    left: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+    padding: 12px !important;
+    font-size: 11.5px !important;
+  }
+
+  /* Login and signup */
+  body.auth-page {
+    display: block !important;
+    min-height: 100dvh;
+    padding: 10px !important;
+    overflow-x: hidden;
+  }
+  .auth-page .box,
+  .auth-page .card,
+  .auth-page .card.compact {
+    width: 100% !important;
+    max-width: 440px !important;
+    min-width: 0 !important;
+    margin-inline: auto !important;
+  }
+  .auth-page .card,
+  .auth-page .card.compact {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-height: 0 !important;
+    border-radius: 16px !important;
+  }
+  .auth-page .left,
+  .auth-page .card.compact .left {
+    min-height: 0 !important;
+    padding: 14px 16px !important;
+    border-right: 0 !important;
+    border-bottom: 4px solid var(--green) !important;
+  }
+  .auth-page .brand { display: grid !important; grid-template-columns: 48px minmax(0, 1fr); gap: 0 10px !important; max-width: 100% !important; text-align: left !important; }
+  .auth-page .logo {
+    grid-row: 1 / 3;
+    width: 48px !important;
+    height: 48px !important;
+    flex-basis: 48px !important;
+  }
+  .auth-page .left h1 { align-self: end; margin: 0 !important; font-size: 20px !important; line-height: 1.1; }
+  .auth-page .left p { align-self: start; max-width: 100% !important; margin: 3px 0 0 !important; font-size: 8.5px !important; line-height: 1.35 !important; }
+  .auth-page .auth-benefits { display: none !important; }
+  .auth-page .right,
+  .auth-page .card.compact .right { min-width: 0 !important; padding: 18px 15px 20px !important; }
+  .auth-page .right-inner { width: 100% !important; max-width: none !important; }
+  .auth-page .auth-context-bar { min-height: 34px; margin-bottom: 12px !important; }
+  .auth-page .auth-return { min-height: 34px; padding: 7px 9px !important; font-size: 10px !important; }
+  .auth-page .role-label { font-size: 8px !important; }
+  .auth-page .right h2 { margin-bottom: 5px !important; font-size: 22px !important; line-height: 1.2; }
+  .auth-page .sub { margin-bottom: 16px !important; font-size: 11.5px !important; line-height: 1.5 !important; }
+  .auth-page .form-group { margin-bottom: 12px !important; }
+  .auth-page .form-group label { margin-bottom: 6px !important; font-size: 10px !important; }
+  .auth-page input,
+  .auth-page select { min-height: 46px !important; height: auto !important; padding-block: 9px !important; font-size: 13px !important; }
+  .auth-page .has-leading-icon input { padding-left: 42px !important; }
+  .auth-page .auth-form-options { gap: 10px; margin: 0 0 14px !important; font-size: 10px !important; }
+  .auth-page .btn { min-height: 46px !important; margin-top: 14px !important; padding: 10px 14px !important; font-size: 12px !important; }
+  .auth-page .auth-divider { margin: 13px 0 10px !important; font-size: 8px !important; }
+  .auth-page .google-signin { min-height: 42px; }
+  .auth-page .small,
+  .auth-page .auth-support-link { font-size: 9.5px !important; line-height: 1.45 !important; }
+
+  .auth-signup .signup-progress-copy { margin-bottom: 6px !important; }
+  .auth-signup .step-tracker { margin-bottom: 13px !important; }
+  .auth-signup .form-row { grid-template-columns: minmax(0, 1fr) !important; gap: 0 !important; }
+  .auth-signup .form-step { min-width: 0; }
+  .auth-signup .signup-actions { gap: 8px !important; }
+
+  /* Auth and beneficiary dialogs */
+  .auth-page .modal-bg,
+  :where(.home-page, .beneficiary-programs-page) .modal {
+    padding: 8px !important;
+  }
+  .auth-page .modal,
+  :where(.home-page, .beneficiary-programs-page) .modal-content,
+  :where(.home-page, .beneficiary-programs-page) .modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100dvh - 16px) !important;
+    padding: 20px 16px !important;
+    overflow-y: auto !important;
+    border-radius: 16px !important;
+  }
+  .auth-page .modal-title,
+  :where(.home-page, .beneficiary-programs-page) .modal-content h2 { font-size: 20px !important; }
+  .auth-page .modal-subtitle,
+  :where(.home-page, .beneficiary-programs-page) .modal-content p { font-size: 11.5px; }
+  .auth-page .modal-icon-header { width: 52px !important; height: 52px !important; margin-bottom: 12px !important; }
+  .auth-page .modal-close-btn,
+  :where(.home-page, .beneficiary-programs-page) .close-modal { width: 40px !important; height: 40px !important; }
+
+  /* Authenticated home */
+  .home-page .welcome-area { min-height: 0 !important; padding: 42px 0 32px !important; }
+  .home-page .welcome-inner { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 26px !important; }
+  .home-page .welcome-left { max-width: 100% !important; text-align: center; }
+  .home-page .welcome-badge { max-width: 100%; margin-inline: auto; font-size: 8px !important; white-space: normal; }
+  .home-page .welcome-title { margin: 13px 0 12px !important; font-size: clamp(29px, 9vw, 37px) !important; line-height: 1.08 !important; }
+  .home-page .welcome-text { font-size: 13px !important; line-height: 1.6 !important; }
+  .home-page .welcome-actions { display: grid !important; grid-template-columns: 1fr !important; gap: 8px !important; margin-top: 20px !important; }
+  .home-page .welcome-actions a { width: 100%; min-height: 44px; padding: 10px 14px !important; font-size: 11.5px !important; }
+  .home-page .welcome-stats { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px !important; margin-top: 18px !important; }
+  .home-page .stat-box { min-width: 0 !important; padding: 8px 5px !important; justify-content: center; }
+  .home-page .stat-icon { display: none !important; }
+  .home-page .stat-title { font-size: 11px !important; }
+  .home-page .stat-sub { font-size: 7px !important; }
+  .home-page .welcome-right { min-width: 0 !important; }
+  .home-page .hero-graphic { min-height: 270px !important; }
+  .home-page .bp-service-orbit { width: min(270px, 88vw) !important; }
+  .home-page .program-area,
+  .home-page .service-guide-section,
+  .home-page .service-help-section { padding-block: 38px !important; }
+  .home-page .area-title,
+  .home-page .content-enhancement-heading h2 { font-size: 24px !important; }
+  .home-page .home-official-advisory,
+  .home-page .bp-service-snapshot { padding: 15px !important; }
+
+  /* Beneficiary programs */
+  .beneficiary-programs-page .page-wrap > .welcome-area.programs-hero {
+    min-height: 0 !important;
+    padding: 44px 0 38px !important;
+  }
+  .beneficiary-programs-page .programs-hero .welcome-inner { width: calc(100% - 24px) !important; }
+  .beneficiary-programs-page .programs-hero .welcome-left { width: 100% !important; max-width: 100% !important; }
+  .beneficiary-programs-page .programs-hero .welcome-badge { font-size: 8px !important; }
+  .beneficiary-programs-page .page-wrap > .welcome-area.programs-hero .welcome-title {
+    margin: 13px 0 12px !important;
+    font-size: clamp(31px, 10vw, 39px) !important;
+    line-height: 1.06 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+  .beneficiary-programs-page .page-wrap > .welcome-area.programs-hero .welcome-text {
+    max-width: 100% !important;
+    font-size: 13px !important;
+    line-height: 1.62 !important;
+  }
+  .beneficiary-programs-page .programs-hero-note { width: 100% !important; margin-top: 20px !important; padding: 12px !important; text-align: left; }
+  .beneficiary-programs-page .programs-hero-note svg { width: 25px !important; height: 25px !important; }
+  .beneficiary-programs-page .program-area { padding: 38px 0 42px !important; }
+  .beneficiary-programs-page .program-area .content-wrap { width: calc(100% - 24px) !important; }
+  .beneficiary-programs-page .area-head {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 15px !important;
+    margin-bottom: 20px !important;
+    align-items: start !important;
+  }
+  .beneficiary-programs-page .head-text { width: 100% !important; min-width: 0 !important; text-align: left !important; }
+  .beneficiary-programs-page .area-title {
+    margin: 0 0 7px !important;
+    font-size: 27px !important;
+    line-height: 1.15 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+  .beneficiary-programs-page .area-sub { max-width: 100% !important; font-size: 12px !important; line-height: 1.55 !important; }
+  .beneficiary-programs-page .program-discovery-controls {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 5px !important;
+    margin: 0 !important;
+    padding: 5px !important;
+  }
+  .beneficiary-programs-page .program-discovery-controls > .search-container,
+  .beneficiary-programs-page .program-discovery-controls > .schedule-filter-wrap,
+  .beneficiary-programs-page .program-discovery-controls input,
+  .beneficiary-programs-page .program-schedule-toggle { width: 100% !important; min-width: 0 !important; height: 46px !important; min-height: 46px !important; }
+  .beneficiary-programs-page .program-discovery-controls input { padding-left: 39px !important; padding-right: 10px !important; font-size: 12px !important; }
+  .beneficiary-programs-page .program-schedule-toggle { padding: 8px 11px !important; font-size: 11.5px !important; }
+  .beneficiary-programs-page .program-filter-guidance { grid-column: auto !important; margin: -7px 0 0 !important; }
+  .beneficiary-programs-page .program-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 14px !important; }
+  .beneficiary-programs-page .program-card { width: 100% !important; min-width: 0 !important; border-radius: 14px !important; }
+  .beneficiary-programs-page .program-card .card-img-wrap { height: 160px !important; }
+  .beneficiary-programs-page .program-card .card-body { padding: 15px !important; }
+  .beneficiary-programs-page .program-card .card-title { font-size: 18px !important; }
+  .beneficiary-programs-page .program-card .card-desc { font-size: 11.5px !important; line-height: 1.55 !important; }
+  .beneficiary-programs-page .program-card .program-card-schedule { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px !important; }
+  .beneficiary-programs-page .program-card .program-card-schedule span { min-width: 0; min-height: 52px !important; padding: 8px !important; }
+  .beneficiary-programs-page .program-card .program-card-schedule strong { font-size: 10.5px !important; }
+  .beneficiary-programs-page .program-card .program-btn,
+  .beneficiary-programs-page .program-card .btn-check-status { min-height: 43px !important; font-size: 11.5px !important; }
+  .beneficiary-programs-page .completed-area { padding: 34px 0 42px !important; }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-dialog,
+  .beneficiary-programs-page #applicationModal .modal-content {
+    width: calc(100% - 16px) !important;
+    max-width: none !important;
+    max-height: calc(100dvh - 16px) !important;
+  }
+  .beneficiary-programs-page .program-details-split { height: auto !important; max-height: calc(100dvh - 16px) !important; }
+  .beneficiary-programs-page .program-details-identity { padding: 16px !important; }
+  .beneficiary-programs-page .program-details-scroll { padding: 18px 15px !important; }
+  .beneficiary-programs-page #programDetailsModal .details-footer { padding: 10px 15px !important; }
+  .beneficiary-programs-page #applicationModal #multiStepForm { max-height: calc(100dvh - 210px) !important; }
+
+  /* Authenticated About */
+  .about-page .about-hero-custom { min-height: 0 !important; padding: 40px 0 34px !important; }
+  .about-page .about-hero-custom .welcome-title { font-size: clamp(29px, 9vw, 36px) !important; line-height: 1.08 !important; }
+  .about-page .about-hero-custom .welcome-text { font-size: 13px !important; line-height: 1.6 !important; }
+  .about-page .about-hero-actions { gap: 8px !important; margin-top: 20px !important; }
+  .about-page .about-hero-actions a { min-height: 44px !important; padding: 10px 13px !important; font-size: 11px !important; }
+  .about-page .about-hero-assurance { font-size: 9.5px !important; }
+  .about-page .stats-glass-panel { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 0 !important; padding: 10px 0 !important; }
+  .about-page .stat-item { min-width: 0; padding: 10px 5px !important; }
+  .about-page .stat-item + .stat-item { border-top: 0 !important; border-left: 1px solid var(--about-border) !important; }
+  .about-page .stat-icon { width: 32px !important; height: 32px !important; }
+  .about-page .stat-num { font-size: 22px !important; }
+  .about-page .stat-label { font-size: 7.5px !important; }
+  .about-page .content-section { padding: 36px 0 !important; }
+  .about-page .section-title-wrap { margin-bottom: 22px !important; }
+  .about-page .section-title-wrap h2 { font-size: 24px !important; }
+  .about-page .section-title-wrap p { font-size: 12px !important; }
+  .about-page :where(.grid-two, .grid-three) { grid-template-columns: minmax(0, 1fr) !important; gap: 11px !important; }
+  .about-page :where(.about-card, .service-card) { min-height: 0 !important; padding: 17px !important; }
+  .about-page .service-card h4 { font-size: 17px !important; }
+  .about-page .service-card p { font-size: 11.5px !important; }
+  .about-page .team-card { padding: 16px !important; gap: 13px !important; }
+  .about-page .team-avatar { width: 72px !important; height: 72px !important; }
+  .about-page .contact-glass-panel { padding: 17px !important; }
+  .about-page .activity-gallery-card { flex-basis: 92% !important; }
+  .about-page .activity-modal-overlay { padding: 8px !important; }
+  .about-page .activity-modal { width: 100% !important; max-height: calc(100dvh - 16px) !important; border-radius: 15px !important; }
+  .about-page .activity-modal-media { padding: 58px 12px 12px !important; }
+  .about-page .activity-modal-content { padding: 18px 16px 20px !important; }
+  .about-page .activity-modal-content h2 { font-size: 22px !important; }
+  .about-page .modal-overlay { padding: 8px !important; }
+  .about-page .manager-modal { width: 100% !important; max-height: calc(100dvh - 16px); overflow-y: auto; border-radius: 15px !important; }
+
+  /* Beneficiary Profile, including activity/notification history */
+  .beneficiary-profile-page .profile-container {
+    width: calc(100% - 24px) !important;
+    max-width: none !important;
+    padding: 24px 0 38px !important;
+  }
+  .beneficiary-profile-page .landscape-id-card { padding: 16px !important; border-radius: 15px !important; }
+  .beneficiary-profile-page .id-card-inner { min-height: 0 !important; display: grid !important; grid-template-columns: 68px minmax(0, 1fr); gap: 13px !important; align-items: center; }
+  .beneficiary-profile-page .id-avatar { width: 68px !important; height: 68px !important; }
+  .beneficiary-profile-page .id-details { min-width: 0; }
+  .beneficiary-profile-page .id-badges { gap: 5px !important; }
+  .beneficiary-profile-page :where(.badge-role, .badge-status) { padding: 5px 7px !important; font-size: 7.5px !important; }
+  .beneficiary-profile-page .id-name { margin: 7px 0 5px !important; font-size: 21px !important; line-height: 1.15 !important; }
+  .beneficiary-profile-page .id-meta { gap: 5px 10px !important; font-size: 8.5px !important; }
+  .beneficiary-profile-page .profile-tabs-nav { width: 100% !important; gap: 5px !important; padding: 6px !important; overflow-x: auto !important; }
+  .beneficiary-profile-page .profile-tab { min-width: max-content !important; min-height: 40px !important; padding: 8px 11px !important; font-size: 9.5px !important; }
+  .beneficiary-profile-page .profile-content-card { padding: 17px !important; border-radius: 14px !important; }
+  .beneficiary-profile-page .content-header { margin-bottom: 18px !important; padding-bottom: 13px !important; }
+  .beneficiary-profile-page .content-header h3 { font-size: 19px !important; }
+  .beneficiary-profile-page .content-header p { font-size: 10.5px !important; }
+  .beneficiary-profile-page #profileForm .info-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 11px !important; }
+  .beneficiary-profile-page #profileForm .info-group label { min-height: 0 !important; font-size: 10px !important; }
+  .beneficiary-profile-page #profileForm .form-input { min-height: 44px !important; height: auto !important; font-size: 12px !important; }
+  .beneficiary-profile-page .profile-record-note { padding: 11px !important; }
+  .beneficiary-profile-page .profile-record-note strong { font-size: 11px !important; }
+  .beneficiary-profile-page .profile-record-note span { font-size: 10.5px !important; }
+  .beneficiary-profile-page #my-programs .status-card-horizontal { padding: 14px !important; border-radius: 13px !important; }
+  .beneficiary-profile-page #activity-log .log-timeline { padding-left: 0 !important; }
+  .beneficiary-profile-page #activity-log .log-timeline::before { display: none !important; }
+  .beneficiary-profile-page #activity-log .log-card-premium {
+    grid-template-columns: 38px minmax(0, 1fr) !important;
+    gap: 9px !important;
+    padding: 12px !important;
+    border-radius: 12px !important;
+  }
+  .beneficiary-profile-page .log-event-icon { width: 38px !important; height: 38px !important; }
+  .beneficiary-profile-page .log-event-heading { gap: 5px !important; }
+  .beneficiary-profile-page #activity-log .action-pill { padding: 4px 7px !important; font-size: 7.5px !important; }
+  .beneficiary-profile-page .log-module-name { font-size: 11px !important; }
+  .beneficiary-profile-page .log-description { font-size: 10.5px !important; line-height: 1.5 !important; }
+  .beneficiary-profile-page .log-event-time { grid-column: 2 !important; gap: 5px !important; font-size: 9px !important; }
+  .beneficiary-profile-page .security-overview,
+  .beneficiary-profile-page #security .security-form-panel { padding: 17px !important; }
+  .beneficiary-profile-page .security-card { border-radius: 14px !important; }
+  .beneficiary-profile-page :where(.modal-overlay, .modal.status-modal) { padding: 8px !important; }
+  .beneficiary-profile-page :where(.profile-confirm-dialog, .status-modal-dialog) { width: 100% !important; max-width: 100% !important; max-height: calc(100dvh - 16px) !important; overflow-y: auto; border-radius: 15px !important; }
+
+  /* Verification */
+  .verification-page .verify-hero.welcome-area { padding: 30px 0 24px !important; }
+  .verification-page .verify-hero .content-wrap,
+  .verification-page .results-area.content-wrap,
+  .verification-page .verification-guidance.content-wrap { width: calc(100% - 24px) !important; }
+  .verification-page .welcome-title { margin-top: 12px !important; font-size: 29px !important; line-height: 1.08 !important; }
+  .verification-page .centered-text { font-size: 12.5px !important; }
+  .verification-page .verification-route-choice { gap: 7px !important; margin-top: 14px !important; }
+  .verification-page .verification-route-choice > * { padding: 11px !important; }
+  .verification-page .v-search-box { margin-top: 14px !important; padding: 12px !important; }
+  .verification-page .v-input-wrapper { gap: 8px !important; }
+  .verification-page :where(.v-select, .v-search-entry) { min-height: 48px !important; height: 48px !important; }
+  .verification-page .v-btn { width: 100% !important; min-height: 44px !important; flex-basis: auto !important; }
+  .verification-page .results-area { padding: 26px 0 34px !important; }
+  .verification-page .v-card-horizontal { padding: 14px !important; }
+  .verification-page .v-person-avatar { width: 40px !important; height: 40px !important; }
+  .verification-page .v-name { font-size: 18px !important; }
+  .verification-page .verification-guidance { padding: 17px !important; margin-bottom: 34px !important; }
+  .verification-page .verification-status-grid article { padding: 14px !important; }
+  .verification-page .verification-correction-panel { padding: 14px !important; }
+
+  /* Standalone privacy notice */
+  .privacy-page header { padding: 12px 12px 58px !important; }
+  .privacy-page .wrap { width: calc(100% - 20px) !important; }
+  .privacy-page .topbar { padding: 8px 10px !important; border-radius: 13px !important; }
+  .privacy-page .brand img { width: 36px !important; height: 36px !important; }
+  .privacy-page .hero { padding-top: 31px !important; }
+  .privacy-page h1 { font-size: 31px !important; }
+  .privacy-page header p { font-size: 13px !important; }
+  .privacy-page main { margin-top: -30px !important; padding: 20px 15px !important; border-radius: 15px !important; }
+  .privacy-page main h2 { margin-top: 26px !important; font-size: 18px !important; }
+  .privacy-page main p,
+  .privacy-page main li { font-size: 12.5px !important; }
+  .privacy-page .summary { gap: 10px !important; margin-bottom: 24px !important; padding: 14px !important; }
+  .privacy-page ul { padding: 14px 14px 14px 30px !important; }
+  .privacy-page .actions { margin-top: 28px !important; padding-top: 18px !important; }
+  .privacy-page .back { width: 100%; min-height: 44px; justify-content: center; font-size: 11.5px; }
+}
+
+@media (max-width: 370px) {
+  .brand-title { font-size: 16px !important; }
+  .brand-logo { width: 36px !important; height: 36px !important; flex-basis: 36px !important; }
+  .public-index-page .public-home-hero .welcome-title,
+  .home-page .welcome-title,
+  .beneficiary-programs-page .page-wrap > .welcome-area.programs-hero .welcome-title { font-size: 28px !important; }
+  .auth-page .right,
+  .auth-page .card.compact .right { padding-inline: 12px !important; }
+  .auth-page .role-label { display: none; }
+  .beneficiary-programs-page .program-card .program-card-schedule { grid-template-columns: 1fr; }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  body.auth-page { padding: 8px !important; }
+  .auth-page .card,
+  .auth-page .card.compact { max-width: 820px !important; grid-template-columns: 170px minmax(0, 1fr) !important; }
+  .auth-page .left,
+  .auth-page .card.compact .left { border-right: 4px solid var(--green) !important; border-bottom: 0 !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

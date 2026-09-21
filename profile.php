@@ -278,6 +278,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=1">
 <script src="frontend_polish.js?v=20260921" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
