@@ -50,6 +50,7 @@
 
           root.classList.add('is-processing');
           setMessage(root, 'Verifying your Google account securely...');
+          let userMessage = 'Google sign-in is temporarily unavailable. Please try again or use your email and password.';
 
           try {
             const body = new URLSearchParams({
@@ -59,12 +60,27 @@
             const result = await fetch('google_auth_callback.php', {
               method: 'POST',
               credentials: 'same-origin',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                'Accept': 'application/json'
+              },
               body
             });
-            const payload = await result.json();
+            const responseText = await result.text();
+            let payload = null;
+            if (responseText.trim() !== '') {
+              try {
+                payload = JSON.parse(responseText);
+              } catch (parseError) {
+                payload = null;
+              }
+            }
+            if (!payload || typeof payload !== 'object') {
+              throw new Error('Invalid Google sign-in response');
+            }
             if (!result.ok || !payload.ok || !payload.redirect) {
-              throw new Error(payload.message || 'Google sign-in could not be completed.');
+              userMessage = payload.message || 'Google sign-in could not be completed. Please try again.';
+              throw new Error('Google sign-in request rejected');
             }
             root.classList.remove('is-processing');
             setMessage(root, '');
@@ -88,7 +104,7 @@
             window.location.assign(payload.redirect);
           } catch (error) {
             root.classList.remove('is-processing');
-            showError(root, error.message || 'Google sign-in could not be completed.');
+            showError(root, userMessage);
           }
         }
       });

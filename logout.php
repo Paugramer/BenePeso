@@ -2,6 +2,7 @@
 require_once __DIR__ . '/auth_session.php';
 require "db.php";
 require_once __DIR__ . '/remember_auth.php';
+require_once __DIR__ . '/activity_log_helper.php';
 
 $requested_role = $_POST['role'] ?? $_GET['role'] ?? ($_SESSION['role'] ?? null);
 $role = is_string($requested_role) && auth_has_role($requested_role) ? $requested_role : null;
@@ -69,14 +70,8 @@ if ($role !== null) {
         $actor_role = "Registered User"; 
         $desc = $actor_name . " logged out securely.";
         
-        // Added target_name to query and bind_param
         $user_id = (int)($_SESSION['user_id'] ?? 0);
-        $stmt = $conn->prepare("INSERT INTO activity_logs (user_id, actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
-        if ($stmt) {
-            $stmt->bind_param("issssss", $user_id, $actor_name, $actor_role, $module, $action, $target, $desc);
-            $stmt->execute();
-            $stmt->close();
-        }
+        benepeso_log_user_activity($conn, $user_id, $actor_name, $module, $action, $target, $desc);
     }
 }
 

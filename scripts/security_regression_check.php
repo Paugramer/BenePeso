@@ -6,6 +6,7 @@ if (PHP_SAPI !== 'cli') {
 }
 
 require dirname(__DIR__) . '/db.php';
+require dirname(__DIR__) . '/activity_log_helper.php';
 
 function security_check(bool $condition, string $message): void
 {
@@ -111,6 +112,29 @@ try {
         }
         $verification->close();
     }
+
+    // Deployment compatibility: PHP may be released before the additive SQL
+    // migration reaches production. A temporary legacy-shaped table confirms
+    // beneficiary login/activity logging still succeeds without user_id.
+    $conn->query(
+        "CREATE TEMPORARY TABLE activity_logs (
+            log_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            actor_name VARCHAR(255) NOT NULL,
+            actor_role VARCHAR(100) NOT NULL,
+            module_name VARCHAR(100) NOT NULL,
+            action_type VARCHAR(100) NOT NULL,
+            target_name VARCHAR(255) NOT NULL,
+            description TEXT NOT NULL,
+            created_at DATETIME NOT NULL
+        )"
+    );
+    security_check(
+        benepeso_log_user_activity($conn, $userId, $actorName, 'Auth', 'LOGIN', 'System', $description),
+        'The compatibility logger rejected a legacy activity_logs schema.'
+    );
+    $legacyCount = $conn->query('SELECT COUNT(*) AS total FROM activity_logs');
+    security_check((int)$legacyCount->fetch_assoc()['total'] === 1, 'Legacy activity-log compatibility failed.');
+    $conn->query('DROP TEMPORARY TABLE activity_logs');
 
     $conn->rollback();
     echo "BENEPESO security regression checks passed; all test writes were rolled back." . PHP_EOL;

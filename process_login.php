@@ -4,6 +4,7 @@ require_once __DIR__ . '/auth_rate_limit.php';
 require "db.php";
 require_once __DIR__ . '/remember_auth.php';
 require_once __DIR__ . '/turnstile_config.php';
+require_once __DIR__ . '/activity_log_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: login.php');
@@ -225,14 +226,15 @@ if ($stmt_user) {
                 remember_auth_revoke_cookie($conn);
             }
 
-            // DIRECT UNIFIED SQL LOGGING FOR USERS
-            $log_desc = $user_full_name . " logged in securely.";
-            $log_stmt = $conn->prepare("INSERT INTO activity_logs (user_id, actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, ?, 'Registered User', 'Auth', 'LOGIN', 'System', ?, NOW())");
-            if ($log_stmt) {
-                $log_stmt->bind_param("iss", $user_id, $user_full_name, $log_desc);
-                $log_stmt->execute();
-                $log_stmt->close();
-            }
+            benepeso_log_user_activity(
+                $conn,
+                $user_id,
+                $user_full_name,
+                'Auth',
+                'LOGIN',
+                'System',
+                $user_full_name . ' logged in securely.'
+            );
 
             header("Location: home.php");
             exit();

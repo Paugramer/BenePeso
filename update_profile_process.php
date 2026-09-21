@@ -2,6 +2,7 @@
 require_once __DIR__ . '/auth.php';
 require "db.php";
 require_once __DIR__ . '/beneficiary_choices.php';
+require_once __DIR__ . '/activity_log_helper.php';
 
 check_user_role('user');
 
@@ -215,17 +216,10 @@ try {
     $pending_stmt->close();
 
     $actor_name = trim($first_name . ' ' . $last_name);
-    $actor_role = 'Registered User';
     $log_description = $actor_name . ' updated their personal profile information.';
-    $log_stmt = $conn->prepare("INSERT INTO activity_logs (user_id, action_type, module_name, description, actor_name, actor_role, created_at) VALUES (?, 'Update', 'Profile', ?, ?, ?, NOW())");
-    if (!$log_stmt) {
-        throw new RuntimeException('Unable to prepare activity log.');
-    }
-    $log_stmt->bind_param('isss', $user_id, $log_description, $actor_name, $actor_role);
-    if (!$log_stmt->execute()) {
+    if (!benepeso_log_user_activity($conn, $user_id, $actor_name, 'Profile', 'Update', 'Account', $log_description)) {
         throw new RuntimeException('Unable to record profile activity.');
     }
-    $log_stmt->close();
 
     $conn->commit();
     return_to_profile('Profile details updated successfully!');

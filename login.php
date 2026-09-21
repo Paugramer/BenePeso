@@ -97,7 +97,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <?php endif; ?>
   <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
-  <script src="google_signin.js?v=5" defer></script>
+  <script src="google_signin.js?v=6" defer></script>
 </head>
 <body class="auth-page auth-login" data-disable-page-loader>
 

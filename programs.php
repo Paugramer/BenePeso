@@ -10,6 +10,7 @@ require_once "tupad_household_helper.php";
 require_once "tupad_document_helper.php";
 require_once "spes_schema_helper.php";
 require_once "spes_lifecycle_helper.php";
+require_once __DIR__ . '/activity_log_helper.php';
 ensure_program_eligibility_schema($conn);
 ensure_tupad_category_schema($conn);
 ensure_tupad_document_schema($conn);
@@ -95,9 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'log_v
     $desc = ($log_type === 'status') ? "Opened status details for $prog_name." : "Viewed details for $prog_name.";
     $mod = "Programs";
     
-    $log_stmt = $conn->prepare("INSERT INTO activity_logs (user_id, actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, ?, 'Registered User', ?, 'VIEW', ?, ?, NOW())");
-    $log_stmt->bind_param("issss", $user_id, $user_display_name, $mod, $prog_name, $desc);
-    $log_stmt->execute();
+    benepeso_log_user_activity($conn, $user_id, $user_display_name, $mod, 'VIEW', $prog_name, $desc);
     $_SESSION['last_program_view_log'] = ['fingerprint' => $logFingerprint, 'time' => time()];
     echo json_encode(['status' => 'success']);
     exit();
@@ -757,9 +756,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
             }
 
             $log_desc = "Successfully applied for " . $p_name . ".";
-            $l_stmt = $conn->prepare("INSERT INTO activity_logs (user_id, actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, ?, 'Registered User', 'Programs', 'APPLY', ?, ?, NOW())");
-            $l_stmt->bind_param("isss", $user_id, $user_display_name, $p_name, $log_desc);
-            $l_stmt->execute();
+            benepeso_log_user_activity($conn, $user_id, $user_display_name, 'Programs', 'APPLY', $p_name, $log_desc);
 
         } else {
             $conn->rollback();

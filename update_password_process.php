@@ -3,6 +3,7 @@ require_once __DIR__ . '/auth.php';
 require "db.php";
 require_once __DIR__ . '/user_security_metadata_helper.php';
 require_once __DIR__ . '/auth_rate_limit.php';
+require_once __DIR__ . '/activity_log_helper.php';
 
 // 1. Strict Security Check: Ensure user is logged in
 check_user_role('user');
@@ -107,13 +108,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $actor_name = trim($row['first_name'] . " " . $row['last_name']);
                 $log_description = $actor_name . ' changed their account password.';
                 
-                // Keep beneficiary security events visible in the beneficiary activity log.
-                $log_stmt = $conn->prepare("INSERT INTO activity_logs (user_id, action_type, module_name, description, actor_name, actor_role, created_at) VALUES (?, 'Security', 'Profile', ?, ?, 'Registered User', NOW())");
-                if ($log_stmt) {
-                    $log_stmt->bind_param("iss", $user_id, $log_description, $actor_name);
-                    $log_stmt->execute();
-                    $log_stmt->close();
-                }
+                benepeso_log_user_activity(
+                    $conn,
+                    $user_id,
+                    $actor_name,
+                    'Profile',
+                    'Security',
+                    'Account',
+                    $log_description
+                );
             }
 
         } else {

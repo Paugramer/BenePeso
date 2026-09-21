@@ -3,6 +3,7 @@ require_once __DIR__ . '/auth.php';
 require "db.php";
 require_once __DIR__ . '/user_security_metadata_helper.php';
 require_once __DIR__ . '/spes_lifecycle_helper.php';
+require_once __DIR__ . '/activity_log_helper.php';
 
 check_user_role('user');
 
@@ -83,13 +84,19 @@ while ($row = $availed_programs_result->fetch_assoc()) {
 
 // Activity history is account-owned. Names are display values and are not
 // reliable authorization identifiers because multiple residents can share one.
-$log_stmt = $conn->prepare("
-    SELECT action_type, module_name, description, created_at 
-    FROM activity_logs 
-    WHERE user_id = ? AND actor_role = 'Registered User'
-    ORDER BY created_at DESC 
-");
-$log_stmt->bind_param("i", $user_id);
+$activity_log_owned = benepeso_activity_log_supports_user_id($conn);
+$activity_where = $activity_log_owned
+    ? "user_id = ? AND actor_role = 'Registered User'"
+    : '1 = 0';
+$log_stmt = $conn->prepare(
+    "SELECT action_type, module_name, description, created_at
+     FROM activity_logs
+     WHERE {$activity_where}
+     ORDER BY created_at DESC"
+);
+if ($activity_log_owned) {
+    $log_stmt->bind_param("i", $user_id);
+}
 $log_stmt->execute();
 $activity_logs_result = $log_stmt->get_result();
 

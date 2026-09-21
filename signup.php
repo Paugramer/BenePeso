@@ -52,7 +52,7 @@ $barangays = beneficiary_barangay_options();
 <script src="frontend_polish.js?v=20260921" defer></script>
   <?php if (!$google_registration): ?>
     <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
-  <script src="google_signin.js?v=5" defer></script>
+  <script src="google_signin.js?v=6" defer></script>
   <?php endif; ?>
 </head>
 <body class="auth-page auth-signup" data-disable-page-loader>

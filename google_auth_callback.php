@@ -16,6 +16,14 @@ function google_auth_response(int $status, array $payload): void
     exit();
 }
 
+set_exception_handler(static function (Throwable $error): void {
+    error_log('BENEPESO Google authentication request failed: ' . $error->getMessage());
+    google_auth_response(500, [
+        'ok' => false,
+        'message' => 'Google sign-in is temporarily unavailable. Please try again or use your email and password.'
+    ]);
+});
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     google_auth_response(405, ['ok' => false, 'message' => 'Method not allowed.']);
 }

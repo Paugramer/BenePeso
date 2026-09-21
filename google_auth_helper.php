@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/google_auth_config.php';
+require_once __DIR__ . '/activity_log_helper.php';
 
 const GOOGLE_PENDING_REGISTRATION_TTL = 1800;
 
@@ -120,15 +121,13 @@ function google_auth_activate_beneficiary(mysqli $conn, array $user): void
     auth_activate_role('user');
     auth_regenerate_session();
 
-    $description = $fullName . ' logged in securely using Google.';
-    $log = $conn->prepare(
-        "INSERT INTO activity_logs
-            (user_id, actor_name, actor_role, module_name, action_type, target_name, description, created_at)
-         VALUES (?, ?, 'Registered User', 'Auth', 'LOGIN', 'System', ?, NOW())"
+    benepeso_log_user_activity(
+        $conn,
+        $userId,
+        $fullName,
+        'Auth',
+        'LOGIN',
+        'System',
+        $fullName . ' logged in securely using Google.'
     );
-    if ($log) {
-        $log->bind_param('iss', $userId, $fullName, $description);
-        $log->execute();
-        $log->close();
-    }
 }
