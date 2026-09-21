@@ -42,6 +42,10 @@
     max-width: none !important;
     margin-inline: auto !important;
   }
+  .welcome-inner {
+    min-height: 0 !important;
+    padding-block: 0 !important;
+  }
 
   /* Shared beneficiary header */
   .topbar { min-height: 64px; }
@@ -168,7 +172,7 @@
      repeats the same schedule control and only adds unnecessary scrolling. */
   .public-index-page .public-directory-toolbar { display: none !important; }
 
-  .public-index-page .public-trust-strip { margin: 0 !important; padding-top: 12px !important; }
+  .public-index-page .public-trust-strip { margin: 0 !important; padding: 0 !important; }
   .public-index-page .public-trust-strip .content-wrap { width: calc(100% - 24px) !important; }
   .public-index-page .public-trust-strip .content-wrap > span {
     grid-template-columns: 34px minmax(0, 1fr) !important;
@@ -231,9 +235,14 @@
   /* Public About page */
   .public-about-page .public-about-hero.search-hero.welcome-area {
     min-height: 0 !important;
-    padding: 26px 0 18px !important;
+    padding: 24px 0 12px !important;
   }
-  .public-about-page .public-about-hero-inner { width: calc(100% - 24px) !important; gap: 14px !important; }
+  .public-about-page .public-about-hero-inner {
+    width: calc(100% - 24px) !important;
+    min-height: 0 !important;
+    gap: 12px !important;
+    padding-block: 0 !important;
+  }
   .public-about-page .public-about-hero-copy { text-align: center !important; }
   .public-about-page .public-about-hero-copy .welcome-badge { margin-inline: auto !important; }
   .public-about-page .public-about-hero .welcome-title {
@@ -246,16 +255,17 @@
   .public-about-page .public-about-hero .public-hero-actions a { width: 100%; min-height: 44px !important; padding: 10px 14px !important; font-size: 11.5px !important; }
   .public-about-page .public-about-identity { width: 100% !important; padding: 14px !important; }
   .public-about-page .public-about-seal { width: 58px !important; height: 58px !important; }
-  .public-about-page .public-about-overview { width: calc(100% - 24px) !important; padding: 36px 0 40px !important; }
+  .public-about-page .public-about-overview { width: calc(100% - 24px) !important; padding: 26px 0 30px !important; }
+  .public-about-page .public-about-heading { margin-bottom: 18px !important; }
   .public-about-page .public-about-heading h2,
   .public-about-page .public-about-standards h2,
   .public-about-page .public-about-contact h2,
   .public-about-page .public-purpose-copy h2 { font-size: 24px !important; }
   .public-about-page .public-about-grid article { padding: 16px !important; }
-  .public-about-page .public-about-purpose { padding: 36px 0 !important; }
+  .public-about-page .public-about-purpose { padding: 30px 0 !important; }
   .public-about-page .public-purpose-visual { transform: scale(.88); margin-block: -20px; }
-  .public-about-page .public-about-standards { padding: 34px 0 !important; }
-  .public-about-page .public-about-contact { width: calc(100% - 24px) !important; padding: 16px !important; }
+  .public-about-page .public-about-standards { padding: 28px 0 !important; }
+  .public-about-page .public-about-contact { width: calc(100% - 24px) !important; margin-block: 14px !important; padding: 16px !important; }
 
   /* Small, readable in-app notices instead of desktop-width toasts. */
   .toast-notification {
