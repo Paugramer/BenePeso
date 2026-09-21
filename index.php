@@ -152,7 +152,7 @@ if ($updated_stmt) {
     <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="index.css?v=29">
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=1">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=3">
 <script src="frontend_polish.js?v=20260921" defer></script>
 </head>
 <body class="public-index-page">
@@ -230,7 +230,7 @@ if ($updated_stmt) {
                         </aside>
                     </div>
 
-                    <form action="index.php" method="GET" class="v-search-box-centered stagger-4">
+                    <form action="index.php#available-programs" method="GET" class="v-search-box-centered stagger-4">
                         <div class="input-wrapper">
                             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px; color:var(--muted);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                             <label class="sr-only" for="publicProgramSearch">Search programs by name</label>

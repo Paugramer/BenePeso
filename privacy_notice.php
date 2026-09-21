@@ -54,7 +54,7 @@ $embedded = isset($_GET['embedded']) && $_GET['embedded'] === '1';
     body.embedded header, body.embedded .actions { display:none; }
     body.embedded main { width:100%; margin:0; padding:24px; border:0; border-radius:0; box-shadow:none; }
   </style>
-  <link rel="stylesheet" href="beneficiary_mobile.css?v=1">
+  <link rel="stylesheet" href="beneficiary_mobile.css?v=3">
 </head>
 <body class="privacy-page<?= $embedded ? ' embedded' : '' ?>">
 <header>

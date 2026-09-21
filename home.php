@@ -114,7 +114,7 @@ try {
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=1">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=3">
     <script src="frontend_polish.js?v=20260921" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -361,7 +361,7 @@ try {
                 <h2 class="area-title" id="homeProgramsTitle">Available Programs</h2>
                 <p class="area-sub">Current and upcoming PESO opportunities that are still accepting beneficiaries.</p>
             </div>
-            <a class="see-more" href="programs.php">See all →</a>
+            <a class="see-more" href="programs.php">Review directory <span aria-hidden="true">&rarr;</span></a>
         </div>
 
         <div class="program-list">
