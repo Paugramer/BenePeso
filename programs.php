@@ -888,7 +888,7 @@ if ($barangay_summary_result) {
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=8">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=9">
 <script src="frontend_polish.js?v=20260921" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -1503,8 +1503,8 @@ if ($barangay_summary_result) {
                     <div class="span-2 section-title">Basic Information</div>
                     <div class="form-group"><label>First Name</label><input type="text" value="<?php echo h($user_data['first_name']??''); ?>" readonly required></div>
                     <div class="form-group"><label>Last Name</label><input type="text" value="<?php echo h($user_data['last_name']??''); ?>" readonly required></div>
-                    <div class="form-group"><label>Full Address</label><input type="text" value="<?php echo h($full_address); ?>" readonly required></div>
-                    <div class="form-group"><label>Contact No.</label><input type="text" value="<?php echo h($user_data['contact_no']??''); ?>" readonly required></div>
+                    <div class="form-group mobile-wide"><label>Full Address</label><input type="text" value="<?php echo h($full_address); ?>" readonly required></div>
+                    <div class="form-group mobile-wide"><label>Contact No.</label><input type="text" value="<?php echo h($user_data['contact_no']??''); ?>" readonly required></div>
                 </div>
                 <div class="form-actions single-btn">
                     <button type="button" class="btn-primary" onclick="nextStep(1)">Next Step</button>
@@ -2962,7 +2962,11 @@ if ($barangay_summary_result) {
         stepsArray.forEach((stepName, idx) => {
             navHtml += `<div class="wizard-step-indicator" id="ind-step-${idx+1}"><span class="wizard-number">${idx+1}</span><span class="wizard-label">${stepName}</span></div>`;
         });
-        document.getElementById('wizardNav').innerHTML = navHtml;
+        const wizardNav = document.getElementById('wizardNav');
+        wizardNav.innerHTML = navHtml;
+        wizardNav.classList.toggle('wizard-nav--compact', stepsArray.length <= 4);
+        wizardNav.classList.toggle('wizard-nav--scrollable', stepsArray.length > 4);
+        wizardNav.dataset.stepCount = String(stepsArray.length);
     }
 
     function proceedToForm() {
