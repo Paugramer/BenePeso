@@ -36,8 +36,111 @@ if ($res && $res->num_rows === 1) {
     }
 }
 
-// 2. Fetch approved batches for a clear Program > Batch filter.
-$programs_list = $conn->query("SELECT program_id, program_name, program_code, start_date, end_date FROM programs WHERE approval_status = 'Approved' AND (UPPER(program_name) LIKE '%TUPAD%' OR UPPER(program_name) LIKE '%SPES%' OR UPPER(program_name) LIKE '%MSME%') ORDER BY program_name ASC, start_date DESC, program_id DESC");
+function verification_user_can_search_program(mysqli $conn, int $programId, int $userId, string $email): bool
+{
+    if ($programId < 1) return false;
+
+    $accessStmt = $conn->prepare(
+        "SELECT 1
+           FROM beneficiaries own
+           JOIN programs p ON p.program_id = own.program_id
+          WHERE own.program_id = ?
+            AND (own.user_id = ? OR (own.user_id IS NULL AND own.email = ?))
+            AND p.approval_status = 'Approved'
+            AND (UPPER(p.program_name) LIKE '%TUPAD%' OR UPPER(p.program_name) LIKE '%SPES%' OR UPPER(p.program_name) LIKE '%MSME%')
+          LIMIT 1"
+    );
+    if (!$accessStmt) return false;
+    $accessStmt->bind_param('iis', $programId, $userId, $email);
+    $accessStmt->execute();
+    $allowed = $accessStmt->get_result()->num_rows === 1;
+    $accessStmt->close();
+    return $allowed;
+}
+
+// Privacy-scoped suggestions: only the user's barangay and a batch that the
+// signed-in account has applied to can be searched.
+if (isset($_GET['suggest']) && $_GET['suggest'] === '1') {
+    header('Content-Type: application/json; charset=UTF-8');
+    header('Cache-Control: private, no-store, max-age=0');
+    header('X-Content-Type-Options: nosniff');
+    $prefix = trim((string)($_GET['q'] ?? ''));
+    $suggestProgramId = ctype_digit((string)($_GET['program_filter'] ?? '')) ? (int)$_GET['program_filter'] : 0;
+
+    if (mb_strlen($prefix, 'UTF-8') < 1 || !verification_user_can_search_program($conn, $suggestProgramId, $user_id, $user_email)) {
+        echo json_encode(['items' => []]);
+        exit;
+    }
+
+    $suggestIp = auth_request_ip();
+    $suggestLimited = max(
+        auth_rate_limit_hit('beneficiary-suggest-account', (string)$user_id, 60, 300, 300),
+        auth_rate_limit_hit('beneficiary-suggest-ip', $suggestIp, 160, 300, 300)
+    );
+    if ($suggestLimited > 0) {
+        http_response_code(429);
+        echo json_encode(['items' => [], 'message' => 'Please wait before searching again.']);
+        exit;
+    }
+
+    $prefixLike = $prefix . '%';
+    $suggestStmt = $conn->prepare(
+        "SELECT b.first_name, b.last_name, b.full_name, u.profile_pic
+           FROM beneficiaries b
+           JOIN programs p ON p.program_id = b.program_id
+           LEFT JOIN users u ON u.user_id = b.user_id
+          WHERE b.barangay = ?
+            AND b.program_id = ?
+            AND p.approval_status = 'Approved'
+            AND LOWER(TRIM(b.full_name)) LIKE LOWER(?)
+          ORDER BY b.full_name ASC, b.beneficiary_id DESC
+          LIMIT 6"
+    );
+    $suggestStmt->bind_param('sis', $user_barangay, $suggestProgramId, $prefixLike);
+    $suggestStmt->execute();
+    $suggestResult = $suggestStmt->get_result();
+    $suggestions = [];
+    while ($suggestRow = $suggestResult->fetch_assoc()) {
+        $fullName = trim((string)($suggestRow['full_name'] ?? ''));
+        if ($fullName === '') continue;
+        $firstName = trim((string)($suggestRow['first_name'] ?? ''));
+        $lastName = trim((string)($suggestRow['last_name'] ?? ''));
+        if ($firstName !== '' && $lastName !== '') {
+            $lastLength = mb_strlen($lastName, 'UTF-8');
+            $displayName = $firstName . ' ' . mb_substr($lastName, 0, 1, 'UTF-8') . str_repeat('*', max(0, $lastLength - 1));
+        } else {
+            $nameLength = mb_strlen($fullName, 'UTF-8');
+            $displayName = mb_substr($fullName, 0, (int)ceil($nameLength / 2), 'UTF-8') . str_repeat('*', (int)floor($nameLength / 2));
+        }
+        $profileFilename = basename((string)($suggestRow['profile_pic'] ?? ''));
+        $profileImage = $profileFilename !== '' && $profileFilename !== 'default_user.png' && is_file(__DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $profileFilename)
+            ? 'uploads/' . rawurlencode($profileFilename)
+            : '';
+        $suggestions[] = [
+            'value' => $fullName,
+            'label' => $displayName,
+            'initial' => mb_strtoupper(mb_substr($firstName !== '' ? $firstName : $fullName, 0, 1, 'UTF-8'), 'UTF-8'),
+            'photo' => $profileImage,
+        ];
+    }
+    $suggestStmt->close();
+    echo json_encode(['items' => $suggestions], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+// Show only approved batches that the signed-in beneficiary has applied to.
+$programs_stmt = $conn->prepare(
+    "SELECT DISTINCT p.program_id, p.program_name, p.program_code, p.start_date, p.end_date
+       FROM programs p
+       JOIN beneficiaries own ON own.program_id = p.program_id
+      WHERE (own.user_id = ? OR (own.user_id IS NULL AND own.email = ?))
+        AND p.approval_status = 'Approved'
+        AND (UPPER(p.program_name) LIKE '%TUPAD%' OR UPPER(p.program_name) LIKE '%SPES%' OR UPPER(p.program_name) LIKE '%MSME%')
+      ORDER BY p.program_name ASC, p.start_date DESC, p.program_id DESC"
+);
+$programs_stmt->bind_param('is', $user_id, $user_email);
+$programs_stmt->execute();
+$programs_list = $programs_stmt->get_result();
 
 // 3. Setup Pagination Variables
 $results_per_page = 5;
@@ -48,15 +151,23 @@ $total_pages = 0;
 $total_results = 0;
 
 $search_result = null;
+$search_query = '';
 $filter_program = isset($_GET['program_filter']) ? $_GET['program_filter'] : "";
 $search_ready = false;
+$search_too_short = false;
 $batch_required = false;
+$program_access_denied = false;
 $rate_limited = false;
 
-if ($filter_program !== '') {
+if (isset($_GET['search'])) {
+    $search_query = trim((string)($_GET['search'] ?? ''));
     $valid_program_filter = ctype_digit((string)$filter_program) && (int)$filter_program > 0;
-    $batch_required = !$valid_program_filter;
-    $search_ready = $valid_program_filter;
+    $batch_required = $search_query !== '' && !$valid_program_filter;
+    $has_program_access = $valid_program_filter
+        && verification_user_can_search_program($conn, (int)$filter_program, $user_id, $user_email);
+    $program_access_denied = $valid_program_filter && !$has_program_access;
+    $search_ready = mb_strlen($search_query, 'UTF-8') >= 1 && $has_program_access;
+    $search_too_short = $search_query !== '' && !$search_ready && !$batch_required && !$program_access_denied;
 }
 
 if ($search_ready) {
@@ -99,21 +210,21 @@ if ($search_ready) {
     }
 }
 
-// A selected program may return only records owned by the signed-in account.
+// Return an exact-name match only within the user's barangay and a batch that
+// their own account has applied to.
 if ($search_ready) {
-    // Residents may verify only records owned by their authenticated account.
-    // The email fallback retains access to safely-linked legacy records.
+    $search_param = $search_query;
     $where_clause = "WHERE b.barangay = ?
-        AND (b.user_id = ? OR (b.user_id IS NULL AND b.email = ?))
         AND p.approval_status = 'Approved'
         AND (UPPER(p.program_name) LIKE '%TUPAD%' OR UPPER(p.program_name) LIKE '%SPES%' OR UPPER(p.program_name) LIKE '%MSME%')
+        AND LOWER(TRIM(b.full_name)) = LOWER(TRIM(?))
         AND b.program_id = ?";
 
     // --- A. Get Total Count for Pagination ---
     $count_sql = "SELECT COUNT(*) as total FROM beneficiaries b JOIN programs p ON b.program_id = p.program_id " . $where_clause;
     $count_stmt = $conn->prepare($count_sql);
     
-    $count_stmt->bind_param("sisi", $user_barangay, $user_id, $user_email, $filter_program);
+    $count_stmt->bind_param("ssi", $user_barangay, $search_param, $filter_program);
     $count_stmt->execute();
     $total_results = $count_stmt->get_result()->fetch_assoc()['total'];
     $total_pages = ceil($total_results / $results_per_page);
@@ -127,7 +238,7 @@ if ($search_ready) {
               LEFT JOIN users u ON u.user_id = b.user_id " . $where_clause . " ORDER BY b.created_at DESC LIMIT ?, ?";
     $stmt = $conn->prepare($sql);
     
-    $stmt->bind_param("sisiii", $user_barangay, $user_id, $user_email, $filter_program, $offset, $results_per_page);
+    $stmt->bind_param("ssiii", $user_barangay, $search_param, $filter_program, $offset, $results_per_page);
     
     $stmt->execute();
     $search_result = $stmt->get_result();
@@ -214,28 +325,28 @@ if ($search_ready) {
             <div class="verify-hero-content">
                 <div class="verify-badge">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 7.9 7.5 9.5 4.4-1.6 7.5-4.9 7.5-9.5V6L12 3Z"></path><path d="m9 12 2 2 4-4"></path></svg>
-                    <span>Private account lookup</span>
+                    <span>Barangay beneficiary lookup</span>
                 </div>
                 <h1 class="welcome-title">
-                    My Record <span class="welcome-highlight">Verification</span>
+                    Program <span class="welcome-highlight">Verification</span>
                 </h1>
                 <p class="welcome-text centered-text">
-                    Check only the beneficiary records linked to your signed-in account in a specific approved PESO program batch. This lookup does not determine eligibility or replace official PESO confirmation.
+                    Search for a beneficiary in your registered barangay and in an approved program batch that you have applied to. Results are limited and do not replace official PESO confirmation.
                 </p>
 
                 <div class="verification-route-choice" aria-label="Choose how to check an application">
                     <a href="profile.php#my-programs"><strong>Checking your own application?</strong><span>Open My Applications for complete private details.</span></a>
-                    <div><strong>Account-protected lookup</strong><span>Only records linked to your account can appear below.</span></div>
+                    <div><strong>Checking your barangay?</strong><span>Search a masked beneficiary record only within one of your applied program batches.</span></div>
                 </div>
 
                 <form id="searchForm" action="verification.php" method="GET" class="v-search-box">
                     <div class="v-search-intro">
                         <span class="v-search-intro-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.5 2.8 7.6 7 9 4.2-1.4 7-4.5 7-9V6l-7-3Z"></path><path d="m9 12 2 2 4-4"></path></svg></span>
-                        <div><strong>Find my beneficiary record</strong><small>Select the exact batch to check your account-linked status.</small></div>
+                        <div><strong>Find a beneficiary record</strong><small>Select one of your applied batches, then enter the resident's registered name.</small></div>
                     </div>
                     <ol class="v-lookup-steps" aria-label="Verification steps">
                         <li><span>1</span><strong>Choose batch</strong></li>
-                        <li><span>2</span><strong>Confirm account</strong></li>
+                        <li><span>2</span><strong>Enter exact name</strong></li>
                         <li><span>3</span><strong>Review status</strong></li>
                     </ol>
                     <div class="v-input-wrapper">
@@ -285,23 +396,24 @@ if ($search_ready) {
                             <small class="v-search-help" id="batchFilterHelp">Choose the exact approved schedule.</small>
                         </label>
                         <div class="v-search-field v-resident-field">
-                            <label class="v-search-field-label" for="searchInput">Signed-in resident</label>
+                            <label class="v-search-field-label" for="searchInput">Resident name</label>
                             <span class="v-search-entry">
                                 <svg class="v-search-entry-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
-                                <input type="text" id="searchInput" class="v-input" value="<?= htmlspecialchars($user_display_name) ?>" readonly aria-readonly="true">
+                                <input type="text" name="search" id="searchInput" class="v-input" placeholder="Start typing a registered name" value="<?= htmlspecialchars($search_query) ?>" autocomplete="off" minlength="1" required role="combobox" aria-autocomplete="list" aria-controls="nameSuggestions" aria-expanded="false">
                                 <button type="submit" class="v-btn" aria-label="Verify beneficiary record">
                                     <span class="v-btn-default"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="v-btn-label">Verify</span></span>
                                     <span class="v-btn-progress" hidden><i aria-hidden="true"></i>Checking</span>
                                 </button>
                             </span>
-                            <small class="v-search-help">For privacy, this lookup cannot search another resident's record.</small>
+                            <div class="v-name-suggestions" id="nameSuggestions" role="listbox" aria-label="Matching beneficiary names" hidden></div>
+                            <small class="v-search-help">Suggestions show masked matches only from your barangay and selected applied batch.</small>
                         </div>
                     </div>
                     <div class="privacy-disclaimer" id="verificationUseNotice">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                        <span>This service displays only records linked to your account. If your record is missing or incorrect, contact PESO for assistance.</span>
+                        <span>Search is limited to your registered barangay and program batches you joined. Do not copy or redistribute another resident's information.</span>
                     </div>
-                    <?php if ($filter_program !== ''): ?>
+                    <?php if ($search_query !== '' || $filter_program !== ''): ?>
                         <a class="verification-reset" href="verification.php">Clear lookup and start again</a>
                     <?php endif; ?>
                 </form>
@@ -314,7 +426,7 @@ if ($search_ready) {
         <?php if ($search_result && $search_result->num_rows > 0): ?>
             <div class="results-header">
                 <h2>Verification Results</h2>
-                <p>Your account-linked records from the selected batch are shown below.</p>
+                <p>Limited matching records from your barangay and selected applied batch are shown below.</p>
             </div>
             
             <div class="results-list">
@@ -411,6 +523,7 @@ if ($search_ready) {
                 <?php
                 $qs = "";
                 if(isset($_GET['program_filter'])) $qs .= "&program_filter=".urlencode($_GET['program_filter']);
+                if(isset($_GET['search'])) $qs .= "&search=".urlencode($_GET['search']);
                 ?>
                 <nav class="pagination-wrapper" aria-label="Verification result pages">
                     <?php if($current_page > 1): ?>
@@ -449,7 +562,23 @@ if ($search_ready) {
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4M16 3v4M4 10h16"></path></svg>
                 </div>
                 <h3>Select the exact batch</h3>
-                <p>Choose your program and exact batch before checking your account-linked record.</p>
+                <p>Choose one of your applied program batches before searching for a resident.</p>
+            </div>
+        <?php elseif ($program_access_denied): ?>
+            <div class="v-no-results" role="alert">
+                <div class="v-no-results-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 5 6v5c0 4.5 2.8 7.6 7 9 4.2-1.4 7-4.5 7-9V6l-7-3Z"></path><path d="M9 9l6 6M15 9l-6 6"></path></svg>
+                </div>
+                <h3>Program not available for lookup</h3>
+                <p>You can search only approved program batches linked to your own application.</p>
+            </div>
+        <?php elseif ($search_too_short): ?>
+            <div class="v-no-results">
+                <div class="v-no-results-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+                <h3>Enter a resident name</h3>
+                <p>Enter the registered name or choose a masked suggestion from your barangay and selected batch.</p>
             </div>
         <?php elseif ($search_ready): ?>
             <div class="v-no-results">
@@ -457,8 +586,8 @@ if ($search_ready) {
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </div>
                 <h3>No Records Found</h3>
-                <p>No account-linked record was found in this batch. If you believe a record is missing, contact PESO for official assistance.</p>
-                <ul class="verification-no-match-reasons"><li>The selected batch may be different.</li><li>Your application may still be awaiting entry or validation.</li><li>The record may not yet be linked to your account.</li><li>Your registered barangay may need correction by PESO.</li></ul>
+                <p>No matching beneficiary was found in your barangay and selected applied batch.</p>
+                <ul class="verification-no-match-reasons"><li>The selected batch may be different.</li><li>The registered spelling may not match.</li><li>The record may still be awaiting entry or validation.</li><li>The resident may be registered in another barangay.</li></ul>
             </div>
         <?php else: ?>
             <div class="v-empty-state">
@@ -466,8 +595,8 @@ if ($search_ready) {
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 2.8 7.6 7 9 4.2-1.4 7-4.5 7-9V6l-7-3Z"></path><circle cx="11" cy="11" r="3"></circle><path d="m13.5 13.5 2 2"></path></svg>
                 </div>
                 <span class="v-empty-kicker">Secure barangay lookup</span>
-                <h3>Start a private verification</h3>
-                <p>Resident records remain hidden until a specific name is entered.</p>
+                <h3>Search your program community</h3>
+                <p>Select a batch you applied to, then search for a beneficiary registered in <?= htmlspecialchars($user_barangay ?: 'your barangay') ?>.</p>
             </div>
         <?php endif; ?>
     </section>
@@ -573,6 +702,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitDefault = submitButton ? submitButton.querySelector('.v-btn-default') : null;
     const submitLabel = submitButton ? submitButton.querySelector('.v-btn-label') : null;
     const submitProgress = submitButton ? submitButton.querySelector('.v-btn-progress') : null;
+    const suggestionList = document.getElementById('nameSuggestions');
+    let suggestionTimer = null;
+    let suggestionRequest = null;
+    let suggestionButtons = [];
+    let activeSuggestion = -1;
+    const suggestionCache = new Map();
     const initialBatchValue = programFilter.value;
     const batchCatalog = Array.from(programFilter.querySelectorAll('option[value]:not([value=""])')).map(option => ({
         value: option.value,
@@ -647,10 +782,166 @@ document.addEventListener('DOMContentLoaded', function() {
     if (initiallySelectedBatch) programTypeFilter.value = initiallySelectedBatch.type;
     rebuildBatchOptions(programTypeFilter.value, initialBatchValue);
 
+    function closeSuggestions() {
+        if (!suggestionList) return;
+        suggestionList.hidden = true;
+        suggestionList.replaceChildren();
+        suggestionButtons = [];
+        activeSuggestion = -1;
+        searchInput.setAttribute('aria-expanded', 'false');
+        searchInput.removeAttribute('aria-activedescendant');
+    }
+
+    function setActiveSuggestion(index) {
+        if (!suggestionButtons.length) return;
+        activeSuggestion = (index + suggestionButtons.length) % suggestionButtons.length;
+        suggestionButtons.forEach((button, buttonIndex) => {
+            const isActive = buttonIndex === activeSuggestion;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        const activeButton = suggestionButtons[activeSuggestion];
+        searchInput.setAttribute('aria-activedescendant', activeButton.id);
+        activeButton.scrollIntoView({ block: 'nearest' });
+    }
+
+    function selectSuggestion(item) {
+        searchInput.value = item.value || '';
+        closeSuggestions();
+        searchInput.focus();
+    }
+
+    function showSuggestionMessage(message) {
+        if (!suggestionList) return;
+        suggestionList.replaceChildren();
+        const state = document.createElement('div');
+        state.className = 'v-suggestion-state';
+        state.textContent = message;
+        suggestionList.appendChild(state);
+        suggestionList.hidden = false;
+        searchInput.setAttribute('aria-expanded', 'true');
+    }
+
+    function renderSuggestions(items) {
+        if (!suggestionList) return;
+        suggestionList.replaceChildren();
+        suggestionButtons = [];
+        activeSuggestion = -1;
+        if (!items.length) {
+            showSuggestionMessage('No matching beneficiary in this batch and barangay.');
+            return;
+        }
+        items.forEach((item, index) => {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.id = `beneficiarySuggestion${index}`;
+            option.className = 'v-suggestion-option';
+            option.setAttribute('role', 'option');
+            option.setAttribute('aria-selected', 'false');
+
+            const avatar = document.createElement('span');
+            avatar.className = 'v-suggestion-avatar';
+            avatar.textContent = item.initial || 'B';
+            if (item.photo) {
+                const image = document.createElement('img');
+                image.src = item.photo;
+                image.alt = '';
+                image.loading = 'lazy';
+                image.addEventListener('error', () => image.remove());
+                avatar.appendChild(image);
+            }
+
+            const copy = document.createElement('span');
+            copy.className = 'v-suggestion-copy';
+            const name = document.createElement('strong');
+            name.textContent = item.label || 'Matching beneficiary';
+            const context = document.createElement('small');
+            context.textContent = 'Matching record in selected applied batch';
+            copy.append(name, context);
+            option.append(avatar, copy);
+            option.addEventListener('mousedown', event => event.preventDefault());
+            option.addEventListener('click', () => selectSuggestion(item));
+            suggestionList.appendChild(option);
+            suggestionButtons.push(option);
+        });
+        suggestionList.hidden = false;
+        searchInput.setAttribute('aria-expanded', 'true');
+    }
+
+    function requestSuggestions() {
+        const prefix = searchInput.value.trim();
+        const batchId = programFilter.value;
+        if (!batchId || prefix.length < 1) {
+            closeSuggestions();
+            return;
+        }
+        const cacheKey = `${batchId}|${prefix.toLocaleLowerCase()}`;
+        if (suggestionCache.has(cacheKey)) {
+            renderSuggestions(suggestionCache.get(cacheKey));
+            return;
+        }
+        if (suggestionRequest) suggestionRequest.abort();
+        suggestionRequest = new AbortController();
+        showSuggestionMessage('Searching your barangay and selected batch...');
+        const suggestionUrl = `verification.php?suggest=1&q=${encodeURIComponent(prefix)}&program_filter=${encodeURIComponent(batchId)}`;
+        fetch(suggestionUrl, {
+            credentials: 'same-origin',
+            cache: 'no-store',
+            signal: suggestionRequest.signal,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Suggestion lookup unavailable');
+                return response.json();
+            })
+            .then(data => {
+                const suggestionItems = Array.isArray(data.items) ? data.items : [];
+                suggestionCache.set(cacheKey, suggestionItems);
+                renderSuggestions(suggestionItems);
+            })
+            .catch(error => {
+                if (error.name !== 'AbortError') showSuggestionMessage('Suggestions are temporarily unavailable. You can still enter the exact name.');
+            });
+    }
+
+    searchInput.addEventListener('input', () => {
+        window.clearTimeout(suggestionTimer);
+        suggestionTimer = window.setTimeout(requestSuggestions, 180);
+    });
+    searchInput.addEventListener('focus', () => {
+        if (searchInput.value.trim().length >= 1 && programFilter.value) requestSuggestions();
+    });
+    searchInput.addEventListener('keydown', event => {
+        if (!suggestionList || suggestionList.hidden || !suggestionButtons.length) {
+            if (event.key === 'Escape') closeSuggestions();
+            return;
+        }
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            setActiveSuggestion(activeSuggestion + 1);
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            setActiveSuggestion(activeSuggestion - 1);
+        } else if (event.key === 'Enter' && activeSuggestion >= 0) {
+            event.preventDefault();
+            suggestionButtons[activeSuggestion].click();
+        } else if (event.key === 'Escape') {
+            closeSuggestions();
+        }
+    });
+    programFilter.addEventListener('change', () => {
+        closeSuggestions();
+        if (searchInput.value.trim().length >= 1) requestSuggestions();
+    });
     programTypeFilter.addEventListener('change', () => {
         rebuildBatchOptions(programTypeFilter.value);
+        closeSuggestions();
+        searchInput.value = '';
         programFilter.dispatchEvent(new Event('change', { bubbles: true }));
         programFilter.focus();
+    });
+    document.addEventListener('click', event => {
+        if (!event.target.closest('.v-resident-field')) closeSuggestions();
     });
 
     function setLookupLoading(isLoading) {
@@ -664,12 +955,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchResults() {
+        const query = searchInput.value.trim();
         const filter = programFilter.value;
-        if (!filter) return;
+        if (query.length < 1 || !filter) return;
         
         setLookupLoading(true);
 
-        const url = `verification.php?program_filter=${encodeURIComponent(filter)}`;
+        const url = `verification.php?search=${encodeURIComponent(query)}&program_filter=${encodeURIComponent(filter)}`;
 
         fetch(url, {
             credentials: 'same-origin',

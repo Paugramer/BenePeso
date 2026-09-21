@@ -87,7 +87,7 @@ while ($row = $availed_programs_result->fetch_assoc()) {
 $activity_log_owned = benepeso_activity_log_supports_user_id($conn);
 $activity_where = $activity_log_owned
     ? "user_id = ? AND actor_role = 'Registered User'"
-    : '1 = 0';
+    : "actor_name IN (?, ?) AND actor_role = 'Registered User'";
 $log_stmt = $conn->prepare(
     "SELECT action_type, module_name, description, created_at
      FROM activity_logs
@@ -96,6 +96,10 @@ $log_stmt = $conn->prepare(
 );
 if ($activity_log_owned) {
     $log_stmt->bind_param("i", $user_id);
+} else {
+    // Legacy deployments do not yet have activity_logs.user_id. Use the same
+    // canonical names written by beneficiary authentication and program events.
+    $log_stmt->bind_param("ss", $basic_name, $user_display_name);
 }
 $log_stmt->execute();
 $activity_logs_result = $log_stmt->get_result();

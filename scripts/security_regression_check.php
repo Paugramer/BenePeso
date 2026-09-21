@@ -31,9 +31,17 @@ try {
     security_check($emailLookupIndex && $emailLookupIndex->num_rows === 3, 'The beneficiary email lookup index is missing or incomplete.');
 
     $userResult = $conn->query(
-        "SELECT user_id, email, barangay FROM users
-         WHERE COALESCE(status, 'Active') <> 'Banned'
-         ORDER BY user_id LIMIT 1"
+        "SELECT DISTINCT u.user_id, u.email, u.barangay, b.program_id, b.full_name
+           FROM users u
+           JOIN beneficiaries b ON b.user_id = u.user_id
+           JOIN programs p ON p.program_id = b.program_id
+          WHERE COALESCE(u.status, 'Active') <> 'Banned'
+            AND p.approval_status = 'Approved'
+            AND TRIM(COALESCE(b.full_name, '')) <> ''
+            AND (UPPER(p.program_name) LIKE '%TUPAD%'
+              OR UPPER(p.program_name) LIKE '%SPES%'
+              OR UPPER(p.program_name) LIKE '%MSME%')
+          ORDER BY u.user_id LIMIT 1"
     );
     $user = $userResult ? $userResult->fetch_assoc() : null;
     security_check(is_array($user), 'No active beneficiary account is available for the regression check.');
@@ -41,6 +49,8 @@ try {
     $userId = (int)$user['user_id'];
     $email = (string)$user['email'];
     $barangay = (string)$user['barangay'];
+    $programId = (int)$user['program_id'];
+    $beneficiaryName = (string)$user['full_name'];
     $actorName = 'BENEPESO SECURITY TEST';
     $description = 'This rolled-back record verifies account-owned audit events.';
 
@@ -77,41 +87,40 @@ try {
     security_check($identity->execute(), 'The cross-role identity query failed.');
     $identity->close();
 
-    $programResult = $conn->query(
-        "SELECT program_id FROM programs
-         WHERE approval_status = 'Approved'
-           AND (UPPER(program_name) LIKE '%TUPAD%'
-             OR UPPER(program_name) LIKE '%SPES%'
-             OR UPPER(program_name) LIKE '%MSME%')
-         ORDER BY program_id LIMIT 1"
+    $programAccess = $conn->prepare(
+        "SELECT 1
+           FROM beneficiaries own
+           JOIN programs p ON p.program_id = own.program_id
+          WHERE own.program_id = ?
+            AND (own.user_id = ? OR (own.user_id IS NULL AND own.email = ?))
+            AND p.approval_status = 'Approved'
+          LIMIT 1"
     );
-    $program = $programResult ? $programResult->fetch_assoc() : null;
-    if (is_array($program)) {
-        $programId = (int)$program['program_id'];
-        $verification = $conn->prepare(
-            "SELECT b.user_id, b.email
-             FROM beneficiaries b
-             JOIN programs p ON b.program_id = p.program_id
-             WHERE b.barangay = ?
-               AND (b.user_id = ? OR (b.user_id IS NULL AND b.email = ?))
-               AND p.approval_status = 'Approved'
-               AND (UPPER(p.program_name) LIKE '%TUPAD%'
-                 OR UPPER(p.program_name) LIKE '%SPES%'
-                 OR UPPER(p.program_name) LIKE '%MSME%')
-               AND b.program_id = ?"
-        );
-        security_check($verification !== false, 'The account-owned verification query could not be prepared.');
-        $verification->bind_param('sisi', $barangay, $userId, $email, $programId);
-        security_check($verification->execute(), 'The account-owned verification query failed.');
-        $verificationResult = $verification->get_result();
-        while ($row = $verificationResult->fetch_assoc()) {
-            $belongsToUser = (int)$row['user_id'] === $userId;
-            $matchesLegacyEmail = $row['user_id'] === null
-                && strcasecmp((string)$row['email'], $email) === 0;
-            security_check($belongsToUser || $matchesLegacyEmail, 'A foreign beneficiary record escaped the ownership filter.');
-        }
-        $verification->close();
+    security_check($programAccess !== false, 'The applied-program access query could not be prepared.');
+    $programAccess->bind_param('iis', $programId, $userId, $email);
+    security_check($programAccess->execute(), 'The applied-program access query failed.');
+    security_check($programAccess->get_result()->num_rows === 1, 'The user cannot access their own applied program.');
+    $programAccess->close();
+
+    $verification = $conn->prepare(
+        "SELECT b.barangay, b.program_id
+           FROM beneficiaries b
+           JOIN programs p ON b.program_id = p.program_id
+          WHERE b.barangay = ?
+            AND p.approval_status = 'Approved'
+            AND LOWER(TRIM(b.full_name)) = LOWER(TRIM(?))
+            AND b.program_id = ?"
+    );
+    security_check($verification !== false, 'The scoped verification query could not be prepared.');
+    $verification->bind_param('ssi', $barangay, $beneficiaryName, $programId);
+    security_check($verification->execute(), 'The scoped verification query failed.');
+    $verificationResult = $verification->get_result();
+    security_check($verificationResult->num_rows >= 1, 'The scoped verification lookup found no matching record.');
+    while ($row = $verificationResult->fetch_assoc()) {
+        security_check(strcasecmp((string)$row['barangay'], $barangay) === 0, 'A record outside the user barangay escaped the verification scope.');
+        security_check((int)$row['program_id'] === $programId, 'A record outside the selected applied program escaped the verification scope.');
     }
+    $verification->close();
 
     // Deployment compatibility: PHP may be released before the additive SQL
     // migration reaches production. A temporary legacy-shaped table confirms

@@ -3249,6 +3249,15 @@ input[type="number"] { -moz-appearance: textfield; }
 .beneficiary-programs-page .program-card .program-card-schedule strong { font-size: 12px; line-height: 1.45; }
 .beneficiary-programs-page .program-card .program-btn,
 .beneficiary-programs-page .program-card .btn-check-status { width: 100%; min-height: 46px; height: auto; }
+.beneficiary-programs-page .program-card .program-record-meta {
+    min-height: 42px;
+    box-sizing: border-box;
+    align-items: center;
+}
+
+@media (max-width: 800px) {
+    .beneficiary-programs-page .program-card .program-record-meta { min-height: 0; }
+}
 
 /* Tighter modal proportions remove unused side space and clarify reading order. */
 .beneficiary-programs-page #programDetailsModal .program-details-dialog { width: min(920px, calc(100vw - 48px)); max-width: 920px !important; max-height: min(690px, calc(100dvh - 48px)); }
