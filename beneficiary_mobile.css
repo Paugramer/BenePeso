@@ -79,9 +79,10 @@
   /* Public index */
   .public-index-page .public-home-hero.search-hero.welcome-area {
     min-height: 0 !important;
-    padding: 30px 0 12px !important;
+    padding: 26px 0 0 !important;
   }
-  .public-index-page .public-home-hero-grid { gap: 14px !important; }
+  .public-index-page .public-home-hero-inner { display: grid !important; gap: 12px !important; }
+  .public-index-page .public-home-hero-grid { gap: 12px !important; }
   .public-index-page .public-hero-copy,
   .public-index-page .public-home-hero .centered-text { text-align: center !important; }
   .public-index-page .public-hero-copy .welcome-badge { margin-inline: auto !important; }
@@ -96,7 +97,7 @@
     font-size: 13px !important;
     line-height: 1.62 !important;
   }
-  .public-index-page .public-hero-actions { gap: 8px !important; margin-top: 20px !important; }
+  .public-index-page .public-hero-actions { gap: 8px !important; margin-top: 16px !important; }
   .public-index-page .public-hero-actions a {
     width: 100%;
     min-height: 44px !important;
@@ -107,16 +108,41 @@
   .public-index-page .public-program-shortcuts > div { justify-content: center; }
   /* The summary already repeats these three shortcuts on a phone. */
   .public-index-page:not(.public-about-page) .public-program-shortcuts { display: none !important; }
-  .public-index-page .public-hero-summary { padding: 15px !important; border-radius: 15px !important; text-align: center; }
+  .public-index-page .public-hero-summary { padding: 13px !important; border-radius: 15px !important; text-align: center; }
   .public-index-page .public-summary-head { justify-content: center !important; flex-wrap: wrap; }
+  .public-index-page .public-summary-count { min-height: 0 !important; margin: 12px 0 !important; }
   .public-index-page .public-summary-count strong { font-size: 34px !important; }
-  .public-index-page .public-summary-programs a { min-height: 44px; padding: 6px 10px !important; }
+  .public-index-page .public-summary-programs { gap: 6px !important; }
+  .public-index-page .public-summary-programs > a {
+    grid-template-columns: 38px minmax(0, 1fr) 38px !important;
+    gap: 7px !important;
+    min-height: 50px !important;
+    padding: 5px 7px !important;
+    align-items: center !important;
+  }
   .public-index-page .public-summary-programs a > i,
-  .public-index-page .public-summary-programs a > em { align-self: center; justify-self: center; }
+  .public-index-page .public-summary-programs a > em {
+    align-self: center !important;
+    justify-self: center !important;
+  }
+  .public-index-page .public-summary-programs a > i { width: 36px !important; height: 36px !important; }
+  .public-index-page .public-summary-programs a > span {
+    align-content: center !important;
+    justify-items: center !important;
+    text-align: center !important;
+  }
+  .public-index-page .public-summary-programs a b { width: 100%; text-align: center !important; }
   .public-index-page .public-summary-programs small { display: none !important; }
-  .public-index-page .public-summary-foot { gap: 5px; align-items: center !important; flex-direction: column; text-align: center; }
+  .public-index-page .public-summary-foot {
+    gap: 4px !important;
+    align-items: center !important;
+    flex-direction: column;
+    margin-top: 10px !important;
+    padding-top: 9px !important;
+    text-align: center;
+  }
 
-  .public-index-page .public-home-hero .v-search-box-centered { margin-top: 10px !important; }
+  .public-index-page .public-home-hero .v-search-box-centered { margin: 0 !important; }
   .public-index-page .public-home-hero .v-search-box-centered .input-wrapper {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) !important;
@@ -142,7 +168,7 @@
      repeats the same schedule control and only adds unnecessary scrolling. */
   .public-index-page .public-directory-toolbar { display: none !important; }
 
-  .public-index-page .public-trust-strip { margin: 0 !important; }
+  .public-index-page .public-trust-strip { margin: 0 !important; padding-top: 12px !important; }
   .public-index-page .public-trust-strip .content-wrap { width: calc(100% - 24px) !important; }
   .public-index-page .public-trust-strip .content-wrap > span {
     grid-template-columns: 34px minmax(0, 1fr) !important;
@@ -205,9 +231,9 @@
   /* Public About page */
   .public-about-page .public-about-hero.search-hero.welcome-area {
     min-height: 0 !important;
-    padding: 40px 0 30px !important;
+    padding: 26px 0 18px !important;
   }
-  .public-about-page .public-about-hero-inner { width: calc(100% - 24px) !important; gap: 20px !important; }
+  .public-about-page .public-about-hero-inner { width: calc(100% - 24px) !important; gap: 14px !important; }
   .public-about-page .public-about-hero-copy { text-align: center !important; }
   .public-about-page .public-about-hero-copy .welcome-badge { margin-inline: auto !important; }
   .public-about-page .public-about-hero .welcome-title {
@@ -218,8 +244,8 @@
   .public-about-page .public-about-hero .centered-text { font-size: 13px !important; line-height: 1.6 !important; text-align: center !important; }
   .public-about-page .public-about-hero .public-hero-actions { display: grid !important; grid-template-columns: 1fr; gap: 8px !important; }
   .public-about-page .public-about-hero .public-hero-actions a { width: 100%; min-height: 44px !important; padding: 10px 14px !important; font-size: 11.5px !important; }
-  .public-about-page .public-about-identity { width: 100% !important; padding: 16px !important; }
-  .public-about-page .public-about-seal { width: 66px !important; height: 66px !important; }
+  .public-about-page .public-about-identity { width: 100% !important; padding: 14px !important; }
+  .public-about-page .public-about-seal { width: 58px !important; height: 58px !important; }
   .public-about-page .public-about-overview { width: calc(100% - 24px) !important; padding: 36px 0 40px !important; }
   .public-about-page .public-about-heading h2,
   .public-about-page .public-about-standards h2,
@@ -296,7 +322,7 @@
     width: fit-content !important;
     max-width: 100%;
     min-height: 0 !important;
-    margin: 0 auto 8px !important;
+    margin: 0 auto 8px 0 !important;
     justify-content: center !important;
   }
   .auth-page .auth-return {
@@ -373,7 +399,7 @@
   .auth-signup .auth-account-footer > span[aria-hidden="true"] { display: none !important; }
   .auth-signup .auth-account-footer .small,
   .auth-signup .auth-account-footer .auth-support-link { width: 100% !important; text-align: center; }
-  .auth-page .bp-back-to-top { display: none !important; }
+  .bp-back-to-top { display: none !important; }
 
   /* Auth and beneficiary dialogs */
   .auth-page .modal-bg,
@@ -444,42 +470,64 @@
   .home-page .home-readiness-list { margin-top: 0 !important; }
 
   /* The desktop footer's generous spacing becomes excessive on a phone. */
-  .home-page .site-footer {
+  .site-footer {
     min-height: 0 !important;
     margin-top: 0 !important;
     padding: 28px 0 18px !important;
   }
-  .home-page .site-footer .footer-grid {
+  .site-footer .footer-grid {
     grid-template-columns: minmax(0, 1fr) !important;
-    gap: 20px !important;
+    gap: 18px !important;
     text-align: center !important;
   }
-  .home-page .site-footer .footer-brand {
+  .site-footer .footer-brand {
     align-items: center !important;
     justify-content: center !important;
-    flex-direction: row !important;
-    gap: 10px !important;
+    flex-direction: column !important;
+    gap: 7px !important;
+    min-width: 0 !important;
+    text-align: center !important;
   }
-  .home-page .site-footer .footer-logo { width: 44px !important; height: 44px !important; }
-  .home-page .site-footer .footer-title { font-size: 18px !important; }
-  .home-page .site-footer .footer-sub { max-width: 230px; margin-top: 2px !important; font-size: 8px !important; line-height: 1.45; }
-  .home-page .site-footer .footer-col { display: grid; justify-items: center; gap: 5px; }
-  .home-page .site-footer .footer-head { margin: 0 0 3px !important; font-size: 10px !important; }
-  .home-page .site-footer .footer-col a,
-  .home-page .site-footer .footer-text {
+  .site-footer .footer-brand > div,
+  .site-footer .brand-text-footer { width: 100%; min-width: 0; }
+  .site-footer .footer-logo {
+    width: 52px !important;
+    height: 52px !important;
+    flex: 0 0 52px !important;
+    margin: 0 auto !important;
+  }
+  .site-footer .footer-title { font-size: 18px !important; line-height: 1.15 !important; }
+  .site-footer .footer-sub {
+    max-width: 260px;
+    margin: 3px auto 0 !important;
+    font-size: 8px !important;
+    line-height: 1.45;
+    white-space: normal !important;
+  }
+  .site-footer .footer-col { display: grid; justify-items: center; gap: 4px; }
+  .site-footer .footer-grid > .footer-col:nth-child(2) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(290px, 100%);
+    margin-inline: auto;
+    column-gap: 10px;
+  }
+  .site-footer .footer-grid > .footer-col:nth-child(2) .footer-head { grid-column: 1 / -1; }
+  .site-footer .footer-head { margin: 0 0 3px !important; font-size: 10px !important; }
+  .site-footer .footer-col a,
+  .site-footer .footer-text {
     min-height: 0 !important;
     margin: 0 !important;
     padding: 2px 0 !important;
     font-size: 10.5px !important;
     line-height: 1.45 !important;
   }
-  .home-page .site-footer .footer-contact-link {
+  .site-footer .footer-contact-link {
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
     gap: 6px;
   }
-  .home-page .site-footer .footer-bottom {
+  .site-footer .footer-bottom {
     align-items: center !important;
     flex-direction: column !important;
     gap: 5px !important;
@@ -489,8 +537,7 @@
     font-size: 9px !important;
     line-height: 1.45;
   }
-  .home-page .site-footer .footer-mini { max-width: 290px; letter-spacing: .06em; }
-  .home-page .bp-back-to-top { display: none !important; }
+  .site-footer .footer-mini { max-width: 290px; letter-spacing: .06em; }
   .home-page .bp-service-snapshot-v2 .bp-snapshot-controls {
     grid-template-columns: minmax(0, 1fr) !important;
     justify-items: center !important;

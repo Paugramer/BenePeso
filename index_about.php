@@ -32,7 +32,7 @@ if (isset($_SESSION['role'])) {
     <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="index.css?v=28">
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=3">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=6">
 <script src="frontend_polish.js?v=20260921" defer></script>
 </head>
 <body class="public-index-page public-about-page">
