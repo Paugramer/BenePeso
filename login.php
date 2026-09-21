@@ -34,7 +34,7 @@ $masked_email = "";
 
 if (!empty($fp_email) && !empty($fp_role)) {
     if ($fp_role === 'admin') {
-        $reset_name = 'System Administrator';
+        $reset_name = 'PESO Vinzons Administrator';
     } else {
         $tbl = $fp_role === 'peso_staff' ? 'peso_staff' : 'users';
         $stmt_n = $conn->prepare("SELECT first_name, last_name FROM $tbl WHERE email=?");
@@ -88,11 +88,11 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=31" />
+  <link rel="stylesheet" href="style.css?v=32" />
   <link rel="stylesheet" href="frontend_polish.css?v=20260921">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=11">
-<script src="frontend_polish.js?v=15" defer></script>
+  <link rel="stylesheet" href="auth_refresh.css?v=12">
+<script src="frontend_polish.js?v=20260921" defer></script>
   <?php if (benepeso_turnstile_enabled()): ?>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <?php endif; ?>

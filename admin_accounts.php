@@ -9,8 +9,8 @@ if (!isset($_SESSION["admin_id"])) {
 }
 
 $admin_id = (int)$_SESSION["admin_id"];
-$admin_name = $_SESSION["admin_name"] ?? "Administrator";
-$admin_display_name = "PESO VINZONS";
+$admin_name = "PESO Vinzons";
+$admin_display_name = "PESO Vinzons";
 $admin_pic = "default_avatar.png";
 $pic_path = "uploads/admin_pics/" . $admin_pic;
 if (!file_exists($pic_path) || empty($admin_pic)) { $pic_path = "img/default_avatar.png"; }
@@ -288,7 +288,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<script src="frontend_polish.js?v=15" defer></script>
+<script src="frontend_polish.js?v=20260921" defer></script>
 </head>
 <body class="admin-accounts-page accounts-view-<?= e($view) ?>">
 

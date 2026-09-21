@@ -246,7 +246,7 @@ ensure_application_source_schema($conn);
 /* =========================
    ADMIN INFO
 ========================= */
-$admin_name = $_SESSION["admin_name"] ?? "System Admin";
+$admin_name = "PESO Vinzons";
 $admin_pic = "default_avatar.png";
 
 if (table_exists($conn, "admins")) {
@@ -256,26 +256,11 @@ if (table_exists($conn, "admins")) {
     $stmt->execute();
     $result = $stmt->get_result();
     if ($row = $result->fetch_assoc()) {
-      if (isset($row["first_name"]) && isset($row["last_name"])) {
-          $admin_name = trim($row["first_name"] . " " . $row["last_name"]);
-      } elseif (isset($row["name"])) {
-          $admin_name = trim($row["name"]);
-      } elseif (isset($row["full_name"])) {
-          $admin_name = trim($row["full_name"]);
-      } elseif (isset($row["username"])) {
-          $admin_name = trim($row["username"]);
-      }
       $admin_pic = !empty($row["profile_picture"]) ? $row["profile_picture"] : "default_avatar.png";
     }
     $stmt->close();
   }
 }
-
-if (empty(trim($admin_name))) {
-    $admin_name = "System Admin";
-}
-
-$admin_name = "PESO VINZONS";
 
 $pic_path = "uploads/admin_pics/" . $admin_pic;
 if (!file_exists($pic_path) || empty($admin_pic)) {
@@ -1720,7 +1705,7 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
 <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
-<script src="frontend_polish.js?v=15" defer></script>
+<script src="frontend_polish.js?v=20260921" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
 </head>
 <body class="admin-beneficiaries-page">

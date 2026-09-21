@@ -57,7 +57,7 @@ function showStatus(type) {
 
     if (type === 'success') {
         icon.innerHTML = '<div style="font-size:3rem;">✅</div>';
-        title.innerText = "Registered Successfully!";
+        title.innerText = "Registration Successful!";
         msg.innerText = "Your application is now being reviewed by our staff. Check your dashboard for updates.";
     } else if (type === 'ongoing') {
         icon.innerHTML = '<div style="font-size:3rem;">⏳</div>';

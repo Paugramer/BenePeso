@@ -2033,7 +2033,7 @@ body.auth-page.auth-page-leaving::after {
 }
 
 .auth-page .brand::before {
-  content: "PESO VINZONS • OFFICIAL SERVICE PORTAL";
+  content: "PESO Vinzons • OFFICIAL SERVICE PORTAL";
   order: -1;
   color: rgba(255, 255, 255, .72);
   font-size: 9px;

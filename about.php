@@ -189,7 +189,7 @@ try {
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=7">
-<script src="frontend_polish.js?v=20260919c" defer></script>
+    <script src="frontend_polish.js?v=20260921" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body class="about-page">
@@ -251,7 +251,7 @@ try {
             <div class="welcome-left stagger-1">
                 <div class="welcome-badge">
                     <span class="badge-dot"></span>
-                    ABOUT BENEPESO &bull; PESO VINZONS
+                    ABOUT BENEPESO &bull; PESO Vinzons
                 </div>
                 <h1 class="welcome-title">
                     Connecting <span class="welcome-highlight">Vinzons</span> to opportunity

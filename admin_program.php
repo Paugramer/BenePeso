@@ -33,8 +33,8 @@ if (!isset($_SESSION["admin_id"])) { header("Location: login.php"); exit(); }
 sync_program_statuses($conn);
 
 $admin_id = (int)$_SESSION["admin_id"];
-$admin_name = "System Administrator";
-$admin_position = "Admin";
+$admin_name = "PESO Vinzons";
+$admin_position = "Administrator";
 $flash = $_SESSION["flash"] ?? "";
 $flash_type = $_SESSION["flash_type"] ?? "success";
 unset($_SESSION["flash"], $_SESSION["flash_type"]);
@@ -44,19 +44,6 @@ $admin_pic = "default_avatar.png";
 $pic_path = "uploads/admin_pics/" . $admin_pic;
 if (!file_exists($pic_path) || empty($admin_pic)) { $pic_path = "img/default_avatar.png"; }
 
-// Keep the signed-in identity consistent with the Admin dashboard.
-$admin_info = $conn->prepare("SELECT email FROM admins WHERE admin_id = ? LIMIT 1");
-if ($admin_info) {
-    $admin_info->bind_param("i", $admin_id);
-    $admin_info->execute();
-    $admin_result = $admin_info->get_result();
-    if ($admin_row = $admin_result->fetch_assoc()) {
-        $email_parts = explode('@', (string)$admin_row['email']);
-        $admin_name = ucfirst($email_parts[0]);
-        $admin_position = "Administrator";
-    }
-    $admin_info->close();
-}
 if (!function_exists('e')) {
     function e($s){ return htmlspecialchars((string)($s ?? ""), ENT_QUOTES, "UTF-8"); }
 }
@@ -108,7 +95,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->bind_param("si", $new_status, $program_id);
         if ($stmt->execute() && $stmt->affected_rows === 1) {
             sync_program_statuses($conn);
-            $_SESSION["flash"] = "Batch " . $new_status . " successfully.";
+            $_SESSION["flash"] = "Batch status updated to " . $new_status . ".";
         } else {
             $_SESSION["flash"] = "The batch was not found or has already been reviewed.";
             $_SESSION["flash_type"] = "error";
@@ -304,7 +291,7 @@ if ($active_program) {
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<script src="frontend_polish.js?v=15" defer></script>
+<script src="frontend_polish.js?v=20260921" defer></script>
 </head>
 <body>
 <div class="page-wrap">

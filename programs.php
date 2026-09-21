@@ -891,7 +891,7 @@ if ($barangay_summary_result) {
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-<script src="frontend_polish.js?v=20260919c" defer></script>
+<script src="frontend_polish.js?v=20260921" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
 <body class="beneficiary-programs-page">
@@ -1280,7 +1280,7 @@ if ($barangay_summary_result) {
 <div class="modal show" id="submissionErrorModal">
     <div class="modal-content alert-box<?= $error_type === 'tupad_household' ? ' eligibility-notice' : '' ?>">
         <?php if ($error_type === 'tupad_household'): ?>
-        <div class="notice-agency">PESO VINZONS &bull; TUPAD PROGRAM</div>
+        <div class="notice-agency">PESO Vinzons &bull; TUPAD PROGRAM</div>
         <div class="notice-emblem" aria-hidden="true">
             <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v5.2c0 4.7 3.2 8.1 7.5 9.8 4.3-1.7 7.5-5.1 7.5-9.8V6L12 3Z"/><path d="M8.7 12.1 11 14.4l4.6-4.8"/></svg>
         </div>

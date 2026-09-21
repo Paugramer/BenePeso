@@ -129,26 +129,9 @@ function format_date_value($value): string {
 /* =========================
    ADMIN INFO
 ========================= */
-$admin_name = "System Administrator";
-$admin_position = "Admin";
+$admin_name = "PESO Vinzons";
+$admin_position = "Administrator";
 $admin_pic = "default_avatar.png";
-
-// FIXED QUERY: Only selecting 'email' since first_name, last_name, etc., are not in the db schema.
-if (table_exists($conn, "admins")) {
-  $stmt = $conn->prepare("SELECT email FROM admins WHERE admin_id = ? LIMIT 1");
-  if ($stmt) {
-    $stmt->bind_param("i", $admin_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($row = $result->fetch_assoc()) {
-      // Use the part of the email before the @ as a display name
-      $email_parts = explode('@', $row["email"]);
-      $admin_name = ucfirst($email_parts[0]); 
-      $admin_position = "Administrator";
-    }
-    $stmt->close();
-  }
-}
 
 $pic_path = "uploads/admin_pics/" . $admin_pic; 
 if (!file_exists($pic_path) || empty($admin_pic)) { $pic_path = "img/default_avatar.png"; }
@@ -359,7 +342,7 @@ if (table_exists($conn, "activity_logs")) {
   <link rel="stylesheet" href="dashboard_polish.css?v=8">
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
-<script src="frontend_polish.js?v=15" defer></script>
+<script src="frontend_polish.js?v=20260921" defer></script>
 <script src="dashboard_workload.js?v=1" defer></script>
 </head>
 <body>

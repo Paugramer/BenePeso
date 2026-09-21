@@ -516,7 +516,7 @@ header("Expires: 0");
 
 echo $excel_header;
 
-echo '<tr><td colspan="4" class="no-border" style="text-align:center; font-weight:bold; font-size: 14pt;">LGU Vinzons PESO</td></tr>';
+echo '<tr><td colspan="4" class="no-border" style="text-align:center; font-weight:bold; font-size: 14pt;">PESO Vinzons</td></tr>';
 echo '<tr><td colspan="4" class="no-border" style="text-align:center;">Official List of Beneficiaries</td></tr>';
 echo '<tr><td colspan="4" class="no-border" style="text-align:center; font-weight:bold; font-size: 12pt;">' . htmlspecialchars($reportTitle) . '</td></tr>';
 echo '<tr><td colspan="4" class="no-border" style="text-align:center;">' . $subtitle . '</td></tr>';

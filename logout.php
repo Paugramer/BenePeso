@@ -25,9 +25,9 @@ if ($role !== null) {
     $desc = "";
 
     if ($role === "admin") {
-        $actor_name = "System Admin";
+        $actor_name = "PESO Vinzons";
         $actor_role = "Administrator";
-        $desc = "Admin logged out securely.";
+        $desc = "Administrator logged out securely.";
         
         // Added target_name to query and bind_param
         $stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");

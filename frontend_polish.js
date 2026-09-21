@@ -16,7 +16,7 @@
     loader.className = 'bp-page-loader';
     loader.setAttribute('role', 'status');
     loader.setAttribute('aria-live', 'polite');
-    loader.setAttribute('aria-label', 'Preparing BenePeso services');
+    loader.setAttribute('aria-label', 'Preparing BENEPESO services');
     loader.innerHTML =
       '<div class="bp-loader-visual" aria-hidden="true">' +
         '<span class="bp-loader-glow"></span>' +
@@ -36,7 +36,7 @@
       '<div class="bp-loader-brand"><strong>BENEPESO</strong><span>Profiling &bull; Eligibility &bull; Verification</span></div>' +
       '<p>Preparing your services</p>' +
       '<div class="bp-loader-progress" aria-hidden="true"><span></span></div>' +
-      '<span class="bp-loader-sr">Please wait while BenePeso finishes loading.</span>';
+      '<span class="bp-loader-sr">Please wait while BENEPESO finishes loading.</span>';
 
     document.body.prepend(loader);
     document.documentElement.classList.add('bp-page-loading');
@@ -506,7 +506,7 @@
       const settings = Object.assign({
         variant: 'save',
         title: 'Saving changes',
-        message: 'Please wait while BenePeso completes this request.'
+        message: 'Please wait while BENEPESO completes this request.'
       }, options || {});
 
       if (activeLoader) {
@@ -546,7 +546,7 @@
       ).toLowerCase();
 
       if (endpoint === 'logout.php') {
-        return { variant: 'logout', title: 'Signing you out', message: 'Closing your BenePeso session securely...' };
+        return { variant: 'logout', title: 'Signing you out', message: 'Closing your BENEPESO session securely...' };
       }
       if (endpoint === 'process_login.php') {
         return { variant: 'login', title: 'Signing you in', message: 'Checking your credentials securely...' };
@@ -575,7 +575,7 @@
       if (action.includes('beneficiary')) {
         return { variant: 'save', title: 'Saving beneficiary record', message: 'Validating and saving the beneficiary information...' };
       }
-      return { variant: 'save', title: 'Saving changes', message: 'Please wait while BenePeso completes this request...' };
+      return { variant: 'save', title: 'Saving changes', message: 'Please wait while BENEPESO completes this request...' };
     }
 
     document.addEventListener('submit', (event) => {

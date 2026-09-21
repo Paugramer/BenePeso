@@ -83,7 +83,7 @@ if ($stmt_admin) {
             $_SESSION["fail_count"] = 0;
             $_SESSION["lock_until"] = 0;
             $_SESSION["admin_id"] = (int)$row["admin_id"];
-            $_SESSION["admin_name"] = "Administrator"; 
+            $_SESSION["admin_name"] = "PESO Vinzons";
             auth_activate_role("admin");
             auth_regenerate_session();
             if ($remember_requested) {
@@ -93,7 +93,7 @@ if ($stmt_admin) {
             }
 
             // DIRECT UNIFIED SQL LOGGING FOR ADMIN
-            $log_stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES ('System Admin', 'Administrator', 'Auth', 'LOGIN', 'System', 'Admin logged in securely.', NOW())");
+            $log_stmt = $conn->prepare("INSERT INTO activity_logs (actor_name, actor_role, module_name, action_type, target_name, description, created_at) VALUES ('PESO Vinzons', 'Administrator', 'Auth', 'LOGIN', 'System', 'Administrator logged in securely.', NOW())");
             if ($log_stmt) {
                 $log_stmt->execute();
                 $log_stmt->close();

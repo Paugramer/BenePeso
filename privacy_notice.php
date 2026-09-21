@@ -8,7 +8,7 @@ $embedded = isset($_GET['embedded']) && $_GET['embedded'] === '1';
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Notice | BenePeso</title>
+  <title>Privacy Notice | BENEPESO</title>
   <link rel="icon" href="img/pesologo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -66,7 +66,7 @@ $embedded = isset($_GET['embedded']) && $_GET['embedded'] === '1';
       <div>
         <div class="eyebrow">Official Data Protection Notice</div>
         <h1>Privacy Notice</h1>
-        <p>How the Public Employment Service Office (PESO) Vinzons collects, uses, stores, and protects personal data in BenePeso.</p>
+        <p>How the Public Employment Service Office (PESO) Vinzons collects, uses, stores, and protects personal data in BENEPESO.</p>
         <div class="meta">Notice version: 13 August 2026</div>
       </div>
       <div class="hero-icon" aria-hidden="true"><svg width="62" height="62" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><rect x="8.5" y="10" width="7" height="6" rx="1"/><path d="M10 10V8.5a2 2 0 0 1 4 0V10"/></svg></div>
@@ -78,7 +78,7 @@ $embedded = isset($_GET['embedded']) && $_GET['embedded'] === '1';
   <div class="summary"><span class="summary-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span><p>PESO Vinzons processes personal data to register beneficiaries, determine program eligibility, manage applications and assistance, communicate application results, verify records, and prepare required government reports.</p></div>
 
   <h2>Who is responsible for your information</h2>
-  <p>The Municipality of Vinzons, through PESO Vinzons, is the personal information controller for BenePeso. Privacy questions and requests may be submitted in person to PESO Vinzons at the Municipality of Vinzons, Camarines Norte.</p>
+  <p>The Municipality of Vinzons, through PESO Vinzons, is the personal information controller for BENEPESO. Privacy questions and requests may be submitted in person to PESO Vinzons at the Municipality of Vinzons, Camarines Norte.</p>
 
   <h2>Information we collect</h2>
   <ul>
@@ -96,13 +96,13 @@ $embedded = isset($_GET['embedded']) && $_GET['embedded'] === '1';
   <p>Processing is based on the functions and legal obligations of the Municipality and PESO, applicable program rules, and—where required—your specific consent. The checkbox shown during registration and application records that this notice was presented and understood; it does not waive any right under the Data Privacy Act of 2012.</p>
 
   <h2>Who may receive or access it</h2>
-  <p>Access is limited to authorized PESO and municipal personnel whose duties require it. Information may be disclosed to DOLE, other competent government agencies, auditors, or authorized service providers when required for the relevant program, reporting obligation, public function, or by law. BenePeso does not sell personal data.</p>
+  <p>Access is limited to authorized PESO and municipal personnel whose duties require it. Information may be disclosed to DOLE, other competent government agencies, auditors, or authorized service providers when required for the relevant program, reporting obligation, public function, or by law. BENEPESO does not sell personal data.</p>
 
   <h2>Retention and deletion</h2>
   <p>Records are kept only for the period necessary to administer the program, meet government records-retention and audit requirements, resolve claims, and comply with law. When retention is no longer required, records must be securely deleted, anonymized, or disposed of under the Municipality's approved records policy.</p>
 
   <h2>Protection of your information</h2>
-  <p>BenePeso uses role-based access, authenticated accounts, password hashing, activity records, and controlled administrative access. PESO Vinzons also applies appropriate organizational, physical, and technical safeguards according to the sensitivity and risk of the information.</p>
+  <p>BENEPESO uses role-based access, authenticated accounts, password hashing, activity records, and controlled administrative access. PESO Vinzons also applies appropriate organizational, physical, and technical safeguards according to the sensitivity and risk of the information.</p>
 
   <h2>Your rights</h2>
   <p>Subject to applicable law, you may ask to be informed, access your personal data, correct inaccurate or incomplete data, object to certain processing, request erasure or blocking, obtain data portability where applicable, withdraw consent when processing depends on consent, and seek damages. You may also lodge a complaint with the National Privacy Commission.</p>

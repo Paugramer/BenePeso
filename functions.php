@@ -6,7 +6,7 @@ function logActivity($conn, $actor_id, $module, $action, $target, $description) 
     $actor_role = 'System';
 
     if (isset($_SESSION['admin_id'])) {
-        $actor_name = 'PESO VINZONS';
+        $actor_name = 'PESO Vinzons';
         $actor_role = 'Administrator';
     } elseif (isset($_SESSION['staff_id'])) {
         $staff_id = (int)$actor_id;

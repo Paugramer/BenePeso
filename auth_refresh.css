@@ -52,7 +52,7 @@ body.auth-page::before {
 
 .auth-page .brand { max-width: 224px; gap: 12px; }
 .auth-page .brand::before {
-  content: "PESO VINZONS  /  OFFICIAL PORTAL";
+  content: "PESO Vinzons  /  OFFICIAL PORTAL";
   font-size: 9px;
   letter-spacing: .13em;
 }

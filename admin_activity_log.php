@@ -8,26 +8,11 @@ if (!isset($_SESSION["admin_id"])) {
 }
 
 $admin_id = (int)$_SESSION["admin_id"];
-$admin_name = "System Administrator";
-$admin_position = "Admin";
+$admin_name = "PESO Vinzons";
+$admin_position = "Administrator";
 $admin_pic = "default_avatar.png";
 $pic_path = "uploads/admin_pics/" . $admin_pic;
 if (!file_exists($pic_path) || empty($admin_pic)) { $pic_path = "img/default_avatar.png"; }
-
-$admin_info = $conn->prepare("SELECT email FROM admins WHERE admin_id = ? LIMIT 1");
-if ($admin_info) {
-    $admin_info->bind_param("i", $admin_id);
-    $admin_info->execute();
-    $admin_result = $admin_info->get_result();
-    if ($admin_row = $admin_result->fetch_assoc()) {
-        $email_parts = explode('@', (string)$admin_row['email']);
-        $admin_name = ucfirst($email_parts[0]);
-        $admin_position = "Administrator";
-    }
-    $admin_info->close();
-}
-
-$admin_name = "PESO VINZONS";
 
 function h($v){
     return htmlspecialchars((string)($v ?? ""), ENT_QUOTES, "UTF-8");
@@ -200,7 +185,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<script src="frontend_polish.js?v=15" defer></script>
+<script src="frontend_polish.js?v=20260921" defer></script>
 </head>
 <body>
 
@@ -364,7 +349,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
                                     $raw_actor_role = trim((string)($row['actor_role'] ?? ''));
                                     $legacy_admin_entry = stripos($raw_description, 'Admin ') === 0;
                                     if ($legacy_admin_entry) {
-                                        $raw_actor_name = 'PESO VINZONS';
+                                        $raw_actor_name = 'PESO Vinzons';
                                         $raw_actor_role = 'Administrator';
                                     } elseif (($raw_actor_name === '' || strcasecmp($raw_actor_name, 'PESO Staff') === 0)
                                         && !empty($row['staff_id']) && isset($staff_names[(int)$row['staff_id']])) {
@@ -379,7 +364,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
                                     
                                     if ($module_name === 'Administrator' || $module_name === 'PESO Staff') {
                                         $display_role = $module_name;
-                                        $actor_name = ($module_name === 'Administrator') ? 'System Admin' : 'Staff Member';
+                                        $actor_name = ($module_name === 'Administrator') ? 'PESO Vinzons' : 'Staff Member';
                                         $module_name = 'Auth';
                                         $action_title = 'LOGIN';
                                         $desc = 'User logged in securely.';
@@ -387,13 +372,17 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
 
                                     if (strtolower($actor_name) === 'admin' || strtolower($actor_name) === 'system admin' || $actor_name === '0') {
                                         $display_role = 'Administrator';
-                                        $actor_name = 'System Admin';
+                                        $actor_name = 'PESO Vinzons';
                                     }
                                     
                                     if ($display_role === 'Unknown') {
                                         if (stripos($actor_name, 'Admin') !== false) $display_role = 'Administrator';
                                         elseif (!empty($row['staff_id'])) $display_role = 'PESO Staff';
                                         else $display_role = 'User';
+                                    }
+
+                                    if ($display_role === 'Administrator') {
+                                        $actor_name = 'PESO Vinzons';
                                     }
 
                                     if (strtolower($module_name) === 'authentication') $module_name = 'Auth';
