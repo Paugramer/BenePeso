@@ -292,14 +292,22 @@
   .auth-page .right,
   .auth-page .card.compact .right { min-width: 0 !important; padding: 18px 15px 20px !important; }
   .auth-page .right-inner { width: 100% !important; max-width: none !important; }
-  .auth-page .auth-context-bar { min-height: 26px; margin-bottom: 8px !important; justify-content: center !important; }
+  .auth-page .auth-context-bar {
+    width: fit-content !important;
+    max-width: 100%;
+    min-height: 0 !important;
+    margin: 0 auto 8px !important;
+    justify-content: center !important;
+  }
   .auth-page .auth-return {
-    width: auto !important;
-    min-height: 26px;
+    width: fit-content !important;
+    min-height: 28px !important;
     flex: 0 0 auto !important;
-    padding: 5px 8px !important;
-    border: 0 !important;
-    background: transparent !important;
+    margin: 0 !important;
+    padding: 5px 10px !important;
+    border: 1px solid #d7e5de !important;
+    border-radius: 999px !important;
+    background: #f7fbf9 !important;
     box-shadow: none !important;
     font-size: 10px !important;
   }
@@ -318,7 +326,28 @@
     min-height: 17px !important;
   }
   .auth-page .has-leading-icon input { padding-left: 42px !important; }
-  .auth-page .auth-form-options { min-height: 24px !important; gap: 10px; margin: 1px 0 10px !important; font-size: 10px !important; }
+  .auth-page .auth-form-options {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 20px !important;
+    gap: 8px !important;
+    margin: 2px 0 10px !important;
+    padding: 0 !important;
+    font-size: 10px !important;
+  }
+  .auth-page .remember-option,
+  .auth-page .auth-form-options > a {
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.3 !important;
+  }
+  .auth-page .auth-form-options > a { justify-self: end; text-align: right; }
   .auth-page .btn { min-height: 46px !important; margin-top: 14px !important; padding: 10px 14px !important; font-size: 12px !important; }
   .auth-page .auth-divider { margin: 13px 0 10px !important; font-size: 8px !important; }
   .auth-page .google-signin { min-height: 42px; }
@@ -329,6 +358,10 @@
   .auth-signup .step-tracker { margin-bottom: 13px !important; }
   .auth-signup .signup-progress-copy { text-align: center; }
   .auth-signup .form-row { grid-template-columns: minmax(0, 1fr) !important; gap: 0 !important; }
+  .auth-signup .form-row.form-row--mobile-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
   .auth-signup .form-step { min-width: 0; }
   .auth-signup .signup-actions { gap: 8px !important; }
   .auth-signup .auth-account-footer {
@@ -340,6 +373,7 @@
   .auth-signup .auth-account-footer > span[aria-hidden="true"] { display: none !important; }
   .auth-signup .auth-account-footer .small,
   .auth-signup .auth-account-footer .auth-support-link { width: 100% !important; text-align: center; }
+  .auth-page .bp-back-to-top { display: none !important; }
 
   /* Auth and beneficiary dialogs */
   .auth-page .modal-bg,
@@ -388,6 +422,75 @@
   .home-page .content-enhancement-heading h2 { font-size: 24px !important; }
   .home-page .home-official-advisory,
   .home-page .bp-service-snapshot { padding: 15px !important; }
+  .home-page .home-readiness-panel {
+    gap: 12px !important;
+    padding: 16px 14px !important;
+  }
+  .home-page .home-readiness-heading {
+    display: grid !important;
+    gap: 5px !important;
+    align-self: stretch !important;
+    text-align: center;
+  }
+  .home-page .home-readiness-heading .area-title,
+  .home-page .home-readiness-heading .area-sub { margin: 0 !important; }
+  .home-page .home-readiness-heading > a {
+    width: fit-content !important;
+    min-height: 0 !important;
+    margin: 2px auto 0 !important;
+    padding: 2px 0 !important;
+    line-height: 1.35 !important;
+  }
+  .home-page .home-readiness-list { margin-top: 0 !important; }
+
+  /* The desktop footer's generous spacing becomes excessive on a phone. */
+  .home-page .site-footer {
+    min-height: 0 !important;
+    margin-top: 0 !important;
+    padding: 28px 0 18px !important;
+  }
+  .home-page .site-footer .footer-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 20px !important;
+    text-align: center !important;
+  }
+  .home-page .site-footer .footer-brand {
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: row !important;
+    gap: 10px !important;
+  }
+  .home-page .site-footer .footer-logo { width: 44px !important; height: 44px !important; }
+  .home-page .site-footer .footer-title { font-size: 18px !important; }
+  .home-page .site-footer .footer-sub { max-width: 230px; margin-top: 2px !important; font-size: 8px !important; line-height: 1.45; }
+  .home-page .site-footer .footer-col { display: grid; justify-items: center; gap: 5px; }
+  .home-page .site-footer .footer-head { margin: 0 0 3px !important; font-size: 10px !important; }
+  .home-page .site-footer .footer-col a,
+  .home-page .site-footer .footer-text {
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 2px 0 !important;
+    font-size: 10.5px !important;
+    line-height: 1.45 !important;
+  }
+  .home-page .site-footer .footer-contact-link {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .home-page .site-footer .footer-bottom {
+    align-items: center !important;
+    flex-direction: column !important;
+    gap: 5px !important;
+    margin-top: 20px !important;
+    padding-top: 14px !important;
+    text-align: center !important;
+    font-size: 9px !important;
+    line-height: 1.45;
+  }
+  .home-page .site-footer .footer-mini { max-width: 290px; letter-spacing: .06em; }
+  .home-page .bp-back-to-top { display: none !important; }
   .home-page .bp-service-snapshot-v2 .bp-snapshot-controls {
     grid-template-columns: minmax(0, 1fr) !important;
     justify-items: center !important;
@@ -676,6 +779,17 @@
   .privacy-page ul { padding: 14px 14px 14px 30px !important; }
   .privacy-page .actions { margin-top: 28px !important; padding-top: 18px !important; }
   .privacy-page .back { width: 100%; min-height: 44px; justify-content: center; font-size: 11.5px; }
+}
+
+/* Paired signup fields fit comfortably from large-phone width upward. */
+@media (min-width: 390px) and (max-width: 600px) {
+  .auth-signup .form-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+  }
+  .auth-signup .form-row .form-group { min-width: 0; }
+  .auth-signup .form-row input,
+  .auth-signup .form-row select { min-width: 0; }
 }
 
 @media (max-width: 370px) {

@@ -49,7 +49,7 @@ $barangays = beneficiary_barangay_options();
   <link rel="stylesheet" href="frontend_polish.css?v=20260921">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
   <link rel="stylesheet" href="auth_refresh.css?v=12">
-  <link rel="stylesheet" href="beneficiary_mobile.css?v=4">
+  <link rel="stylesheet" href="beneficiary_mobile.css?v=5">
 <script src="frontend_polish.js?v=20260921" defer></script>
   <?php if (!$google_registration): ?>
     <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
@@ -156,7 +156,7 @@ $barangays = beneficiary_barangay_options();
                 </div>
               </div>
 
-              <div class="form-row">
+              <div class="form-row form-row--mobile-pair">
                 <div class="form-group">
                   <label for="birthDate">Date of Birth</label>
                   <input type="date" id="birthDate" name="birthdate" max="<?php echo date('Y-m-d'); ?>" value="<?php echo get_val('birthdate'); ?>" required onchange="calculateAge()">
@@ -167,7 +167,7 @@ $barangays = beneficiary_barangay_options();
                 </div>
               </div>
 
-              <div class="form-row">
+              <div class="form-row form-row--mobile-pair">
                   <div class="form-group">
                     <label for="sexSelect">Sex</label>
                     <select name="sex" id="sexSelect" required>
