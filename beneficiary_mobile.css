@@ -175,12 +175,19 @@
   .public-index-page .public-trust-strip { margin: 0 !important; padding: 0 !important; }
   .public-index-page .public-trust-strip .content-wrap { width: calc(100% - 24px) !important; }
   .public-index-page .public-trust-strip .content-wrap > span {
-    grid-template-columns: 34px minmax(0, 1fr) !important;
-    gap: 2px 9px !important;
-    padding: 10px 8px !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto auto auto !important;
+    gap: 3px !important;
+    padding: 11px 8px !important;
     align-items: center;
+    justify-items: center;
+    text-align: center;
   }
-  .public-index-page .public-trust-strip svg { justify-self: center; }
+  .public-index-page .public-trust-strip svg {
+    grid-row: auto !important;
+    margin-bottom: 2px;
+    justify-self: center;
+  }
   .public-index-page .public-route { width: calc(100% - 24px) !important; padding: 16px !important; }
   .public-index-page .public-route-heading { text-align: center; }
   .public-index-page .public-route-heading h2 { font-size: 21px !important; text-align: center; }
@@ -693,19 +700,72 @@
   .beneficiary-programs-page .program-schedule-toggle { width: 100% !important; min-width: 0 !important; height: 46px !important; min-height: 46px !important; }
   .beneficiary-programs-page .program-discovery-controls input { padding-left: 39px !important; padding-right: 10px !important; font-size: 12px !important; }
   .beneficiary-programs-page .program-schedule-toggle { padding: 8px 11px !important; font-size: 11.5px !important; }
-  .beneficiary-programs-page .program-filter-guidance { grid-column: auto !important; margin: -7px 0 0 !important; }
+  .beneficiary-programs-page .program-filter-guidance {
+    grid-column: auto !important;
+    max-width: 100%;
+    margin: -3px auto 0 !important;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .beneficiary-programs-page .program-filter-guidance .program-results-icon { flex: 0 0 20px; }
   .beneficiary-programs-page .program-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 14px !important; }
   .beneficiary-programs-page .program-card { width: 100% !important; min-width: 0 !important; border-radius: 14px !important; }
-  .beneficiary-programs-page .program-card .card-img-wrap { height: 160px !important; }
+  .beneficiary-programs-page .program-card .card-img-wrap { height: 138px !important; padding: 8px 10px !important; }
+  .beneficiary-programs-page .program-card .card-img-wrap img { object-fit: contain !important; }
   .beneficiary-programs-page .program-card .card-body { padding: 15px !important; }
   .beneficiary-programs-page .program-card .card-title { font-size: 18px !important; }
   .beneficiary-programs-page .program-card .card-desc { font-size: 11.5px !important; line-height: 1.55 !important; }
-  .beneficiary-programs-page .program-card .program-card-schedule { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px !important; }
-  .beneficiary-programs-page .program-card .program-card-schedule span { min-width: 0; min-height: 52px !important; padding: 8px !important; }
+  .beneficiary-programs-page .program-card .card-footer-info { gap: 8px !important; padding-top: 12px !important; }
+  .beneficiary-programs-page .program-card .program-card-schedule { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
+  .beneficiary-programs-page .program-card .program-card-schedule span {
+    min-width: 0;
+    min-height: 48px !important;
+    padding: 7px !important;
+    align-items: center;
+    text-align: center !important;
+  }
   .beneficiary-programs-page .program-card .program-card-schedule strong { font-size: 10.5px !important; }
   .beneficiary-programs-page .program-card .program-btn,
   .beneficiary-programs-page .program-card .btn-check-status { min-height: 43px !important; font-size: 11.5px !important; }
   .beneficiary-programs-page .completed-area { padding: 34px 0 42px !important; }
+  .beneficiary-programs-page .completed-list { gap: 8px !important; }
+  .beneficiary-programs-page .completed-item {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 6px !important;
+    padding: 13px !important;
+    justify-items: center;
+    text-align: center;
+  }
+  .beneficiary-programs-page .comp-icon { width: 40px !important; height: 40px !important; margin: 0 !important; }
+  .beneficiary-programs-page .comp-info { min-width: 0; text-align: center; }
+  .beneficiary-programs-page .comp-status {
+    grid-column: 1 !important;
+    justify-self: center !important;
+    margin: 3px 0 0 !important;
+  }
+
+  .beneficiary-programs-page .batch-chooser-dialog {
+    width: calc(100% - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    padding: 20px 14px 16px !important;
+  }
+  .beneficiary-programs-page .batch-chooser-kicker {
+    width: 100%;
+    margin-bottom: 5px !important;
+    justify-content: center;
+    text-align: center;
+  }
+  .beneficiary-programs-page .batch-chooser-dialog h2 {
+    margin: 0 38px 6px !important;
+    font-size: 23px !important;
+    line-height: 1.15;
+    text-align: center;
+  }
+  .beneficiary-programs-page .batch-chooser-intro { margin-bottom: 14px !important; font-size: 11.5px !important; line-height: 1.5 !important; text-align: center; }
+  .beneficiary-programs-page .batch-choice-list { gap: 7px !important; }
+  .beneficiary-programs-page .batch-choice-card { padding: 10px !important; gap: 8px !important; }
+  .beneficiary-programs-page .batch-choice-number { width: 34px !important; height: 34px !important; }
 
   .beneficiary-programs-page #programDetailsModal .program-details-dialog,
   .beneficiary-programs-page #applicationModal .modal-content {
@@ -714,8 +774,62 @@
     max-height: calc(100dvh - 16px) !important;
   }
   .beneficiary-programs-page .program-details-split { height: auto !important; max-height: calc(100dvh - 16px) !important; }
-  .beneficiary-programs-page .program-details-identity { padding: 16px !important; }
-  .beneficiary-programs-page .program-details-scroll { padding: 18px 15px !important; }
+  .beneficiary-programs-page .program-details-identity {
+    grid-template-columns: 78px minmax(0, 1fr) !important;
+    gap: 10px !important;
+    padding: 12px 50px 12px 12px !important;
+    align-items: center;
+  }
+  .beneficiary-programs-page .program-details-image-wrap {
+    width: 78px !important;
+    height: 58px !important;
+    aspect-ratio: auto !important;
+    margin: 0 !important;
+    border-radius: 9px !important;
+  }
+  .beneficiary-programs-page #programDetailsModal .details-header { padding: 0 !important; text-align: center !important; }
+  .beneficiary-programs-page #programDetailsModal .program-details-kicker { margin-bottom: 4px !important; font-size: 7.5px !important; }
+  .beneficiary-programs-page #programDetailsModal .details-heading-row { padding: 0 !important; justify-content: center !important; }
+  .beneficiary-programs-page #programDetailsModal .details-heading-row h2 { font-size: 20px !important; text-align: center !important; }
+  .beneficiary-programs-page #programDetailsModal .details-header .batch-code { margin: 4px auto 6px !important; text-align: center !important; }
+  .beneficiary-programs-page .program-details-scroll { padding: 14px 12px !important; }
+  .beneficiary-programs-page .program-details-review-heading {
+    width: 100%;
+    gap: 3px !important;
+    margin: 0 0 12px !important;
+    padding-bottom: 9px !important;
+    align-items: center !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    text-align: center;
+  }
+  .beneficiary-programs-page .program-details-section { margin-bottom: 13px !important; }
+  .beneficiary-programs-page .program-details-section h3 { margin-bottom: 7px !important; text-align: center; }
+  .beneficiary-programs-page .program-details-section > p { font-size: 12px !important; line-height: 1.58 !important; }
+  .beneficiary-programs-page #programDetailsModal .program-schedule-panel { margin-bottom: 10px !important; padding: 8px !important; }
+  .beneficiary-programs-page #programDetailsModal .program-schedule-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+  .beneficiary-programs-page #programDetailsModal .program-schedule-item {
+    min-height: 57px !important;
+    padding: 7px !important;
+    align-items: center;
+    text-align: center;
+  }
+  .beneficiary-programs-page #programDetailsModal .program-schedule-label { font-size: 7.5px !important; }
+  .beneficiary-programs-page #programDetailsModal .program-schedule-value { font-size: 10.5px !important; }
+  .beneficiary-programs-page .program-detail-record-meta {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 3px !important;
+    margin-bottom: 12px !important;
+    padding: 8px !important;
+    justify-items: center;
+    text-align: center;
+  }
+  .beneficiary-programs-page .program-detail-record-meta strong { justify-self: center !important; text-align: center !important; }
+  .beneficiary-programs-page #programDetailsModal .program-detail-list { gap: 6px !important; }
+  .beneficiary-programs-page #programDetailsModal .program-detail-list li { padding: 8px 9px !important; }
   .beneficiary-programs-page #programDetailsModal .details-footer { padding: 10px 15px !important; }
   .beneficiary-programs-page #applicationModal #multiStepForm { max-height: calc(100dvh - 210px) !important; }
 
@@ -858,7 +972,7 @@
   .auth-page .right,
   .auth-page .card.compact .right { padding-inline: 12px !important; }
   .auth-page .role-label { display: none; }
-  .beneficiary-programs-page .program-card .program-card-schedule { grid-template-columns: 1fr; }
+  .beneficiary-programs-page .program-card .program-card-schedule { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 
 @media (max-height: 560px) and (orientation: landscape) {
