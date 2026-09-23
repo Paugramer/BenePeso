@@ -1316,6 +1316,113 @@
   .beneficiary-programs-page #applicationModal .form-grid > * { grid-column: 1 !important; }
 }
 
+/* Final authenticated-phone refinements: compact without crowding. */
+@media (max-width: 600px) {
+  .beneficiary-profile-page .profile-container { display: grid !important; gap: 14px !important; }
+  .beneficiary-profile-page .landscape-id-card { padding: 20px 16px !important; }
+  .beneficiary-profile-page .id-card-inner {
+    grid-template-columns: minmax(0, 1fr) !important;
+    justify-items: center !important;
+    gap: 12px !important;
+    text-align: center !important;
+  }
+  .beneficiary-profile-page .id-avatar { width: 82px !important; height: 82px !important; }
+  .beneficiary-profile-page .id-details { width: 100% !important; }
+  .beneficiary-profile-page .id-badges { justify-content: center !important; flex-wrap: wrap !important; }
+  .beneficiary-profile-page .id-name { max-width: 100%; margin: 8px 0 !important; font-size: 23px !important; overflow-wrap: anywhere; }
+  .beneficiary-profile-page .id-meta { width: 100%; display: grid !important; gap: 7px !important; font-size: 10.5px !important; }
+  .beneficiary-profile-page .meta-item {
+    width: 100%; min-width: 0; display: grid !important;
+    grid-template-columns: 20px minmax(0, 1fr); align-items: center; gap: 8px !important;
+    padding: 8px 10px; border: 1px solid rgba(255,255,255,.16); border-radius: 9px;
+    background: rgba(255,255,255,.07); text-align: left; overflow-wrap: anywhere;
+  }
+  .beneficiary-profile-page .meta-item svg { justify-self: center; }
+
+  .beneficiary-profile-page .profile-tabs-nav {
+    display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important; padding: 6px !important; overflow: visible !important;
+  }
+  .beneficiary-profile-page .profile-tabs-nav .tab-link {
+    width: 100%; min-width: 0 !important; min-height: 48px !important;
+    display: flex; justify-content: center; gap: 7px; padding: 8px 6px !important;
+    font-size: 10.5px !important; line-height: 1.2; text-align: center;
+  }
+  .beneficiary-profile-page .profile-tabs-nav .tab-link svg { width: 17px !important; height: 17px !important; flex: 0 0 17px; }
+  .beneficiary-profile-page .profile-tabs-nav .tab-link.active { animation: bp-tab-settle .3s cubic-bezier(.22,.8,.32,1); }
+  .beneficiary-profile-page .profile-main { min-height: 0 !important; padding: 18px 14px !important; border-radius: 15px !important; }
+  .beneficiary-profile-page .content-header { align-items: flex-start !important; gap: 10px !important; }
+  .beneficiary-profile-page .content-header > div:first-child { min-width: 0; }
+  .beneficiary-profile-page .btn-edit { flex: 0 0 auto; padding: 9px 11px !important; }
+  .beneficiary-profile-page .profile-record-note { align-items: flex-start !important; }
+
+  .beneficiary-profile-page #profileForm .info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px 9px !important; }
+  .beneficiary-profile-page #profileForm :where(.section-divider, .full-row) { grid-column: 1 / -1 !important; }
+  .beneficiary-profile-page #profileForm .info-group { min-width: 0; }
+  .beneficiary-profile-page #profileForm .info-group label { min-height: 28px !important; display: flex; align-items: flex-end; line-height: 1.25 !important; }
+  .beneficiary-profile-page #profileForm .form-input { width: 100%; min-width: 0; min-height: 46px !important; padding: 10px !important; }
+  .beneficiary-profile-page #profileForm .persistent-hint { display: block !important; font-size: 9.5px !important; }
+  .beneficiary-profile-page .profile-save-actions { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px !important; }
+  .beneficiary-profile-page .profile-save-actions[hidden] { display: none !important; }
+
+  .beneficiary-profile-page .profile-filter-bar {
+    display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px !important; margin: 0 0 16px !important; padding: 0 !important; overflow: visible !important;
+  }
+  .beneficiary-profile-page .profile-filter-chip { width: 100%; min-width: 0; min-height: 40px; padding: 7px !important; white-space: normal; }
+  .beneficiary-profile-page .profile-filter-chip:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .beneficiary-profile-page .profile-filter-chip.active { animation: bp-filter-settle .26s ease-out; }
+  .beneficiary-profile-page #my-programs .status-card-horizontal {
+    display: grid !important; grid-template-columns: minmax(0, 1fr) !important;
+    gap: 13px !important; padding: 16px !important; overflow: hidden;
+    animation: bp-card-enter .34s cubic-bezier(.22,.8,.32,1) both;
+  }
+  .beneficiary-profile-page #my-programs .card-left { width: 100%; min-width: 0; align-items: flex-start !important; gap: 11px !important; }
+  .beneficiary-profile-page #my-programs .card-left > div:last-child { min-width: 0; }
+  .beneficiary-profile-page #my-programs .card-left h4 { overflow-wrap: anywhere; }
+  .beneficiary-profile-page #my-programs .card-right { width: 100%; display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 9px !important; text-align: left !important; }
+  .beneficiary-profile-page #my-programs .btn-check-status { width: 100% !important; min-height: 46px; justify-content: center; }
+  .beneficiary-profile-page .application-action-summary { grid-template-columns: minmax(0, 1fr) !important; }
+  .beneficiary-profile-page .application-action-summary > div + div { border-top: 1px solid #dce9e2 !important; border-left: 0 !important; }
+  .beneficiary-profile-page .bp-service-journey { overflow: visible !important; padding-bottom: 0 !important; }
+  .beneficiary-profile-page .bp-service-journey-heading { align-items: flex-start; flex-direction: column; gap: 3px; }
+  .beneficiary-profile-page .bp-service-journey ol { min-width: 0 !important; grid-template-columns: minmax(0, 1fr) !important; }
+  .beneficiary-profile-page .bp-service-journey li {
+    grid-template-columns: 30px minmax(0, 1fr) !important; justify-items: start !important;
+    align-items: center; gap: 10px !important; padding: 7px 0 !important; text-align: left !important;
+  }
+  .beneficiary-profile-page .bp-service-journey li::before { top: -50% !important; left: 14px !important; right: auto !important; width: 2px !important; height: 100% !important; }
+  .beneficiary-profile-page .bp-service-journey li > div { text-align: left; }
+  .beneficiary-profile-page .bp-service-journey li strong { font-size: 10px !important; }
+  .beneficiary-profile-page .bp-service-journey li small { font-size: 9px !important; }
+
+  .beneficiary-profile-page :where(.security-overview, #security .security-form-panel, .profile-data-rights) { padding: 16px !important; }
+  .beneficiary-profile-page .security-overview { grid-template-columns: 42px minmax(0, 1fr) !important; gap: 11px !important; }
+  .beneficiary-profile-page #security .password-wrap input { padding-right: 50px !important; }
+  .beneficiary-profile-page .btn-security,
+  .beneficiary-profile-page .profile-data-rights-actions > * { width: 100% !important; min-height: 46px !important; justify-content: center; text-align: center; }
+
+  .verification-page .v-resident-control { grid-template-columns: minmax(0, 1fr) !important; gap: 8px !important; }
+  .verification-page .v-resident-control .v-btn { width: 100% !important; min-width: 0 !important; min-height: 48px !important; }
+
+  body:is(.home-page, .beneficiary-programs-page, .about-page, .verification-page, .beneficiary-profile-page) .account-dropdown .logout-form .logout-link {
+    width: 100% !important; display: flex !important; align-items: center !important;
+    justify-content: center !important; gap: 10px !important; text-align: center !important;
+  }
+  body:is(.home-page, .beneficiary-programs-page, .about-page, .verification-page, .beneficiary-profile-page) .account-dropdown .logout-form .logout-link > span {
+    width: auto !important; min-width: 0; text-align: center !important;
+  }
+}
+
+@keyframes bp-tab-settle { from { opacity: .72; transform: translateY(3px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes bp-filter-settle { from { transform: scale(.97); } to { transform: scale(1); } }
+@keyframes bp-card-enter { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 340px) {
+  .beneficiary-profile-page #profileForm .info-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .beneficiary-profile-page #profileForm .info-group { grid-column: 1 !important; }
+}
+
 @media (max-height: 560px) and (orientation: landscape) {
   body.auth-page { padding: 8px !important; }
   .auth-page .card,

@@ -262,8 +262,8 @@ if ($search_ready) {
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="verification.css?v=13" />
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=13">
+    <link rel="stylesheet" href="verification.css?v=14" />
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=14">
 <script src="frontend_polish.js?v=20260921" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -398,9 +398,11 @@ if ($search_ready) {
                         </label>
                         <div class="v-search-field v-resident-field">
                             <label class="v-search-field-label" for="searchInput">Resident name</label>
-                            <span class="v-search-entry">
-                                <svg class="v-search-entry-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
-                                <input type="text" name="search" id="searchInput" class="v-input" placeholder="Start typing a registered name" value="<?= htmlspecialchars($search_query) ?>" autocomplete="off" minlength="1" required role="combobox" aria-autocomplete="list" aria-controls="nameSuggestions" aria-expanded="false">
+                            <span class="v-resident-control">
+                                <span class="v-search-entry">
+                                    <svg class="v-search-entry-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+                                    <input type="text" name="search" id="searchInput" class="v-input" placeholder="Start typing a registered name" value="<?= htmlspecialchars($search_query) ?>" autocomplete="off" minlength="1" required role="combobox" aria-autocomplete="list" aria-controls="nameSuggestions" aria-expanded="false">
+                                </span>
                                 <button type="submit" class="v-btn" aria-label="Verify beneficiary record">
                                     <span class="v-btn-default"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><span class="v-btn-label">Verify</span></span>
                                     <span class="v-btn-progress" hidden><i aria-hidden="true"></i>Checking</span>

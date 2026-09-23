@@ -278,7 +278,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=13">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=14">
 <script src="frontend_polish.js?v=20260921" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -493,14 +493,15 @@ while ($row = $activity_logs_result->fetch_assoc()) {
                         <input type="text" id="profileDistrict" name="district" value="<?= h($user['district'] ?: 'Camarines Norte') ?>" readonly class="form-input disabled-input">
                     </div>
 
-                    <div class="info-group full-row">
+                    <div class="info-group full-row profile-email-field">
                         <label for="profileEmail">Email Address</label>
-                        <input type="email" id="profileEmail" name="email" value="<?= h($user['email']) ?>" maxlength="120" autocomplete="email" required readonly class="form-input">
+                        <input type="email" id="profileEmail" name="email" value="<?= h($user['email']) ?>" maxlength="120" autocomplete="email" required readonly class="form-input disabled-input" aria-describedby="profileEmailHint">
+                        <small class="field-hint persistent-hint" id="profileEmailHint">For account security, request a verified correction before changing your registered email.</small>
                     </div>
                 </div>
 
                 <div id="saveAction" class="profile-save-actions" hidden>
-                    <button type="button" class="btn-cancel" onclick="location.reload()">Cancel</button>
+                    <button type="button" class="btn-cancel" onclick="cancelProfileEdit()">Cancel</button>
                     <button type="submit" class="btn-save">Save Changes</button>
                 </div>
             </form>
@@ -683,7 +684,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
         <h2 id="modalTitle">Confirm Action</h2>
         <p id="modalMessage">Are you sure you want to proceed with this update?</p>
         <div class="profile-confirm-actions">
-            <button type="button" class="btn-cancel" onclick="closeModal('confirmModal')">Cancel</button>
+            <button type="button" class="btn-cancel" id="modalCancelBtn" onclick="closeModal('confirmModal')">Cancel</button>
             <button type="button" class="btn-save" id="modalConfirmBtn">Yes, Proceed</button>
         </div>
     </div>
@@ -867,41 +868,88 @@ document.addEventListener('DOMContentLoaded', function() {
         profileHasUnsavedChanges = false;
     });
 
-    window.addEventListener('beforeunload', function(event) {
-        if (!profileHasUnsavedChanges) return;
-        event.preventDefault();
-        event.returnValue = '';
+    document.querySelectorAll('#profileForm .form-input:not(.disabled-input)').forEach(field => {
+        field.addEventListener('input', updateProfileDirtyState);
+        field.addEventListener('change', updateProfileDirtyState);
+    });
+
+    document.querySelectorAll('a[href]').forEach(link => {
+        link.addEventListener('click', function(event) {
+            if (!profileHasUnsavedChanges || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || this.target === '_blank') return;
+            const destination = this.href;
+            if (!destination || destination === window.location.href) return;
+            event.preventDefault();
+            openUnsavedChangesModal(() => { window.location.href = destination; });
+        });
+    });
+
+    document.querySelectorAll('.logout-form').forEach(form => {
+        form.addEventListener('submit', function(event) {
+            if (!profileHasUnsavedChanges || form.dataset.confirmedLeave === 'true') return;
+            event.preventDefault();
+            openUnsavedChangesModal(() => {
+                form.dataset.confirmedLeave = 'true';
+                form.submit();
+            });
+        });
     });
 });
 
 let profileHasUnsavedChanges = false;
+let profileInitialValues = new Map();
 
-function switchTab(evt, tabName) {
-    const tabcontent = document.getElementsByClassName("tab-content");
-    for (let i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].classList.remove("active");
-        tabcontent[i].hidden = true;
-    }
-    const tablinks = document.getElementsByClassName("tab-link");
-    for (let i = 0; i < tablinks.length; i++) {
-        tablinks[i].classList.remove("active");
-        tablinks[i].setAttribute('aria-selected', 'false');
-        tablinks[i].tabIndex = -1;
-    }
+function editableProfileFields() {
+    return Array.from(document.querySelectorAll('#profileForm .form-input:not(.disabled-input)'));
+}
+
+function updateProfileDirtyState() {
+    profileHasUnsavedChanges = editableProfileFields().some(field => String(field.value) !== String(profileInitialValues.get(field) ?? field.defaultValue ?? ''));
+}
+
+function activateProfileTab(trigger, tabName, animate = true) {
     const targetPanel = document.getElementById(tabName);
+    if (!targetPanel || !trigger) return;
+    const tabs = Array.from(document.querySelectorAll('.tab-link'));
+    const previousTab = tabs.find(tab => tab.getAttribute('aria-selected') === 'true');
+    const direction = Math.sign(tabs.indexOf(trigger) - Math.max(0, tabs.indexOf(previousTab))) || 1;
+    document.querySelectorAll('.tab-content').forEach(panel => {
+        panel.classList.remove('active');
+        panel.hidden = true;
+    });
+    tabs.forEach(tab => {
+        tab.classList.remove('active');
+        tab.setAttribute('aria-selected', 'false');
+        tab.tabIndex = -1;
+    });
     targetPanel.hidden = false;
-    targetPanel.classList.add("active");
-    evt.currentTarget.classList.add("active");
-    evt.currentTarget.setAttribute('aria-selected', 'true');
-    evt.currentTarget.tabIndex = 0;
+    targetPanel.classList.add('active');
+    trigger.classList.add('active');
+    trigger.setAttribute('aria-selected', 'true');
+    trigger.tabIndex = 0;
+    if (animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        targetPanel.animate(
+            [{ opacity: 0, transform: `translate3d(${direction * 16}px, 7px, 0)` }, { opacity: 1, transform: 'translate3d(0, 0, 0)' }],
+            { duration: 300, easing: 'cubic-bezier(.22,.8,.32,1)' }
+        );
+    }
     if (history.replaceState) history.replaceState(null, '', '#' + tabName);
 }
 
+function switchTab(evt, tabName) {
+    const trigger = evt.currentTarget;
+    if (profileHasUnsavedChanges && tabName !== 'personal-info') {
+        openUnsavedChangesModal(() => activateProfileTab(trigger, tabName));
+        return;
+    }
+    activateProfileTab(trigger, tabName);
+}
+
 function toggleEdit() {
-    const inputs = document.querySelectorAll('#profileForm input:not(.disabled-input), #profileForm select:not(.disabled-input)');
+    const inputs = editableProfileFields();
     const saveAction = document.getElementById('saveAction');
     const editBtn = document.getElementById('editToggle');
     
+    profileInitialValues = new Map(inputs.map(input => [input, String(input.value)]));
     inputs.forEach(input => {
         if (input.tagName === 'SELECT') {
             input.disabled = !input.disabled;
@@ -913,8 +961,16 @@ function toggleEdit() {
     
     saveAction.hidden = false;
     editBtn.hidden = true;
-    profileHasUnsavedChanges = true;
+    profileHasUnsavedChanges = false;
     document.getElementById('profileFirstName').focus();
+}
+
+function cancelProfileEdit() {
+    if (!profileHasUnsavedChanges) {
+        window.location.reload();
+        return;
+    }
+    openUnsavedChangesModal(() => window.location.reload());
 }
 
 function previewAndSubmitAvatar(input) {
@@ -951,21 +1007,39 @@ function closeToast() { document.getElementById('toastNotification').classList.r
 
 let currentFormToSubmit = null;
 let lastModalTrigger = null;
+let pendingConfirmAction = null;
 function openModal(title, message, formId) {
     document.getElementById('modalTitle').innerText = title;
     document.getElementById('modalMessage').innerText = message;
     currentFormToSubmit = document.getElementById(formId);
+    pendingConfirmAction = null;
+    document.getElementById('modalCancelBtn').innerText = 'Cancel';
+    document.getElementById('modalConfirmBtn').innerText = 'Yes, Proceed';
     const modal = document.getElementById('confirmModal');
     lastModalTrigger = document.activeElement;
     modal.classList.add('show');
     modal.setAttribute('aria-hidden', 'false');
     document.getElementById('modalConfirmBtn').focus();
 }
+function openUnsavedChangesModal(action) {
+    document.getElementById('modalTitle').innerText = 'Discard unsaved changes?';
+    document.getElementById('modalMessage').innerText = 'You changed profile information that has not been saved. Keep editing, or discard those changes and continue.';
+    document.getElementById('modalCancelBtn').innerText = 'Keep editing';
+    document.getElementById('modalConfirmBtn').innerText = 'Discard & continue';
+    currentFormToSubmit = null;
+    pendingConfirmAction = action;
+    const modal = document.getElementById('confirmModal');
+    lastModalTrigger = document.activeElement;
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+    document.getElementById('modalCancelBtn').focus();
+}
 function closeModal(modalId) {
     const modal = document.getElementById(modalId || 'confirmModal');
     modal.classList.remove('show');
     if (modal.hasAttribute('aria-hidden')) modal.setAttribute('aria-hidden', 'true');
     currentFormToSubmit = null;
+    pendingConfirmAction = null;
     if (lastModalTrigger instanceof HTMLElement) lastModalTrigger.focus();
 }
 
@@ -977,7 +1051,18 @@ function openCorrectionModal() {
     modal.querySelector('.modal-close')?.focus();
 }
 document.getElementById('modalConfirmBtn').addEventListener('click', function() {
-    if (currentFormToSubmit) currentFormToSubmit.submit();
+    const form = currentFormToSubmit;
+    const action = pendingConfirmAction;
+    if (action) {
+        profileHasUnsavedChanges = false;
+        pendingConfirmAction = null;
+        action();
+        return;
+    }
+    if (form) {
+        profileHasUnsavedChanges = false;
+        form.submit();
+    }
 });
 document.getElementById('profileForm').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -1458,23 +1543,8 @@ document.addEventListener('DOMContentLoaded', function() {
     renderLogs();
     const requestedTab = window.location.hash.slice(1);
     if (['personal-info', 'my-programs', 'activity-log', 'security'].includes(requestedTab)) {
-        const target = document.getElementById(requestedTab);
         const trigger = Array.from(document.querySelectorAll('.tab-link')).find(button => button.getAttribute('onclick')?.includes(`'${requestedTab}'`));
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-            content.hidden = true;
-        });
-        document.querySelectorAll('.tab-link').forEach(button => {
-            button.classList.remove('active');
-            button.setAttribute('aria-selected', 'false');
-            button.tabIndex = -1;
-        });
-        if (target) target.hidden = false;
-        target?.classList.add('active');
-        trigger?.classList.add('active');
-        trigger?.setAttribute('aria-selected', 'true');
-        if (trigger) trigger.tabIndex = 0;
-        window.setTimeout(() => target?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+        if (trigger) activateProfileTab(trigger, requestedTab, false);
     }
 });
 

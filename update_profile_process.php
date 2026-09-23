@@ -89,6 +89,10 @@ if (!$current_user) {
 }
 $old_email = (string)$current_user['email'];
 
+if (strcasecmp($old_email, $email) !== 0) {
+    return_to_profile('Update Failed: Email changes require a verified correction request for account security.');
+}
+
 $email_stmt = $conn->prepare(
     "SELECT account_id FROM (
         SELECT user_id AS account_id FROM users WHERE email = ? AND user_id <> ?

@@ -261,6 +261,14 @@
 
 .verification-page .v-resident-field { grid-column: 1 / -1; }
 
+.verification-page .v-resident-control {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: 9px;
+}
+
 .verification-page .v-search-field-label {
     color: #48695b;
     font-size: 10px;
@@ -928,6 +936,8 @@
     .verification-page .v-select,
     .verification-page .v-search-entry { height: 52px; min-height: 52px; }
     .verification-page .v-btn { min-width: 104px; flex-basis: 104px; padding: 0 10px; }
+    .verification-page .v-resident-control { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    .verification-page .v-resident-control .v-btn { width: 100%; min-width: 0; min-height: 48px; }
     .verification-page .privacy-disclaimer { font-size: 9.5px; }
     .verification-page .v-card-horizontal { padding: 17px; border-radius: 14px; }
     .verification-page .v-card-right { grid-template-columns: 1fr; }
