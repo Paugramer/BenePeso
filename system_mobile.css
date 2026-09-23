@@ -298,6 +298,81 @@
     border-radius: 13px !important;
   }
   :is(.admin-mobile-page, .staff-mobile-page) .bulk-selection-actions { width: 100%; display: grid !important; grid-template-columns: 1fr !important; gap: 6px !important; }
+
+  /* Final component coverage for specialized admin/staff variants that do
+     not use the standard panel or modal class names. */
+  :is(.admin-mobile-page, .staff-mobile-page) :where(main, section, article, aside, form, fieldset, figure, div) { min-width: 0; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(img, video, canvas) {
+    display: block;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.form-card, .info-card,
+    .dashboard-chart-card, .barangay-workload-panel, .report-format-card,
+    .account-status-dialog, .bulk-status-dialog) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(button, [class^="btn-"],
+    [class*=" btn-"], .page-btn, .segment-btn, .report-action-button,
+    .beneficiary-availment-button, .upload-btn-label) {
+    max-width: 100%;
+    min-height: 42px;
+    touch-action: manipulation;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.workload-modal,
+    .activity-detail-modal) {
+    padding: 8px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.workload-modal-dialog,
+    .activity-detail-dialog) {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    min-width: 0 !important;
+    overflow-y: auto !important;
+    border-radius: 14px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.activity-detail-grid,
+    .import-summary-grid, .split-grid) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .activity-detail-wide { grid-column: 1 !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.workload-modal-head,
+    .activity-detail-head) {
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    gap: 9px !important;
+    padding: 14px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.workload-modal-list,
+    .activity-detail-body) { padding: 12px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.workload-modal-close,
+    .activity-detail-close, .modal-close, .modal-close-icon,
+    .profile-card-close, .profile-close-button) {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .id-card-dialog {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.id-card-left, .id-card-right,
+    .id-card-right-inner) {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .id-card-left {
+    min-height: 0 !important;
+    padding: 18px 14px !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid #e4ece7 !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.program-image, .beneficiary-table-avatar,
+    .user-img-side, .chip-img) { object-fit: cover; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-title, .success-title,
+    .panel-title, .program-card-title) { overflow-wrap: anywhere; }
 }
 
 @media (max-width: 340px) {

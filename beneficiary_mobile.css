@@ -1094,6 +1094,84 @@
   .privacy-page ul { padding: 14px 14px 14px 30px !important; }
   .privacy-page .actions { margin-top: 28px !important; padding-top: 18px !important; }
   .privacy-page .back { width: 100%; min-height: 44px; justify-content: center; font-size: 11.5px; }
+
+  /* Final component safety net. Page-specific rules above control the visual
+     design; these rules prevent any remaining card, media, dialog, or table
+     variant from retaining a desktop-only width on a phone. */
+  body :where(main, section, article, aside, form, fieldset, figure, div) { min-width: 0; }
+  body :where(img, video, canvas) {
+    display: block;
+  }
+  body :where(input, select, textarea) { font-size: 16px !important; }
+  body :where(.card, .info-card, .security-card, .status-card-horizontal, .log-card-premium,
+    .about-card, .service-card, .team-card, .program-card, .no-results-card,
+    .profile-readiness-panel, .verification-correction-panel, .service-access-panel,
+    .service-help-panel, .contact-glass-panel) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  body :where(.grid-two, .grid-three, .info-grid, .results-grid, .program-grid,
+    .program-grid-container, .verification-status-grid, .service-step-grid,
+    .applicant-guide-grid, .checkbox-grid) > * { min-width: 0 !important; }
+  body :where(button, [class^="btn-"], [class*=" btn-"], .btn, .v-btn, .program-btn,
+    .notice-button, .account-button) {
+    max-width: 100%;
+    min-height: 42px;
+    touch-action: manipulation;
+  }
+  body :where(.dynamic-table-wrap, .table-wrap, .table-wrapper, .scrollable-table-wrap) {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  body :where(.modal-overlay, .activity-modal-overlay, .profile-correction-modal,
+    .status-modal, .age-notice-modal, .signup-privacy-modal) {
+    padding: 8px !important;
+  }
+  body :where(.manager-modal, .activity-modal, .status-modal-dialog,
+    .profile-confirm-dialog, .application-privacy-dialog, .archive-summary-dialog,
+    .spes-baby-dialog, .small-modal) {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    min-width: 0 !important;
+    overflow-y: auto !important;
+  }
+  body :where(.modal-close, .modal-close-btn, .activity-modal-close) {
+    width: 42px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+  }
+  body :where(.modal-title, .notice-title, .archive-summary-title) {
+    font-size: clamp(18px, 5.8vw, 23px) !important;
+    line-height: 1.22 !important;
+    overflow-wrap: anywhere;
+  }
+
+  /* About activity gallery: align the complete heading group, not only its
+     text, and keep the photograph/card inside the phone content column. */
+  .about-page .activity-gallery-heading {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    justify-items: center !important;
+    gap: 14px !important;
+    text-align: center !important;
+  }
+  .about-page .activity-gallery-heading > div:first-child { max-width: 36rem; }
+  .about-page .activity-gallery-controls { justify-self: center !important; padding: 0 !important; }
+  .about-page .activity-gallery-footer { justify-content: center !important; text-align: center !important; }
+  .about-page .activity-gallery-status-wrap { width: min(100%, 255px); justify-content: center !important; }
+  .about-page .activity-gallery-frame,
+  .about-page .activity-gallery-track { width: 100% !important; max-width: 100% !important; }
+  .about-page .activity-gallery-card { min-width: 0 !important; max-width: 100% !important; }
+  .about-page .activity-gallery-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
 }
 
 /* Paired signup fields fit comfortably from large-phone width upward. */
