@@ -36,6 +36,9 @@
     font-family: inherit;
   }
 
+  :where(input, select, textarea) { font-size: 16px !important; }
+  :where(button, .btn, .btn-main, .btn-primary, .btn-secondary) { touch-action: manipulation; }
+
   :where(.content-wrap, .content-container, .welcome-inner, .topbar-inner) {
     width: calc(100% - 24px) !important;
     min-width: 0 !important;

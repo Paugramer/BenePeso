@@ -57,6 +57,7 @@
   }
 
   :is(.admin-mobile-page, .staff-mobile-page) .top-area {
+    position: relative !important;
     width: 100% !important;
     min-width: 0 !important;
     min-height: 0 !important;
@@ -67,21 +68,43 @@
     border-radius: 14px !important;
   }
 
-  :is(.admin-mobile-page, .staff-mobile-page) .top-left,
-  :is(.admin-mobile-page, .staff-mobile-page) .top-title { width: 100% !important; min-width: 0 !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .top-left {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding-inline: 44px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .top-title {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding-inline: 0 !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .top-left > :where(div, section) {
+    width: 100%;
+    align-items: center !important;
+    text-align: center !important;
+  }
   :is(.admin-mobile-page, .staff-mobile-page) .menu-toggle {
+    position: absolute !important;
+    z-index: 5;
+    top: 14px !important;
+    right: 14px !important;
+    left: auto !important;
     width: 40px !important;
     height: 40px !important;
     min-width: 40px !important;
     flex: 0 0 40px !important;
   }
-  :is(.admin-mobile-page, .staff-mobile-page) .eyebrow { font-size: 8px !important; }
-  :is(.admin-mobile-page, .staff-mobile-page) .top-big { font-size: 21px !important; line-height: 1.2 !important; }
-  :is(.admin-mobile-page, .staff-mobile-page) .top-sub { margin-top: 4px !important; font-size: 10.5px !important; line-height: 1.45 !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .eyebrow { justify-content: center !important; font-size: 9px !important; text-align: center !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .top-big { font-size: 23px !important; line-height: 1.16 !important; text-align: center !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .top-sub { max-width: 44ch; margin: 5px auto 0 !important; font-size: 11.5px !important; line-height: 1.5 !important; text-align: center !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .breadcrumb {
     max-width: 100%;
     overflow-x: auto;
-    font-size: 9px !important;
+    justify-content: center !important;
+    font-size: 9.5px !important;
+    text-align: center !important;
     white-space: nowrap;
     scrollbar-width: none;
   }
@@ -136,8 +159,9 @@
   :is(.admin-mobile-page, .staff-mobile-page) :where(.panel-head, .panel-head-flex, .records-toolbar) {
     min-width: 0 !important;
     gap: 10px !important;
-    align-items: flex-start !important;
+    align-items: center !important;
     flex-direction: column !important;
+    text-align: center !important;
   }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.panel-head, .panel-head-flex) > * { max-width: 100%; }
 
@@ -187,7 +211,7 @@
   :is(.admin-mobile-page, .staff-mobile-page) :where(.search-input, .filter-select, .toolbar-input, .toolbar-select, .activity-filter-trigger, .activity-date-field) {
     min-height: 44px !important;
     height: auto !important;
-    font-size: 11px !important;
+    font-size: 16px !important;
   }
   :is(.admin-mobile-page, .staff-mobile-page) .beneficiary-secondary-filters { grid-template-columns: minmax(0, 1fr) !important; gap: 7px !important; }
 
@@ -242,10 +266,14 @@
   :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-form, .modal-body, .modal-body-sm) { padding: 15px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.form-grid, .landscape-form-grid, .details-grid) { grid-template-columns: minmax(0, 1fr) !important; gap: 10px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.form-grid, .landscape-form-grid, .details-grid) > * { grid-column: auto !important; min-width: 0 !important; }
-  :is(.admin-mobile-page, .staff-mobile-page) :where(input, select, textarea) { max-width: 100%; font-size: 13px; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(input, select, textarea) {
+    max-width: 100%;
+    min-height: 44px;
+    font-size: 16px !important;
+  }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-actions, .modal-actions-flex, .modal-actions-sm, .modal-footer-sticky) {
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 7px !important;
     padding: 12px 15px !important;
   }
@@ -254,6 +282,9 @@
     min-width: 0 !important;
     min-height: 43px !important;
     margin: 0 !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-actions, .modal-actions-flex, .modal-actions-sm, .modal-footer-sticky) > :only-child {
+    grid-column: 1 / -1;
   }
 
   :is(.admin-mobile-page, .staff-mobile-page) .bulk-selection-bar {
@@ -272,6 +303,19 @@
 @media (max-width: 340px) {
   :is(.admin-mobile-page, .staff-mobile-page) .stats-grid { grid-template-columns: minmax(0, 1fr) !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .top-actions { grid-template-columns: minmax(0, 1fr); }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-actions, .modal-actions-flex, .modal-actions-sm, .modal-footer-sticky) { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+@media (min-width: 390px) and (max-width: 600px) {
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.form-grid, .form-grid-2, .landscape-form-grid, .details-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.form-grid, .form-grid-2, .landscape-form-grid, .details-grid) > :where(.span-2, .full-width, .section-title, .form-section),
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.form-grid, .form-grid-2, .landscape-form-grid, .details-grid) > :has(textarea),
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.form-grid, .form-grid-2, .landscape-form-grid, .details-grid) > :has(input[type="file"]) {
+    grid-column: 1 / -1 !important;
+  }
 }
 
 @media (max-height: 560px) and (orientation: landscape) {

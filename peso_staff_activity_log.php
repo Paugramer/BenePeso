@@ -257,7 +257,7 @@ if ($stmt) {
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=1">
+<link rel="stylesheet" href="system_mobile.css?v=2">
 <script src="frontend_polish.js?v=20260921" defer></script>
 </head>
 <body class="staff-mobile-page staff-activity-page">
