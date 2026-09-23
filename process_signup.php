@@ -87,18 +87,27 @@ if (!$valid_birthdate || $birth_date_object > $today || $age < 18) {
 
 $profile_pic_name = "";
 $profile_upload = null;
-if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === 0) {
-    $file_ext = strtolower(pathinfo($_FILES["profile_pic"]["name"], PATHINFO_EXTENSION));
-    $allowed_exts = ["jpg", "jpeg", "png", "webp"];
-    $allowed_mimes = ['image/jpeg', 'image/png', 'image/webp'];
+$profile_error = isset($_FILES['profile_pic']) ? (int)$_FILES['profile_pic']['error'] : UPLOAD_ERR_NO_FILE;
+if ($profile_error === UPLOAD_ERR_OK) {
     $detected_mime = (new finfo(FILEINFO_MIME_TYPE))->file($_FILES['profile_pic']['tmp_name']);
+    $allowed_mimes = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+    ];
+    $dimensions = @getimagesize($_FILES['profile_pic']['tmp_name']);
 
     if ($_FILES['profile_pic']['size'] <= 5 * 1024 * 1024
-        && in_array($file_ext, $allowed_exts, true)
-        && in_array($detected_mime, $allowed_mimes, true)) {
+        && isset($allowed_mimes[$detected_mime])
+        && is_array($dimensions)
+        && (int)$dimensions[0] > 0
+        && (int)$dimensions[1] > 0
+        && (int)$dimensions[0] <= GOOGLE_PROFILE_PICTURE_MAX_DIMENSION
+        && (int)$dimensions[1] <= GOOGLE_PROFILE_PICTURE_MAX_DIMENSION) {
         $profile_upload = [
             'tmp_name' => $_FILES['profile_pic']['tmp_name'],
-            'extension' => $file_ext,
+            'extension' => $allowed_mimes[$detected_mime],
+            'source' => 'upload',
         ];
     } else {
         $_SESSION['flash'] = 'Profile picture must be a valid JPG, PNG, or WebP image up to 5 MB.';
@@ -106,6 +115,13 @@ if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === 0) {
         header('Location: signup.php');
         exit();
     }
+} elseif ($profile_error !== UPLOAD_ERR_NO_FILE) {
+    $_SESSION['flash'] = $profile_error === UPLOAD_ERR_INI_SIZE || $profile_error === UPLOAD_ERR_FORM_SIZE
+        ? 'Profile picture must be no larger than 5 MB.'
+        : 'Profile picture upload was interrupted. Please select the image again.';
+    $_SESSION['form_data'] = $_POST;
+    header($google_registration ? 'Location: signup.php?google=complete' : 'Location: signup.php');
+    exit();
 }
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -221,9 +237,32 @@ if ($check_identity) {
 
 // Store the image only after all account fields and uniqueness checks have passed.
 $uploaded_profile_path = null;
+$google_picture_url = $google_registration ? google_auth_profile_picture_url($google_identity) : '';
+if ($profile_upload === null && $google_picture_url !== '') {
+    $profile_upload = google_auth_download_profile_picture($google_identity);
+    if ($profile_upload !== null) {
+        $profile_upload['source'] = 'google';
+    } else {
+        $_SESSION['flash'] = 'Your Google profile photo could not be imported securely. Please upload a clear JPG, PNG, or WebP photo to continue.';
+        $_SESSION['form_data'] = $_POST;
+        header('Location: signup.php?google=complete');
+        exit();
+    }
+}
+
+if ($profile_upload === null) {
+    $_SESSION['flash'] = 'Please upload a clear JPG, PNG, or WebP profile photo to continue.';
+    $_SESSION['form_data'] = $_POST;
+    header($google_registration ? 'Location: signup.php?google=complete' : 'Location: signup.php');
+    exit();
+}
+
 if ($profile_upload !== null) {
     $target_dir = __DIR__ . DIRECTORY_SEPARATOR . 'uploads';
     if (!is_dir($target_dir) && !mkdir($target_dir, 0755, true) && !is_dir($target_dir)) {
+        if (($profile_upload['source'] ?? '') === 'google') {
+            @unlink($profile_upload['tmp_name']);
+        }
         $_SESSION['flash'] = 'Profile picture storage is unavailable. Please try again.';
         $_SESSION['form_data'] = $_POST;
         header('Location: signup.php');
@@ -232,7 +271,19 @@ if ($profile_upload !== null) {
 
     $profile_pic_name = 'IMG_' . bin2hex(random_bytes(12)) . '.' . $profile_upload['extension'];
     $uploaded_profile_path = $target_dir . DIRECTORY_SEPARATOR . $profile_pic_name;
-    if (!move_uploaded_file($profile_upload['tmp_name'], $uploaded_profile_path)) {
+    if (($profile_upload['source'] ?? '') === 'google') {
+        $stored = @rename($profile_upload['tmp_name'], $uploaded_profile_path);
+        if (!$stored && @copy($profile_upload['tmp_name'], $uploaded_profile_path)) {
+            @unlink($profile_upload['tmp_name']);
+            $stored = true;
+        }
+    } else {
+        $stored = move_uploaded_file($profile_upload['tmp_name'], $uploaded_profile_path);
+    }
+    if (!$stored) {
+        if (($profile_upload['source'] ?? '') === 'google') {
+            @unlink($profile_upload['tmp_name']);
+        }
         $_SESSION['flash'] = 'Profile picture could not be saved. Please try again.';
         $_SESSION['form_data'] = $_POST;
         header('Location: signup.php');

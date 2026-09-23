@@ -15,6 +15,7 @@ unset($_SESSION["form_data"]);
 
 $google_identity = google_auth_pending_identity();
 $google_registration = $google_identity !== null;
+$google_picture_url = $google_registration ? google_auth_profile_picture_url($google_identity) : '';
 if ($google_registration) {
     $form_data['email'] = $google_identity['email'];
     if (empty($form_data['first_name'])) $form_data['first_name'] = $google_identity['given_name'] ?? '';
@@ -273,22 +274,22 @@ $barangays = beneficiary_barangay_options();
 
           <div class="form-step" id="step3">
               <div style="text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 10px;">
-                  Add a photo so the PESO office can verify your identity.
+                  <?= $google_picture_url !== '' ? 'Your verified Google photo will be used. You may replace it below.' : 'Add a photo so the PESO office can verify your identity.' ?>
               </div>
 
               <div class="profile-upload-container" id="profileUploadContainer">
                 <div class="profile-preview-box">
-                  <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"<?= $google_picture_url !== '' ? ' style="display:none"' : '' ?>>
                       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                       <circle cx="12" cy="13" r="4"></circle>
                   </svg>
-                  <img id="previewImg" src="#" alt="Profile" style="display:none;">
+                  <img id="previewImg" src="<?= $google_picture_url !== '' ? htmlspecialchars($google_picture_url, ENT_QUOTES, 'UTF-8') : '#' ?>" alt="<?= $google_picture_url !== '' ? 'Google profile photo selected for BENEPESO' : 'Profile photo preview' ?>" referrerpolicy="no-referrer"<?= $google_picture_url === '' ? ' style="display:none"' : '' ?>>
                 </div>
                 <label for="profile_pic" class="upload-label">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px; vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-                    Upload Photo
+                    <?= $google_picture_url !== '' ? 'Replace Photo' : 'Upload Photo' ?>
                 </label>
-                <input type="file" name="profile_pic" id="profile_pic" class="visually-hidden-file" accept="image/*" required>
+                <input type="file" name="profile_pic" id="profile_pic" class="visually-hidden-file" accept="image/jpeg,image/png,image/webp"<?= $google_picture_url === '' ? ' required' : '' ?>>
               </div>
 
               <label class="privacy-acknowledgment" for="privacyAcknowledgment">

@@ -4,6 +4,126 @@ require_once __DIR__ . '/google_auth_config.php';
 require_once __DIR__ . '/activity_log_helper.php';
 
 const GOOGLE_PENDING_REGISTRATION_TTL = 1800;
+const GOOGLE_PROFILE_PICTURE_MAX_BYTES = 5242880;
+const GOOGLE_PROFILE_PICTURE_MAX_DIMENSION = 4096;
+
+/**
+ * Return a Google-hosted HTTPS profile image URL, or an empty string.
+ * Keeping this allow-list narrow prevents an ID-token claim from becoming an
+ * arbitrary server-side request when a new beneficiary imports their photo.
+ */
+function google_auth_profile_picture_url(array $identity): string
+{
+    $url = trim((string)($identity['picture'] ?? ''));
+    if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL)) {
+        return '';
+    }
+
+    $parts = parse_url($url);
+    $scheme = strtolower((string)($parts['scheme'] ?? ''));
+    $host = strtolower(rtrim((string)($parts['host'] ?? ''), '.'));
+    $port = isset($parts['port']) ? (int)$parts['port'] : 443;
+    $hasCredentials = isset($parts['user']) || isset($parts['pass']);
+    $isGoogleImageHost = $host === 'googleusercontent.com'
+        || str_ends_with($host, '.googleusercontent.com');
+
+    if ($scheme !== 'https' || $port !== 443 || $hasCredentials || !$isGoogleImageHost) {
+        return '';
+    }
+
+    return $url;
+}
+
+/**
+ * Download a verified Google profile image into a temporary file. The caller
+ * owns the returned file and must move it or delete it.
+ *
+ * @return array{tmp_name:string, extension:string}|null
+ */
+function google_auth_download_profile_picture(array $identity): ?array
+{
+    $url = google_auth_profile_picture_url($identity);
+    if ($url === '' || !function_exists('curl_init')) {
+        return null;
+    }
+
+    $temporaryPath = tempnam(sys_get_temp_dir(), 'benepeso_google_');
+    if ($temporaryPath === false) {
+        return null;
+    }
+
+    $handle = fopen($temporaryPath, 'wb');
+    if ($handle === false) {
+        @unlink($temporaryPath);
+        return null;
+    }
+
+    $downloadedBytes = 0;
+    $tooLarge = false;
+    $curl = curl_init($url);
+    if ($curl === false) {
+        fclose($handle);
+        @unlink($temporaryPath);
+        return null;
+    }
+    $options = [
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_CONNECTTIMEOUT => 4,
+        CURLOPT_TIMEOUT => 8,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+        CURLOPT_USERAGENT => 'BENEPESO-Google-Profile-Importer/1.0',
+        CURLOPT_HTTPHEADER => ['Accept: image/jpeg, image/png, image/webp'],
+        CURLOPT_WRITEFUNCTION => static function ($curlHandle, string $chunk) use ($handle, &$downloadedBytes, &$tooLarge): int {
+            $chunkLength = strlen($chunk);
+            if ($downloadedBytes + $chunkLength > GOOGLE_PROFILE_PICTURE_MAX_BYTES) {
+                $tooLarge = true;
+                return 0;
+            }
+            $written = fwrite($handle, $chunk);
+            if ($written === false) {
+                return 0;
+            }
+            $downloadedBytes += $written;
+            return $written;
+        },
+    ];
+    if (defined('CURLOPT_PROTOCOLS') && defined('CURLPROTO_HTTPS')) {
+        $options[CURLOPT_PROTOCOLS] = CURLPROTO_HTTPS;
+    }
+    curl_setopt_array($curl, $options);
+    $completed = curl_exec($curl);
+    $httpStatus = (int)curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+    curl_close($curl);
+    fclose($handle);
+
+    if ($completed !== true || $tooLarge || $httpStatus !== 200 || $downloadedBytes < 1) {
+        @unlink($temporaryPath);
+        return null;
+    }
+
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($temporaryPath);
+    $extensions = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+    ];
+    $dimensions = @getimagesize($temporaryPath);
+    if (!isset($extensions[$mime])
+        || !is_array($dimensions)
+        || (int)$dimensions[0] < 1
+        || (int)$dimensions[1] < 1
+        || (int)$dimensions[0] > GOOGLE_PROFILE_PICTURE_MAX_DIMENSION
+        || (int)$dimensions[1] > GOOGLE_PROFILE_PICTURE_MAX_DIMENSION) {
+        @unlink($temporaryPath);
+        return null;
+    }
+
+    return [
+        'tmp_name' => $temporaryPath,
+        'extension' => $extensions[$mime],
+    ];
+}
 
 function google_auth_ensure_schema(mysqli $conn): bool
 {

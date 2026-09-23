@@ -66,9 +66,12 @@ $identity = [
     'email' => mb_strtolower(trim((string)$payload['email'])),
     'given_name' => trim((string)($payload['given_name'] ?? '')),
     'family_name' => trim((string)($payload['family_name'] ?? '')),
-    'picture' => filter_var($payload['picture'] ?? '', FILTER_VALIDATE_URL) ? (string)$payload['picture'] : '',
+    'picture' => '',
     'created_at' => time(),
 ];
+$identity['picture'] = google_auth_profile_picture_url([
+    'picture' => (string)($payload['picture'] ?? ''),
+]);
 
 if (!google_auth_ensure_schema($conn)) {
     error_log('BENEPESO could not prepare the Google identity table: ' . $conn->error);
