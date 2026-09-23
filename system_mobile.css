@@ -317,7 +317,14 @@
     .beneficiary-availment-button, .upload-btn-label) {
     max-width: 100%;
     min-height: 42px;
+    align-items: center;
+    justify-content: center;
     touch-action: manipulation;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(button, [class^="btn-"],
+    [class*=" btn-"], .page-btn, .segment-btn, .report-action-button) > :where(svg, i) {
+    flex: 0 0 auto;
+    align-self: center;
   }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.workload-modal,
     .activity-detail-modal) {
