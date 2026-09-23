@@ -254,18 +254,20 @@
 }
 
 .verification-page .v-program-field,
-.verification-page .v-type-field,
-.verification-page .v-resident-field {
+.verification-page .v-type-field {
     grid-template-rows: 12px 54px auto;
 }
 
-.verification-page .v-resident-field { grid-column: 1 / -1; }
+.verification-page .v-resident-field {
+    grid-column: 1 / -1;
+    grid-template-rows: 12px auto auto;
+}
 
 .verification-page .v-resident-control {
     min-width: 0;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    align-items: stretch;
+    align-items: center;
     gap: 9px;
 }
 

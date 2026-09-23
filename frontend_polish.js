@@ -885,14 +885,22 @@
 
         document.body.appendChild(menu);
         const rect = root.getBoundingClientRect();
+        const isPhoneMenu = window.innerWidth <= 600;
+        const viewportGutter = isPhoneMenu ? 12 : 8;
+        const menuWidth = isPhoneMenu
+          ? Math.min(window.innerWidth - (viewportGutter * 2), Math.max(rect.width, 280))
+          : rect.width;
+        const preferredLeft = rect.left - ((menuWidth - rect.width) / 2);
         const roomBelow = window.innerHeight - rect.bottom - 12;
-        const menuHeight = Math.min(menu.scrollHeight, 320);
+        const menuLimit = isPhoneMenu ? 260 : 320;
+        const menuHeight = Math.min(menu.scrollHeight, menuLimit);
         const openAbove = roomBelow < Math.min(menuHeight, 220) && rect.top > roomBelow;
-        menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - rect.width - 8)) + 'px';
-        menu.style.width = rect.width + 'px';
-        menu.style.maxHeight = Math.max(150, Math.min(320, openAbove ? rect.top - 12 : roomBelow)) + 'px';
+        menu.style.left = Math.max(viewportGutter, Math.min(preferredLeft, window.innerWidth - menuWidth - viewportGutter)) + 'px';
+        menu.style.width = menuWidth + 'px';
+        menu.style.maxHeight = Math.max(150, Math.min(menuLimit, openAbove ? rect.top - 12 : roomBelow)) + 'px';
         menu.style.top = (openAbove ? Math.max(8, rect.top - Math.min(menuHeight, rect.top - 12) - 6) : rect.bottom + 6) + 'px';
         menu.classList.toggle('opens-above', openAbove);
+        menu.classList.toggle('is-phone-menu', isPhoneMenu);
         root.classList.add('is-open');
         button.setAttribute('aria-expanded', 'true');
         active = { root, button, menu };

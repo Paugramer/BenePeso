@@ -217,7 +217,7 @@ if ($active_program) {
 <link rel="stylesheet" href="peso_staff_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
 <link rel="stylesheet" href="system_mobile.css?v=4">
-<script src="frontend_polish.js?v=20260921" defer></script>
+<script src="frontend_polish.js?v=20260923" defer></script>
 </head>
 <body class="staff-mobile-page staff-program-page">
 <div class="page-wrap">

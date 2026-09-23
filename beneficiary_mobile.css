@@ -1385,8 +1385,8 @@
   .beneficiary-profile-page .application-action-summary { grid-template-columns: minmax(0, 1fr) !important; }
   .beneficiary-profile-page .application-action-summary > div + div { border-top: 1px solid #dce9e2 !important; border-left: 0 !important; }
   .beneficiary-profile-page .bp-service-journey { overflow: visible !important; padding-bottom: 0 !important; }
-  .beneficiary-profile-page .bp-service-journey-heading { align-items: flex-start; flex-direction: column; gap: 3px; }
-  .beneficiary-profile-page .bp-service-journey ol { min-width: 0 !important; grid-template-columns: minmax(0, 1fr) !important; }
+  .beneficiary-profile-page .bp-service-journey-heading { align-items: center; flex-direction: column; gap: 3px; text-align: center; }
+  .beneficiary-profile-page .bp-service-journey ol { width: min(100%, 240px); min-width: 0 !important; margin-inline: auto !important; grid-template-columns: minmax(0, 1fr) !important; }
   .beneficiary-profile-page .bp-service-journey li {
     grid-template-columns: 30px minmax(0, 1fr) !important; justify-items: start !important;
     align-items: center; gap: 10px !important; padding: 7px 0 !important; text-align: left !important;
@@ -1402,8 +1402,22 @@
   .beneficiary-profile-page .btn-security,
   .beneficiary-profile-page .profile-data-rights-actions > * { width: 100% !important; min-height: 46px !important; justify-content: center; text-align: center; }
 
-  .verification-page .v-resident-control { grid-template-columns: minmax(0, 1fr) !important; gap: 8px !important; }
-  .verification-page .v-resident-control .v-btn { width: 100% !important; min-width: 0 !important; min-height: 48px !important; }
+  .beneficiary-profile-page #my-programs .content-header { flex-direction: column !important; align-items: center !important; text-align: center !important; }
+  .beneficiary-profile-page #my-programs .application-count { align-self: center; justify-content: center; }
+  .beneficiary-profile-page #my-programs .card-left { flex-direction: column; align-items: center !important; text-align: center; }
+  .beneficiary-profile-page #my-programs .program-copy { width: 100%; text-align: center; }
+  .beneficiary-profile-page #my-programs .card-right { justify-items: center; text-align: center !important; }
+  .beneficiary-profile-page #my-programs .status-summary { width: 100%; align-items: center !important; text-align: center; }
+  .beneficiary-profile-page #my-programs .application-action-summary > div { justify-items: center; text-align: center; }
+
+  .verification-page .v-resident-field { grid-template-rows: 12px auto auto !important; }
+  .verification-page .v-resident-control { grid-template-columns: minmax(0, 1fr) !important; align-items: stretch !important; gap: 8px !important; }
+  .verification-page .v-resident-control .v-btn { width: 100% !important; min-width: 0 !important; height: 50px !important; min-height: 50px !important; margin: 0 !important; }
+  .verification-page .v-resident-control .v-input { font-size: 13px !important; }
+  .verification-page .v-resident-field > .v-search-help { position: static !important; margin-top: 1px; }
+
+  .bp-select-menu.is-phone-menu { padding: 8px; border-radius: 15px; }
+  .bp-select-menu.is-phone-menu .bp-select-option { min-height: 44px; padding: 10px 12px; font-size: 12px; }
 
   body:is(.home-page, .beneficiary-programs-page, .about-page, .verification-page, .beneficiary-profile-page) .account-dropdown .logout-form .logout-link {
     width: 100% !important; display: flex !important; align-items: center !important;

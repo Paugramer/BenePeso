@@ -1706,7 +1706,7 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="system_search_polish.css?v=1">
 <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
 <link rel="stylesheet" href="system_mobile.css?v=4">
-<script src="frontend_polish.js?v=20260921" defer></script>
+<script src="frontend_polish.js?v=20260923" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
 </head>
 <body class="admin-mobile-page admin-beneficiaries-page">
