@@ -263,7 +263,7 @@ if ($search_ready) {
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
     <link rel="stylesheet" href="verification.css?v=15" />
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=15">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=16">
 <script src="frontend_polish.js?v=20260923" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>

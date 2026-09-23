@@ -1355,6 +1355,11 @@
   .beneficiary-profile-page .content-header > div:first-child { min-width: 0; }
   .beneficiary-profile-page .btn-edit { flex: 0 0 auto; padding: 9px 11px !important; }
   .beneficiary-profile-page .profile-record-note { align-items: flex-start !important; }
+  .beneficiary-profile-page .profile-readiness-panel { justify-items: center; text-align: center; }
+  .beneficiary-profile-page .profile-readiness-panel > div:first-child { width: 100%; }
+  .beneficiary-profile-page .profile-readiness-panel :where(.content-enhancement-eyebrow, h2, p) { text-align: center !important; }
+  .beneficiary-profile-page .profile-readiness-panel p { margin-inline: auto; }
+  .beneficiary-profile-page .profile-readiness-progress { width: min(92%, 360px) !important; margin-inline: auto !important; }
 
   .beneficiary-profile-page #profileForm .info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px 9px !important; }
   .beneficiary-profile-page #profileForm :where(.section-divider, .full-row) { grid-column: 1 / -1 !important; }
@@ -1409,6 +1414,15 @@
   .beneficiary-profile-page #my-programs .card-right { justify-items: center; text-align: center !important; }
   .beneficiary-profile-page #my-programs .status-summary { width: 100%; align-items: center !important; text-align: center; }
   .beneficiary-profile-page #my-programs .application-action-summary > div { justify-items: center; text-align: center; }
+  .beneficiary-profile-page :where(#activity-log, #security) .content-header {
+    flex-direction: column !important; align-items: center !important;
+    justify-content: center !important; text-align: center !important;
+  }
+  .beneficiary-profile-page :where(#activity-log, #security) .content-header > div:first-child { width: 100%; text-align: center; }
+  .beneficiary-profile-page :where(.activity-count, .security-state) { align-self: center !important; justify-content: center; }
+  .beneficiary-profile-page .security-overview h4,
+  .beneficiary-profile-page .security-overview > p { text-align: center; }
+  .beneficiary-profile-page .security-form-heading { text-align: center; }
 
   .verification-page .v-resident-field { grid-template-rows: 12px auto auto !important; }
   .verification-page .v-resident-control { grid-template-columns: minmax(0, 1fr) !important; align-items: stretch !important; gap: 8px !important; }

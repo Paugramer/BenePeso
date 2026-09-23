@@ -152,7 +152,7 @@ if ($updated_stmt) {
     <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="index.css?v=29">
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=15">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=16">
 <script src="frontend_polish.js?v=20260923" defer></script>
 </head>
 <body class="public-index-page">
