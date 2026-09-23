@@ -1160,32 +1160,51 @@
   /* About activity gallery: align the complete heading group, not only its
      text, and keep the photograph/card inside the phone content column. */
   .about-page .activity-gallery-heading {
-    position: relative !important;
+    position: static !important;
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) !important;
     justify-items: center !important;
-    gap: 14px !important;
-    padding-top: 56px !important;
+    gap: 16px !important;
+    margin-bottom: 8px !important;
+    padding-top: 0 !important;
     text-align: center !important;
   }
   .about-page .activity-gallery-heading > div:first-child { max-width: 36rem; }
   .about-page .activity-gallery-controls {
-    position: absolute !important;
-    inset: 0 0 auto !important;
+    position: static !important;
+    inset: auto !important;
     width: 100% !important;
     display: grid !important;
     grid-template-columns: repeat(2, 42px) !important;
     justify-content: space-between !important;
     justify-self: stretch !important;
     padding: 0 !important;
+    margin-top: 2px !important;
   }
   .about-page .activity-gallery-controls > :first-child { justify-self: start; }
   .about-page .activity-gallery-controls > :last-child { justify-self: end; }
-  .about-page .activity-gallery-footer { justify-content: center !important; text-align: center !important; }
+  .about-page .activity-gallery-footer {
+    justify-content: center !important;
+    margin: 0 0 2px !important;
+    text-align: center !important;
+  }
   .about-page .activity-gallery-status-wrap { width: min(100%, 255px); justify-content: center !important; }
-  .about-page .activity-gallery-frame,
-  .about-page .activity-gallery-track { width: 100% !important; max-width: 100% !important; }
-  .about-page .activity-gallery-card { min-width: 0 !important; max-width: 100% !important; }
+  .about-page .activity-gallery-frame {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-inline: 0 !important;
+  }
+  .about-page .activity-gallery-track {
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 12px !important;
+    padding: 18px 0 24px !important;
+  }
+  .about-page .activity-gallery-card {
+    flex: 0 0 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
   .about-page .activity-gallery-photo img {
     width: 100% !important;
     height: 100% !important;
@@ -1249,6 +1268,24 @@
   .about-page .activity-modal-footer > div { display: contents !important; }
   .about-page #activityModalPrev { grid-column: 1; grid-row: 1; justify-self: start; }
   .about-page #activityModalNext { grid-column: 3; grid-row: 1; justify-self: end; }
+
+  /* Keep the decorative status dot in its own lane so wrapped eligibility
+     and requirement text can never paint over it. */
+  .beneficiary-programs-page #programDetailsModal .program-detail-list li {
+    min-height: 40px;
+    display: flex !important;
+    align-items: center !important;
+    padding: 9px 10px 9px 30px !important;
+    line-height: 1.4 !important;
+    overflow-wrap: anywhere;
+  }
+  .beneficiary-programs-page #programDetailsModal .program-detail-list li::before {
+    top: 50% !important;
+    left: 12px !important;
+    width: 7px !important;
+    height: 7px !important;
+    transform: translateY(-50%);
+  }
 }
 
 /* Paired signup fields fit comfortably from large-phone width upward. */

@@ -11,10 +11,6 @@ require_once "tupad_document_helper.php";
 require_once "spes_schema_helper.php";
 require_once "spes_lifecycle_helper.php";
 require_once __DIR__ . '/activity_log_helper.php';
-ensure_program_eligibility_schema($conn);
-ensure_tupad_category_schema($conn);
-ensure_tupad_document_schema($conn);
-ensureSpesParentStatusCapacity($conn);
 
 check_user_role('user');
 
@@ -29,6 +25,74 @@ function is_supported_benepeso_program_name(string $programName): bool
 }
 
 $user_id = (int)$_SESSION["user_id"];
+
+// Eligibility is requested from an already-rendered programs page. Keep this
+// response path lean: the full page performs schema setup and profile/SPES
+// hydration, none of which is needed to answer this click.
+if (isset($_GET['action']) && $_GET['action'] === 'check_eligibility') {
+    header('Content-Type: application/json');
+    $check_program_id = isset($_GET['program_id']) ? (int)$_GET['program_id'] : 0;
+
+    $configuredEligibility = evaluate_program_eligibility($conn, $user_id, $check_program_id);
+    if (!$configuredEligibility['eligible']) {
+        echo json_encode($configuredEligibility); exit();
+    }
+
+    $pStmt = $conn->prepare("SELECT program_name FROM programs WHERE program_id = ?");
+    $pStmt->bind_param("i", $check_program_id);
+    $pStmt->execute();
+    $pRes = $pStmt->get_result()->fetch_assoc();
+    $pStmt->close();
+
+    $prog_name_check = $pRes ? $pRes['program_name'] : '';
+    if (!is_supported_benepeso_program_name($prog_name_check)) {
+        echo json_encode(['eligible' => false, 'message' => 'This listing is not part of the supported BENEPESO catalog.']);
+        exit();
+    }
+    $base_prog_name = explode(' ', trim($prog_name_check))[0];
+
+    $activeAppStmt = $conn->prepare("
+        SELECT p.program_name, b.availment_status
+        FROM beneficiaries b
+        JOIN programs p ON b.program_id = p.program_id
+        WHERE b.user_id = ?
+        AND (b.approval_status = 'Pending'
+             OR (b.approval_status = 'Approved' AND b.availment_status IN ('Not Yet Availed', 'Requirements Received', 'Orientation', 'Examination', 'Exam Passed', 'Exam Failed', 'Ongoing', 'Salary Distribution')))
+        ORDER BY b.created_at DESC LIMIT 1
+    ");
+    $activeAppStmt->bind_param("i", $user_id);
+    $activeAppStmt->execute();
+    $activeApp = $activeAppStmt->get_result()->fetch_assoc();
+    $activeAppStmt->close();
+
+    if ($activeApp) {
+        echo json_encode(['eligible' => false, 'message' => "You currently have an active or pending application for " . $activeApp['program_name'] . ". You cannot apply for another program until it is completed."]); exit();
+    }
+
+    if (strcasecmp($base_prog_name, 'TUPAD') === 0) {
+        $twentyMonthsAgo = date('Y-m-d', strtotime('-20 months'));
+        $searchBase = $base_prog_name . '%';
+        $cooldownStmt = $conn->prepare("SELECT b.date_completed, b.date_availed FROM beneficiaries b JOIN programs p ON b.program_id = p.program_id WHERE b.user_id = ? AND p.program_name LIKE ? AND b.approval_status = 'Approved' AND b.availment_status = 'Completed' ORDER BY b.created_at DESC LIMIT 1");
+        $cooldownStmt->bind_param("is", $user_id, $searchBase);
+        $cooldownStmt->execute();
+        $lastAvail = $cooldownStmt->get_result()->fetch_assoc();
+        $cooldownStmt->close();
+        if ($lastAvail) {
+            $compareDate = !empty($lastAvail['date_completed']) ? $lastAvail['date_completed'] : (!empty($lastAvail['date_availed']) ? $lastAvail['date_availed'] : null);
+            if ($compareDate && $compareDate > $twentyMonthsAgo) {
+                echo json_encode(['eligible' => false, 'message' => "You must wait 1 year and 8 months after completing a TUPAD program before applying for a new batch."]); exit();
+            }
+        }
+    }
+
+    echo json_encode(['eligible' => true]); exit();
+}
+
+ensure_program_eligibility_schema($conn);
+ensure_tupad_category_schema($conn);
+ensure_tupad_document_schema($conn);
+ensureSpesParentStatusCapacity($conn);
+
 $user_display_name = "User";
 $first_char = "U";
 $is_logged_in = true;
@@ -100,73 +164,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'log_v
     $_SESSION['last_program_view_log'] = ['fingerprint' => $logFingerprint, 'time' => time()];
     echo json_encode(['status' => 'success']);
     exit();
-}
-
-// SMART ELIGIBILITY CHECKER (AJAX)
-if (isset($_GET['action']) && $_GET['action'] === 'check_eligibility') {
-    header('Content-Type: application/json');
-    $check_program_id = isset($_GET['program_id']) ? (int)$_GET['program_id'] : 0;
-
-    $configuredEligibility = evaluate_program_eligibility($conn, $user_id, $check_program_id);
-    if (!$configuredEligibility['eligible']) {
-        echo json_encode($configuredEligibility); exit();
-    }
-
-    // Get Base Program Name (e.g. extracts "TUPAD" from "TUPAD 2026 Batch 1")
-    $pStmt = $conn->prepare("SELECT program_name FROM programs WHERE program_id = ?");
-    $pStmt->bind_param("i", $check_program_id);
-    $pStmt->execute();
-    $pRes = $pStmt->get_result()->fetch_assoc();
-    $pStmt->close();
-    
-    $prog_name_check = $pRes ? $pRes['program_name'] : '';
-    if (!is_supported_benepeso_program_name($prog_name_check)) {
-        echo json_encode(['eligible' => false, 'message' => 'This listing is not part of the supported BENEPESO catalog.']);
-        exit();
-    }
-    $base_prog_name = explode(' ', trim($prog_name_check))[0];
-
-    // RULE 1: Global Block - User cannot apply if they have ANY active or pending program.
-    $activeAppStmt = $conn->prepare("
-        SELECT p.program_name, b.availment_status 
-        FROM beneficiaries b 
-        JOIN programs p ON b.program_id = p.program_id 
-        WHERE b.user_id = ? 
-        AND (b.approval_status = 'Pending' 
-             OR (b.approval_status = 'Approved' AND b.availment_status IN ('Not Yet Availed', 'Requirements Received', 'Orientation', 'Examination', 'Exam Passed', 'Exam Failed', 'Ongoing', 'Salary Distribution')))
-        ORDER BY b.created_at DESC LIMIT 1
-    ");
-    $activeAppStmt->bind_param("i", $user_id);
-    $activeAppStmt->execute();
-    $activeApp = $activeAppStmt->get_result()->fetch_assoc();
-    $activeAppStmt->close();
-
-    if ($activeApp) {
-        echo json_encode(['eligible' => false, 'message' => "You currently have an active or pending application for " . $activeApp['program_name'] . ". You cannot apply for another program until it is completed."]); exit();
-    }
-
-    // RULE 2: The PESO Vinzons 20-month cooldown applies only to TUPAD.
-    if (strcasecmp($base_prog_name, 'TUPAD') === 0) {
-        $twentyMonthsAgo = date('Y-m-d', strtotime('-20 months'));
-        $searchBase = $base_prog_name . '%';
-        $cooldownStmt = $conn->prepare("SELECT b.date_completed, b.date_availed FROM beneficiaries b JOIN programs p ON b.program_id = p.program_id WHERE b.user_id = ? AND p.program_name LIKE ? AND b.approval_status = 'Approved' AND b.availment_status = 'Completed' ORDER BY b.created_at DESC LIMIT 1");
-        $cooldownStmt->bind_param("is", $user_id, $searchBase);
-        $cooldownStmt->execute();
-        $lastAvail = $cooldownStmt->get_result()->fetch_assoc();
-        $cooldownStmt->close();
-        if ($lastAvail) {
-            $compareDate = !empty($lastAvail['date_completed']) ? $lastAvail['date_completed'] : (!empty($lastAvail['date_availed']) ? $lastAvail['date_availed'] : null);
-            if ($compareDate && $compareDate > $twentyMonthsAgo) {
-                echo json_encode(['eligible' => false, 'message' => "You must wait 1 year and 8 months after completing a TUPAD program before applying for a new batch."]); exit();
-            }
-        }
-    }
-
-    // FAMILY CHECK BYPASSED: 
-    // Allowing siblings/family to apply via the automated checker to prevent false disqualifications.
-    // Approvals for duplicate households will be handled by the Admin dashboard manually.
-    
-    echo json_encode(['eligible' => true]); exit();
 }
 
 // HANDLE BULLETPROOF FORM SUBMISSION
@@ -888,7 +885,7 @@ if ($barangay_summary_result) {
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=12">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=13">
 <script src="frontend_polish.js?v=20260921" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>
@@ -2276,6 +2273,7 @@ if ($barangay_summary_result) {
     }
 
     let activeProgramId = 0, activeProgramName = "", currentFormType = "tupad", totalSteps = 3;
+    const eligibilityResultCache = new Map();
     const isReturningSpesBeneficiary = <?= $is_spes_returning ? 'true' : 'false' ?>;
     const spesPreviousDetails = <?= json_encode($spes_prefill, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     let pendingSpesCard = null;
@@ -2661,7 +2659,7 @@ if ($barangay_summary_result) {
                 // Set global active variables before checking eligibility
                 activeProgramId = element.getAttribute('data-prog-id');
                 activeProgramName = title;
-                checkEligibility(activeProgramId, title, desc, startDate, endDate);
+                checkEligibility(activeProgramId, title, desc, startDate, endDate, btn);
             };
         }
         
@@ -2786,25 +2784,60 @@ if ($barangay_summary_result) {
         modal.classList.add('show');
     }
 
-    function checkEligibility(programId, title, desc, startDate, endDate) {
+    function showEligibilityResult(data) {
+        closeModal('programDetailsModal');
+        if (data.eligible === false) {
+            document.getElementById('alertMessage').textContent = data.message;
+            document.getElementById('alertModal').classList.add('show');
+        } else {
+            document.getElementById('successEligibleModal').classList.add('show');
+        }
+    }
+
+    function checkEligibility(programId, title, desc, startDate, endDate, triggerButton = null) {
         document.getElementById('eligibilityProgName').innerText = title;
         document.getElementById('eligibilityProgDesc').innerText = desc;
         document.getElementById('eligibilityProgDates').textContent = "Program Duration: " + startDate + " to " + endDate;
 
-        fetch(`programs.php?action=check_eligibility&program_id=` + programId)
-            .then(response => response.json())
+        const cacheKey = String(programId);
+        if (eligibilityResultCache.has(cacheKey)) {
+            showEligibilityResult(eligibilityResultCache.get(cacheKey));
+            return;
+        }
+
+        const originalLabel = triggerButton?.textContent || 'Check Eligibility & Apply';
+        if (triggerButton) {
+            triggerButton.disabled = true;
+            triggerButton.setAttribute('aria-busy', 'true');
+            triggerButton.textContent = 'Checking eligibility…';
+        }
+
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+        fetch(`programs.php?action=check_eligibility&program_id=` + encodeURIComponent(programId), {
+            signal: controller.signal,
+            headers: {'Accept': 'application/json'}
+        })
+            .then(response => {
+                if (!response.ok) throw new Error(`Eligibility request failed (${response.status})`);
+                return response.json();
+            })
             .then(data => {
-                closeModal('programDetailsModal');
-                if (data.eligible === false) {
-                    document.getElementById('alertMessage').textContent = data.message;
-                    document.getElementById('alertModal').classList.add('show');
-                } else {
-                    document.getElementById('successEligibleModal').classList.add('show');
-                }
+                eligibilityResultCache.set(cacheKey, data);
+                showEligibilityResult(data);
             }).catch(error => {
                 console.error('Fetch Error:', error);
-                closeModal('programDetailsModal');
-                showProfessionalNotice('Eligibility could not be checked right now. Please check your connection and try again.', 'Unable to Check Eligibility');
+                const message = error.name === 'AbortError'
+                    ? 'The eligibility check took too long. Please try again.'
+                    : 'Eligibility could not be checked right now. Please check your connection and try again.';
+                showProfessionalNotice(message, 'Unable to Check Eligibility');
+            }).finally(() => {
+                window.clearTimeout(timeoutId);
+                if (triggerButton?.isConnected) {
+                    triggerButton.disabled = false;
+                    triggerButton.removeAttribute('aria-busy');
+                    triggerButton.textContent = originalLabel;
+                }
             });
     }
 
