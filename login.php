@@ -91,7 +91,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="stylesheet" href="style.css?v=33" />
   <link rel="stylesheet" href="frontend_polish.css?v=20260921">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=14">
+  <link rel="stylesheet" href="auth_refresh.css?v=15">
   <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260923" defer></script>
@@ -542,6 +542,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   const setTurnstileState = (state, message, allowRetry = false) => {
     if (!turnstileState) return;
     turnstileState.dataset.state = state;
+    turnstileState.closest('.auth-turnstile')?.classList.toggle('is-error', state === 'error');
     if (turnstileStateText) turnstileStateText.textContent = message;
     if (turnstileRetry) turnstileRetry.hidden = !allowRetry;
   };
@@ -575,8 +576,8 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
       turnstileWidgetId = window.turnstile.render(turnstileHost, {
         sitekey: turnstileHost.dataset.sitekey,
         theme: 'light',
-        size: 'flexible',
-        appearance: 'interaction-only',
+        size: 'normal',
+        appearance: 'always',
         action: 'login',
         retry: 'auto',
         'retry-interval': 2000,

@@ -582,19 +582,22 @@ body.auth-page::before {
   padding: 7px 9px;
   flex-direction: column;
   gap: 7px;
-  overflow: visible;
+  overflow: hidden;
   border: 1px solid #d8e5de;
   background: linear-gradient(145deg, #fbfdfc, #f3f9f6);
 }
 
 .auth-page #loginTurnstile {
-  width: 100%;
+  width: 300px;
+  max-width: 100%;
   min-height: 0;
+  margin-inline: auto;
 }
 
 .auth-page #loginTurnstile[hidden] { display: none !important; }
-.auth-page .auth-turnstile--managed.has-widget { min-height: 0; }
+.auth-page .auth-turnstile--managed.has-widget { min-height: 0; padding: 6px; background: #fff; }
 .auth-page .auth-turnstile--managed.has-widget #loginTurnstile { min-height: 65px; }
+.auth-page .auth-turnstile--managed.has-widget:not(.is-error) .auth-turnstile-state { display: none; }
 
 .auth-page #loginTurnstile > div,
 .auth-page #loginTurnstile iframe { max-width: 100% !important; }
