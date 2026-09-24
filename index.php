@@ -152,10 +152,10 @@ if ($updated_stmt) {
     <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="index.css?v=29">
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=17">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
 <script src="frontend_polish.js?v=20260923" defer></script>
 </head>
-<body class="public-index-page">
+<body class="public-index-page" data-force-page-loader>
 <a class="public-skip-link" href="#mainContent">Skip to main content</a>
 
 <div class="page-wrap">
@@ -307,35 +307,6 @@ if ($updated_stmt) {
                             <?php endif; ?>
                         </p>
                     </div>
-                </div>
-
-                <div class="public-directory-toolbar" aria-label="Filter the program directory">
-                    <form action="index.php#available-programs" method="GET">
-                        <label class="sr-only" for="directorySearch">Search the program directory</label>
-                        <span class="directory-search-control">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-                            <input id="directorySearch" name="search" type="search" placeholder="Search TUPAD, SPES, or MSME" value="<?= htmlspecialchars($search_query) ?>" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="publicDirectorySuggestions">
-                            <div class="public-program-suggestions public-program-suggestions--directory" id="publicDirectorySuggestions" role="listbox" aria-label="Program suggestions" hidden>
-                                <a href="?search=TUPAD#available-programs" role="option" data-search-value="TUPAD"><span class="program-symbol program-symbol--tupad" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18h14M7 15v-2a5 5 0 0 1 10 0v2M9 8.5V7a3 3 0 0 1 6 0v1.5M6 9h12"/></svg></span><span><strong>TUPAD</strong><small>Community-based emergency employment</small></span><i aria-hidden="true">&rarr;</i></a>
-                                <a href="?search=SPES#available-programs" role="option" data-search-value="SPES"><span class="program-symbol program-symbol--spes" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Z"/><path d="M7 12v4c3 2 7 2 10 0v-4M21 9v6"/></svg></span><span><strong>SPES</strong><small>Employment opportunities for students</small></span><i aria-hidden="true">&rarr;</i></a>
-                                <a href="?search=MSME#available-programs" role="option" data-search-value="MSME"><span class="program-symbol program-symbol--msme" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 10v9h14v-9M4 5h16l1 5a3 3 0 0 1-4 0 3 3 0 0 1-5 0 3 3 0 0 1-5 0 3 3 0 0 1-4 0l1-5Z"/><path d="M9 19v-5h6v5"/></svg></span><span><strong>MSME Profiling</strong><small>Business and livelihood support</small></span><i aria-hidden="true">&rarr;</i></a>
-                            </div>
-                        </span>
-                        <input class="directory-status-input" type="hidden" name="status" value="<?= htmlspecialchars($status_filter) ?>">
-                        <div class="public-schedule-select public-schedule-select--directory" data-public-schedule>
-                            <button class="public-schedule-toggle" type="button" aria-haspopup="listbox" aria-expanded="false">
-                                <svg class="schedule-calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
-                                <span class="public-schedule-label"><?= $status_filter === 'Upcoming' ? 'Coming soon' : ($status_filter === 'Ongoing' ? 'Open now' : 'All schedules') ?></span>
-                                <svg class="schedule-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 8 4 4 4-4"></path></svg>
-                            </button>
-                            <div class="public-schedule-menu" role="listbox" aria-label="Program schedule" hidden>
-                                <button type="button" role="option" data-value="" aria-selected="<?= $status_filter === '' ? 'true' : 'false' ?>"><span class="schedule-option-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span><span><strong>All schedules</strong><small>Show every open listing</small></span><span class="schedule-option-check" aria-hidden="true"></span></button>
-                                <button type="button" role="option" data-value="Ongoing" aria-selected="<?= $status_filter === 'Ongoing' ? 'true' : 'false' ?>"><span class="schedule-option-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></svg></span><span><strong>Open now</strong><small>Currently accepting applications</small></span><span class="schedule-option-check" aria-hidden="true"></span></button>
-                                <button type="button" role="option" data-value="Upcoming" aria-selected="<?= $status_filter === 'Upcoming' ? 'true' : 'false' ?>"><span class="schedule-option-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><strong>Coming soon</strong><small>Programs opening next</small></span><span class="schedule-option-check" aria-hidden="true"></span></button>
-                            </div>
-                        </div>
-                        <button type="submit">Update results</button>
-                    </form>
                 </div>
 
                 <div class="public-directory-notice" role="note">

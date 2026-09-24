@@ -91,11 +91,18 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="stylesheet" href="style.css?v=32" />
   <link rel="stylesheet" href="frontend_polish.css?v=20260921">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=12">
-  <link rel="stylesheet" href="beneficiary_mobile.css?v=17">
+  <link rel="stylesheet" href="auth_refresh.css?v=13">
+  <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
 <script src="frontend_polish.js?v=20260923" defer></script>
   <?php if (benepeso_turnstile_enabled()): ?>
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script>
+    window.benepesoTurnstileLoaded = false;
+    window.benepesoTurnstileReady = function () {
+      window.benepesoTurnstileLoaded = true;
+      window.dispatchEvent(new Event('benepeso-turnstile-ready'));
+    };
+  </script>
+  <script id="turnstileApi" src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&amp;onload=benepesoTurnstileReady" defer></script>
   <?php endif; ?>
   <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
   <script src="google_signin.js?v=6" defer></script>
@@ -145,7 +152,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
           </div>
         <?php endif; ?>
 
-        <form action="process_login.php" method="POST" autocomplete="off" id="loginForm" class="stagger-3" onsubmit="showLoading('Authenticating', 'Verifying your credentials securely...')">
+        <form action="process_login.php" method="POST" autocomplete="off" id="loginForm" class="stagger-3">
           <?= auth_csrf_input() ?>
           
           <div class="form-group">
@@ -195,17 +202,17 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
           </div>
 
           <?php if (benepeso_turnstile_enabled()): ?>
-            <div class="auth-turnstile auth-turnstile--adaptive" aria-label="Cloudflare security verification">
-              <div class="cf-turnstile"
-                   data-sitekey="<?= htmlspecialchars(benepeso_turnstile_site_key(), ENT_QUOTES, 'UTF-8') ?>"
-                   data-theme="light"
-                   data-size="flexible"
-                   data-action="login"
-                   data-appearance="interaction-only"></div>
+            <div class="auth-turnstile auth-turnstile--managed" aria-label="Cloudflare security verification">
+              <div id="loginTurnstile" data-sitekey="<?= htmlspecialchars(benepeso_turnstile_site_key(), ENT_QUOTES, 'UTF-8') ?>"></div>
+              <div class="auth-turnstile-state" id="turnstileState" role="status" aria-live="polite">
+                <span class="auth-turnstile-spinner" aria-hidden="true"></span>
+                <span id="turnstileStateText">Preparing secure verification&hellip;</span>
+                <button type="button" id="turnstileRetry" hidden>Retry</button>
+              </div>
             </div>
           <?php endif; ?>
 
-          <button class="btn" type="submit" id="loginBtn" <?php echo $locked ? "disabled" : ""; ?>>
+          <button class="btn" type="submit" id="loginBtn" <?php echo ($locked || benepeso_turnstile_enabled()) ? "disabled" : ""; ?>>
             Log in securely
           </button>
         </form>
@@ -389,6 +396,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   const flash = <?php echo json_encode($flash); ?>;
   const fpStep = <?php echo json_encode($fp_step); ?>;
   const isLocked = <?php echo $locked ? "true" : "false"; ?>;
+  const turnstileEnabled = <?php echo benepeso_turnstile_enabled() ? "true" : "false"; ?>;
 
   function openModal(id){ 
       const modal = document.getElementById(id);
@@ -519,10 +527,125 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   }
 
   const loginForm = document.getElementById("loginForm");
+  const loginButton = document.getElementById('loginBtn');
+  const turnstileHost = document.getElementById('loginTurnstile');
+  const turnstileState = document.getElementById('turnstileState');
+  const turnstileStateText = document.getElementById('turnstileStateText');
+  const turnstileRetry = document.getElementById('turnstileRetry');
+  let turnstileWidgetId = null;
+  let turnstileVerified = !turnstileEnabled;
+  let turnstileRetryCount = 0;
+
+  const setTurnstileState = (state, message, allowRetry = false) => {
+    if (!turnstileState) return;
+    turnstileState.dataset.state = state;
+    if (turnstileStateText) turnstileStateText.textContent = message;
+    if (turnstileRetry) turnstileRetry.hidden = !allowRetry;
+  };
+
+  const syncLoginButton = () => {
+    if (loginButton) loginButton.disabled = isLocked || (turnstileEnabled && !turnstileVerified);
+  };
+
+  const renderTurnstile = () => {
+    if (!turnstileEnabled || !turnstileHost || !window.turnstile || turnstileWidgetId !== null) return;
+    setTurnstileState('loading', 'Preparing secure verification…');
+    try {
+      turnstileWidgetId = window.turnstile.render(turnstileHost, {
+        sitekey: turnstileHost.dataset.sitekey,
+        theme: 'light',
+        size: 'flexible',
+        appearance: 'always',
+        action: 'login',
+        retry: 'auto',
+        'retry-interval': 5000,
+        callback: () => {
+          turnstileVerified = true;
+          turnstileRetryCount = 0;
+          setTurnstileState('success', 'Security verification complete.');
+          syncLoginButton();
+        },
+        'expired-callback': () => {
+          turnstileVerified = false;
+          setTurnstileState('loading', 'Security verification expired. Refreshing…');
+          syncLoginButton();
+          window.turnstile.reset(turnstileWidgetId);
+        },
+        'timeout-callback': () => {
+          turnstileVerified = false;
+          setTurnstileState('error', 'Security verification timed out.', true);
+          syncLoginButton();
+        },
+        'error-callback': () => {
+          turnstileVerified = false;
+          syncLoginButton();
+          if (turnstileRetryCount < 2) {
+            turnstileRetryCount += 1;
+            setTurnstileState('loading', 'Security check is reconnecting…');
+            window.setTimeout(() => window.turnstile?.reset(turnstileWidgetId), 2500 * turnstileRetryCount);
+          } else {
+            setTurnstileState('error', 'Security verification could not start. Check your connection, then retry.', true);
+          }
+          return true;
+        }
+      });
+    } catch (error) {
+      turnstileWidgetId = null;
+      turnstileVerified = false;
+      setTurnstileState('error', 'Security verification could not load. Check your connection, then retry.', true);
+      syncLoginButton();
+    }
+  };
+
+  const retryTurnstile = () => {
+    turnstileVerified = false;
+    turnstileRetryCount = 0;
+    setTurnstileState('loading', 'Restarting secure verification…');
+    syncLoginButton();
+    if (!window.turnstile) {
+      document.getElementById('turnstileApi')?.remove();
+      window.benepesoTurnstileLoaded = false;
+      const script = document.createElement('script');
+      script.id = 'turnstileApi';
+      script.defer = true;
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=benepesoTurnstileReady&retry=' + Date.now();
+      script.onerror = () => {
+        setTurnstileState('error', 'Security verification could not load. Check your connection, then retry.', true);
+        syncLoginButton();
+      };
+      document.head.appendChild(script);
+      return;
+    }
+    if (window.turnstile && turnstileWidgetId !== null) {
+      window.turnstile.reset(turnstileWidgetId);
+      return;
+    }
+    renderTurnstile();
+  };
+
+  turnstileRetry?.addEventListener('click', retryTurnstile);
+  window.addEventListener('benepeso-turnstile-ready', renderTurnstile);
+  if (window.benepesoTurnstileLoaded) renderTurnstile();
+  if (turnstileEnabled) {
+    syncLoginButton();
+    window.setTimeout(() => {
+      if (!window.turnstile && !turnstileVerified) {
+        setTurnstileState('error', 'Security verification is taking longer than expected. Check your connection, then retry.', true);
+      }
+    }, 8000);
+  }
+
   if (loginForm && !isLocked){
-    loginForm.addEventListener("submit", ()=>{
+    loginForm.addEventListener("submit", event => {
+      if (turnstileEnabled && !turnstileVerified) {
+        event.preventDefault();
+        setTurnstileState('error', 'Please wait for the security verification before logging in.', true);
+        turnstileState?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        return;
+      }
       if(loginForm.checkValidity()) {
-         loginForm.querySelector('button[type="submit"]').disabled = true;
+         loginButton.disabled = true;
+         showLoading('Authenticating', 'Verifying your credentials securely...');
       }
     });
   }
