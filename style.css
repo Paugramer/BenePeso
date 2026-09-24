@@ -814,11 +814,15 @@ body.auth-page.modal-open {
 }
 
 .auth-page input:focus-visible,
-.auth-page select:focus-visible,
+.auth-page select:focus-visible {
+  outline: 1px solid rgba(185, 143, 37, .48);
+  outline-offset: 1px;
+}
+
 .auth-page button:focus-visible,
 .auth-page a:focus-visible {
-  outline: 3px solid rgba(210, 167, 61, .58);
-  outline-offset: 2px;
+  outline: 2px solid rgba(185, 143, 37, .62);
+  outline-offset: 1px;
 }
 
 .auth-page input[readonly] {

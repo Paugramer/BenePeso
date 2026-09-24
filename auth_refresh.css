@@ -578,8 +578,8 @@ body.auth-page::before {
 .auth-page .auth-turnstile--adaptive .cf-turnstile { min-height: 0; }
 
 .auth-page .auth-turnstile--managed {
-  min-height: 82px;
-  padding: 8px;
+  min-height: 48px;
+  padding: 7px 9px;
   flex-direction: column;
   gap: 7px;
   overflow: visible;
@@ -589,15 +589,19 @@ body.auth-page::before {
 
 .auth-page #loginTurnstile {
   width: 100%;
-  min-height: 65px;
+  min-height: 0;
 }
+
+.auth-page #loginTurnstile[hidden] { display: none !important; }
+.auth-page .auth-turnstile--managed.has-widget { min-height: 0; }
+.auth-page .auth-turnstile--managed.has-widget #loginTurnstile { min-height: 65px; }
 
 .auth-page #loginTurnstile > div,
 .auth-page #loginTurnstile iframe { max-width: 100% !important; }
 
 .auth-page .auth-turnstile-state {
   width: 100%;
-  min-height: 24px;
+  min-height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -640,7 +644,7 @@ body.auth-page::before {
 }
 
 .auth-page #loginBtn:disabled {
-  cursor: wait;
+  cursor: not-allowed;
   opacity: .62;
   box-shadow: none;
 }

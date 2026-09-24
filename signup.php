@@ -46,11 +46,11 @@ $barangays = beneficiary_barangay_options();
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=32" />
+  <link rel="stylesheet" href="style.css?v=33" />
   <link rel="stylesheet" href="frontend_polish.css?v=20260921">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=12">
-  <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
+  <link rel="stylesheet" href="auth_refresh.css?v=14">
+  <link rel="stylesheet" href="beneficiary_mobile.css?v=19">
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260923" defer></script>
   <?php if (!$google_registration): ?>
@@ -233,13 +233,13 @@ $barangays = beneficiary_barangay_options();
                   Google will secure your sign-in. You can add a BENEPESO password later through password recovery if needed.
                 </div>
               <?php else: ?>
-              <div class="form-row">
+              <div class="form-row form-row--credentials">
                 <div class="form-group">
                   <label for="passwordInput">Password</label>
                   <div class="password-wrap">
                     <input type="password" name="password" id="passwordInput" placeholder="Create password" autocomplete="new-password" minlength="10" aria-describedby="passwordHint" required>
                     <button type="button" class="toggle-pass" id="togglePass1" name="toggle_pass_1" data-target="passwordInput" aria-label="Show password">
-                      <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 5c5.5 0 9.5 5.5 9.5 7s-4 7-9.5 7S2.5 13.5 2.5 12S6.5 5 12 5Zm0 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"/></svg>
+                      <svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
                     </button>
                   </div>
                   <small class="field-hint" id="passwordHint">Use at least 10 characters with uppercase, lowercase, a number, and a symbol.</small>
@@ -250,7 +250,7 @@ $barangays = beneficiary_barangay_options();
                   <div class="password-wrap">
                     <input type="password" name="confirm_password" id="confirmPasswordInput" placeholder="Retype password" autocomplete="new-password" minlength="10" required>
                     <button type="button" class="toggle-pass" id="togglePass2" name="toggle_pass_2" data-target="confirmPasswordInput" aria-label="Show password">
-                      <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 5c5.5 0 9.5 5.5 9.5 7s-4 7-9.5 7S2.5 13.5 2.5 12S6.5 5 12 5Zm0 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"/></svg>
+                      <svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
                     </button>
                   </div>
                 </div>

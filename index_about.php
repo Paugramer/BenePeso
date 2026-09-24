@@ -31,7 +31,7 @@ if (isset($_SESSION['role'])) {
     <link rel="stylesheet" href="home.css?v=17">
     <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=28">
+    <link rel="stylesheet" href="index.css?v=31">
     <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
     <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260923" defer></script>
@@ -108,6 +108,34 @@ if (isset($_SESSION['role'])) {
                 <article><span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4M8 11h6M11 8v6"/></svg></span><div><small>EXPLORE</small><h3>Discover</h3><p>Review approved programs, schedules, venues, available slots, eligibility rules, and documentary requirements.</p></div></article>
                 <article><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M14 3v4h4M9 12h6M9 16h4"/></svg></span><div><small>PREPARE</small><h3>Apply accurately</h3><p>Use one registered profile to submit complete information for the exact program batch you select.</p></div></article>
                 <article><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v5h5M9 12l2 2 4-5"/></svg></span><div><small>TRACK</small><h3>Follow official updates</h3><p>Track PESO validation, requirements received, program participation, and the next recorded action.</p></div></article>
+            </div>
+        </section>
+
+        <section class="public-community content-wrap reveal" id="community-in-action" aria-labelledby="publicCommunityTitle">
+            <div class="public-community-heading">
+                <div>
+                    <span class="section-kicker">Community in action</span>
+                    <h2 id="publicCommunityTitle">Public service you can see</h2>
+                </div>
+                <p>These documented PESO Vinzons activities show the work behind the records—from preparation and orientation to training and beneficiary support.</p>
+            </div>
+            <div class="public-community-gallery">
+                <figure class="public-community-card public-community-card--feature">
+                    <img src="img/peso-community-medt-2026.png" alt="PESO Vinzons facilitator leading Employment and Micro-Enterprise Development Training" loading="lazy" decoding="async" width="1080" height="720">
+                    <figcaption><span>MSME</span><strong>Employment and Micro-Enterprise Development Training</strong><small>SB Annex, Vinzons</small></figcaption>
+                </figure>
+                <figure class="public-community-card">
+                    <img src="img/752659025_2053404155260623_314073346839281248_n.jpg" alt="Student beneficiaries attending a SPES payout at Vinzons Municipal Hall" loading="lazy" decoding="async" width="1080" height="720">
+                    <figcaption><span>SPES</span><strong>Student beneficiary support</strong><small>Vinzons Municipal Hall</small></figcaption>
+                </figure>
+                <figure class="public-community-card">
+                    <img src="img/738512047_895211810293178_8484532229922374617_n.jpg" alt="DOLE representative addressing beneficiaries during a TUPAD activity" loading="lazy" decoding="async" width="1080" height="720">
+                    <figcaption><span>TUPAD</span><strong>Community employment assistance</strong><small>Vinzons Town Kiosk</small></figcaption>
+                </figure>
+                <figure class="public-community-card">
+                    <img src="img/725657050_1033155005802300_8541529917400426415_n.jpg" alt="SPES beneficiaries attending a pre-deployment orientation" loading="lazy" decoding="async" width="1080" height="720">
+                    <figcaption><span>SPES</span><strong>Pre-deployment orientation</strong><small>SB Annex, Vinzons</small></figcaption>
+                </figure>
             </div>
         </section>
 

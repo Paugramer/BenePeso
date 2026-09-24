@@ -88,10 +88,10 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=32" />
+  <link rel="stylesheet" href="style.css?v=33" />
   <link rel="stylesheet" href="frontend_polish.css?v=20260921">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=13">
+  <link rel="stylesheet" href="auth_refresh.css?v=14">
   <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260923" defer></script>
@@ -103,7 +103,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
       window.dispatchEvent(new Event('benepeso-turnstile-ready'));
     };
   </script>
-  <script id="turnstileApi" src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&amp;onload=benepesoTurnstileReady" defer></script>
+  <script id="turnstileApi" src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&amp;onload=benepesoTurnstileReady" async defer></script>
   <?php endif; ?>
   <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
   <script src="google_signin.js?v=6" defer></script>
@@ -188,7 +188,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
                 >
                 <button type="button" class="toggle-pass" data-target="passwordInput" aria-label="Show password">
                   <svg viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M12 5c5.5 0 9.5 5.5 9.5 7s-4 7-9.5 7S2.5 13.5 2.5 12S6.5 5 12 5Zm0 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"/>
+                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" stroke-width="1.8"/>
                   </svg>
                 </button>
               </div>
@@ -204,7 +204,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
 
           <?php if (benepeso_turnstile_enabled()): ?>
             <div class="auth-turnstile auth-turnstile--managed" aria-label="Cloudflare security verification">
-              <div id="loginTurnstile" data-sitekey="<?= htmlspecialchars(benepeso_turnstile_site_key(), ENT_QUOTES, 'UTF-8') ?>"></div>
+              <div id="loginTurnstile" data-sitekey="<?= htmlspecialchars(benepeso_turnstile_site_key(), ENT_QUOTES, 'UTF-8') ?>" hidden></div>
               <div class="auth-turnstile-state" id="turnstileState" role="status" aria-live="polite">
                 <span class="auth-turnstile-spinner" aria-hidden="true"></span>
                 <span id="turnstileStateText">Preparing secure verification&hellip;</span>
@@ -213,7 +213,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
             </div>
           <?php endif; ?>
 
-          <button class="btn" type="submit" id="loginBtn" <?php echo ($locked || benepeso_turnstile_enabled()) ? "disabled" : ""; ?>>
+          <button class="btn" type="submit" id="loginBtn" <?php echo $locked ? "disabled" : ""; ?>>
             Log in securely
           </button>
         </form>
@@ -364,7 +364,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
           <div class="password-wrap">
               <input type="password" name="new_password" id="newPassFp" placeholder="Enter new password" minlength="10" autocomplete="new-password" aria-describedby="recoveryStrengthText" required>
               <button type="button" class="toggle-pass" data-target="newPassFp" aria-label="Show password">
-                  <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 5c5.5 0 9.5 5.5 9.5 7s-4 7-9.5 7S2.5 13.5 2.5 12S6.5 5 12 5Zm0 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"/></svg>
+                  <svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
               </button>
           </div>
       </div>
@@ -374,7 +374,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
           <div class="password-wrap">
               <input type="password" name="confirm_password" id="confPassFp" placeholder="Retype new password" minlength="10" autocomplete="new-password" required>
               <button type="button" class="toggle-pass" data-target="confPassFp" aria-label="Show password">
-                  <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 5c5.5 0 9.5 5.5 9.5 7s-4 7-9.5 7S2.5 13.5 2.5 12S6.5 5 12 5Zm0 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"/></svg>
+                  <svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
               </button>
           </div>
       </div>
@@ -536,6 +536,8 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   let turnstileWidgetId = null;
   let turnstileVerified = !turnstileEnabled;
   let turnstileRetryCount = 0;
+  let turnstileLoadTimer = null;
+  let turnstileChallengeTimer = null;
 
   const setTurnstileState = (state, message, allowRetry = false) => {
     if (!turnstileState) return;
@@ -545,34 +547,55 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   };
 
   const syncLoginButton = () => {
-    if (loginButton) loginButton.disabled = isLocked || (turnstileEnabled && !turnstileVerified);
+    if (loginButton) loginButton.disabled = isLocked;
+  };
+
+  const showTurnstileHost = visible => {
+    if (!turnstileHost) return;
+    turnstileHost.hidden = !visible;
+    turnstileHost.closest('.auth-turnstile')?.classList.toggle('has-widget', visible);
+  };
+
+  const removeTurnstileWidget = () => {
+    window.clearTimeout(turnstileChallengeTimer);
+    if (window.turnstile && turnstileWidgetId !== null) {
+      try { window.turnstile.remove(turnstileWidgetId); } catch (error) { /* Failed widgets may already be removed. */ }
+    }
+    turnstileWidgetId = null;
+    if (turnstileHost) turnstileHost.replaceChildren();
+    showTurnstileHost(false);
   };
 
   const renderTurnstile = () => {
     if (!turnstileEnabled || !turnstileHost || !window.turnstile || turnstileWidgetId !== null) return;
-    setTurnstileState('loading', 'Preparing secure verification…');
+    window.clearTimeout(turnstileLoadTimer);
+    setTurnstileState('loading', 'Starting secure verification…');
+    showTurnstileHost(true);
     try {
       turnstileWidgetId = window.turnstile.render(turnstileHost, {
         sitekey: turnstileHost.dataset.sitekey,
         theme: 'light',
         size: 'flexible',
-        appearance: 'always',
+        appearance: 'interaction-only',
         action: 'login',
         retry: 'auto',
-        'retry-interval': 5000,
+        'retry-interval': 2000,
         callback: () => {
+          window.clearTimeout(turnstileChallengeTimer);
           turnstileVerified = true;
           turnstileRetryCount = 0;
           setTurnstileState('success', 'Security verification complete.');
           syncLoginButton();
         },
         'expired-callback': () => {
+          window.clearTimeout(turnstileChallengeTimer);
           turnstileVerified = false;
           setTurnstileState('loading', 'Security verification expired. Refreshing…');
           syncLoginButton();
           window.turnstile.reset(turnstileWidgetId);
         },
         'timeout-callback': () => {
+          window.clearTimeout(turnstileChallengeTimer);
           turnstileVerified = false;
           setTurnstileState('error', 'Security verification timed out.', true);
           syncLoginButton();
@@ -583,15 +606,20 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
           if (turnstileRetryCount < 2) {
             turnstileRetryCount += 1;
             setTurnstileState('loading', 'Security check is reconnecting…');
-            window.setTimeout(() => window.turnstile?.reset(turnstileWidgetId), 2500 * turnstileRetryCount);
+            window.setTimeout(() => window.turnstile?.reset(turnstileWidgetId), 900);
           } else {
             setTurnstileState('error', 'Security verification could not start. Check your connection, then retry.', true);
           }
           return true;
         }
       });
+      turnstileChallengeTimer = window.setTimeout(() => {
+        if (!turnstileVerified) {
+          setTurnstileState('error', 'Verification is taking longer than expected. Retry the secure check.', true);
+        }
+      }, 6000);
     } catch (error) {
-      turnstileWidgetId = null;
+      removeTurnstileWidget();
       turnstileVerified = false;
       setTurnstileState('error', 'Security verification could not load. Check your connection, then retry.', true);
       syncLoginButton();
@@ -603,11 +631,13 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
     turnstileRetryCount = 0;
     setTurnstileState('loading', 'Restarting secure verification…');
     syncLoginButton();
+    removeTurnstileWidget();
     if (!window.turnstile) {
       document.getElementById('turnstileApi')?.remove();
       window.benepesoTurnstileLoaded = false;
       const script = document.createElement('script');
       script.id = 'turnstileApi';
+      script.async = true;
       script.defer = true;
       script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=benepesoTurnstileReady&retry=' + Date.now();
       script.onerror = () => {
@@ -615,10 +645,6 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
         syncLoginButton();
       };
       document.head.appendChild(script);
-      return;
-    }
-    if (window.turnstile && turnstileWidgetId !== null) {
-      window.turnstile.reset(turnstileWidgetId);
       return;
     }
     renderTurnstile();
@@ -629,18 +655,19 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   if (window.benepesoTurnstileLoaded) renderTurnstile();
   if (turnstileEnabled) {
     syncLoginButton();
-    window.setTimeout(() => {
+    turnstileLoadTimer = window.setTimeout(() => {
       if (!window.turnstile && !turnstileVerified) {
         setTurnstileState('error', 'Security verification is taking longer than expected. Check your connection, then retry.', true);
       }
-    }, 8000);
+    }, 4000);
   }
 
   if (loginForm && !isLocked){
     loginForm.addEventListener("submit", event => {
       if (turnstileEnabled && !turnstileVerified) {
         event.preventDefault();
-        setTurnstileState('error', 'Please wait for the security verification before logging in.', true);
+        if (window.turnstile && turnstileWidgetId === null) renderTurnstile();
+        setTurnstileState('error', 'Complete the security check, then select Log in securely again.', true);
         turnstileState?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         return;
       }

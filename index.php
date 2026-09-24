@@ -151,7 +151,7 @@ if ($updated_stmt) {
     
     <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=30">
+    <link rel="stylesheet" href="index.css?v=31">
     <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
     <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260923" defer></script>
@@ -239,6 +239,29 @@ if ($updated_stmt) {
                     <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></svg><b>Official PESO records</b><small>Published from approved listings</small></span>
                     <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><b>Secure applications</b><small>Personal records stay protected</small></span>
                     <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v5h5"/><path d="M12 8v4l3 2"/></svg><b>Trackable updates</b><small>Follow validation and next steps</small></span>
+                </div>
+            </section>
+
+            <section class="public-impact content-wrap reveal" aria-labelledby="publicImpactTitle">
+                <div class="public-impact-copy">
+                    <span class="section-kicker">PESO in the community</span>
+                    <h2 id="publicImpactTitle">Real programs. Visible local impact.</h2>
+                    <p>See how PESO Vinzons turns official opportunities into orientations, training, work experience, and support for residents.</p>
+                    <a href="index_about.php#community-in-action">View community activities <span aria-hidden="true">&rarr;</span></a>
+                </div>
+                <div class="public-impact-gallery" aria-label="Recent PESO Vinzons community activities">
+                    <figure class="public-impact-photo public-impact-photo--wide">
+                        <img src="img/peso-community-medt-2026.png" alt="PESO Vinzons facilitator leading an employment and micro-enterprise development session" loading="lazy" decoding="async" width="1080" height="720">
+                        <figcaption><strong>MSME development</strong><span>Skills and livelihood guidance</span></figcaption>
+                    </figure>
+                    <figure class="public-impact-photo">
+                        <img src="img/752659025_2053404155260623_314073346839281248_n.jpg" alt="Student beneficiaries attending a SPES activity at Vinzons Municipal Hall" loading="lazy" decoding="async" width="1080" height="720">
+                        <figcaption><strong>SPES</strong><span>Student employment support</span></figcaption>
+                    </figure>
+                    <figure class="public-impact-photo">
+                        <img src="img/738512047_895211810293178_8484532229922374617_n.jpg" alt="TUPAD beneficiaries attending an official PESO and DOLE activity" loading="lazy" decoding="async" width="1080" height="720">
+                        <figcaption><strong>TUPAD</strong><span>Community employment assistance</span></figcaption>
+                    </figure>
                 </div>
             </section>
 
