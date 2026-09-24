@@ -190,6 +190,7 @@ try {
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=7">
     <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
+    <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260923" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
 </head>

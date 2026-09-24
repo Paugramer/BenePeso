@@ -93,6 +93,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
   <link rel="stylesheet" href="auth_refresh.css?v=13">
   <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
+  <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260923" defer></script>
   <?php if (benepeso_turnstile_enabled()): ?>
   <script>

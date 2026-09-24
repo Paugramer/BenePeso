@@ -2699,6 +2699,21 @@ html { scroll-behavior: smooth; }
 }
 .public-home-hero .v-search-box-centered .btn-main { border-radius: 9px; }
 
+/* The directory owns the only search/filter control on the public page. */
+.results-area .public-directory-search {
+    max-width: none;
+    margin: 0 0 14px;
+    border: 1px solid #d1e2d9;
+    border-radius: 13px;
+    background: rgba(255,255,255,.96);
+    box-shadow: 0 12px 30px rgba(10,61,41,.08);
+}
+.results-area .public-directory-search .input-wrapper { position: relative; }
+.results-area .public-directory-search input,
+.results-area .public-directory-search .public-schedule-toggle,
+.results-area .public-directory-search .btn-main { min-height: 48px; height: 48px; }
+.results-area .public-directory-search .btn-main { border-radius: 9px; }
+
 .public-trust-strip { position: relative; z-index: 4; border-block: 1px solid #dce9e2; background: rgba(255,255,255,.95); }
 .public-trust-strip .content-wrap { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); width: min(1100px, calc(100% - 40px)); }
 .public-trust-strip .content-wrap > span { display: grid; grid-template-columns: 38px minmax(0,1fr); grid-template-rows: auto auto; gap: 1px 10px; padding: 17px 28px; align-items: center; }
@@ -2723,6 +2738,31 @@ html { scroll-behavior: smooth; }
 .public-active-filters a { display: inline-flex; gap: 7px; padding: 6px 9px; align-items: center; border: 1px solid #cce0d5; border-radius: 999px; background: #edf7f1; color: #176b49; font-size: 9px; font-weight: 750; text-decoration: none; }
 .public-active-filters a:hover { border-color: #83b49c; background: #fff; }
 .public-active-filters .clear-all { border-color: transparent; background: transparent; color: #6f8078; text-decoration: underline; text-underline-offset: 2px; }
+
+@media (max-width: 600px) {
+    .results-area .public-directory-search { padding: 7px; }
+    .results-area .public-directory-search .input-wrapper {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 7px;
+        padding: 0;
+    }
+    .results-area .public-directory-search .search-icon { display: none; }
+    .results-area .public-directory-search input {
+        grid-column: 1 / -1;
+        width: 100%;
+        min-width: 0;
+        padding: 9px 12px;
+        border: 1px solid #d8e6df;
+        border-radius: 9px;
+        background: #fbfdfc;
+        text-align: left;
+    }
+    .results-area .public-directory-search .public-schedule-select { grid-column: 1; width: 100%; min-width: 0; }
+    .results-area .public-directory-search .public-schedule-toggle { width: 100%; min-width: 0; }
+    .results-area .public-directory-search .btn-main { grid-column: 2; padding-inline: 18px; }
+    .results-area .public-directory-search .public-program-suggestions { top: 53px; width: 100%; }
+}
 
 .public-index-page .program-card { border-radius: 16px 5px 16px 5px; }
 .public-index-page .program-card:hover { transform: translateY(-6px); box-shadow: 0 20px 42px rgba(16,65,45,.12); }

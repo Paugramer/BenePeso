@@ -1,0 +1,315 @@
+/* BENEPESO system-wide readability guardrails.
+   Loaded last so every workspace keeps a legible type scale at each breakpoint. */
+
+:root {
+  --bp-readable-body: 15px;
+  --bp-readable-copy: 13px;
+  --bp-readable-secondary: 12px;
+  --bp-readable-meta: 11px;
+}
+
+body:is(
+  .public-index-page,
+  .home-page,
+  .beneficiary-programs-page,
+  .about-page,
+  .beneficiary-profile-page,
+  .verification-page,
+  .privacy-page,
+  .auth-page,
+  .admin-mobile-page,
+  .staff-mobile-page
+) {
+  font-size: var(--bp-readable-body);
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body:is(
+  .public-index-page,
+  .home-page,
+  .beneficiary-programs-page,
+  .about-page,
+  .beneficiary-profile-page,
+  .verification-page,
+  .privacy-page,
+  .auth-page,
+  .admin-mobile-page,
+  .staff-mobile-page
+) small {
+  font-size: max(11.5px, .78em) !important;
+  line-height: 1.45;
+}
+
+/* Shared navigation and supporting copy. */
+body:is(.public-index-page, .home-page, .beneficiary-programs-page, .about-page, .beneficiary-profile-page, .verification-page) :where(.brand-subtitle, .side-sub, .user-role) {
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+}
+
+body:is(.public-index-page, .home-page, .beneficiary-programs-page, .about-page, .beneficiary-profile-page, .verification-page) :where(.menu-item, .account-button, .account-dropdown a, .btn-login) {
+  font-size: 13px !important;
+}
+
+/* Public directory: readable explanatory, status, and journey text. */
+.public-index-page :where(.public-program-shortcuts > span, .public-program-shortcuts a, .public-summary-head, .section-kicker) {
+  font-size: 11.5px !important;
+}
+.public-index-page :where(.public-summary-count span, .public-summary-programs b, .public-trust-strip b, .public-route-flow strong, .public-beneficiary-cue strong) {
+  font-size: 12.5px !important;
+}
+.public-index-page :where(.public-summary-programs small, .public-summary-foot > span, .public-summary-foot a, .public-trust-strip small, .public-route-flow p, .public-beneficiary-cue small) {
+  font-size: 11.5px !important;
+  line-height: 1.5 !important;
+}
+.public-index-page :where(.public-route-heading > span, .public-route-flow small, .card-status, .public-active-filters > span, .public-active-filters a) {
+  font-size: 11px !important;
+}
+.public-index-page :where(.public-directory-notice strong, .public-program-suggestions strong) { font-size: 12.5px !important; }
+.public-index-page :where(.public-directory-notice span, .public-directory-notice time, .public-program-suggestions small) {
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+}
+.public-index-page .public-directory-search :where(input, button) { font-size: 13px !important; }
+
+.public-about-page :where(.public-about-contact > div > span, .public-purpose-copy .section-kicker) { font-size: 11.5px !important; }
+.public-about-page :where(.public-about-identity > strong, .public-about-grid p, .public-about-standards li span, .public-purpose-copy li) {
+  font-size: 12.5px !important;
+  line-height: 1.55 !important;
+}
+.public-about-page :where(.public-about-identity small, .public-about-grid article > small, .public-purpose-visual b, .public-purpose-visual i, .public-purpose-visual em, .public-about-help-links a) {
+  font-size: 11px !important;
+}
+
+/* Beneficiary workspace cards, forms, status details, and footer text. */
+body:is(.home-page, .beneficiary-programs-page, .about-page, .beneficiary-profile-page, .verification-page) :where(
+  .welcome-badge,
+  .quick-tag,
+  .content-enhancement-eyebrow,
+  .programs-hero-note strong,
+  .application-modal-eyebrow,
+  .program-details-kicker,
+  .activity-modal-eyebrow,
+  .v-label,
+  .v-empty-kicker
+) { font-size: 11px !important; }
+
+.home-page :where(.home-section-eyebrow, .quick-step, .program-listing-count, .home-program-status) { font-size: 11px !important; }
+.home-page :where(.quick-note, .service-step-grid li p, .service-step-grid li a, .home-program-meta span, .home-readiness-heading > a, .home-readiness-list .info-text) {
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+}
+.home-page .readiness-number { font-size: 10.5px !important; }
+.about-page :where(.community-program-family-label, .map-official-badge) { font-size: 11px !important; }
+.about-page :where(.community-story-details dt, .community-story-details dd, .map-card-footer > span) { font-size: 12px !important; }
+.home-page :where(.home-advisory-copy > span, .home-advisory-meta, .program-record-meta, .program-information-warning) { font-size: 11.5px !important; }
+.verification-page :where(.verification-route-choice span, .verification-next-action span) { font-size: 11px !important; }
+.beneficiary-profile-page :where(.profile-missing-fields span, .security-history span, .application-action-summary span) { font-size: 11px !important; }
+
+body:is(.home-page, .beneficiary-programs-page, .about-page, .beneficiary-profile-page, .verification-page) :where(
+  .quick-desc,
+  .stat-sub,
+  .program-date,
+  .area-sub,
+  .panel-sub,
+  .section-subtitle,
+  .card-desc,
+  .info-text,
+  .field-hint,
+  .persistent-hint,
+  .log-description,
+  .activity-gallery-card-copy small,
+  .v-search-intro small,
+  .verification-status-grid p,
+  .verification-correction-panel p
+) {
+  font-size: 12.5px !important;
+  line-height: 1.55 !important;
+}
+
+body:is(.home-page, .beneficiary-programs-page, .about-page, .beneficiary-profile-page, .verification-page) :where(
+  .stat-title,
+  .program-card-schedule strong,
+  .program-schedule-value,
+  .profile-record-note strong,
+  .log-module-name,
+  .verification-next-action strong
+) { font-size: 12.5px !important; }
+
+body:is(.home-page, .beneficiary-programs-page, .about-page, .beneficiary-profile-page, .verification-page) :where(
+  .program-card-schedule span,
+  .program-schedule-label,
+  .program-details-path small,
+  .program-details-next span,
+  .profile-record-note span,
+  .log-event-time,
+  .activity-modal-image-note,
+  .verification-next-action span
+) { font-size: 11px !important; }
+
+.beneficiary-profile-page :where(.badge-role, .badge-status, .action-pill, .profile-filter-chip) { font-size: 11px !important; }
+.beneficiary-profile-page :where(.id-meta, .profile-tab, .tab-link) { font-size: 12px !important; }
+.beneficiary-profile-page #profileForm .info-group label { font-size: 12px !important; }
+
+/* Authentication screens and recovery dialogs. */
+.auth-page :where(.form-group label, .reset-label) { font-size: 12px !important; line-height: 1.3 !important; }
+.auth-page :where(input, select, textarea, .btn) { font-size: 13px !important; }
+.auth-page :where(.sub, .field-hint, .small, .auth-support-link, .privacy-acknowledgment) {
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+}
+.auth-page :where(.role-label, .signup-progress-copy, .signup-progress-copy strong, .step-text, .password-strength-head, .password-checks span, .auth-divider) {
+  font-size: 10.5px !important;
+  line-height: 1.35 !important;
+}
+
+/* Administrator and PESO staff workspaces. */
+body:is(.admin-mobile-page, .staff-mobile-page) :where(.side-sub, .user-role, .eyebrow) {
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+}
+body:is(.admin-mobile-page, .staff-mobile-page) :where(.top-sub, .panel-sub, .section-subtitle, .stat-note) {
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+body:is(.admin-mobile-page, .staff-mobile-page) :where(.stat-label, .stat-trend, .pill, .action-pill, .spes-lifecycle-ribbon) {
+  font-size: 11.5px !important;
+  line-height: 1.35 !important;
+}
+body:is(.admin-mobile-page, .staff-mobile-page) :where(.form-group label, .detail-group label, .info-text label, .activity-date-field > span) {
+  font-size: 12px !important;
+  line-height: 1.3 !important;
+}
+body:is(.admin-mobile-page, .staff-mobile-page) :where(input, select, textarea, button, .btn, .menu-item) {
+  font-size: 13px !important;
+}
+body:is(.admin-mobile-page, .staff-mobile-page) :where(.data-table, .activity-table, .dynamic-table) {
+  font-size: 13px !important;
+}
+body:is(.admin-mobile-page, .staff-mobile-page) :where(.data-table thead th, .activity-table thead th, .dynamic-table thead th) {
+  font-size: 12px !important;
+}
+body:is(.admin-mobile-page, .staff-mobile-page) :where(.data-table tbody td::before, .activity-table tbody td::before, .dynamic-table tbody td::before) {
+  font-size: 10.5px !important;
+}
+body:is(.admin-mobile-page, .staff-mobile-page) :where(.modal-sub, .field-hint, .help-text, .report-format-card small, .activity-detail-grid span, .activity-detail-grid small) {
+  font-size: 11.5px !important;
+  line-height: 1.45 !important;
+}
+body:is(.admin-dashboard-page, .staff-dashboard-page) :where(.barangay-pending, .barangay-open-hint) { font-size: 11.5px !important; }
+
+/* Phone type remains compact, but never drops into unreadable micro-copy. */
+@media (max-width: 600px) {
+  :root {
+    --bp-readable-body: 14px;
+    --bp-readable-copy: 12px;
+    --bp-readable-secondary: 11px;
+    --bp-readable-meta: 10px;
+  }
+
+  body:is(
+    .public-index-page,
+    .home-page,
+    .beneficiary-programs-page,
+    .about-page,
+    .beneficiary-profile-page,
+    .verification-page,
+    .privacy-page,
+    .auth-page,
+    .admin-mobile-page,
+    .staff-mobile-page
+  ) { font-size: var(--bp-readable-body); }
+
+  body:is(
+    .public-index-page,
+    .home-page,
+    .beneficiary-programs-page,
+    .about-page,
+    .beneficiary-profile-page,
+    .verification-page,
+    .privacy-page,
+    .auth-page,
+    .admin-mobile-page,
+    .staff-mobile-page
+  ) small { font-size: max(10.5px, .76em) !important; }
+
+  body:is(.public-index-page, .home-page, .beneficiary-programs-page, .about-page, .beneficiary-profile-page, .verification-page) :where(.brand-subtitle) {
+    font-size: 9.5px !important;
+  }
+
+  .public-index-page :where(.public-summary-head, .section-kicker, .public-route-heading > span, .public-route-flow small, .card-status, .public-active-filters > span, .public-active-filters a) {
+    font-size: 10px !important;
+  }
+  .public-index-page :where(.public-summary-count span, .public-summary-programs b, .public-trust-strip b, .public-route-flow strong, .public-beneficiary-cue strong, .public-directory-notice strong, .public-program-suggestions strong) {
+    font-size: 11.5px !important;
+  }
+  .public-index-page :where(.public-summary-programs small, .public-summary-foot > span, .public-summary-foot a, .public-trust-strip small, .public-route-flow p, .public-beneficiary-cue small, .public-directory-notice span, .public-directory-notice time, .public-program-suggestions small) {
+    font-size: 10.5px !important;
+  }
+
+  .public-about-page :where(.public-about-identity > strong, .public-about-grid p, .public-about-standards li span, .public-purpose-copy li) { font-size: 11.5px !important; }
+  .public-about-page :where(.public-about-identity small, .public-about-grid article > small, .public-purpose-visual b, .public-purpose-visual i, .public-purpose-visual em, .public-about-help-links a) { font-size: 10px !important; }
+
+  body:is(.home-page, .beneficiary-programs-page, .about-page, .beneficiary-profile-page, .verification-page) :where(
+    .welcome-badge,
+    .quick-tag,
+    .content-enhancement-eyebrow,
+    .programs-hero-note strong,
+    .application-modal-eyebrow,
+    .program-details-kicker,
+    .activity-modal-eyebrow,
+    .v-label,
+    .v-empty-kicker,
+    .badge-role,
+    .badge-status,
+    .action-pill
+  ) { font-size: 10px !important; }
+
+  body:is(.home-page, .beneficiary-programs-page, .about-page, .beneficiary-profile-page, .verification-page) :where(
+    .quick-desc,
+    .stat-sub,
+    .program-date,
+    .area-sub,
+    .panel-sub,
+    .section-subtitle,
+    .card-desc,
+    .info-text,
+    .field-hint,
+    .persistent-hint,
+    .log-description,
+    .activity-gallery-card-copy small,
+    .v-search-intro small,
+    .verification-status-grid p,
+    .verification-correction-panel p
+  ) { font-size: 11.5px !important; }
+
+  .home-page :where(.home-section-eyebrow, .quick-step, .program-listing-count, .home-program-status) { font-size: 10px !important; }
+  .home-page :where(.quick-note, .service-step-grid li p, .service-step-grid li a, .home-program-meta span, .home-readiness-heading > a, .home-readiness-list .info-text) { font-size: 11px !important; }
+  .home-page .readiness-number { font-size: 10px !important; }
+  .about-page :where(.community-program-family-label, .map-official-badge) { font-size: 10px !important; }
+  .about-page :where(.community-story-details dt, .community-story-details dd, .map-card-footer > span) { font-size: 11px !important; }
+  .home-page :where(.home-advisory-copy > span, .home-advisory-meta, .program-record-meta, .program-information-warning) { font-size: 10.5px !important; }
+  .verification-page :where(.verification-route-choice span, .verification-next-action span) { font-size: 10px !important; }
+  .beneficiary-profile-page :where(.profile-missing-fields span, .security-history span, .application-action-summary span) { font-size: 10px !important; }
+
+  .beneficiary-profile-page :where(.id-meta, .profile-tab, .tab-link) { font-size: 11px !important; }
+  .beneficiary-profile-page #profileForm .info-group label { font-size: 10.5px !important; }
+
+  .auth-page :where(.form-group label, .reset-label) { font-size: 10.5px !important; }
+  .auth-page :where(input, select, textarea, .btn) { font-size: 12.5px !important; }
+  .auth-page :where(.sub, .field-hint, .small, .auth-support-link, .privacy-acknowledgment) { font-size: 11px !important; }
+  .auth-page :where(.role-label, .signup-progress-copy, .signup-progress-copy strong, .step-text, .password-strength-head, .password-checks span, .auth-divider) {
+    font-size: 10px !important;
+  }
+
+  body:is(.admin-mobile-page, .staff-mobile-page) :where(.side-sub, .user-role, .eyebrow) { font-size: 10.5px !important; }
+  body:is(.admin-mobile-page, .staff-mobile-page) :where(.top-sub, .panel-sub, .section-subtitle, .stat-note) { font-size: 11.5px !important; }
+  body:is(.admin-mobile-page, .staff-mobile-page) :where(.stat-label, .stat-trend, .pill, .action-pill, .spes-lifecycle-ribbon) { font-size: 10px !important; }
+  body:is(.admin-mobile-page, .staff-mobile-page) :where(.form-group label, .detail-group label, .info-text label, .activity-date-field > span) { font-size: 10.5px !important; }
+  body:is(.admin-mobile-page, .staff-mobile-page) :where(input, select, textarea, button, .btn, .menu-item) { font-size: 12px !important; }
+  body:is(.admin-mobile-page, .staff-mobile-page) :where(.data-table, .activity-table, .dynamic-table) { font-size: 12px !important; }
+  body:is(.admin-mobile-page, .staff-mobile-page) :where(.data-table thead th, .activity-table thead th, .dynamic-table thead th) { font-size: 11px !important; }
+  body:is(.admin-mobile-page, .staff-mobile-page) :where(.data-table tbody td::before, .activity-table tbody td::before, .dynamic-table tbody td::before) { font-size: 10px !important; }
+  body:is(.admin-dashboard-page, .staff-dashboard-page) :where(.barangay-pending, .barangay-open-hint) { font-size: 10.5px !important; }
+}

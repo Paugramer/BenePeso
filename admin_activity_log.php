@@ -186,6 +186,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
 <link rel="stylesheet" href="system_mobile.css?v=5">
+<link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260923" defer></script>
 </head>
 <body class="admin-mobile-page admin-activity-page">
