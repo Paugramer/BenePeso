@@ -34,6 +34,12 @@ $peso_staff_id = (int) $_SESSION["staff_id"];
 
 function h($value){ return htmlspecialchars((string)$value, ENT_QUOTES, "UTF-8"); }
 
+function beneficiary_program_icon(string $programName): string {
+  if (stripos($programName, 'SPES') !== false) return 'ph-student';
+  if (stripos($programName, 'MSME') !== false) return 'ph-storefront';
+  return 'ph-hammer';
+}
+
 function table_exists(mysqli $conn, string $table): bool {
   $table = $conn->real_escape_string($table);
   $res = $conn->query("SHOW TABLES LIKE '$table'");
@@ -181,7 +187,7 @@ if (table_exists($conn, "peso_staff")) {
 
 if (empty(trim($staff_name))) { $staff_name = "PESO Staff"; }
 $pic_path = "uploads/staff_pics/" . $staff_pic;
-if (!file_exists($pic_path) || empty($staff_pic)) { $pic_path = "img/default_avatar.png"; }
+if (!file_exists($pic_path) || empty($staff_pic)) { $pic_path = "img/default_user.svg"; }
 $initial = strtoupper(substr(trim($staff_name), 0, 1));
 
 $flash = $_SESSION["flash"] ?? "";
@@ -1147,15 +1153,30 @@ if (stripos($selectedProgramName, 'MSME') !== false) {
 }
 
 $programs = [];
-$sqlPrograms = "SELECT c.program_name, c.image_path, (SELECT COUNT(b.beneficiary_id) FROM beneficiaries b JOIN programs p ON b.program_id = p.program_id WHERE p.program_name = c.program_name) AS beneficiary_count FROM program_categories c ORDER BY c.program_name ASC";
+$sqlPrograms = "SELECT c.program_name, c.image_path, COALESCE(t.beneficiary_count, 0) AS beneficiary_count
+  FROM program_categories c
+  LEFT JOIN (
+    SELECT p.program_name, COUNT(b.beneficiary_id) AS beneficiary_count
+    FROM programs p
+    LEFT JOIN beneficiaries b ON b.program_id = p.program_id
+    GROUP BY p.program_name
+  ) t ON t.program_name = c.program_name
+  ORDER BY c.program_name ASC";
 $resPrograms = $conn->query($sqlPrograms);
 if ($resPrograms) { while ($row = $resPrograms->fetch_assoc()) { $programs[] = $row; } }
 
 $globalTotalBeneficiaries = 0; $globalApprovedBeneficiaries = 0; $globalPendingBeneficiaries = 0; $globalOngoingAvailments = 0;
-$res = $conn->query("SELECT COUNT(*) AS total FROM beneficiaries"); if ($res && ($row = $res->fetch_assoc())) $globalTotalBeneficiaries = (int)($row["total"] ?? 0);
-$res = $conn->query("SELECT COUNT(*) AS total FROM beneficiaries WHERE approval_status = 'Approved'"); if ($res && ($row = $res->fetch_assoc())) $globalApprovedBeneficiaries = (int)($row["total"] ?? 0);
-$res = $conn->query("SELECT COUNT(*) AS total FROM beneficiaries WHERE approval_status = 'Pending'"); if ($res && ($row = $res->fetch_assoc())) $globalPendingBeneficiaries = (int)($row["total"] ?? 0);
-$res = $query = $conn->query("SELECT COUNT(*) AS total FROM beneficiaries WHERE availment_status = 'Ongoing'"); if ($res && ($row = $res->fetch_assoc())) $globalOngoingAvailments = (int)($row["total"] ?? 0);
+$res = $conn->query("SELECT COUNT(*) AS total,
+  SUM(approval_status = 'Approved') AS approved_total,
+  SUM(approval_status = 'Pending') AS pending_total,
+  SUM(availment_status = 'Ongoing') AS ongoing_total
+  FROM beneficiaries");
+if ($res && ($row = $res->fetch_assoc())) {
+  $globalTotalBeneficiaries = (int)($row['total'] ?? 0);
+  $globalApprovedBeneficiaries = (int)($row['approved_total'] ?? 0);
+  $globalPendingBeneficiaries = (int)($row['pending_total'] ?? 0);
+  $globalOngoingAvailments = (int)($row['ongoing_total'] ?? 0);
+}
 
 $beneficiaries = [];
 $batches = [];
@@ -1166,6 +1187,7 @@ $limit = 7;
 $offset = ($page - 1) * $limit;
 
 if ($selectedProgramName !== "") {
+  $isSpesProgram = stripos($selectedProgramName, 'SPES') !== false;
 
   $stmt = $conn->prepare("SELECT program_id, program_code FROM programs WHERE program_name = ? ORDER BY created_at DESC");
   if ($stmt) {
@@ -1236,7 +1258,9 @@ if ($selectedProgramName !== "") {
     $stmt->execute();
     $res = $stmt->get_result();
     while ($row = $res->fetch_assoc()) {
-        $row = array_merge($row, spes_beneficiary_lifecycle_details($conn, (int)$row['beneficiary_id']));
+        if ($isSpesProgram) {
+            $row = array_merge($row, spes_beneficiary_lifecycle_details($conn, (int)$row['beneficiary_id']));
+        }
         $beneficiaries[] = $row;
     }
     $stmt->close();
@@ -1257,7 +1281,9 @@ if ($selectedProgramName !== "") {
       $stmtAll->execute();
       $resAll = $stmtAll->get_result();
       while ($row = $resAll->fetch_assoc()) {
-          $row = array_merge($row, spes_beneficiary_lifecycle_details($conn, (int)$row['beneficiary_id']));
+          if ($isSpesProgram) {
+              $row = array_merge($row, spes_beneficiary_lifecycle_details($conn, (int)$row['beneficiary_id']));
+          }
           $allBeneficiariesForReport[] = $row;
       }
       $stmtAll->close();
@@ -1272,8 +1298,8 @@ if ($selectedProgramName !== "") {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BENEPESO | Staff Beneficiaries</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <link rel="stylesheet" href="peso_staff_beneficiaries.css?v=20260910-status-report-ui">
+  <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
+  <link rel="stylesheet" href="peso_staff_beneficiaries.css?v=20260924-mobile-performance">
   <link rel="stylesheet" href="shared_sidebar.css">
   <style>
       /* Temporary Inline Styles to enforce the A4 Preview Look */
@@ -1285,7 +1311,7 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="peso_staff_responsive.css?v=24">
   <link rel="stylesheet" href="system_search_polish.css?v=1">
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
-  <link rel="stylesheet" href="system_mobile.css?v=4">
+  <link rel="stylesheet" href="system_mobile.css?v=5">
 <script src="frontend_polish.js?v=20260923" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
 </head>
@@ -1401,7 +1427,7 @@ if ($selectedProgramName !== "") {
         <div class="program-grid">
           <?php foreach ($programs as $program): ?>
             <article class="program-card-shell">
-              <div class="program-image-wrap"><img src="<?php echo !empty($program["image_path"]) ? h($program["image_path"]) : "img/pesobgs.jpg"; ?>" class="program-image"></div>
+              <div class="program-image-wrap"><img src="<?php echo !empty($program["image_path"]) ? h($program["image_path"]) : "img/pesobgs.jpg"; ?>" class="program-image" alt="<?php echo h($program["program_name"]); ?>"><span class="beneficiary-program-icon" aria-hidden="true"><i class="ph <?php echo beneficiary_program_icon($program["program_name"]); ?>"></i></span></div>
               <div class="program-body">
                 <h3 class="program-title"><?php echo h($program["program_name"]); ?></h3>
                 
@@ -4460,6 +4486,7 @@ function toggleBatchScheduleFields(select) {
   const modal = document.getElementById('bulkStatusActionModal');
   const inputs = document.getElementById('bulkSelectedInputs');
   const status = document.getElementById('bulkAvailmentStatus');
+  if (!bar || !count || !modal || !inputs || !status) return;
   const selected = () => boxes.filter(box => box.checked);
   const sync = () => {
     const chosen = selected();

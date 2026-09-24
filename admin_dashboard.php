@@ -134,7 +134,7 @@ $admin_position = "Administrator";
 $admin_pic = "default_avatar.png";
 
 $pic_path = "uploads/admin_pics/" . $admin_pic; 
-if (!file_exists($pic_path) || empty($admin_pic)) { $pic_path = "img/default_avatar.png"; }
+if (!file_exists($pic_path) || empty($admin_pic)) { $pic_path = "img/default_user.svg"; }
 
 /* =========================
    COUNTS (SYSTEM WIDE)
@@ -342,7 +342,7 @@ if (table_exists($conn, "activity_logs")) {
   <link rel="stylesheet" href="dashboard_polish.css?v=8">
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
-<link rel="stylesheet" href="system_mobile.css?v=4">
+<link rel="stylesheet" href="system_mobile.css?v=5">
 <script src="frontend_polish.js?v=20260923" defer></script>
 <script src="dashboard_workload.js?v=1" defer></script>
 </head>

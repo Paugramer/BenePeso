@@ -151,7 +151,7 @@ if (table_exists($conn, "peso_staff")) {
 
 if (empty(trim($staff_name))) { $staff_name = "PESO Staff"; }
 $pic_path = "uploads/staff_pics/" . $staff_pic;
-if (!file_exists($pic_path) || empty($staff_pic)) { $pic_path = "img/default_avatar.png"; }
+if (!file_exists($pic_path) || empty($staff_pic)) { $pic_path = "img/default_user.svg"; }
 
 /* =========================
    COUNTS
@@ -357,7 +357,7 @@ if (table_exists($conn, "activity_logs")) {
   <link rel="stylesheet" href="dashboard_polish.css?v=8">
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=17">
-<link rel="stylesheet" href="system_mobile.css?v=4">
+<link rel="stylesheet" href="system_mobile.css?v=5">
 <script src="frontend_polish.js?v=20260923" defer></script>
 <script src="dashboard_workload.js?v=1" defer></script>
 </head>

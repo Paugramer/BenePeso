@@ -42,7 +42,7 @@ unset($_SESSION["flash"], $_SESSION["flash_type"]);
 // Avatar logic imported from Dashboard
 $admin_pic = "default_avatar.png"; 
 $pic_path = "uploads/admin_pics/" . $admin_pic;
-if (!file_exists($pic_path) || empty($admin_pic)) { $pic_path = "img/default_avatar.png"; }
+if (!file_exists($pic_path) || empty($admin_pic)) { $pic_path = "img/default_user.svg"; }
 
 if (!function_exists('e')) {
     function e($s){ return htmlspecialchars((string)($s ?? ""), ENT_QUOTES, "UTF-8"); }
@@ -291,7 +291,7 @@ if ($active_program) {
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=4">
+<link rel="stylesheet" href="system_mobile.css?v=5">
 <script src="frontend_polish.js?v=20260923" defer></script>
 </head>
 <body class="admin-mobile-page admin-program-page">
@@ -904,11 +904,17 @@ document.addEventListener('click', (e) => {
     }
 });
 
-document.querySelectorAll('[data-close-modal]').forEach(b => b.onclick = (e) => { e.preventDefault(); document.getElementById(b.dataset.closeModal).classList.remove('show'); });
+document.querySelectorAll('[data-close-modal]').forEach(b => b.onclick = (e) => {
+    e.preventDefault();
+    const modal = document.getElementById(b.dataset.closeModal);
+    if (modal?.contains(document.activeElement)) document.activeElement.blur();
+    modal?.classList.remove('show');
+});
 
 const programModals = Array.from(document.querySelectorAll('.modal'));
 const syncProgramModalState = () => {
     const openModal = programModals.find(modal => modal.classList.contains('show'));
+    programModals.forEach(modal => modal.setAttribute('aria-hidden', modal === openModal ? 'false' : 'true'));
     document.body.style.overflow = openModal ? 'hidden' : '';
     if (openModal) {
         const focusTarget = openModal.querySelector('input:not([type="hidden"]), select, textarea, button');
@@ -920,7 +926,10 @@ programModals.forEach(modal => new MutationObserver(syncProgramModalState).obser
 document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
     const openModal = [...programModals].reverse().find(modal => modal.classList.contains('show'));
-    if (openModal) openModal.classList.remove('show');
+    if (openModal) {
+        if (openModal.contains(document.activeElement)) document.activeElement.blur();
+        openModal.classList.remove('show');
+    }
 });
 
 document.querySelectorAll('.program-card-shell, .batch-table tbody tr').forEach((element, index) => {

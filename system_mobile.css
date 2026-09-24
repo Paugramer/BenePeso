@@ -89,8 +89,8 @@
     position: absolute !important;
     z-index: 5;
     top: 14px !important;
-    right: 14px !important;
-    left: auto !important;
+    right: auto !important;
+    left: 14px !important;
     width: 40px !important;
     height: 40px !important;
     min-width: 40px !important;
@@ -180,19 +180,32 @@
   :is(.admin-mobile-page, .staff-mobile-page) :where(.custom-tabs, .profile-tabs) {
     width: 100% !important;
     max-width: 100%;
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    gap: 5px !important;
-    overflow-x: auto !important;
-    overscroll-behavior-inline: contain;
-    scrollbar-width: thin;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    padding: 6px !important;
+    overflow: visible !important;
+    border: 1px solid #d7e6de !important;
+    border-radius: 14px !important;
+    background: linear-gradient(145deg, #f7fbf9, #edf6f1) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9) !important;
   }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.tab-item, .profile-tab) {
-    min-height: 38px !important;
-    flex: 0 0 auto !important;
-    padding: 8px 11px !important;
-    font-size: 9.5px !important;
-    white-space: nowrap;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    padding: 8px 7px !important;
+    border-radius: 10px !important;
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+    text-align: center !important;
+    white-space: normal !important;
+    transition: transform .25s cubic-bezier(.22,.8,.32,1), background-color .25s ease, color .25s ease, box-shadow .25s ease !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.tab-item, .profile-tab):active { transform: scale(.97); }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.tab-item, .profile-tab).active {
+    animation: system-mobile-tab-settle .3s cubic-bezier(.22,.8,.32,1);
+    box-shadow: 0 7px 16px rgba(31,122,84,.22) !important;
   }
 
   :is(.admin-mobile-page, .staff-mobile-page) :where(.filter-form, .filter-container, .toolbar-grid, .advanced-filter-row, .controls-row, .account-filter-bar) {
@@ -276,6 +289,21 @@
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 7px !important;
     padding: 12px 15px !important;
+  }
+
+  /* Program forms must scroll to their actions instead of letting a sticky
+     footer cover the last fields on short phone screens. */
+  :is(.admin-program-page, .staff-program-page) .modal-form .modal-actions {
+    position: static !important;
+    inset: auto !important;
+    flex: 0 0 auto !important;
+    margin-top: 18px !important;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+  }
+
+  :is(.admin-dashboard-page, .staff-dashboard-page) .barangay-workload-panel .panel-head .panel-link {
+    align-self: center !important;
+    margin-inline: auto !important;
   }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-actions, .modal-actions-flex, .modal-actions-sm, .modal-footer-sticky) > * {
     width: 100% !important;
@@ -380,6 +408,11 @@
     .user-img-side, .chip-img) { object-fit: cover; }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-title, .success-title,
     .panel-title, .program-card-title) { overflow-wrap: anywhere; }
+}
+
+@keyframes system-mobile-tab-settle {
+  from { opacity: .72; transform: translateY(4px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @media (max-width: 340px) {

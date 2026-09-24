@@ -62,12 +62,15 @@
   .brand-title { font-size: 18px !important; line-height: 1.1; }
   .brand-subtitle { margin-top: 2px; font-size: 8px !important; letter-spacing: .08em; }
   .menu-button {
+    order: -1;
     width: 42px !important;
     height: 42px !important;
     min-width: 42px;
     padding: 10px !important;
     border-radius: 11px !important;
   }
+  .brand-area { order: 0; }
+  .topbar-inner { justify-content: flex-start !important; gap: 10px !important; }
   .menu-area {
     top: calc(100% + 8px) !important;
     right: 12px !important;

@@ -12,7 +12,7 @@ $admin_name = "PESO Vinzons";
 $admin_position = "Administrator";
 $admin_pic = "default_avatar.png";
 $pic_path = "uploads/admin_pics/" . $admin_pic;
-if (!file_exists($pic_path) || empty($admin_pic)) { $pic_path = "img/default_avatar.png"; }
+if (!file_exists($pic_path) || empty($admin_pic)) { $pic_path = "img/default_user.svg"; }
 
 function h($v){
     return htmlspecialchars((string)($v ?? ""), ENT_QUOTES, "UTF-8");
@@ -185,7 +185,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=4">
+<link rel="stylesheet" href="system_mobile.css?v=5">
 <script src="frontend_polish.js?v=20260923" defer></script>
 </head>
 <body class="admin-mobile-page admin-activity-page">

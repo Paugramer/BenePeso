@@ -110,7 +110,7 @@ if (empty($staff_name)) {
 
 $pic_path = "uploads/staff_pics/" . $staff_pic;
 if (!file_exists($pic_path) || empty($staff_pic)) {
-    $pic_path = "img/default_avatar.png";
+    $pic_path = "img/default_user.svg";
 }
 $initial = strtoupper(substr(trim($staff_name), 0, 1));
 
@@ -257,7 +257,7 @@ if ($stmt) {
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=4">
+<link rel="stylesheet" href="system_mobile.css?v=5">
 <script src="frontend_polish.js?v=20260923" defer></script>
 </head>
 <body class="staff-mobile-page staff-activity-page">
