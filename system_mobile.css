@@ -41,7 +41,34 @@
     max-width: 86vw !important;
   }
 
-  :is(.admin-mobile-page, .staff-mobile-page) .side-top { padding: 16px 14px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .side-top {
+    position: relative !important;
+    min-height: 54px !important;
+    padding: 0 48px 0 0 !important;
+  }
+  /* Keep the close control anchored while the drawer loses its .open class.
+     Otherwise older page styles briefly return it to flex flow during exit. */
+  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close,
+  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close:active {
+    position: absolute !important;
+    top: 6px !important;
+    right: 0 !important;
+    display: grid !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    place-items: center !important;
+    transform: none !important;
+    line-height: 1 !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close i {
+    display: block;
+    margin: 0 !important;
+    line-height: 1 !important;
+  }
   :is(.admin-mobile-page, .staff-mobile-page) .side-user { padding: 14px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .nav-area { padding: 10px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .nav-item { min-height: 42px !important; padding: 9px 11px !important; font-size: 12px !important; }
@@ -144,8 +171,13 @@
     border-radius: 13px !important;
   }
   :is(.admin-mobile-page, .staff-mobile-page) .stat-label { font-size: 8px !important; line-height: 1.35 !important; }
-  :is(.admin-mobile-page, .staff-mobile-page) .stat-value { margin-top: 7px !important; font-size: 25px !important; line-height: 1 !important; }
-  :is(.admin-program-page, .staff-program-page) .stat-value { width: 100%; text-align: center !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .stat-value {
+    width: 100% !important;
+    margin-top: 7px !important;
+    font-size: 25px !important;
+    line-height: 1 !important;
+    text-align: center !important;
+  }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.stat-icon, .stat-icon-sm) { width: 34px !important; height: 34px !important; font-size: 17px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .stat-trend { margin-top: 8px !important; font-size: 8px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .stat-note { display: none !important; }
@@ -158,13 +190,28 @@
   :is(.admin-mobile-page, .staff-mobile-page) :where(.panel-title, .section-title) { font-size: 16px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.panel-sub, .section-subtitle) { font-size: 9.5px !important; line-height: 1.45 !important; }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.panel-head, .panel-head-flex, .records-toolbar) {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-inline: 0 !important;
     min-width: 0 !important;
     gap: 10px !important;
     align-items: center !important;
     flex-direction: column !important;
     text-align: center !important;
   }
-  :is(.admin-mobile-page, .staff-mobile-page) :where(.panel-head, .panel-head-flex) > * { max-width: 100%; }
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.panel-head, .panel-head-flex) > * {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .panel-card > .panel-head-flex {
+    margin: 0 0 14px !important;
+    padding: 0 2px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .panel-head-flex .panel-title {
+    white-space: normal !important;
+  }
 
   :is(.admin-mobile-page, .staff-mobile-page) .dashboard-command-bar { gap: 12px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .dashboard-quick-actions { width: 100%; display: grid !important; grid-template-columns: 1fr !important; gap: 6px !important; }
@@ -172,10 +219,44 @@
   :is(.admin-mobile-page, .staff-mobile-page) .dashboard-chart-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 10px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .dashboard-chart-canvas { min-height: 220px !important; height: 220px !important; }
 
-  :is(.admin-mobile-page, .staff-mobile-page) .program-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 10px !important; }
-  :is(.admin-mobile-page, .staff-mobile-page) .program-card-shell { width: 100% !important; min-width: 0 !important; border-radius: 13px !important; }
-  :is(.admin-mobile-page, .staff-mobile-page) .program-image-wrap { min-height: 145px !important; height: 145px !important; }
-  :is(.admin-mobile-page, .staff-mobile-page) .program-body { padding: 13px !important; }
+  :is(.admin-mobile-page, .staff-mobile-page) .program-grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+    margin-top: 0 !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .program-grid > .program-card-shell {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    padding: 10px !important;
+    gap: 10px !important;
+    overflow: hidden !important;
+    border-radius: 13px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .program-card-shell .program-image-wrap {
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    aspect-ratio: 16 / 9 !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .program-card-shell .program-image {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .program-card-shell .program-body {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 3px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .program-card-shell :where(.styled-record-counter, .card-actions, .btn-directory) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.program-card-title, .program-title) { font-size: 17px !important; }
 
   :is(.admin-mobile-page, .staff-mobile-page) :where(.custom-tabs, .profile-tabs) {

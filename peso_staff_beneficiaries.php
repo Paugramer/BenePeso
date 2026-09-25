@@ -1183,7 +1183,7 @@ $batches = [];
 $totalRecords = 0;
 $totalPages = 1;
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
-$limit = 7; 
+$limit = 5;
 $offset = ($page - 1) * $limit;
 
 if ($selectedProgramName !== "") {
@@ -1290,7 +1290,7 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="peso_staff_responsive.css?v=24">
   <link rel="stylesheet" href="system_search_polish.css?v=1">
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
-  <link rel="stylesheet" href="system_mobile.css?v=5">
+  <link rel="stylesheet" href="system_mobile.css?v=7">
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
