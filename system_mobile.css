@@ -145,6 +145,7 @@
   }
   :is(.admin-mobile-page, .staff-mobile-page) .stat-label { font-size: 8px !important; line-height: 1.35 !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .stat-value { margin-top: 7px !important; font-size: 25px !important; line-height: 1 !important; }
+  :is(.admin-program-page, .staff-program-page) .stat-value { width: 100%; text-align: center !important; }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.stat-icon, .stat-icon-sm) { width: 34px !important; height: 34px !important; font-size: 17px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .stat-trend { margin-top: 8px !important; font-size: 8px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .stat-note { display: none !important; }
@@ -276,6 +277,7 @@
   }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-head, .modal-head-alt, .modal-head-sm) { padding: 15px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .modal-title { padding-right: 40px; font-size: 18px !important; line-height: 1.25 !important; }
+  :is(.admin-program-page, .staff-program-page) .modal-head:has(.program-modal-heading) .modal-title { padding-right: 0 !important; }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-form, .modal-body, .modal-body-sm) { padding: 15px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.form-grid, .landscape-form-grid, .details-grid) { grid-template-columns: minmax(0, 1fr) !important; gap: 10px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.form-grid, .landscape-form-grid, .details-grid) > * { grid-column: auto !important; min-width: 0 !important; }
@@ -388,6 +390,28 @@
     height: 42px !important;
     min-width: 42px !important;
     min-height: 42px !important;
+  }
+
+  :is(.admin-program-page, .staff-program-page) .filter-form > .search-icon {
+    top: 0 !important;
+    height: 52px !important;
+    display: grid !important;
+    margin: 0 !important;
+    place-items: center !important;
+    line-height: 1 !important;
+    transform: none !important;
+  }
+
+  :is(.admin-program-page, .staff-program-page) #addBatchModal .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  :is(.admin-program-page, .staff-program-page) #addBatchModal .form-grid > .span-2 {
+    grid-column: 1 / -1 !important;
+  }
+  :is(.admin-program-page, .staff-program-page) #addBatchModal .form-group label {
+    font-size: 9.5px !important;
+    line-height: 1.35 !important;
   }
   :is(.admin-mobile-page, .staff-mobile-page) .id-card-dialog {
     display: flex !important;

@@ -288,7 +288,14 @@
 .modal-head:has(.program-modal-heading) { display: flex !important; align-items: center; justify-content: center; min-height: 122px; padding-inline: 68px; position: relative; }
 .modal-head:has(.program-modal-heading) .program-modal-heading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; text-align: center; }
 .modal-head:has(.program-modal-heading) .program-modal-heading > div { text-align: center; }
-.modal-head:has(.program-modal-heading) .modal-close { position: absolute; right: 28px; top: 28px; }
+.modal-head:has(.program-modal-heading) .modal-title { padding-right: 0 !important; text-align: center; }
+.modal-head:has(.program-modal-heading) .modal-sub { text-align: center; }
+.modal-head:has(.program-modal-heading) .modal-close { position: absolute; right: 28px; top: 28px; display: grid; padding: 0; place-items: center; line-height: 1; transform: none !important; }
+.modal-head:has(.program-modal-heading) .modal-close:active { top: 28px; transform: none !important; }
+.modal-head:has(.program-modal-heading) .modal-close i { display: block; margin: 0; line-height: 1; transform: none !important; }
+
+.program-card-shell .open-edit-category { display: inline-flex; gap: 8px; align-items: center; justify-content: center; }
+.program-card-shell .open-edit-category i { flex: 0 0 auto; margin: 0 !important; line-height: 1; }
 
 .beneficiary-directory-search { display: grid; grid-template-columns: 42px minmax(190px,.72fr) minmax(240px,1fr) auto; align-items: center; gap: 10px; margin: 14px 0 18px; padding: 10px; border: 1px solid #d8e7df; border-radius: 15px; background: linear-gradient(135deg,#f8fcfa,#edf7f2); }
 .beneficiary-search-icon { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid #cae2d5; border-radius: 11px; color: #1f7a54; background: #fff; font-size: 19px; }
@@ -324,7 +331,8 @@
 
 @media (max-width: 600px) {
   .modal-head:has(.program-modal-heading) { min-height: 114px; padding-inline: 54px; }
-  .modal-head:has(.program-modal-heading) .modal-close { right: 16px; top: 16px; }
+  .modal-head:has(.program-modal-heading) .modal-close,
+  .modal-head:has(.program-modal-heading) .modal-close:active { right: 16px; top: 16px; }
   .directory-beneficiary-link { min-height: 38px; padding-inline: 10px; }
   .program-directory-head { align-items: stretch !important; flex-direction: column; }
   .program-directory-head .directory-beneficiary-link { width: 100%; margin-left: 0; }

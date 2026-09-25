@@ -211,12 +211,12 @@ if ($active_program) {
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="peso_staff_program.css?v=20260905-card-responsive">
     <link rel="stylesheet" href="shared_sidebar.css">
-<link rel="stylesheet" href="program_filter_polish.css?v=7">
+<link rel="stylesheet" href="program_filter_polish.css?v=8">
     <script src="program_filter_polish.js?v=2" defer></script>
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
-<link rel="stylesheet" href="peso_staff_responsive.css?v=23">
+<link rel="stylesheet" href="peso_staff_responsive.css?v=25">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=5">
+<link rel="stylesheet" href="system_mobile.css?v=6">
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 </head>

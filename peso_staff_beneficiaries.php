@@ -1266,28 +1266,7 @@ if ($selectedProgramName !== "") {
     $stmt->close();
   }
 
-  $allBeneficiariesForReport = [];
-  
-  $hasStartDate = column_exists($conn, "programs", "start_date");
-  $hasEndDate = column_exists($conn, "programs", "end_date");
-  $progDateCols = "";
-  if ($hasStartDate) $progDateCols .= ", p.start_date";
-  if ($hasEndDate) $progDateCols .= ", p.end_date";
-  
-  $sqlAll = "SELECT b.*, p.program_code, p.program_name $progDateCols FROM beneficiaries b JOIN programs p ON b.program_id = p.program_id WHERE p.program_name = ?";
-  $stmtAll = $conn->prepare($sqlAll);
-  if ($stmtAll) {
-      $stmtAll->bind_param("s", $selectedProgramName);
-      $stmtAll->execute();
-      $resAll = $stmtAll->get_result();
-      while ($row = $resAll->fetch_assoc()) {
-          if ($isSpesProgram) {
-              $row = array_merge($row, spes_beneficiary_lifecycle_details($conn, (int)$row['beneficiary_id']));
-          }
-          $allBeneficiariesForReport[] = $row;
-      }
-      $stmtAll->close();
-  }
+  // Report-only records are fetched on demand so the directory can render quickly.
 }
 ?>
 <!DOCTYPE html>
@@ -2758,9 +2737,29 @@ function toggleBatchScheduleFields(select) {
 <?php endif; ?>
 
 <script>
-    const allBeneficiariesData = <?php echo json_encode($allBeneficiariesForReport ?? []); ?>;
-    const currentProgramName = "<?php echo h($selectedProgramName); ?>";
+    let allBeneficiariesData = [];
+    const currentProgramName = <?php echo json_encode($selectedProgramName, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
     const currentReportTitle = <?php echo json_encode($reportProgramTitle, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+    let reportDataPromise = null;
+
+    function loadReportData() {
+      if (reportDataPromise) return reportDataPromise;
+      const url = `beneficiary_report_data.php?program_name=${encodeURIComponent(currentProgramName)}`;
+      reportDataPromise = fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+        .then(response => response.json().then(payload => ({ response, payload })))
+        .then(({ response, payload }) => {
+          if (!response.ok || !payload.ok || !Array.isArray(payload.records)) {
+            throw new Error(payload.message || 'Report records could not be loaded.');
+          }
+          allBeneficiariesData = payload.records;
+          return allBeneficiariesData;
+        })
+        .catch(error => {
+          reportDataPromise = null;
+          throw error;
+        });
+      return reportDataPromise;
+    }
     
     let previewData = [];
     let currentPreviewPage = 1;
@@ -3750,11 +3749,22 @@ function toggleBatchScheduleFields(select) {
       const openReportBtn = document.getElementById('openReportModal');
       const reportFilterToggle = document.querySelector('#generateReportModal .report-filter-toggle');
       if(openReportBtn) {
-          openReportBtn.addEventListener('click', () => {
+          openReportBtn.addEventListener('click', async () => {
               reportModal.classList.add('show');
               reportModal.classList.remove('filters-open');
               reportFilterToggle?.setAttribute('aria-expanded', 'false');
-              updateReportPreview(); 
+              openReportBtn.disabled = true;
+              openReportBtn.setAttribute('aria-busy', 'true');
+              try {
+                  await loadReportData();
+                  updateReportPreview();
+              } catch (error) {
+                  reportModal.classList.remove('show');
+                  showBeneficiaryNotice('Report Unavailable', error.message || 'Report records could not be loaded. Please try again.');
+              } finally {
+                  openReportBtn.disabled = false;
+                  openReportBtn.removeAttribute('aria-busy');
+              }
           });
       }
       reportFilterToggle?.addEventListener('click', () => {

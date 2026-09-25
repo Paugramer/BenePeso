@@ -1,7 +1,7 @@
 /* Admin-only responsive entry point.
    Reuses the verified management-panel responsive system, then adds the
    account-management dialog adjustments that exist only in Admin. */
-@import url("peso_staff_responsive.css?v=24");
+@import url("peso_staff_responsive.css?v=25");
 
 @media (max-width: 760px) {
   /* Manage Accounts: responsive controls without nested horizontal scrollers. */
