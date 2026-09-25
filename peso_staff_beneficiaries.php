@@ -1290,7 +1290,7 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="peso_staff_responsive.css?v=24">
   <link rel="stylesheet" href="system_search_polish.css?v=1">
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
-  <link rel="stylesheet" href="system_mobile.css?v=9">
+  <link rel="stylesheet" href="system_mobile.css?v=10">
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
@@ -2543,9 +2543,9 @@ function toggleBatchScheduleFields(select) {
                 </div>
             </div>
             <div class="report-column-pagination" aria-label="Report column navigation">
-                <button type="button" data-report-column-page="previous"><i class="ph-bold ph-caret-left"></i> Previous columns</button>
+                <button type="button" data-report-column-page="previous" aria-label="Previous report columns" title="Previous columns"><i class="ph-bold ph-caret-left"></i> Previous columns</button>
                 <span class="report-column-page-status">Columns 1–8</span>
-                <button type="button" data-report-column-page="next">Next columns <i class="ph-bold ph-caret-right"></i></button>
+                <button type="button" data-report-column-page="next" aria-label="Next report columns" title="Next columns">Next columns <i class="ph-bold ph-caret-right"></i></button>
             </div>
             <div class="scrollable-table-wrap">
                 <table class="spreadsheet-table" id="preview_main_table">
@@ -3405,6 +3405,13 @@ function toggleBatchScheduleFields(select) {
           if(ind) ind.classList.add('active');
       }
 
+      const wizardNav = document.getElementById('wizardNav');
+      const currentIndicator = document.getElementById('indicator-step-' + currentStep);
+      const currentLabel = currentIndicator?.querySelector('span:not(.step-num)')?.textContent.trim() || '';
+      if (wizardNav) {
+          wizardNav.dataset.progress = `Step ${currentStep} of ${totalSteps}${currentLabel ? ' \u00b7 ' + currentLabel : ''}`;
+      }
+
       const btnPrev = document.getElementById('btnPrevStep');
       const btnNext = document.getElementById('btnNextStep');
       const btnSub = document.getElementById('btnSubmitForm');
@@ -3689,6 +3696,26 @@ function toggleBatchScheduleFields(select) {
       const succModal = document.getElementById('successModal');
       const errModal = document.getElementById('errorModal');
       const profileModal = document.getElementById('profileModal');
+      let lastModalTrigger = null;
+
+      const setModalVisibility = (modal, isOpen, returnFocusTo = null) => {
+          if (!modal) return;
+          if (isOpen) {
+              lastModalTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+              modal.setAttribute('aria-hidden', 'false');
+              modal.classList.add('show');
+              return;
+          }
+
+          const focusedElement = document.activeElement;
+          if (focusedElement instanceof HTMLElement && modal.contains(focusedElement)) focusedElement.blur();
+          modal.classList.remove('show', 'filters-open');
+          modal.setAttribute('aria-hidden', 'true');
+          const focusTarget = returnFocusTo || lastModalTrigger;
+          if (focusTarget instanceof HTMLElement && document.contains(focusTarget)) {
+              requestAnimationFrame(() => focusTarget.focus({ preventScroll: true }));
+          }
+      };
 
       document.querySelectorAll('#openAddBeneficiaryModal, #openAddBeneficiaryModal2').forEach(btn => {
           if(btn) btn.addEventListener('click', () => {
@@ -3714,13 +3741,13 @@ function toggleBatchScheduleFields(select) {
               setupWizardNav();
               updateWizard();
               toggleDateFields(); 
-              addModal.classList.add('show');
+              setModalVisibility(addModal, true);
           });
       });
-      document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => addModal.classList.remove('show')));
+      document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => setModalVisibility(addModal, false), true));
       
-      document.querySelectorAll('#openBulkUploadModal, #openBulkUploadModal2').forEach(btn => { if(btn) btn.addEventListener('click', () => bulkModal.classList.add('show')); });
-      document.querySelectorAll('[data-close-bulk]').forEach(btn => btn.addEventListener('click', () => bulkModal.classList.remove('show')));
+      document.querySelectorAll('#openBulkUploadModal, #openBulkUploadModal2').forEach(btn => { if(btn) btn.addEventListener('click', () => setModalVisibility(bulkModal, true)); });
+      document.querySelectorAll('[data-close-bulk]').forEach(btn => btn.addEventListener('click', () => setModalVisibility(bulkModal, false), true));
 
       // Keep legacy database values stable while presenting clear workflow labels.
       document.querySelectorAll('option[value="Not Yet Availed"]').forEach(option => {
@@ -3750,7 +3777,7 @@ function toggleBatchScheduleFields(select) {
       const reportFilterToggle = document.querySelector('#generateReportModal .report-filter-toggle');
       if(openReportBtn) {
           openReportBtn.addEventListener('click', async () => {
-              reportModal.classList.add('show');
+              setModalVisibility(reportModal, true);
               reportModal.classList.remove('filters-open');
               reportFilterToggle?.setAttribute('aria-expanded', 'false');
               openReportBtn.disabled = true;
@@ -3759,7 +3786,7 @@ function toggleBatchScheduleFields(select) {
                   await loadReportData();
                   updateReportPreview();
               } catch (error) {
-                  reportModal.classList.remove('show');
+                  setModalVisibility(reportModal, false, openReportBtn);
                   showBeneficiaryNotice('Report Unavailable', error.message || 'Report records could not be loaded. Please try again.');
               } finally {
                   openReportBtn.disabled = false;
@@ -3772,9 +3799,9 @@ function toggleBatchScheduleFields(select) {
           reportFilterToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
       });
       document.querySelectorAll('[data-close-report]').forEach(btn => btn.addEventListener('click', () => {
-          reportModal.classList.remove('show', 'filters-open');
+          setModalVisibility(reportModal, false, openReportBtn);
           reportFilterToggle?.setAttribute('aria-expanded', 'false');
-      }));
+      }, true));
 
       const reportBrgySelect = document.getElementById('report_brgy_select');
       const reportAvailSelect = document.getElementById('report_avail_select');
