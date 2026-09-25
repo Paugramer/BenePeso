@@ -151,7 +151,7 @@ if ($updated_stmt) {
     
     <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=33">
+    <link rel="stylesheet" href="index.css?v=34">
     <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
     <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
@@ -257,23 +257,25 @@ if ($updated_stmt) {
                         <div class="public-impact-track" id="publicImpactTrack">
                             <button type="button" class="public-impact-photo is-active" data-impact-index="0" data-program="MSME" data-title="Employment and Micro-Enterprise Development Training" data-date="August 2026" data-location="SB Annex, Vinzons, Camarines Norte" data-summary="PESO Vinzons brought practical employment and micro-enterprise guidance closer to residents through an organized community training session." data-image="img/peso-community-medt-2026.png">
                                 <img src="img/peso-community-medt-2026.png" alt="PESO Vinzons facilitator leading an employment and micro-enterprise development session" loading="lazy" decoding="async" width="1080" height="720">
-                                <span class="public-impact-caption"><b>MSME development</b><small>Skills and livelihood guidance</small><em>View activity</em></span>
+                                <span class="public-impact-caption"><b>MSME development</b><small>Skills and livelihood guidance</small><em>View details <i aria-hidden="true">&rarr;</i></em></span>
                             </button>
                             <button type="button" class="public-impact-photo" data-impact-index="1" data-program="SPES" data-title="SPES Student Beneficiary Support" data-date="July 2026" data-location="Vinzons Municipal Hall" data-summary="Student beneficiaries gathered for an official SPES activity supporting their employment experience and program participation." data-image="img/752659025_2053404155260623_314073346839281248_n.jpg">
                                 <img src="img/752659025_2053404155260623_314073346839281248_n.jpg" alt="Student beneficiaries attending a SPES activity at Vinzons Municipal Hall" loading="lazy" decoding="async" width="1080" height="720">
-                                <span class="public-impact-caption"><b>SPES</b><small>Student employment support</small><em>View activity</em></span>
+                                <span class="public-impact-caption"><b>SPES</b><small>Student employment support</small><em>View details <i aria-hidden="true">&rarr;</i></em></span>
                             </button>
                             <button type="button" class="public-impact-photo" data-impact-index="2" data-program="TUPAD" data-title="DOLE TUPAD Community Activity" data-date="July 2026" data-location="Vinzons Town Kiosk, Vinzons, Camarines Norte" data-summary="PESO Vinzons and DOLE coordinated an official community activity for qualified TUPAD beneficiaries." data-image="img/738512047_895211810293178_8484532229922374617_n.jpg">
                                 <img src="img/738512047_895211810293178_8484532229922374617_n.jpg" alt="TUPAD beneficiaries attending an official PESO and DOLE activity" loading="lazy" decoding="async" width="1080" height="720">
-                                <span class="public-impact-caption"><b>TUPAD</b><small>Community employment assistance</small><em>View activity</em></span>
+                                <span class="public-impact-caption"><b>TUPAD</b><small>Community employment assistance</small><em>View details <i aria-hidden="true">&rarr;</i></em></span>
                             </button>
                         </div>
                     </div>
                     <div class="public-impact-controls">
-                        <button type="button" id="publicImpactPrev" aria-label="Show previous community activity"><span aria-hidden="true">&larr;</span></button>
-                        <span id="publicImpactStatus" aria-live="polite">Activity 1 of 3</span>
-                        <div class="public-impact-dots" aria-hidden="true"><i class="is-active"></i><i></i><i></i></div>
-                        <button type="button" id="publicImpactNext" aria-label="Show next community activity"><span aria-hidden="true">&rarr;</span></button>
+                        <button type="button" id="publicImpactPrev" aria-label="Show previous community activity"><span aria-hidden="true">&larr;</span><b>Previous</b></button>
+                        <div class="public-impact-position">
+                            <span id="publicImpactStatus" aria-live="polite">Activity 1 of 3</span>
+                            <div class="public-impact-dots" aria-hidden="true"><i class="is-active"></i><i></i><i></i></div>
+                        </div>
+                        <button type="button" id="publicImpactNext" aria-label="Show next community activity"><b>Next</b><span aria-hidden="true">&rarr;</span></button>
                     </div>
                 </div>
             </section>
@@ -527,8 +529,8 @@ if ($updated_stmt) {
             <div class="public-activity-modal-footer">
                 <span id="publicActivityModalPosition">1 of 3</span>
                 <div>
-                    <button type="button" id="publicActivityModalPrev" aria-label="View previous community activity">&larr;</button>
-                    <button type="button" id="publicActivityModalNext" aria-label="View next community activity">&rarr;</button>
+                    <button type="button" id="publicActivityModalPrev" aria-label="View previous community activity"><span aria-hidden="true">&larr;</span><b>Previous</b></button>
+                    <button type="button" id="publicActivityModalNext" aria-label="View next community activity"><b>Next</b><span aria-hidden="true">&rarr;</span></button>
                 </div>
             </div>
         </div>
