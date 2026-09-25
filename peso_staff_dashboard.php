@@ -359,7 +359,7 @@ if (table_exists($conn, "activity_logs")) {
 <link rel="stylesheet" href="peso_staff_responsive.css?v=17">
 <link rel="stylesheet" href="system_mobile.css?v=5">
 <link rel="stylesheet" href="system_readability.css?v=1">
-<script src="frontend_polish.js?v=20260923" defer></script>
+<script src="frontend_polish.js?v=20260925" defer></script>
 <script src="dashboard_workload.js?v=1" defer></script>
 </head>
 <body class="staff-mobile-page staff-dashboard-page">

@@ -54,7 +54,8 @@
     } catch (error) {
       /* Storage can be unavailable in privacy modes; body-level disabling remains effective. */
     }
-    if (document.body.hasAttribute('data-disable-page-loader') || document.querySelector('.bp-page-loader') || skipAfterPreparedNavigation) return;
+    const forceOnEntry = document.body.hasAttribute('data-force-page-loader');
+    if (document.body.hasAttribute('data-disable-page-loader') || document.querySelector('.bp-page-loader') || (skipAfterPreparedNavigation && !forceOnEntry)) return;
 
     const navigation = typeof performance.getEntriesByType === 'function'
       ? performance.getEntriesByType('navigation')[0]
@@ -68,10 +69,9 @@
       /* Storage can be unavailable in privacy modes; the loader still works safely. */
     }
 
-    const forceOnEntry = document.body.hasAttribute('data-force-page-loader');
     const shouldShowImmediately = forceOnEntry || !hasBeenSeen || (navigation && navigation.type === 'reload');
     const showDelay = shouldShowImmediately ? 0 : 160;
-    const minimumVisibleMs = shouldShowImmediately ? 550 : 240;
+    const minimumVisibleMs = shouldShowImmediately ? 720 : 240;
     const safetyTimeoutMs = 3500;
     let loader = null;
     let shownAt = 0;
@@ -105,7 +105,8 @@
       }, remaining);
     }
 
-    window.setTimeout(buildLoader, showDelay);
+    if (shouldShowImmediately) buildLoader();
+    else window.setTimeout(buildLoader, showDelay);
 
     if (pageReady) {
       window.setTimeout(removeLoader, showDelay + minimumVisibleMs);

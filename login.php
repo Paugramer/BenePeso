@@ -91,10 +91,10 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="stylesheet" href="style.css?v=33" />
   <link rel="stylesheet" href="frontend_polish.css?v=20260921">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=16">
+  <link rel="stylesheet" href="auth_refresh.css?v=17">
   <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
   <link rel="stylesheet" href="system_readability.css?v=1">
-<script src="frontend_polish.js?v=20260923" defer></script>
+<script src="frontend_polish.js?v=20260925" defer></script>
   <?php if (benepeso_turnstile_enabled()): ?>
   <script>
     window.benepesoTurnstileLoaded = false;
@@ -108,7 +108,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
   <script src="google_signin.js?v=6" defer></script>
 </head>
-<body class="auth-page auth-login" data-disable-page-loader>
+<body class="auth-page auth-login" data-force-page-loader>
 
 <div class="box">
   <div class="card compact">
@@ -598,7 +598,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
         'timeout-callback': () => {
           window.clearTimeout(turnstileChallengeTimer);
           turnstileVerified = false;
-          setTurnstileState('error', 'Security verification timed out.', true);
+          setTurnstileState('error', 'Secure check needs another try.', true);
           syncLoginButton();
         },
         'error-callback': () => {
@@ -609,20 +609,20 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
             setTurnstileState('loading', 'Security check is reconnecting…');
             window.setTimeout(() => window.turnstile?.reset(turnstileWidgetId), 900);
           } else {
-            setTurnstileState('error', 'Security verification could not start. Check your connection, then retry.', true);
+            setTurnstileState('error', 'Secure check needs another try.', true);
           }
           return true;
         }
       });
       turnstileChallengeTimer = window.setTimeout(() => {
         if (!turnstileVerified) {
-          setTurnstileState('error', 'Verification is taking longer than expected. Retry the secure check.', true);
+          setTurnstileState('error', 'Secure check needs another try.', true);
         }
       }, 6000);
     } catch (error) {
       removeTurnstileWidget();
       turnstileVerified = false;
-      setTurnstileState('error', 'Security verification could not load. Check your connection, then retry.', true);
+      setTurnstileState('error', 'Secure check could not connect.', true);
       syncLoginButton();
     }
   };
@@ -642,7 +642,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
       script.defer = true;
       script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=benepesoTurnstileReady&retry=' + Date.now();
       script.onerror = () => {
-        setTurnstileState('error', 'Security verification could not load. Check your connection, then retry.', true);
+        setTurnstileState('error', 'Secure check could not connect.', true);
         syncLoginButton();
       };
       document.head.appendChild(script);
@@ -658,7 +658,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
     syncLoginButton();
     turnstileLoadTimer = window.setTimeout(() => {
       if (!window.turnstile && !turnstileVerified) {
-        setTurnstileState('error', 'Security verification is taking longer than expected. Check your connection, then retry.', true);
+        setTurnstileState('error', 'Secure check could not connect.', true);
       }
     }, 4000);
   }
@@ -668,7 +668,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
       if (turnstileEnabled && !turnstileVerified) {
         event.preventDefault();
         if (window.turnstile && turnstileWidgetId === null) renderTurnstile();
-        setTurnstileState('error', 'Complete the security check, then select Log in securely again.', true);
+        setTurnstileState('error', 'Complete the secure checkbox before logging in.', true);
         turnstileState?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         return;
       }

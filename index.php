@@ -151,10 +151,10 @@ if ($updated_stmt) {
     
     <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=32">
+    <link rel="stylesheet" href="index.css?v=33">
     <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
     <link rel="stylesheet" href="system_readability.css?v=1">
-<script src="frontend_polish.js?v=20260923" defer></script>
+<script src="frontend_polish.js?v=20260925" defer></script>
 </head>
 <body class="public-index-page" data-force-page-loader>
 <a class="public-skip-link" href="#mainContent">Skip to main content</a>
@@ -252,19 +252,29 @@ if ($updated_stmt) {
                         <span>Explore community activities</span><i aria-hidden="true">&rarr;</i>
                     </a>
                 </div>
-                <div class="public-impact-gallery" aria-label="Recent PESO Vinzons community activities">
-                    <figure class="public-impact-photo public-impact-photo--wide">
-                        <img src="img/peso-community-medt-2026.png" alt="PESO Vinzons facilitator leading an employment and micro-enterprise development session" loading="lazy" decoding="async" width="1080" height="720">
-                        <figcaption><strong>MSME development</strong><span>Skills and livelihood guidance</span></figcaption>
-                    </figure>
-                    <figure class="public-impact-photo">
-                        <img src="img/752659025_2053404155260623_314073346839281248_n.jpg" alt="Student beneficiaries attending a SPES activity at Vinzons Municipal Hall" loading="lazy" decoding="async" width="1080" height="720">
-                        <figcaption><strong>SPES</strong><span>Student employment support</span></figcaption>
-                    </figure>
-                    <figure class="public-impact-photo">
-                        <img src="img/738512047_895211810293178_8484532229922374617_n.jpg" alt="TUPAD beneficiaries attending an official PESO and DOLE activity" loading="lazy" decoding="async" width="1080" height="720">
-                        <figcaption><strong>TUPAD</strong><span>Community employment assistance</span></figcaption>
-                    </figure>
+                <div class="public-impact-carousel" id="publicImpactCarousel" aria-label="Recent PESO Vinzons community activities">
+                    <div class="public-impact-viewport">
+                        <div class="public-impact-track" id="publicImpactTrack">
+                            <button type="button" class="public-impact-photo is-active" data-impact-index="0" data-program="MSME" data-title="Employment and Micro-Enterprise Development Training" data-date="August 2026" data-location="SB Annex, Vinzons, Camarines Norte" data-summary="PESO Vinzons brought practical employment and micro-enterprise guidance closer to residents through an organized community training session." data-image="img/peso-community-medt-2026.png">
+                                <img src="img/peso-community-medt-2026.png" alt="PESO Vinzons facilitator leading an employment and micro-enterprise development session" loading="lazy" decoding="async" width="1080" height="720">
+                                <span class="public-impact-caption"><b>MSME development</b><small>Skills and livelihood guidance</small><em>View activity</em></span>
+                            </button>
+                            <button type="button" class="public-impact-photo" data-impact-index="1" data-program="SPES" data-title="SPES Student Beneficiary Support" data-date="July 2026" data-location="Vinzons Municipal Hall" data-summary="Student beneficiaries gathered for an official SPES activity supporting their employment experience and program participation." data-image="img/752659025_2053404155260623_314073346839281248_n.jpg">
+                                <img src="img/752659025_2053404155260623_314073346839281248_n.jpg" alt="Student beneficiaries attending a SPES activity at Vinzons Municipal Hall" loading="lazy" decoding="async" width="1080" height="720">
+                                <span class="public-impact-caption"><b>SPES</b><small>Student employment support</small><em>View activity</em></span>
+                            </button>
+                            <button type="button" class="public-impact-photo" data-impact-index="2" data-program="TUPAD" data-title="DOLE TUPAD Community Activity" data-date="July 2026" data-location="Vinzons Town Kiosk, Vinzons, Camarines Norte" data-summary="PESO Vinzons and DOLE coordinated an official community activity for qualified TUPAD beneficiaries." data-image="img/738512047_895211810293178_8484532229922374617_n.jpg">
+                                <img src="img/738512047_895211810293178_8484532229922374617_n.jpg" alt="TUPAD beneficiaries attending an official PESO and DOLE activity" loading="lazy" decoding="async" width="1080" height="720">
+                                <span class="public-impact-caption"><b>TUPAD</b><small>Community employment assistance</small><em>View activity</em></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="public-impact-controls">
+                        <button type="button" id="publicImpactPrev" aria-label="Show previous community activity"><span aria-hidden="true">&larr;</span></button>
+                        <span id="publicImpactStatus" aria-live="polite">Activity 1 of 3</span>
+                        <div class="public-impact-dots" aria-hidden="true"><i class="is-active"></i><i></i><i></i></div>
+                        <button type="button" id="publicImpactNext" aria-label="Show next community activity"><span aria-hidden="true">&rarr;</span></button>
+                    </div>
                 </div>
             </section>
 
@@ -496,6 +506,33 @@ if ($updated_stmt) {
         <div class="footer-mini">Republic of the Philippines &bull; Province of Camarines Norte</div>
       </div>
     </footer>
+</div>
+
+<div class="public-activity-modal-overlay" id="publicActivityModal" aria-hidden="true">
+    <section class="public-activity-modal" role="dialog" aria-modal="true" aria-labelledby="publicActivityModalTitle" aria-describedby="publicActivityModalSummary">
+        <button type="button" class="public-activity-modal-close" id="publicActivityModalClose" aria-label="Close community activity details">&times;</button>
+        <div class="public-activity-modal-media">
+            <span>Official PESO Vinzons activity photograph</span>
+            <img id="publicActivityModalImage" src="img/peso-community-medt-2026.png" alt="PESO Vinzons community activity">
+        </div>
+        <div class="public-activity-modal-content">
+            <span class="public-activity-modal-program" id="publicActivityModalProgram">MSME</span>
+            <p class="public-activity-modal-eyebrow">Community activity record</p>
+            <h2 id="publicActivityModalTitle">Employment and Micro-Enterprise Development Training</h2>
+            <p id="publicActivityModalSummary"></p>
+            <dl>
+                <div><dt>Date</dt><dd id="publicActivityModalDate"></dd></div>
+                <div><dt>Location</dt><dd id="publicActivityModalLocation"></dd></div>
+            </dl>
+            <div class="public-activity-modal-footer">
+                <span id="publicActivityModalPosition">1 of 3</span>
+                <div>
+                    <button type="button" id="publicActivityModalPrev" aria-label="View previous community activity">&larr;</button>
+                    <button type="button" id="publicActivityModalNext" aria-label="View next community activity">&rarr;</button>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
 
 <div class="modal-overlay" id="programModalOverlay" aria-hidden="true">
@@ -816,6 +853,106 @@ if ($updated_stmt) {
                 if (!suggestions.contains(event.target) && event.target !== input) closeSuggestions();
             });
         });
+
+        // Public community carousel and activity detail modal.
+        const impactCarousel = document.getElementById('publicImpactCarousel');
+        const impactTrack = document.getElementById('publicImpactTrack');
+        const impactCards = impactTrack ? Array.from(impactTrack.querySelectorAll('.public-impact-photo')) : [];
+        const impactDots = Array.from(document.querySelectorAll('.public-impact-dots i'));
+        const impactStatus = document.getElementById('publicImpactStatus');
+        const impactModal = document.getElementById('publicActivityModal');
+        const impactModalClose = document.getElementById('publicActivityModalClose');
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        let impactIndex = 0;
+        let impactModalIndex = 0;
+        let impactTimer = null;
+        let impactModalTrigger = null;
+
+        const renderImpactSlide = index => {
+            if (!impactCards.length) return;
+            impactIndex = (index + impactCards.length) % impactCards.length;
+            impactTrack.style.transform = `translateX(-${impactIndex * 100}%)`;
+            impactCards.forEach((card, cardIndex) => {
+                const active = cardIndex === impactIndex;
+                card.classList.toggle('is-active', active);
+                card.tabIndex = active ? 0 : -1;
+                card.setAttribute('aria-hidden', active ? 'false' : 'true');
+            });
+            impactDots.forEach((dot, dotIndex) => dot.classList.toggle('is-active', dotIndex === impactIndex));
+            if (impactStatus) impactStatus.textContent = `Activity ${impactIndex + 1} of ${impactCards.length}`;
+        };
+
+        const stopImpactAutoPlay = () => {
+            window.clearInterval(impactTimer);
+            impactTimer = null;
+        };
+
+        const startImpactAutoPlay = () => {
+            stopImpactAutoPlay();
+            if (reduceMotion || impactCards.length < 2 || impactModal?.classList.contains('show')) return;
+            impactTimer = window.setInterval(() => renderImpactSlide(impactIndex + 1), 3800);
+        };
+
+        const renderImpactModal = index => {
+            impactModalIndex = (index + impactCards.length) % impactCards.length;
+            const card = impactCards[impactModalIndex];
+            const activity = card.dataset;
+            const image = document.getElementById('publicActivityModalImage');
+            image.src = activity.image;
+            image.alt = card.querySelector('img').alt;
+            document.getElementById('publicActivityModalProgram').textContent = activity.program;
+            document.getElementById('publicActivityModalTitle').textContent = activity.title;
+            document.getElementById('publicActivityModalSummary').textContent = activity.summary;
+            document.getElementById('publicActivityModalDate').textContent = activity.date;
+            document.getElementById('publicActivityModalLocation').textContent = activity.location;
+            document.getElementById('publicActivityModalPosition').textContent = `${impactModalIndex + 1} of ${impactCards.length}`;
+        };
+
+        const openImpactModal = (index, trigger) => {
+            if (!impactModal) return;
+            impactModalTrigger = trigger;
+            renderImpactModal(index);
+            impactModal.classList.add('show');
+            impactModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            stopImpactAutoPlay();
+            window.setTimeout(() => impactModalClose?.focus(), 20);
+        };
+
+        const closeImpactModal = () => {
+            if (!impactModal) return;
+            impactModal.classList.remove('show');
+            impactModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            impactModalTrigger?.focus();
+            startImpactAutoPlay();
+        };
+
+        if (impactCards.length) {
+            renderImpactSlide(0);
+            impactCards.forEach((card, index) => card.addEventListener('click', () => openImpactModal(index, card)));
+            document.getElementById('publicImpactPrev')?.addEventListener('click', () => { renderImpactSlide(impactIndex - 1); startImpactAutoPlay(); });
+            document.getElementById('publicImpactNext')?.addEventListener('click', () => { renderImpactSlide(impactIndex + 1); startImpactAutoPlay(); });
+            impactCarousel?.addEventListener('mouseenter', stopImpactAutoPlay);
+            impactCarousel?.addEventListener('mouseleave', startImpactAutoPlay);
+            impactCarousel?.addEventListener('focusin', stopImpactAutoPlay);
+            impactCarousel?.addEventListener('focusout', startImpactAutoPlay);
+            startImpactAutoPlay();
+        }
+
+        if (impactModal) {
+            impactModalClose?.addEventListener('click', closeImpactModal);
+            document.getElementById('publicActivityModalPrev')?.addEventListener('click', () => renderImpactModal(impactModalIndex - 1));
+            document.getElementById('publicActivityModalNext')?.addEventListener('click', () => renderImpactModal(impactModalIndex + 1));
+            impactModal.addEventListener('click', event => { if (event.target === impactModal) closeImpactModal(); });
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && impactModal.classList.contains('show')) closeImpactModal();
+                if (impactModal.classList.contains('show') && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+                    renderImpactModal(impactModalIndex + (event.key === 'ArrowRight' ? 1 : -1));
+                }
+            });
+            document.addEventListener('visibilitychange', () => document.hidden ? stopImpactAutoPlay() : startImpactAutoPlay());
+        }
 
         // Mobile Menu Toggle
         const menuBtn = document.getElementById('menuButton');

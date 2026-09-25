@@ -31,12 +31,12 @@ if (isset($_SESSION['role'])) {
     <link rel="stylesheet" href="home.css?v=17">
     <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=32">
+    <link rel="stylesheet" href="index.css?v=33">
     <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
     <link rel="stylesheet" href="system_readability.css?v=1">
-<script src="frontend_polish.js?v=20260923" defer></script>
+<script src="frontend_polish.js?v=20260925" defer></script>
 </head>
-<body class="public-index-page public-about-page">
+<body class="public-index-page public-about-page" data-force-page-loader>
 <a class="public-skip-link" href="#mainContent">Skip to main content</a>
 <div class="page-wrap">
     <header class="topbar">
