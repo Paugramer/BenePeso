@@ -252,8 +252,58 @@
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-actions {
     grid-column: 1 !important;
     grid-row: auto !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     align-self: stretch !important;
+    gap: 8px !important;
     margin: 0 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-actions > :where(.btn-main, .btn-light) {
+    min-height: 46px !important;
+    height: 46px !important;
+    padding: 8px 10px !important;
+    border-radius: 11px !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+  }
+
+  /* A selected beneficiary directory uses a compact, explicit grid. This
+     neutralizes legacy flex-basis rules that made Generate Report a tall rail. */
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .records-toolbar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    gap: 9px !important;
+    margin: 0 0 12px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .records-toolbar .custom-tabs {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 5px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-rows: minmax(42px, auto) !important;
+    gap: 5px !important;
+    flex: none !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .records-toolbar .tab-item {
+    width: 100% !important;
+    min-height: 42px !important;
+    height: auto !important;
+    padding: 7px 6px !important;
+    flex: none !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .records-toolbar #openReportModal {
+    display: inline-flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 46px !important;
+    height: 46px !important;
+    margin: 0 !important;
+    padding: 8px 12px !important;
+    flex: none !important;
+    border-radius: 11px !important;
+    font-size: 11px !important;
   }
 
   :is(.admin-mobile-page, .staff-mobile-page) .program-grid {
@@ -560,6 +610,7 @@
 @media (max-width: 340px) {
   :is(.admin-mobile-page, .staff-mobile-page) .stats-grid { grid-template-columns: minmax(0, 1fr) !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .top-actions { grid-template-columns: minmax(0, 1fr); }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-actions { grid-template-columns: minmax(0, 1fr) !important; }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.modal-actions, .modal-actions-flex, .modal-actions-sm, .modal-footer-sticky) { grid-template-columns: minmax(0, 1fr) !important; }
 }
 
