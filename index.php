@@ -151,7 +151,7 @@ if ($updated_stmt) {
     
     <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=35">
+    <link rel="stylesheet" href="index.css?v=36">
     <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
     <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
@@ -527,11 +527,9 @@ if ($updated_stmt) {
                 <div><dt>Location</dt><dd id="publicActivityModalLocation"></dd></div>
             </dl>
             <div class="public-activity-modal-footer">
+                <button type="button" id="publicActivityModalPrev" aria-label="View previous community activity"><span aria-hidden="true">&larr;</span><b>Previous</b></button>
                 <span id="publicActivityModalPosition">1 of 3</span>
-                <div>
-                    <button type="button" id="publicActivityModalPrev" aria-label="View previous community activity"><span aria-hidden="true">&larr;</span><b>Previous</b></button>
-                    <button type="button" id="publicActivityModalNext" aria-label="View next community activity"><b>Next</b><span aria-hidden="true">&rarr;</span></button>
-                </div>
+                <button type="button" id="publicActivityModalNext" aria-label="View next community activity"><b>Next</b><span aria-hidden="true">&rarr;</span></button>
             </div>
         </div>
     </section>
