@@ -91,7 +91,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="stylesheet" href="style.css?v=33" />
   <link rel="stylesheet" href="frontend_polish.css?v=20260921">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=15">
+  <link rel="stylesheet" href="auth_refresh.css?v=16">
   <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260923" defer></script>

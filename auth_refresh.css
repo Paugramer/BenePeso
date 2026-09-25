@@ -618,13 +618,14 @@ body.auth-page::before {
 }
 
 .auth-page .auth-turnstile-spinner {
-  width: 13px;
-  height: 13px;
-  flex: 0 0 13px;
-  border: 2px solid #cfe3d8;
-  border-top-color: #168158;
-  border-radius: 50%;
-  animation: auth-turnstile-spin .8s linear infinite;
+  width: 15px;
+  height: 17px;
+  flex: 0 0 15px;
+  border: 2px solid #168158;
+  border-radius: 5px 5px 7px 7px;
+  background: rgba(22, 129, 88, .08);
+  clip-path: polygon(50% 0, 100% 18%, 92% 70%, 50% 100%, 8% 70%, 0 18%);
+  animation: auth-shield-pulse 1.1s ease-in-out infinite;
 }
 
 .auth-page .auth-turnstile-state[data-state="success"] { color: #12613e; }
@@ -652,7 +653,10 @@ body.auth-page::before {
   box-shadow: none;
 }
 
-@keyframes auth-turnstile-spin { to { transform: rotate(360deg); } }
+@keyframes auth-shield-pulse {
+  0%, 100% { opacity: .58; transform: scale(.92); }
+  50% { opacity: 1; transform: scale(1); }
+}
 
 .auth-page .auth-support-link {
   display: block;

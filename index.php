@@ -151,7 +151,7 @@ if ($updated_stmt) {
     
     <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=31">
+    <link rel="stylesheet" href="index.css?v=32">
     <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
     <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260923" defer></script>
@@ -247,7 +247,10 @@ if ($updated_stmt) {
                     <span class="section-kicker">PESO in the community</span>
                     <h2 id="publicImpactTitle">Real programs. Visible local impact.</h2>
                     <p>See how PESO Vinzons turns official opportunities into orientations, training, work experience, and support for residents.</p>
-                    <a href="index_about.php#community-in-action">View community activities <span aria-hidden="true">&rarr;</span></a>
+                    <a href="index_about.php#community-in-action">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m4 17 5-4 3 2 3-3 5 5"/></svg>
+                        <span>Explore community activities</span><i aria-hidden="true">&rarr;</i>
+                    </a>
                 </div>
                 <div class="public-impact-gallery" aria-label="Recent PESO Vinzons community activities">
                     <figure class="public-impact-photo public-impact-photo--wide">
