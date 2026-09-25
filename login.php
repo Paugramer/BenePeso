@@ -91,7 +91,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="stylesheet" href="style.css?v=33" />
   <link rel="stylesheet" href="frontend_polish.css?v=20260921">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=17">
+  <link rel="stylesheet" href="auth_refresh.css?v=18">
   <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
@@ -535,9 +535,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   const turnstileRetry = document.getElementById('turnstileRetry');
   let turnstileWidgetId = null;
   let turnstileVerified = !turnstileEnabled;
-  let turnstileRetryCount = 0;
   let turnstileLoadTimer = null;
-  let turnstileChallengeTimer = null;
 
   const setTurnstileState = (state, message, allowRetry = false) => {
     if (!turnstileState) return;
@@ -558,7 +556,6 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   };
 
   const removeTurnstileWidget = () => {
-    window.clearTimeout(turnstileChallengeTimer);
     if (window.turnstile && turnstileWidgetId !== null) {
       try { window.turnstile.remove(turnstileWidgetId); } catch (error) { /* Failed widgets may already be removed. */ }
     }
@@ -582,43 +579,29 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
         retry: 'auto',
         'retry-interval': 2000,
         callback: () => {
-          window.clearTimeout(turnstileChallengeTimer);
           turnstileVerified = true;
-          turnstileRetryCount = 0;
           setTurnstileState('success', 'Security verification complete.');
           syncLoginButton();
         },
         'expired-callback': () => {
-          window.clearTimeout(turnstileChallengeTimer);
           turnstileVerified = false;
           setTurnstileState('loading', 'Security verification expired. Refreshing…');
           syncLoginButton();
           window.turnstile.reset(turnstileWidgetId);
         },
         'timeout-callback': () => {
-          window.clearTimeout(turnstileChallengeTimer);
           turnstileVerified = false;
-          setTurnstileState('error', 'Secure check needs another try.', true);
+          setTurnstileState('loading', 'Restarting secure verification…');
           syncLoginButton();
+          window.turnstile?.reset(turnstileWidgetId);
         },
         'error-callback': () => {
           turnstileVerified = false;
+          setTurnstileState('loading', 'Reconnecting secure verification…');
           syncLoginButton();
-          if (turnstileRetryCount < 2) {
-            turnstileRetryCount += 1;
-            setTurnstileState('loading', 'Security check is reconnecting…');
-            window.setTimeout(() => window.turnstile?.reset(turnstileWidgetId), 900);
-          } else {
-            setTurnstileState('error', 'Secure check needs another try.', true);
-          }
           return true;
         }
       });
-      turnstileChallengeTimer = window.setTimeout(() => {
-        if (!turnstileVerified) {
-          setTurnstileState('error', 'Secure check needs another try.', true);
-        }
-      }, 6000);
     } catch (error) {
       removeTurnstileWidget();
       turnstileVerified = false;
@@ -629,7 +612,6 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
 
   const retryTurnstile = () => {
     turnstileVerified = false;
-    turnstileRetryCount = 0;
     setTurnstileState('loading', 'Restarting secure verification…');
     syncLoginButton();
     removeTurnstileWidget();
