@@ -200,7 +200,6 @@
     text-align: center !important;
   }
   :is(.admin-mobile-page, .staff-mobile-page) :where(.panel-head, .panel-head-flex) > * {
-    width: 100%;
     max-width: 100%;
     min-width: 0;
   }
@@ -208,6 +207,9 @@
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .panel-card > .panel-head-flex {
     margin: 0 0 14px !important;
     padding: 0 2px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .panel-card > .panel-head-flex > * {
+    width: 100% !important;
   }
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .panel-head-flex .panel-title {
     white-space: normal !important;
@@ -218,6 +220,41 @@
   :is(.admin-mobile-page, .staff-mobile-page) .dashboard-quick-actions a { min-height: 42px; padding: 9px 11px !important; font-size: 10.5px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .dashboard-chart-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 10px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .dashboard-chart-canvas { min-height: 220px !important; height: 220px !important; }
+  :is(.admin-dashboard-page, .staff-dashboard-page) .dashboard-chart-card .panel-head > div:first-child {
+    width: auto !important;
+    flex: 1 1 auto !important;
+  }
+  :is(.admin-dashboard-page, .staff-dashboard-page) .dashboard-chart-card :where(.chart-period-menu, .panel-link) {
+    width: auto !important;
+    max-width: 46% !important;
+    flex: 0 0 auto !important;
+  }
+
+  /* The page-specific beneficiary stylesheet places the actions in grid row
+     one. Reset that desktop placement after the header becomes one column. */
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-area {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-left {
+    display: block !important;
+    padding-inline: 44px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-left > :where(.breadcrumb, .eyebrow, .top-big, .top-sub) {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-inline: auto !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-left .breadcrumb {
+    display: flex !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-actions {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    align-self: stretch !important;
+    margin: 0 !important;
+  }
 
   :is(.admin-mobile-page, .staff-mobile-page) .program-grid {
     width: 100% !important;
