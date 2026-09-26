@@ -257,7 +257,7 @@ if ($stmt) {
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=14">
+<link rel="stylesheet" href="system_mobile.css?v=15">
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 </head>
@@ -310,7 +310,7 @@ if ($stmt) {
   <main class="main-area">
     <header class="top-area animation-slide-up" style="animation-delay: 0.1s;">
       <div class="top-left">
-        <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu">
+        <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="sideArea">
           <span></span>
           <span></span>
           <span></span>
@@ -484,16 +484,25 @@ if ($stmt) {
     function openSidebar() {
       sideArea.classList.add('open');
       sidebarOverlay.classList.add('show');
+      document.body.classList.add('sidebar-open');
+      menuToggle?.setAttribute('aria-expanded', 'true');
+      menuToggle?.setAttribute('aria-label', 'Close menu');
     }
 
     function closeSidebar() {
       sideArea.classList.remove('open');
       sidebarOverlay.classList.remove('show');
+      document.body.classList.remove('sidebar-open');
+      menuToggle?.setAttribute('aria-expanded', 'false');
+      menuToggle?.setAttribute('aria-label', 'Open menu');
     }
 
     if (menuToggle) menuToggle.addEventListener('click', openSidebar);
     if (sideClose) sideClose.addEventListener('click', closeSidebar);
     if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && sideArea?.classList.contains('open')) closeSidebar();
+    });
 
     // Auto submit form
     document.querySelectorAll('.auto-submit').forEach(el => {

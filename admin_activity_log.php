@@ -185,7 +185,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=14">
+<link rel="stylesheet" href="system_mobile.css?v=15">
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 </head>
@@ -232,7 +232,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
 
         <header class="top-area animate-fade-in">
             <div class="top-left">
-                <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu">
+                <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false" aria-controls="sideArea">
                     <span></span><span></span><span></span>
                 </button>
                 <div class="top-title">
@@ -477,9 +477,20 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
         const sideClose = document.getElementById('sideClose');
         const overlay = document.getElementById('sidebarOverlay');
 
-        if(menuToggle) menuToggle.addEventListener('click', () => { sideArea.classList.add('open'); overlay.classList.add('show'); });
-        if(sideClose) sideClose.addEventListener('click', () => { sideArea.classList.remove('open'); overlay.classList.remove('show'); });
-        if(overlay) overlay.addEventListener('click', () => { sideArea.classList.remove('open'); overlay.classList.remove('show'); });
+        const setSidebarOpen = (open) => {
+            if (!sideArea || !overlay || !menuToggle) return;
+            sideArea.classList.toggle('open', open);
+            overlay.classList.toggle('show', open);
+            document.body.classList.toggle('sidebar-open', open);
+            menuToggle.setAttribute('aria-expanded', String(open));
+            menuToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+        };
+        if(menuToggle) menuToggle.addEventListener('click', () => setSidebarOpen(!sideArea.classList.contains('open')));
+        if(sideClose) sideClose.addEventListener('click', () => setSidebarOpen(false));
+        if(overlay) overlay.addEventListener('click', () => setSidebarOpen(false));
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && sideArea?.classList.contains('open')) setSidebarOpen(false);
+        });
 
         const searchInput = document.getElementById('liveSearchInput');
         if(searchInput) {

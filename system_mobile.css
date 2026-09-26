@@ -65,10 +65,21 @@
     line-height: 1 !important;
   }
   :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close i {
-    display: block;
+    display: none !important;
     margin: 0 !important;
     line-height: 1 !important;
   }
+  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close::before,
+  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close::before { transform: rotate(45deg); }
+  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close::after { transform: rotate(-45deg); }
   :is(.admin-mobile-page, .staff-mobile-page) .side-user { padding: 14px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .nav-area { padding: 10px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .nav-item { min-height: 42px !important; padding: 9px 11px !important; font-size: 12px !important; }
@@ -1204,20 +1215,124 @@
     grid-column: auto !important;
   }
 
-  .admin-add-staff-page .form-card { padding: 18px 16px !important; }
+  .admin-add-staff-page .content-wrapper {
+    max-width: 100% !important;
+    padding-top: 0 !important;
+  }
+  .admin-add-staff-page .form-card {
+    overflow: hidden !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+  .admin-add-staff-page .back-link-inner {
+    min-height: 40px !important;
+    margin: 0 0 14px !important;
+    padding: 8px 11px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 11px !important;
+    background: #fff !important;
+    font-size: 11.5px !important;
+  }
+  .admin-add-staff-page .form-header {
+    margin: 0 -14px !important;
+    padding: 14px 16px 16px !important;
+    border-bottom: 1px solid #dce9e2 !important;
+    background: linear-gradient(135deg, #f8fcfa, #eef8f3) !important;
+  }
+  .admin-add-staff-page .form-header h2 {
+    margin: 0 !important;
+    font-size: 21px !important;
+    line-height: 1.2 !important;
+  }
+  .admin-add-staff-page .form-header p {
+    max-width: 30ch !important;
+    margin: 5px auto 0 !important;
+    font-size: 11.5px !important;
+    line-height: 1.45 !important;
+  }
+  .admin-add-staff-page .step-tracker {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr) !important;
+    gap: 6px !important;
+    margin: 0 -14px 16px !important;
+    padding: 14px 16px !important;
+    border-bottom: 1px solid #e3ede7 !important;
+    background: #fbfdfc !important;
+  }
+  .admin-add-staff-page .step-item {
+    min-width: 0 !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    font-size: 10.5px !important;
+    line-height: 1.25 !important;
+    text-align: center !important;
+  }
+  .admin-add-staff-page .step-circle {
+    width: 34px !important;
+    height: 34px !important;
+    flex: 0 0 34px !important;
+  }
+  .admin-add-staff-page .step-connector {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
   .admin-add-staff-page .form-grid {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 14px 9px !important;
+    gap: 13px 8px !important;
   }
   .admin-add-staff-page .form-group { min-width: 0 !important; }
   .admin-add-staff-page .form-group input {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    height: 48px !important;
     min-width: 0 !important;
-    padding-inline: 11px !important;
-    font-size: 12.5px !important;
+    padding-inline: 10px !important;
+    border-radius: 11px !important;
+    font-size: 12px !important;
   }
-  .admin-add-staff-page .form-group label { font-size: 10px !important; }
-  .admin-add-staff-page .form-actions .btn-main { width: 100% !important; }
+  .admin-add-staff-page .form-group label {
+    font-size: 9px !important;
+    line-height: 1.3 !important;
+  }
+  .admin-add-staff-page .form-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-top: 18px !important;
+    padding-top: 14px !important;
+  }
+  .admin-add-staff-page #step1 .form-actions {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .admin-add-staff-page .form-actions :is(.btn-main, .btn-light) {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 46px !important;
+    padding: 9px !important;
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+    white-space: normal !important;
+  }
+  .admin-add-staff-page .step2-landscape {
+    gap: 16px !important;
+    padding: 0 !important;
+  }
+  .admin-add-staff-page .step2-left {
+    padding-bottom: 16px !important;
+  }
+  .admin-add-staff-page .profile-preview {
+    width: 96px !important;
+    height: 96px !important;
+    margin-bottom: 10px !important;
+  }
+  .admin-add-staff-page .upload-btn-label {
+    min-height: 42px !important;
+    padding: 8px 13px !important;
+    font-size: 11px !important;
+  }
+  .admin-add-staff-page .step2-right { gap: 13px !important; }
 
   :is(.admin-activity-page, .staff-activity-page) .panel-head {
     align-items: stretch !important;
