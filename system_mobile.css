@@ -69,21 +69,33 @@
     color: #173728 !important;
     background: #fff !important;
     border: 1px solid #d6e5dd !important;
-    border-radius: 12px !important;
+    border-radius: 50% !important;
     box-shadow: 0 6px 18px rgba(13, 54, 37, .1) !important;
     pointer-events: auto !important;
     transform: none !important;
     line-height: 1 !important;
+    z-index: 10 !important;
     isolation: isolate;
   }
   :is(.admin-mobile-page, .staff-mobile-page) .side-area.open > .side-top > .side-close {
     display: grid !important;
   }
-  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close :is(i, .side-close-glyph) {
+  :is(.admin-mobile-page, .staff-mobile-page) .side-area.open ~ .main-area .menu-toggle {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close i {
+    display: block !important;
+    margin: 0 !important;
+    font-size: 20px !important;
+    line-height: 1 !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close .side-close-glyph {
     display: block !important;
     margin: 0 !important;
     font-family: Arial, sans-serif !important;
-    font-size: 28px !important;
+    font-size: 27px !important;
     font-weight: 400 !important;
     line-height: .8 !important;
   }
@@ -1505,6 +1517,72 @@
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-card-dialog {
     position: relative !important;
   }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-card-left {
+    min-height: 104px !important;
+    padding: 14px 58px 14px 14px !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #profileModal .id-card-left > div:not(.id-card-pattern) {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 12px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-avatar-large {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    min-height: 56px !important;
+    flex: 0 0 56px !important;
+    margin: 0 !important;
+    font-size: 22px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .profile-badges-row {
+    min-width: 0 !important;
+    align-items: flex-start !important;
+    gap: 7px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .profile-badges-row > * {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-actions {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    margin-top: 10px !important;
+    padding: 10px 12px max(10px, env(safe-area-inset-bottom)) !important;
+    gap: 8px !important;
+    background: #fbfdfc !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-actions > .added-by {
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+    text-align: center !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal #pm_footer_actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 8px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal #pm_footer_actions > button {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    padding: 7px 6px !important;
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+    white-space: normal !important;
+  }
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-card-dialog > .profile-close-button {
     position: absolute !important;
     top: 12px !important;
@@ -1512,6 +1590,7 @@
     left: auto !important;
     z-index: 40 !important;
     margin: 0 !important;
+    border-radius: 50% !important;
     transform: none !important;
   }
 }

@@ -31,9 +31,9 @@
 
   /* A single, uncluttered touch target for the compact document header. */
   body .spes-form-modal .spes-form-tools>.spes-tool-btn.secondary{
-    position:absolute;top:calc(12px + env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));
-    display:grid;place-items:center;width:42px;height:42px;min-width:42px;min-height:42px;
-    margin:0;padding:0;border:1px solid rgba(255,255,255,.22);border-radius:50%;
+    position:absolute!important;top:calc(12px + env(safe-area-inset-top))!important;right:max(12px,env(safe-area-inset-right))!important;
+    display:grid!important;place-items:center!important;width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;
+    margin:0!important;padding:0!important;border:1px solid rgba(255,255,255,.22)!important;border-radius:50%!important;
     background:rgba(255,255,255,.10);box-shadow:none;transform:none
   }
   body .spes-form-modal .spes-form-tools>.spes-tool-btn.secondary:hover,
