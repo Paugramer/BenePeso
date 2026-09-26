@@ -631,7 +631,7 @@
 @media (min-width: 350px) and (max-width: 600px) {
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-left {
     display: grid !important;
-    grid-template-columns: 42px minmax(0, 1fr) !important;
+    grid-template-columns: 42px minmax(0, 1fr) 42px !important;
     align-items: center !important;
     column-gap: 10px !important;
     row-gap: 8px !important;
@@ -931,12 +931,49 @@
 
 /* Phone refinements for beneficiary workflows, account management and logs. */
 @media (min-width: 350px) and (max-width: 600px) {
+  :is(.admin-mobile-page, .staff-mobile-page) .breadcrumb {
+    display: flex !important;
+    width: fit-content !important;
+    max-width: 100% !important;
+    min-height: 34px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    align-self: center !important;
+    margin: 0 auto 4px !important;
+    padding: 6px 10px !important;
+    gap: 4px !important;
+    overflow: hidden !important;
+    border-radius: 9px !important;
+    font-size: 9.5px !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .breadcrumb a {
+    display: inline-flex !important;
+    min-width: 0 !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .breadcrumb a i {
+    margin-right: 0 !important;
+    font-size: 12px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .breadcrumb .separator {
+    margin: 0 1px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .breadcrumb .current {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-left .breadcrumb {
-    width: max-content !important;
+    width: fit-content !important;
     max-width: 100% !important;
     min-height: 36px !important;
-    justify-self: start !important;
-    justify-content: flex-start !important;
+    justify-self: center !important;
+    justify-content: center !important;
     gap: 4px !important;
     padding: 6px 9px !important;
     font-size: 9.5px !important;
@@ -1107,12 +1144,33 @@
     min-height: 82px !important;
   }
   .admin-accounts-page #idCardModal .id-card-right { padding: 16px 12px 12px !important; }
+  .admin-accounts-page #idCardModal .profile-card-close:hover,
+  .admin-accounts-page #idCardModal .profile-card-close:active,
+  .admin-accounts-page #idCardModal .profile-card-close:focus-visible {
+    transform: none !important;
+  }
+  .admin-accounts-page #idCardModal .id-details-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+  .admin-accounts-page #idCardModal .detail-group {
+    min-width: 0 !important;
+    min-height: 78px !important;
+    padding: 11px 12px !important;
+  }
+  .admin-accounts-page #idCardModal .detail-group[style*="grid-column"] {
+    grid-column: 1 / -1 !important;
+  }
   .admin-accounts-page #idCardModal .id-actions {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 8px !important;
   }
-  .admin-accounts-page #idCardModal .id-actions > * {
+  .admin-accounts-page #idCardModal .id-actions > a,
+  .admin-accounts-page #idCardModal .id-actions > button {
+    flex: 0 0 auto !important;
     width: 100% !important;
     min-width: 0 !important;
     min-height: 44px !important;
@@ -1120,8 +1178,12 @@
     padding: 8px !important;
     white-space: normal !important;
   }
-  .admin-accounts-page #idCardModal :is(#idBtnBan, #idBtnUnban) {
+  .admin-accounts-page.accounts-view-staff #idCardModal #idBtnBan {
     grid-column: 1 / -1 !important;
+  }
+  .admin-accounts-page.accounts-view-user #idCardModal :is(#idBtnBan, #idBtnUnban),
+  .admin-accounts-page.accounts-view-banned #idCardModal :is(#idBtnBan, #idBtnUnban) {
+    grid-column: auto !important;
   }
 
   .admin-add-staff-page .form-card { padding: 18px 16px !important; }
@@ -1232,10 +1294,15 @@
     width: 100% !important;
     gap: 8px !important;
   }
-  :is(.admin-activity-page, .staff-activity-page) :is(.pagination-wrapper, .pagination-bar) {
-    justify-content: center !important;
-    text-align: center !important;
+  :is(.admin-mobile-page, .staff-mobile-page) :is(.pagination-wrapper, .pagination-bar) {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
     gap: 10px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .pagination-controls {
+    justify-content: flex-start !important;
   }
 }
 

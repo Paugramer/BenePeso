@@ -288,7 +288,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=12">
+<link rel="stylesheet" href="system_mobile.css?v=13">
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 </head>
@@ -861,7 +861,20 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
 <?php endif; ?>
 
 <script>
+    let accountProfileReturnFocus = null;
+
+    function restoreAccountTriggerFocus() {
+        window.requestAnimationFrame(() => {
+            if (accountProfileReturnFocus instanceof HTMLElement && accountProfileReturnFocus.isConnected && accountProfileReturnFocus.offsetParent !== null) {
+                accountProfileReturnFocus.focus();
+            } else {
+                document.getElementById('menuToggle')?.focus();
+            }
+        });
+    }
+
     function triggerProfileCardFromRow(row) {
+        accountProfileReturnFocus = row.querySelector('.btn-action-view') || document.activeElement;
         const data = row.dataset;
         document.getElementById('idName').textContent = data.name;
         document.getElementById('idJoined').textContent = "Joined: " + data.joined;
@@ -895,7 +908,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
             } else {
                 btnEdit.style.display = 'inline-flex';
                 btnEdit.onclick = function() {
-                    closeProfileCard();
+                    closeProfileCard(false);
                     openEditStaffModal(data);
                 };
             }
@@ -927,22 +940,34 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
             btnBan.style.display = 'none';
             btnUnban.style.display = 'inline-flex';
             btnUnban.onclick = function() {
-                closeProfileCard();
+                closeProfileCard(false);
                 triggerUnbanConfirmation(data.id, data.type);
             };
         } else {
             btnUnban.style.display = 'none';
             btnBan.style.display = 'inline-flex';
             btnBan.onclick = function() {
-                closeProfileCard();
+                closeProfileCard(false);
                 triggerBanConfirmation(data.id, data.type);
             };
         }
         
-        document.getElementById('idCardModal').classList.add('show');
+        const profileModal = document.getElementById('idCardModal');
+        const profileDialog = profileModal.querySelector('.id-card-dialog');
+        profileDialog.scrollTop = 0;
+        profileModal.classList.add('show');
+        profileModal.setAttribute('aria-hidden', 'false');
+        window.requestAnimationFrame(() => profileModal.querySelector('.profile-card-close')?.focus());
     }
 
-    function closeProfileCard() { document.getElementById('idCardModal').classList.remove('show'); }
+    function closeProfileCard(restoreFocus = true) {
+        const profileModal = document.getElementById('idCardModal');
+        const activeElement = document.activeElement;
+        if (activeElement instanceof HTMLElement && profileModal.contains(activeElement)) activeElement.blur();
+        profileModal.classList.remove('show');
+        profileModal.setAttribute('aria-hidden', 'true');
+        if (restoreFocus) restoreAccountTriggerFocus();
+    }
 
     function toggleContact(e, btn) {
         e.stopPropagation();
@@ -960,20 +985,40 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
     }
 
     function triggerBanConfirmation(id, type) {
+        const banModal = document.getElementById('banModal');
         document.getElementById('ban_id').value = id;
         document.getElementById('ban_account_type').value = type;
         document.querySelector('#banModal textarea[name="status_reason"]').value = '';
-        document.getElementById('banModal').classList.add('show');
+        banModal.classList.add('show');
+        banModal.setAttribute('aria-hidden', 'false');
+        window.requestAnimationFrame(() => banModal.querySelector('textarea')?.focus());
     }
-    function closeBanModal() { document.getElementById('banModal').classList.remove('show'); }
+    function closeBanModal() {
+        const banModal = document.getElementById('banModal');
+        const activeElement = document.activeElement;
+        if (activeElement instanceof HTMLElement && banModal.contains(activeElement)) activeElement.blur();
+        banModal.classList.remove('show');
+        banModal.setAttribute('aria-hidden', 'true');
+        restoreAccountTriggerFocus();
+    }
 
     function triggerUnbanConfirmation(id, type) {
+        const unbanModal = document.getElementById('unbanModal');
         document.getElementById('unban_id').value = id;
         document.getElementById('unban_account_type').value = type;
         document.querySelector('#unbanModal textarea[name="status_reason"]').value = '';
-        document.getElementById('unbanModal').classList.add('show');
+        unbanModal.classList.add('show');
+        unbanModal.setAttribute('aria-hidden', 'false');
+        window.requestAnimationFrame(() => unbanModal.querySelector('textarea')?.focus());
     }
-    function closeUnbanModal() { document.getElementById('unbanModal').classList.remove('show'); }
+    function closeUnbanModal() {
+        const unbanModal = document.getElementById('unbanModal');
+        const activeElement = document.activeElement;
+        if (activeElement instanceof HTMLElement && unbanModal.contains(activeElement)) activeElement.blur();
+        unbanModal.classList.remove('show');
+        unbanModal.setAttribute('aria-hidden', 'true');
+        restoreAccountTriggerFocus();
+    }
 
     function openEditStaffModal(data) {
         document.getElementById('edit_staff_id').value = data.id;
@@ -989,9 +1034,19 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
         editAvatar.src = imgSource;
         editAvatar.onerror = function() { this.src = data.fallback; };
 
-        document.getElementById('editStaffModal').classList.add('show');
+        const editModal = document.getElementById('editStaffModal');
+        editModal.classList.add('show');
+        editModal.setAttribute('aria-hidden', 'false');
+        window.requestAnimationFrame(() => document.getElementById('edit_fname')?.focus());
     }
-    function closeEditModal() { document.getElementById('editStaffModal').classList.remove('show'); }
+    function closeEditModal() {
+        const editModal = document.getElementById('editStaffModal');
+        const activeElement = document.activeElement;
+        if (activeElement instanceof HTMLElement && editModal.contains(activeElement)) activeElement.blur();
+        editModal.classList.remove('show');
+        editModal.setAttribute('aria-hidden', 'true');
+        restoreAccountTriggerFocus();
+    }
     
     document.addEventListener('DOMContentLoaded', () => {
         const menuToggle = document.getElementById('menuToggle');
