@@ -286,6 +286,12 @@ body {
   -webkit-backdrop-filter: blur(8px);
   transition: transform .18s cubic-bezier(.2,.8,.2,1), background-color .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease !important;
 }
+#idCardModal .id-card-dialog > .profile-card-close {
+  position: absolute !important;
+  top: 16px !important;
+  right: 16px !important;
+  z-index: 30;
+}
 #idCardModal .modal-close-icon i {
   display: block;
   font-size: 20px;

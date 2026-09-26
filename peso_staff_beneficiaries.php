@@ -1290,7 +1290,7 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="peso_staff_responsive.css?v=24">
   <link rel="stylesheet" href="system_search_polish.css?v=1">
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
-  <link rel="stylesheet" href="system_mobile.css?v=13">
+  <link rel="stylesheet" href="system_mobile.css?v=14">
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
@@ -2562,6 +2562,7 @@ function toggleBatchScheduleFields(select) {
 <div class="modal" id="profileModal" aria-hidden="true">
   <div class="modal-backdrop" data-close-profile></div>
   <div class="modal-dialog id-card-dialog" style="max-width: 900px; padding: 0; display: flex; overflow: hidden; background: #fff; border-radius: 16px;">
+    <button type="button" class="profile-close-button" data-close-profile aria-label="Close beneficiary profile" style="position: absolute; top: 16px; right: 16px; background: #f9fafb; border: 1px solid #eaecf0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #667085;"><i class="ph-bold ph-x"></i></button>
     
     <div class="id-card-left" style="width: 320px; background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; border-right: 1px solid #eaecf0;">
        <div class="id-card-pattern" style="position: absolute; top:0; left:0; right:0; bottom:0; opacity: 0.1; background-image: radial-gradient(#1f7a54 1px, transparent 1px); background-size: 10px 10px; z-index: 1;"></div>
@@ -2576,8 +2577,6 @@ function toggleBatchScheduleFields(select) {
     </div>
 
     <div class="id-card-right" style="flex: 1; padding: 32px; background: #fff; position: relative;">
-       <button type="button" class="profile-close-button" data-close-profile aria-label="Close beneficiary profile" style="position: absolute; top: 16px; right: 16px; background: #f9fafb; border: 1px solid #eaecf0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #667085;"><i class="ph-bold ph-x"></i></button>
-
        <div class="id-card-right-inner">
            <div class="id-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px; border-bottom: 2px solid #1f7a54; padding-bottom: 12px; width: fit-content; min-width: 250px;">
               <div style="width: 36px; height: 36px; background: #1f7a54; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff;"><i class="ph-fill ph-user" style="font-size: 18px;"></i></div>
