@@ -43,16 +43,19 @@
 
   :is(.admin-mobile-page, .staff-mobile-page) .side-top {
     position: relative !important;
-    min-height: 54px !important;
-    padding: 0 48px 0 0 !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 66px !important;
+    padding: 6px 58px 6px 0 !important;
   }
   /* Keep the close control anchored while the drawer loses its .open class.
      Otherwise older page styles briefly return it to flex flow during exit. */
   :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close,
   :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close:active {
     position: absolute !important;
-    top: 6px !important;
-    right: 0 !important;
+    top: 12px !important;
+    right: 12px !important;
     display: grid !important;
     width: 42px !important;
     height: 42px !important;
@@ -428,6 +431,12 @@
     overflow-x: auto;
     padding-bottom: 4px;
     scrollbar-width: thin;
+  }
+
+  :is(.admin-mobile-page, .staff-mobile-page) :where(.pagination-wrapper, .pagination-bar) > :where(.page-info, span:first-child, div:first-child) {
+    width: 100% !important;
+    margin-inline: auto !important;
+    text-align: center !important;
   }
 
   /* Dialogs stay inset so rounded corners and a visible backdrop communicate
@@ -840,6 +849,27 @@
     #adminAddBeneficiaryModal .form-group label {
     font-size: 11px !important;
     line-height: 1.3 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .form-group :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    min-height: 46px !important;
+    padding: 10px 11px !important;
+    font-size: 16px !important;
+    line-height: 1.35 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .form-group select {
+    padding-right: 34px !important;
+    text-overflow: ellipsis !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .form-group textarea {
+    min-height: 88px !important;
+    resize: vertical !important;
   }
 
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
@@ -1437,16 +1467,16 @@
     width: 100% !important;
     gap: 8px !important;
   }
-  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page, .admin-activity-page, .staff-activity-page)
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page, .admin-accounts-page, .admin-activity-page, .staff-activity-page)
     :is(.pagination-wrapper, .pagination-bar) {
     width: 100% !important;
     flex-direction: column !important;
     align-items: stretch !important;
     justify-content: flex-start !important;
-    text-align: left !important;
+    text-align: center !important;
     gap: 10px !important;
   }
-  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page, .admin-activity-page, .staff-activity-page)
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page, .admin-accounts-page, .admin-activity-page, .staff-activity-page)
     :is(.pagination-controls, .pagination-bar > :last-child) {
     display: flex !important;
     width: 100% !important;
@@ -1457,15 +1487,19 @@
     padding: 0 !important;
     overflow: visible !important;
   }
-  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page, .admin-activity-page, .staff-activity-page)
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page, .admin-accounts-page, .admin-activity-page, .staff-activity-page)
     :is(.pagination-controls, .pagination-bar > :last-child) > * {
     flex: 0 0 auto !important;
   }
-  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page, .admin-activity-page, .staff-activity-page)
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page, .admin-accounts-page, .admin-activity-page, .staff-activity-page)
     .pagination-controls > .disabled,
-  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page, .admin-activity-page, .staff-activity-page)
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page, .admin-accounts-page, .admin-activity-page, .staff-activity-page)
     .pagination-bar > :last-child > [disabled] {
     display: none !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page, .admin-accounts-page, .admin-activity-page, .staff-activity-page)
+    :is(.pagination-controls, .pagination-bar > :last-child) > :last-child {
+    margin-left: auto !important;
   }
 
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-card-dialog {
