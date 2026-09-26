@@ -1710,7 +1710,7 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
 <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
-<link rel="stylesheet" href="system_mobile.css?v=10">
+<link rel="stylesheet" href="system_mobile.css?v=11">
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
@@ -4894,15 +4894,15 @@ function toggleBatchScheduleFields(select) {
               pag.style.display = 'none';
           } else {
               pag.innerHTML = `
-                  <div style="font-size: 13px; color: #667085;">
+                  <div class="report-page-summary" style="font-size: 13px; color: #667085;">
                       Showing <strong>${startIndex + 1}</strong> to <strong>${Math.min(endIndex, previewData.length)}</strong> of <strong>${previewData.length}</strong> entries
                   </div>
-                  <div style="display: flex; align-items: center; gap: 8px;">
-                      <button type="button" style="padding: 6px 12px; border: 1px solid #d0d5dd; background: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #344054; display: flex; align-items: center; gap: 4px;" onclick="changePreviewPage(${currentPreviewPage - 1})" ${currentPreviewPage === 1 ? 'disabled' : ''}>
+                  <div class="report-page-actions" style="display: flex; align-items: center; gap: 8px;">
+                      <button type="button" class="report-page-button" style="padding: 6px 12px; border: 1px solid #d0d5dd; background: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #344054; display: flex; align-items: center; gap: 4px;" onclick="changePreviewPage(${currentPreviewPage - 1})" ${currentPreviewPage === 1 ? 'disabled' : ''}>
                           <i class="ph-bold ph-caret-left"></i> Prev
                       </button>
-                      <span style="font-size: 13px; font-weight: 600; color: #344054; margin: 0 4px;">Page ${currentPreviewPage} of ${totalPages}</span>
-                      <button type="button" style="padding: 6px 12px; border: 1px solid #d0d5dd; background: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #344054; display: flex; align-items: center; gap: 4px;" onclick="changePreviewPage(${currentPreviewPage + 1})" ${currentPreviewPage === totalPages ? 'disabled' : ''}>
+                      <span class="report-page-indicator" style="font-size: 13px; font-weight: 600; color: #344054; margin: 0 4px;">Page ${currentPreviewPage} of ${totalPages}</span>
+                      <button type="button" class="report-page-button" style="padding: 6px 12px; border: 1px solid #d0d5dd; background: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #344054; display: flex; align-items: center; gap: 4px;" onclick="changePreviewPage(${currentPreviewPage + 1})" ${currentPreviewPage === totalPages ? 'disabled' : ''}>
                           Next <i class="ph-bold ph-caret-right"></i>
                       </button>
                   </div>
