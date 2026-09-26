@@ -61,25 +61,29 @@
     margin: 0 !important;
     padding: 0 !important;
     place-items: center !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #173728 !important;
+    background: #fff !important;
+    border: 1px solid #d6e5dd !important;
+    border-radius: 12px !important;
+    box-shadow: 0 6px 18px rgba(13, 54, 37, .1) !important;
+    pointer-events: auto !important;
     transform: none !important;
     line-height: 1 !important;
+    isolation: isolate;
   }
-  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close i {
-    display: none !important;
+  :is(.admin-mobile-page, .staff-mobile-page) .side-area.open > .side-top > .side-close {
+    display: grid !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close :is(i, .side-close-glyph) {
+    display: block !important;
     margin: 0 !important;
-    line-height: 1 !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 28px !important;
+    font-weight: 400 !important;
+    line-height: .8 !important;
   }
-  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close::before,
-  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close::after {
-    content: "";
-    position: absolute;
-    width: 18px;
-    height: 2px;
-    border-radius: 999px;
-    background: currentColor;
-  }
-  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close::before { transform: rotate(45deg); }
-  :is(.admin-mobile-page, .staff-mobile-page) .side-area .side-close::after { transform: rotate(-45deg); }
   :is(.admin-mobile-page, .staff-mobile-page) .side-user { padding: 14px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .nav-area { padding: 10px !important; }
   :is(.admin-mobile-page, .staff-mobile-page) .nav-item { min-height: 42px !important; padding: 9px 11px !important; font-size: 12px !important; }
@@ -1225,13 +1229,19 @@
     border-radius: 18px !important;
   }
   .admin-add-staff-page .back-link-inner {
+    box-sizing: border-box !important;
+    width: calc(100% + 28px) !important;
     min-height: 40px !important;
-    margin: 0 0 14px !important;
-    padding: 8px 11px !important;
-    border: 1px solid var(--line) !important;
-    border-radius: 11px !important;
-    background: #fff !important;
-    font-size: 11.5px !important;
+    margin: -14px -14px 0 !important;
+    padding: 13px 16px !important;
+    justify-content: flex-start !important;
+    border: 0 !important;
+    border-bottom: 1px solid #dce9e2 !important;
+    border-radius: 0 !important;
+    background: #fbfdfc !important;
+    color: #476858 !important;
+    font-size: 12px !important;
+    box-shadow: none !important;
   }
   .admin-add-staff-page .form-header {
     margin: 0 -14px !important;

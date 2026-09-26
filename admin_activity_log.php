@@ -185,7 +185,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=15">
+<link rel="stylesheet" href="system_mobile.css?v=16">
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 </head>
@@ -204,7 +204,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
                 </div>
             </div>
             <button class="side-close" id="sideClose" type="button" aria-label="Close menu">
-                <i class="ph ph-x"></i>
+                <span class="side-close-glyph" aria-hidden="true">&#215;</span>
             </button>
         </div>
 
