@@ -1290,7 +1290,7 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="peso_staff_responsive.css?v=24">
   <link rel="stylesheet" href="system_search_polish.css?v=1">
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
-  <link rel="stylesheet" href="system_mobile.css?v=11">
+  <link rel="stylesheet" href="system_mobile.css?v=12">
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
@@ -2280,7 +2280,7 @@ if ($selectedProgramName !== "") {
         <div class="modal-title" style="font-size: 22px;">Update Program Status</div>
         <div class="modal-sub">Record the current stage and notify the beneficiary.</div>
       </div>
-      <button type="button" class="modal-close-icon" style="position: absolute; right: 24px; top: 24px;" data-close-quick><i class="ph-bold ph-x"></i></button>
+      <button type="button" class="modal-close-icon" style="position: absolute; right: 24px; top: 24px;" data-close-quick aria-label="Close status update"><i class="ph-bold ph-x"></i></button>
     </div>
 
     <div class="modal-body-sm">
@@ -3435,7 +3435,10 @@ function toggleBatchScheduleFields(select) {
       if (currentStep > 1) { currentStep--; updateWizard(); }
   });
 
+  let quickStatusReturnFocus = null;
+
   function openQuickStatusModal(id, currentStatus, dateAvailed, dateCompleted) {
+      quickStatusReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       document.getElementById('profileModal')?.classList.remove('show');
       document.getElementById('adminAddBeneficiaryModal')?.classList.remove('show');
       document.getElementById('quick_beneficiary_id').value = id;
@@ -3525,8 +3528,17 @@ function toggleBatchScheduleFields(select) {
   document.querySelectorAll('[data-close-quick]').forEach(btn => {
       btn.addEventListener('click', () => {
           const quickModal = document.getElementById('quickStatusModal');
+          const activeElement = document.activeElement;
+          if (activeElement instanceof HTMLElement && quickModal.contains(activeElement)) activeElement.blur();
           quickModal.classList.remove('show');
           quickModal.setAttribute('aria-hidden', 'true');
+          window.requestAnimationFrame(() => {
+              if (quickStatusReturnFocus?.isConnected && quickStatusReturnFocus.offsetParent !== null) {
+                  quickStatusReturnFocus.focus();
+              } else {
+                  document.getElementById('menuToggle')?.focus();
+              }
+          });
       });
   });
 

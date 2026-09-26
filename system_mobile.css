@@ -928,3 +928,322 @@
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Phone refinements for beneficiary workflows, account management and logs. */
+@media (min-width: 350px) and (max-width: 600px) {
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .top-left .breadcrumb {
+    width: max-content !important;
+    max-width: 100% !important;
+    min-height: 36px !important;
+    justify-self: start !important;
+    justify-content: flex-start !important;
+    gap: 4px !important;
+    padding: 6px 9px !important;
+    font-size: 9.5px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .breadcrumb > * {
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) .breadcrumb .current {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #adminAddBeneficiaryModal .wizard-nav {
+    --wizard-step-size: 29px !important;
+    --wizard-gap: 5px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .wizard-step:not(:first-child)::before {
+    top: 14.5px !important;
+    right: calc(50% + 14.5px) !important;
+    width: calc(100% + 5px - 29px) !important;
+    transform: none !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .wizard-step .step-num {
+    position: relative !important;
+    z-index: 2 !important;
+    background-clip: padding-box !important;
+  }
+
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal {
+    align-items: center !important;
+    padding: 10px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-dialog-sm {
+    display: flex !important;
+    flex-direction: column !important;
+    width: calc(100vw - 20px) !important;
+    max-width: 430px !important;
+    max-height: calc(100dvh - 20px) !important;
+    overflow: hidden !important;
+    border-radius: 18px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-head-sm {
+    flex: 0 0 auto !important;
+    min-height: 94px !important;
+    padding: 16px 58px !important;
+    text-align: center !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-head-sm > div {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-title {
+    font-size: 19px !important;
+    line-height: 1.18 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-sub {
+    margin-top: 4px !important;
+    font-size: 11.5px !important;
+    line-height: 1.35 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .beneficiary-modal-icon {
+    top: 18px !important;
+    left: 14px !important;
+    width: 40px !important;
+    height: 40px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-close-icon {
+    top: 18px !important;
+    right: 14px !important;
+    left: auto !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    transform: none !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-close-icon:hover,
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-close-icon:active,
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-close-icon:focus-visible {
+    transform: none !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-body-sm {
+    min-height: 0 !important;
+    padding: 15px 16px 16px !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-form {
+    gap: 13px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .form-row-2 {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal :is(input, select, textarea) {
+    min-width: 0 !important;
+    min-height: 46px !important;
+    font-size: 13px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-actions-sm {
+    position: sticky !important;
+    bottom: -16px !important;
+    z-index: 3 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin: 3px -2px -2px !important;
+    padding: 12px 2px 2px !important;
+    background: linear-gradient(180deg, rgba(255,255,255,0), #fff 24%) !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-actions-sm > * {
+    min-width: 0 !important;
+    min-height: 44px !important;
+    padding: 8px !important;
+  }
+
+  .admin-accounts-page .stats-grid > .stat-card:last-child:nth-child(odd),
+  :is(.admin-activity-page, .staff-activity-page) .stats-grid > .stat-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1 !important;
+  }
+  .admin-accounts-page .segmented-control {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+  .admin-accounts-page .segment-btn {
+    min-height: 44px !important;
+    padding: 7px 5px !important;
+    font-size: 10.5px !important;
+  }
+  .admin-accounts-page .data-table tbody tr {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .admin-accounts-page .data-table tbody td {
+    grid-column: auto !important;
+    min-height: 72px !important;
+    padding: 11px 9px !important;
+  }
+  .admin-accounts-page .data-table tbody td:first-child,
+  .admin-accounts-page .data-table tbody td:last-child,
+  .admin-accounts-page.accounts-view-user .data-table tbody td:nth-child(4),
+  .admin-accounts-page.accounts-view-banned .data-table tbody td:nth-child(4) {
+    grid-column: 1 / -1 !important;
+  }
+  .admin-accounts-page .data-table tbody td:first-child { min-height: 82px !important; }
+  .admin-accounts-page .data-table tbody td:last-child { min-height: 66px !important; }
+  .admin-accounts-page #idCardModal { padding: 10px !important; }
+  .admin-accounts-page #idCardModal .id-card-dialog {
+    width: calc(100vw - 20px) !important;
+    max-width: 430px !important;
+    height: auto !important;
+    max-height: calc(100dvh - 20px) !important;
+    border-radius: 18px !important;
+  }
+  .admin-accounts-page #idCardModal .id-card-left { padding: 16px 58px 14px !important; }
+  .admin-accounts-page #idCardModal .id-avatar-large {
+    flex-basis: 82px !important;
+    width: 82px !important;
+    height: 82px !important;
+    min-width: 82px !important;
+    min-height: 82px !important;
+  }
+  .admin-accounts-page #idCardModal .id-card-right { padding: 16px 12px 12px !important; }
+  .admin-accounts-page #idCardModal .id-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  .admin-accounts-page #idCardModal .id-actions > * {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    justify-content: center !important;
+    padding: 8px !important;
+    white-space: normal !important;
+  }
+  .admin-accounts-page #idCardModal :is(#idBtnBan, #idBtnUnban) {
+    grid-column: 1 / -1 !important;
+  }
+
+  .admin-add-staff-page .form-card { padding: 18px 16px !important; }
+  .admin-add-staff-page .form-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px 9px !important;
+  }
+  .admin-add-staff-page .form-group { min-width: 0 !important; }
+  .admin-add-staff-page .form-group input {
+    min-width: 0 !important;
+    padding-inline: 11px !important;
+    font-size: 12.5px !important;
+  }
+  .admin-add-staff-page .form-group label { font-size: 10px !important; }
+  .admin-add-staff-page .form-actions .btn-main { width: 100% !important; }
+
+  :is(.admin-activity-page, .staff-activity-page) .panel-head {
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  :is(.admin-activity-page, .staff-activity-page) .activity-export-btn {
+    width: 100% !important;
+    min-height: 46px !important;
+    justify-content: center !important;
+  }
+  .admin-activity-page .advanced-filter-row,
+  .staff-activity-page .toolbar-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+  .admin-activity-page .advanced-filter-row > .activity-search-wrap,
+  .admin-activity-page .advanced-filter-row > .activity-filter-menu[data-filter-menu="action"],
+  .admin-activity-page .advanced-filter-row > .activity-clear-btn,
+  .staff-activity-page .toolbar-grid > .activity-search-wrap,
+  .staff-activity-page .toolbar-grid > .activity-clear-btn {
+    grid-column: 1 / -1 !important;
+  }
+  :is(.admin-activity-page, .staff-activity-page) :is(.activity-filter-trigger, .activity-date-field, .toolbar-input, .filter-date) {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  :is(.admin-activity-page, .staff-activity-page) .table-wrap {
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+  .admin-activity-page .data-table,
+  .staff-activity-page .activity-table {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  :is(.admin-activity-page .data-table, .staff-activity-page .activity-table) thead {
+    display: none !important;
+  }
+  :is(.admin-activity-page .data-table, .staff-activity-page .activity-table) tbody {
+    display: grid !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+  :is(.admin-activity-page, .staff-activity-page) tr.activity-log-row {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    overflow: hidden !important;
+    border: 1px solid #d5e5dc !important;
+    border-radius: 14px !important;
+    background: #fff !important;
+    box-shadow: 0 7px 20px rgba(17,70,47,.06) !important;
+  }
+  :is(.admin-activity-page, .staff-activity-page) tr.activity-log-row > td {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    min-height: 70px !important;
+    padding: 11px 12px !important;
+    border: 0 !important;
+    border-bottom: 1px solid #e4eee8 !important;
+    text-align: left !important;
+    overflow-wrap: anywhere !important;
+  }
+  :is(.admin-activity-page, .staff-activity-page) tr.activity-log-row > td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 6px;
+    color: #6b8175;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+  .admin-activity-page tr.activity-log-row > td:nth-child(5),
+  .staff-activity-page tr.activity-log-row > td:first-child,
+  .staff-activity-page tr.activity-log-row > td:nth-child(4),
+  .staff-activity-page tr.activity-log-row > td:nth-child(5) {
+    grid-column: 1 / -1 !important;
+  }
+  :is(.admin-activity-page, .staff-activity-page) tr.activity-log-row > td:last-child {
+    border-bottom: 0 !important;
+    background: #f8fcfa !important;
+  }
+  :is(.admin-activity-page, .staff-activity-page) .activity-description-cell {
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  :is(.admin-activity-page, .staff-activity-page) :is(.pagination-wrapper, .pagination-bar) {
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 10px !important;
+  }
+}
+
+@media (max-width: 349px) {
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .form-row-2,
+  .admin-add-staff-page .form-grid,
+  .admin-activity-page .advanced-filter-row,
+  .staff-activity-page .toolbar-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}

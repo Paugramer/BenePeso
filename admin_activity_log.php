@@ -185,7 +185,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=11">
+<link rel="stylesheet" href="system_mobile.css?v=12">
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 </head>
@@ -401,20 +401,20 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
                                     }
                                 ?>
                                 <tr class="table-row-animate activity-log-row" tabindex="0" data-date="<?= h(date('M d, Y h:i A', strtotime($row['created_at']))) ?>" data-actor="<?= $actor_name ?>" data-role="<?= $display_role ?>" data-module="<?= $module_name ?>" data-action="<?= $action_title ?>" data-target="<?= h($row['target_name'] ?? 'Not specified') ?>" data-ip="<?= h($row['ip_address'] ?? 'Not recorded') ?>" data-description="<?= $desc ?>">
-                                    <td>
+                                    <td data-label="Date &amp; time">
                                         <div style="font-weight: 800; color: var(--text); font-size: 13px;"><?= date("M d, Y", strtotime($row['created_at'])) ?> <span style="color:var(--muted); font-weight:600; font-size:12px; margin-left:4px;">&bull; <?= date("h:i A", strtotime($row['created_at'])) ?></span></div>
                                     </td>
-                                    <td>
+                                    <td data-label="Actor">
                                         <div style="font-weight: 800; color: var(--green-dark); font-size: 13.5px;"><?= $actor_name ?></div>
                                         <div style="font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; margin-top:2px;"><?= $display_role ?></div>
                                     </td>
-                                    <td>
+                                    <td data-label="Module">
                                         <div style="font-weight: 700; color: var(--text); font-size: 13.5px;"><?= $module_name ?></div>
                                     </td>
-                                    <td>
+                                    <td data-label="Action">
                                         <span class="action-pill <?= $pillClass ?>"><span class="pill-dot"></span> <?= $action_title ?></span>
                                     </td>
-                                    <td>
+                                    <td data-label="Description">
                                         <div class="activity-description-cell"><span><?= $desc ?></span><button type="button" class="activity-detail-btn" aria-label="View activity details"><i class="ph ph-arrow-square-out"></i></button></div>
                                     </td>
                                 </tr>

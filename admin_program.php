@@ -291,7 +291,7 @@ if ($active_program) {
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=24">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=11">
+<link rel="stylesheet" href="system_mobile.css?v=12">
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 </head>

@@ -257,7 +257,7 @@ if ($stmt) {
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=11">
+<link rel="stylesheet" href="system_mobile.css?v=12">
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 </head>
@@ -418,11 +418,11 @@ if ($stmt) {
             <tbody>
               <?php foreach ($logs as $log): ?>
                 <tr class="activity-log-row" tabindex="0" data-date="<?php echo h(format_activity_datetime($log['created_at'] ?? '')); ?>" data-actor="<?php echo h($staff_name); ?>" data-role="PESO Staff" data-module="<?php echo h(activity_label($log['module_name'] ?? '')); ?>" data-action="<?php echo h(activity_label($log['action_type'] ?? '')); ?>" data-target="<?php echo h($log['target_name'] ?? 'Not specified'); ?>" data-description="<?php echo h($log['description'] ?? 'Not specified'); ?>">
-                  <td class="datetime-col"><?php echo h(format_activity_datetime($log["created_at"] ?? "")); ?></td>
-                  <td class="module-col text-center"><?php echo h($log["module_name"] ?? "—"); ?></td>
+                  <td class="datetime-col" data-label="Date &amp; time"><?php echo h(format_activity_datetime($log["created_at"] ?? "")); ?></td>
+                  <td class="module-col text-center" data-label="Module"><?php echo h($log["module_name"] ?? "—"); ?></td>
                   
                   <!-- UPDATED TO PERFECTLY MATCH DASHBOARD DOT STYLE -->
-                  <td class="text-center">
+                  <td class="text-center" data-label="Action">
                     <div style="display:flex; justify-content:center; align-items:center;">
                         <span class="pill" style="background: #f4f8f5; border: 1px solid var(--line); color: var(--text);">
                             <span class="pulse-dot <?php echo h(action_dot_class($log["action_type"] ?? "")); ?>"></span> 
@@ -431,8 +431,8 @@ if ($stmt) {
                     </div>
                   </td>
 
-                  <td class="target-col"><?php echo h($log["target_name"] ?? "—"); ?></td>
-                  <td class="desc-col"><?php echo h($log["description"] ?? "—"); ?></td>
+                  <td class="target-col" data-label="Target"><?php echo h($log["target_name"] ?? "—"); ?></td>
+                  <td class="desc-col" data-label="Description"><?php echo h($log["description"] ?? "—"); ?></td>
                   </tr>
               <?php endforeach; ?>
             </tbody>
