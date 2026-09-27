@@ -153,6 +153,7 @@ if ($updated_stmt) {
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="index.css?v=36">
     <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
+    <link rel="stylesheet" href="public_finish.css?v=1">
     <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 </head>
@@ -922,9 +923,9 @@ if ($updated_stmt) {
         const closeImpactModal = () => {
             if (!impactModal) return;
             impactModal.classList.remove('show');
-            impactModal.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('modal-open');
             impactModalTrigger?.focus();
+            impactModal.setAttribute('aria-hidden', 'true');
             startImpactAutoPlay();
         };
 

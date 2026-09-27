@@ -1841,10 +1841,7 @@
     line-height: 1.2;
     text-transform: uppercase;
   }
-  .admin-activity-page tr.activity-log-row > td:nth-child(5),
-  .staff-activity-page tr.activity-log-row > td:first-child,
-  .staff-activity-page tr.activity-log-row > td:nth-child(4),
-  .staff-activity-page tr.activity-log-row > td:nth-child(5) {
+  :is(.admin-activity-page, .staff-activity-page) tr.activity-log-row > td:nth-child(5) {
     grid-column: 1 / -1 !important;
   }
   :is(.admin-activity-page, .staff-activity-page) tr.activity-log-row > td:last-child {

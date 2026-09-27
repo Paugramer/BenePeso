@@ -263,6 +263,7 @@ if ($stmt) {
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   
   <link rel="stylesheet" href="peso_staff_activity_log.css?v=20260905">
+  <link rel="stylesheet" href="admin_activity_log.css?v=20260927">
   <link rel="stylesheet" href="shared_sidebar.css">
   <link rel="stylesheet" href="activity_filter_polish.css?v=3">
   <script src="activity_filter_polish.js?v=3" defer></script>
@@ -320,7 +321,7 @@ if ($stmt) {
   </aside>
 
   <main class="main-area">
-    <header class="top-area animation-slide-up" style="animation-delay: 0.1s;">
+    <header class="top-area animate-fade-in" style="animation-delay: 0.1s;">
       <div class="top-left">
         <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="sideArea">
           <span></span>
@@ -344,35 +345,36 @@ if ($stmt) {
     </header>
 
     <section class="stats-grid">
-      <div class="stat-card animation-slide-up" style="animation-delay: 0.2s;">
+      <div class="stat-card animate-fade-in" style="animation-delay: 0.2s;">
         <div class="stat-top">
-          <div class="stat-label">Total Logs</div>
-          <div class="stat-icon"><i class="ph-fill ph-stack"></i></div>
+          <div class="stat-label">TOTAL LOGS</div>
+          <div class="stat-icon" style="color: var(--green); background: var(--green-light);"><i class="ph-fill ph-stack"></i></div>
         </div>
         <div class="stat-value"><?php echo (int)$totalLogs; ?></div>
         <div class="stat-note">All activity recorded for your account.</div>
       </div>
 
-      <div class="stat-card animation-slide-up" style="animation-delay: 0.3s;">
+      <div class="stat-card animate-fade-in" style="animation-delay: 0.3s;">
         <div class="stat-top">
-          <div class="stat-label">Today</div>
-          <div class="stat-icon"><i class="ph-fill ph-clock"></i></div>
+          <div class="stat-label">TODAY</div>
+          <div class="stat-icon" style="color: #0f766e; background: #ccfbf1;"><i class="ph-fill ph-clock"></i></div>
         </div>
         <div class="stat-value"><?php echo (int)$todayLogs; ?></div>
         <div class="stat-note">Actions recorded today.</div>
       </div>
 
-      <div class="stat-card animation-slide-up" style="animation-delay: 0.4s;">
+      <div class="stat-card animate-fade-in" style="animation-delay: 0.4s;">
         <div class="stat-top">
-          <div class="stat-label">Program Logs</div>
-          <div class="stat-icon"><i class="ph-fill ph-briefcase"></i></div>
+          <div class="stat-label">PROGRAM LOGS</div>
+          <div class="stat-icon" style="color: #4338ca; background: #e0e7ff;"><i class="ph-fill ph-briefcase"></i></div>
         </div>
         <div class="stat-value"><?php echo (int)$programLogs; ?></div>
         <div class="stat-note">Actions involving programs.</div>
       </div>
     </section>
 
-    <section class="panel-card animation-slide-up" style="animation-delay: 0.6s;">
+    <section class="chart-section" style="margin-top: 4px;">
+    <div class="panel-card animate-fade-in" style="animation-delay: 0.5s;">
       <div class="panel-head panel-head-stack">
         <div>
           <div class="panel-title">Activity Records</div>
@@ -412,64 +414,68 @@ if ($stmt) {
 
       <?php if (!$logs): ?>
         <div class="empty-state">
-          <div class="empty-title">No activity records found</div>
-          <div class="empty-text">No matching logs were found for the selected filters.</div>
+          <i class="ph ph-clock empty-icon" aria-hidden="true"></i>
+          <h4>No activity records found</h4>
+          <div class="empty-sub">No matching logs were found for the selected filters.</div>
         </div>
       <?php else: ?>
         <div class="table-wrap">
-          <table class="activity-table">
+          <table class="data-table activity-table">
             <thead>
               <tr>
-                <th>Date & Time</th>
-                <th class="text-center">Module</th>
-                <th class="text-center">Action</th>
-                <th>Target</th>
-                <th>Description</th>
-                </tr>
+                <th width="20%">DATE &amp; TIME</th>
+                <th width="20%">ACTOR</th>
+                <th width="15%">MODULE</th>
+                <th width="15%">ACTION</th>
+                <th width="30%">DESCRIPTION</th>
+              </tr>
             </thead>
             <tbody>
-              <?php foreach ($logs as $log): ?>
-                <tr class="activity-log-row" tabindex="0" data-date="<?php echo h(format_activity_date($log['created_at'] ?? '')); ?>" data-time="<?php echo h(format_activity_time($log['created_at'] ?? '')); ?>" data-actor="<?php echo h($staff_name); ?>" data-role="PESO Staff" data-module="<?php echo h(activity_label($log['module_name'] ?? '')); ?>" data-action="<?php echo h(activity_label($log['action_type'] ?? '')); ?>" data-target="<?php echo h($log['target_name'] ?? 'Not specified'); ?>" data-description="<?php echo h($log['description'] ?? 'Not specified'); ?>">
-                  <td class="datetime-col" data-label="Date &amp; time"><?php echo h(format_activity_datetime($log["created_at"] ?? "")); ?></td>
-                  <td class="module-col text-center" data-label="Module"><?php echo h($log["module_name"] ?? "—"); ?></td>
-                  
-                  <!-- UPDATED TO PERFECTLY MATCH DASHBOARD DOT STYLE -->
-                  <td class="text-center" data-label="Action">
-                    <div style="display:flex; justify-content:center; align-items:center;">
-                        <span class="pill" style="background: #f4f8f5; border: 1px solid var(--line); color: var(--text);">
-                            <span class="pulse-dot <?php echo h(action_dot_class($log["action_type"] ?? "")); ?>"></span> 
-                            <?php echo h($log["action_type"] ?? "—"); ?>
-                        </span>
-                    </div>
-                  </td>
-
-                  <td class="target-col" data-label="Target"><?php echo h($log["target_name"] ?? "—"); ?></td>
-                  <td class="desc-col" data-label="Description"><?php echo h($log["description"] ?? "—"); ?></td>
-                  </tr>
+              <?php foreach ($logs as $log):
+                $moduleLabel = activity_label($log['module_name'] ?? 'System');
+                $actionLabel = strtoupper(activity_label($log['action_type'] ?? 'LOG'));
+                $description = trim((string)($log['description'] ?? '')) ?: 'Not specified';
+                $pillClass = 'pill-gray';
+                if (in_array($actionLabel, ['CREATE', 'ADD', 'UNBAN', 'LOGIN'], true) || strpos($actionLabel, 'LOGIN') !== false) {
+                    $pillClass = 'pill-green';
+                } elseif (in_array($actionLabel, ['UPDATE', 'EDIT'], true) || strpos($actionLabel, 'AUTH') !== false) {
+                    $pillClass = 'pill-blue';
+                } elseif (in_array($actionLabel, ['DELETE', 'BAN', 'LOGOUT'], true) || strpos($actionLabel, 'LOGOUT') !== false) {
+                    $pillClass = 'pill-red';
+                }
+              ?>
+                <tr class="table-row-animate activity-log-row" tabindex="0" data-date="<?php echo h(format_activity_date($log['created_at'] ?? '')); ?>" data-time="<?php echo h(format_activity_time($log['created_at'] ?? '')); ?>" data-actor="<?php echo h($staff_name); ?>" data-role="PESO Staff" data-module="<?php echo h($moduleLabel); ?>" data-action="<?php echo h($actionLabel); ?>" data-target="<?php echo h($log['target_name'] ?? 'Not specified'); ?>" data-description="<?php echo h($description); ?>">
+                  <td data-label="Date &amp; time"><div style="font-weight:800;color:var(--text);font-size:13px;"><?php echo h(format_activity_date($log['created_at'] ?? '')); ?> <span style="color:var(--muted);font-weight:600;font-size:12px;margin-left:4px;">&bull; <?php echo h(format_activity_time($log['created_at'] ?? '')); ?></span></div></td>
+                  <td data-label="Actor"><div style="font-weight:800;color:var(--green-dark);font-size:13.5px;"><?php echo h($staff_name); ?></div><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-top:2px;">PESO Staff</div></td>
+                  <td data-label="Module"><div style="font-weight:700;color:var(--text);font-size:13.5px;"><?php echo h($moduleLabel); ?></div></td>
+                  <td data-label="Action"><span class="action-pill <?php echo h($pillClass); ?>"><span class="pill-dot"></span> <?php echo h($actionLabel); ?></span></td>
+                  <td data-label="Description"><div class="activity-description-cell"><span><?php echo h($description); ?></span><button type="button" class="activity-detail-btn" aria-label="View activity details"><i class="ph ph-arrow-square-out"></i></button></div></td>
+                </tr>
               <?php endforeach; ?>
             </tbody>
           </table>
         </div>
 
-        <div class="pagination-bar" style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:20px; border-top:1px solid rgba(0,0,0,0.06); flex-wrap:wrap; gap:10px;">
-            <div style="font-size:13px; color:var(--muted); font-weight:500;">
+        <div class="pagination-wrapper">
+            <span class="page-info">
                 Showing <?php echo $totalFilteredLogs > 0 ? $offset + 1 : 0; ?> to <?php echo min($offset + $limit, $totalFilteredLogs); ?> of <?php echo $totalFilteredLogs; ?> entries
-            </div>
-            <div style="display:flex; gap:8px;">
+            </span>
+            <div class="pagination-controls">
                 <?php if($page > 1): ?>
-                    <a href="?<?php echo h(build_query(['page' => $page - 1])); ?>" class="btn-light" style="display:inline-flex; align-items:center; justify-content:center; min-height:36px; padding:0 14px; font-size:13px; font-weight:600; background:#fff; border:1px solid rgba(0,0,0,0.1); border-radius:8px; color:var(--text); text-decoration:none;">Previous</a>
+                    <a href="?<?php echo h(build_query(['page' => $page - 1])); ?>" class="page-btn">Previous</a>
                 <?php else: ?>
-                    <button class="btn-light" disabled style="min-height:36px; padding:0 14px; font-size:13px; font-weight:600; background:#f9f9f9; border:1px solid rgba(0,0,0,0.05); border-radius:8px; color:#aaa; cursor:not-allowed;">Previous</button>
+                    <span class="page-btn disabled" aria-disabled="true">Previous</span>
                 <?php endif; ?>
 
                 <?php if($page < $totalPages): ?>
-                    <a href="?<?php echo h(build_query(['page' => $page + 1])); ?>" class="btn-light" style="display:inline-flex; align-items:center; justify-content:center; min-height:36px; padding:0 14px; font-size:13px; font-weight:600; background:#fff; border:1px solid rgba(0,0,0,0.1); border-radius:8px; color:var(--text); text-decoration:none;">Next</a>
+                    <a href="?<?php echo h(build_query(['page' => $page + 1])); ?>" class="page-btn page-btn-next">Next</a>
                 <?php else: ?>
-                    <button class="btn-light" disabled style="min-height:36px; padding:0 14px; font-size:13px; font-weight:600; background:#f9f9f9; border:1px solid rgba(0,0,0,0.05); border-radius:8px; color:#aaa; cursor:not-allowed;">Next</button>
+                    <span class="page-btn disabled page-btn-next" aria-disabled="true">Next</span>
                 <?php endif; ?>
             </div>
         </div>
       <?php endif; ?>
+    </div>
     </section>
   </main>
 </div>
@@ -524,22 +530,16 @@ if ($stmt) {
     });
 
     const detailModal = document.getElementById('activityDetailModal');
-    const closeDetail = () => { detailModal.classList.remove('show'); detailModal.setAttribute('aria-hidden', 'true'); };
+    let detailTrigger = null;
+    const closeDetail = () => {
+      if (!detailModal.classList.contains('show')) return;
+      detailModal.classList.remove('show');
+      detailTrigger?.focus();
+      detailModal.setAttribute('aria-hidden', 'true');
+    };
     document.querySelectorAll('.activity-log-row').forEach(row => {
-      const moduleCell = row.querySelector('.module-col');
-      const targetCell = row.querySelector('.target-col');
-      const descriptionCell = row.querySelector('.desc-col');
-      const actionPill = row.querySelector('.pill');
-      if (moduleCell) moduleCell.textContent = row.dataset.module || 'Not specified';
-      if (targetCell) targetCell.textContent = row.dataset.target || 'Not specified';
-      if (descriptionCell) descriptionCell.textContent = row.dataset.description || 'Not specified';
-      if (actionPill) {
-        const dot = actionPill.querySelector('.pulse-dot');
-        actionPill.textContent = '';
-        if (dot) actionPill.appendChild(dot);
-        actionPill.appendChild(document.createTextNode(' ' + (row.dataset.action || 'Not specified')));
-      }
       const openDetail = () => {
+        detailTrigger = row;
         ['date','time','actor','role','module','action','target','description'].forEach(key => {
           const node = detailModal.querySelector(`[data-detail="${key}"]`);
           if (node) node.textContent = row.dataset[key] || 'Not specified';

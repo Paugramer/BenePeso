@@ -508,9 +508,16 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
         }
 
         const detailModal = document.getElementById('activityDetailModal');
-        const closeDetail = () => { detailModal.classList.remove('show'); detailModal.setAttribute('aria-hidden', 'true'); };
+        let detailTrigger = null;
+        const closeDetail = () => {
+            if (!detailModal.classList.contains('show')) return;
+            detailModal.classList.remove('show');
+            detailTrigger?.focus();
+            detailModal.setAttribute('aria-hidden', 'true');
+        };
         document.querySelectorAll('.activity-log-row').forEach(row => {
             const openDetail = () => {
+                detailTrigger = row;
                 ['date','time','actor','role','module','action','target','description'].forEach(key => {
                     const node = detailModal.querySelector(`[data-detail="${key}"]`);
                     if (node) node.textContent = row.dataset[key] || 'Not specified';

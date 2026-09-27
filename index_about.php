@@ -33,6 +33,7 @@ if (isset($_SESSION['role'])) {
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="index.css?v=36">
     <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
+    <link rel="stylesheet" href="public_finish.css?v=1">
     <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 </head>
@@ -120,19 +121,19 @@ if (isset($_SESSION['role'])) {
                 <p>These documented PESO Vinzons activities show the work behind the records—from preparation and orientation to training and beneficiary support.</p>
             </div>
             <div class="public-community-gallery">
-                <figure class="public-community-card public-community-card--feature">
+                <figure class="public-community-card public-community-card--feature" tabindex="0" role="button" aria-label="View MSME community activity details" data-program="MSME" data-title="Employment and Micro-Enterprise Development Training" data-date="August 2026" data-location="SB Annex, Vinzons, Camarines Norte" data-summary="PESO Vinzons brought practical employment and micro-enterprise guidance closer to residents through an organized community training session." data-image="img/peso-community-medt-2026.png">
                     <img src="img/peso-community-medt-2026.png" alt="PESO Vinzons facilitator leading Employment and Micro-Enterprise Development Training" loading="lazy" decoding="async" width="1080" height="720">
                     <figcaption><span>MSME</span><strong>Employment and Micro-Enterprise Development Training</strong><small>SB Annex, Vinzons</small></figcaption>
                 </figure>
-                <figure class="public-community-card">
+                <figure class="public-community-card" tabindex="0" role="button" aria-label="View SPES student beneficiary support details" data-program="SPES" data-title="SPES Student Beneficiary Support" data-date="July 2026" data-location="Vinzons Municipal Hall" data-summary="Student beneficiaries gathered for an official SPES activity supporting their employment experience and program participation." data-image="img/752659025_2053404155260623_314073346839281248_n.jpg">
                     <img src="img/752659025_2053404155260623_314073346839281248_n.jpg" alt="Student beneficiaries attending a SPES payout at Vinzons Municipal Hall" loading="lazy" decoding="async" width="1080" height="720">
                     <figcaption><span>SPES</span><strong>Student beneficiary support</strong><small>Vinzons Municipal Hall</small></figcaption>
                 </figure>
-                <figure class="public-community-card">
+                <figure class="public-community-card" tabindex="0" role="button" aria-label="View TUPAD community employment assistance details" data-program="TUPAD" data-title="DOLE TUPAD Community Activity" data-date="July 2026" data-location="Vinzons Town Kiosk, Vinzons, Camarines Norte" data-summary="PESO Vinzons and DOLE coordinated an official community activity for qualified TUPAD beneficiaries." data-image="img/738512047_895211810293178_8484532229922374617_n.jpg">
                     <img src="img/738512047_895211810293178_8484532229922374617_n.jpg" alt="DOLE representative addressing beneficiaries during a TUPAD activity" loading="lazy" decoding="async" width="1080" height="720">
                     <figcaption><span>TUPAD</span><strong>Community employment assistance</strong><small>Vinzons Town Kiosk</small></figcaption>
                 </figure>
-                <figure class="public-community-card">
+                <figure class="public-community-card" tabindex="0" role="button" aria-label="View SPES pre-deployment orientation details" data-program="SPES" data-title="SPES Pre-deployment Orientation" data-date="July 2026" data-location="SB Annex, Vinzons, Camarines Norte" data-summary="SPES beneficiaries received clear pre-deployment guidance before beginning their supported work experience." data-image="img/725657050_1033155005802300_8541529917400426415_n.jpg">
                     <img src="img/725657050_1033155005802300_8541529917400426415_n.jpg" alt="SPES beneficiaries attending a pre-deployment orientation" loading="lazy" decoding="async" width="1080" height="720">
                     <figcaption><span>SPES</span><strong>Pre-deployment orientation</strong><small>SB Annex, Vinzons</small></figcaption>
                 </figure>
@@ -219,9 +220,9 @@ if (isset($_SESSION['role'])) {
                 <div class="footer-head">Office</div>
                 <div class="footer-text">Municipality of Vinzons, Camarines Norte</div>
                 <div class="footer-text">Public Employment Service Office (PESO)</div>
-                <a class="footer-contact-link" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=lguvinzonspeso@gmail.com" target="_blank" rel="noopener noreferrer"><span>lguvinzonspeso@gmail.com</span></a>
-                <a class="footer-contact-link" href="tel:+639479971186"><span>+63 947 997 1186</span></a>
-                <a class="footer-contact-link" href="https://www.facebook.com/peso.vinzons" target="_blank" rel="noopener noreferrer"><span>PESO Vinzons on Facebook</span></a>
+                <a class="footer-contact-link" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=lguvinzonspeso@gmail.com" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span>lguvinzonspeso@gmail.com</span></a>
+                <a class="footer-contact-link" href="tel:+639479971186"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>+63 947 997 1186</span></a>
+                <a class="footer-contact-link" href="https://www.facebook.com/peso.vinzons" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook" aria-hidden="true"></i><span>PESO Vinzons on Facebook</span></a>
             </div>
         </div>
         <div class="content-wrap footer-bottom">
@@ -229,6 +230,31 @@ if (isset($_SESSION['role'])) {
             <div class="footer-mini">Republic of the Philippines &bull; Province of Camarines Norte</div>
         </div>
     </footer>
+</div>
+
+<div class="public-activity-modal-overlay" id="publicActivityModal" aria-hidden="true">
+    <section class="public-activity-modal" role="dialog" aria-modal="true" aria-labelledby="publicActivityModalTitle" aria-describedby="publicActivityModalSummary">
+        <button type="button" class="public-activity-modal-close" id="publicActivityModalClose" aria-label="Close community activity details">&times;</button>
+        <div class="public-activity-modal-media">
+            <span>Official PESO Vinzons activity photograph</span>
+            <img id="publicActivityModalImage" src="img/peso-community-medt-2026.png" alt="PESO Vinzons community activity">
+        </div>
+        <div class="public-activity-modal-content">
+            <span class="public-activity-modal-program" id="publicActivityModalProgram">MSME</span>
+            <p class="public-activity-modal-eyebrow">Community activity record</p>
+            <h2 id="publicActivityModalTitle">Employment and Micro-Enterprise Development Training</h2>
+            <p id="publicActivityModalSummary"></p>
+            <dl>
+                <div><dt>Date</dt><dd id="publicActivityModalDate"></dd></div>
+                <div><dt>Location</dt><dd id="publicActivityModalLocation"></dd></div>
+            </dl>
+            <div class="public-activity-modal-footer">
+                <button type="button" id="publicActivityModalPrev" aria-label="View previous community activity"><span aria-hidden="true">&larr;</span><b>Previous</b></button>
+                <span id="publicActivityModalPosition" aria-live="polite">1 of 4</span>
+                <button type="button" id="publicActivityModalNext" aria-label="View next community activity"><b>Next</b><span aria-hidden="true">&rarr;</span></button>
+            </div>
+        </div>
+    </section>
 </div>
 
 <script>
@@ -273,6 +299,65 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
         document.querySelectorAll('.reveal').forEach(function (element) { element.classList.add('active'); });
     }
+
+    const activityCards = Array.from(document.querySelectorAll('.public-community-card'));
+    const activityModal = document.getElementById('publicActivityModal');
+    const activityModalClose = document.getElementById('publicActivityModalClose');
+    let activityIndex = 0;
+    let activityTrigger = null;
+
+    const renderActivity = function (index) {
+        if (!activityCards.length) return;
+        activityIndex = (index + activityCards.length) % activityCards.length;
+        const card = activityCards[activityIndex];
+        const image = document.getElementById('publicActivityModalImage');
+        image.src = card.dataset.image;
+        image.alt = card.querySelector('img')?.alt || 'PESO Vinzons community activity';
+        document.getElementById('publicActivityModalProgram').textContent = card.dataset.program || '';
+        document.getElementById('publicActivityModalTitle').textContent = card.dataset.title || '';
+        document.getElementById('publicActivityModalSummary').textContent = card.dataset.summary || '';
+        document.getElementById('publicActivityModalDate').textContent = card.dataset.date || '';
+        document.getElementById('publicActivityModalLocation').textContent = card.dataset.location || '';
+        document.getElementById('publicActivityModalPosition').textContent = `${activityIndex + 1} of ${activityCards.length}`;
+    };
+
+    const openActivity = function (index, trigger) {
+        if (!activityModal) return;
+        activityTrigger = trigger;
+        renderActivity(index);
+        activityModal.classList.add('show');
+        activityModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        window.setTimeout(function () { activityModalClose?.focus(); }, 20);
+    };
+
+    const closeActivity = function () {
+        if (!activityModal?.classList.contains('show')) return;
+        activityModal.classList.remove('show');
+        document.body.classList.remove('modal-open');
+        activityTrigger?.focus();
+        activityModal.setAttribute('aria-hidden', 'true');
+    };
+
+    activityCards.forEach(function (card, index) {
+        card.addEventListener('click', function () { openActivity(index, card); });
+        card.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openActivity(index, card);
+            }
+        });
+    });
+    activityModalClose?.addEventListener('click', closeActivity);
+    document.getElementById('publicActivityModalPrev')?.addEventListener('click', function () { renderActivity(activityIndex - 1); });
+    document.getElementById('publicActivityModalNext')?.addEventListener('click', function () { renderActivity(activityIndex + 1); });
+    activityModal?.addEventListener('click', function (event) { if (event.target === activityModal) closeActivity(); });
+    document.addEventListener('keydown', function (event) {
+        if (!activityModal?.classList.contains('show')) return;
+        if (event.key === 'Escape') closeActivity();
+        if (event.key === 'ArrowLeft') renderActivity(activityIndex - 1);
+        if (event.key === 'ArrowRight') renderActivity(activityIndex + 1);
+    });
 });
 </script>
 </body>
