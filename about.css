@@ -1664,7 +1664,6 @@ body {
 }
 
 .about-page .about-hero-primary {
-    position: relative;
     border-color: #239565;
     background: #198158;
     box-shadow: 0 12px 24px rgba(3, 31, 20, .22);
@@ -1673,8 +1672,8 @@ body {
 .about-page .about-hero-secondary { background: rgba(255, 255, 255, .1); backdrop-filter: blur(8px); }
 .about-page .about-hero-primary:hover,
 .about-page .about-hero-secondary:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, .78); background: #116844; }
-.about-page .about-hero-primary span { position: absolute; top: 50%; right: 18px; display: inline-grid; width: 18px; height: 18px; place-items: center; font-size: 17px; line-height: 1; transform: translateY(-50%); transition: transform .2s ease; }
-.about-page .about-hero-primary:hover span { transform: translate(3px, -50%); }
+.about-page .about-hero-primary span { position: static; display: inline-grid; width: 18px; height: 18px; flex: 0 0 18px; place-items: center; font-size: 17px; line-height: 1; transform: none; transition: transform .2s ease; }
+.about-page .about-hero-primary:hover span { transform: translateX(3px); }
 
 .about-page .about-hero-assurance {
     display: inline-flex;
