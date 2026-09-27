@@ -2600,13 +2600,12 @@ if ($barangay_summary_result) {
         if (action === 'none') return;
         if (action === 'unavailable') {
             const modal = document.getElementById('statusModal');
-            const title = element.getAttribute('data-title') || 'Program';
             const icon = document.getElementById('statusIcon');
             icon.className = 'modal-icon';
             icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>';
             document.getElementById('statusModalTitle').textContent = 'No Batches Available';
             document.getElementById('statusModalTitle').style.color = 'var(--green-dark)';
-            document.getElementById('statusModalBody').innerHTML = `<div style="text-align:center;"><h3 style="color:var(--green-dark);font-size:17px;margin-bottom:10px;font-weight:800;">${escapeHtml(title)} remains a PESO program</h3><p style="font-size:14px;color:#444;line-height:1.6;">There is no active application batch for this program right now. Please check again later for an official schedule, eligibility rules, and requirements.</p></div>`;
+            document.getElementById('statusModalBody').innerHTML = '<div style="text-align:center;"><p style="font-size:14px;color:#444;line-height:1.6;">There is no active application batch for this program right now. Please check again later for an official schedule, eligibility rules, and requirements.</p></div>';
             modal.classList.add('show');
             modal.setAttribute('aria-hidden', 'false');
             return;
