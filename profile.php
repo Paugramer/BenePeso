@@ -1644,7 +1644,7 @@ function handleCardClick(element) {
     modal.querySelector('.modal-close')?.focus();
 }
 </script>
-<script src="spes_form_modal.js?v=20260927"></script>
-<script src="msme_form_modal.js?v=20260927"></script>
+<script src="spes_form_modal.js?v=20260927b"></script>
+<script src="msme_form_modal.js?v=20260927b"></script>
 </body>
 </html>

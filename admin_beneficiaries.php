@@ -1710,7 +1710,7 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
 <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
-  <link rel="stylesheet" href="system_mobile.css?v=19">
+  <link rel="stylesheet" href="system_mobile.css?v=20">
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
@@ -2098,7 +2098,7 @@ if ($selectedProgramName !== "") {
   <div class="modal-dialog modal-dialog-large">
     <div class="modal-head-alt">
       <div>
-        <div class="modal-title" id="modalTitle">Add Beneficiary Record</div>
+        <div class="modal-title" id="modalTitle">Add Beneficiary</div>
         <div class="modal-sub" id="modalSub">Create a new profile under <?php echo h($selectedProgramName); ?>.</div>
       </div>
       <button type="button" class="modal-close-icon" data-close-modal><i class="ph-bold ph-x"></i></button>
@@ -4074,7 +4074,7 @@ function toggleBatchScheduleFields(select) {
       setupWizardNav();
       updateWizard();
 
-      if (document.getElementById('modalTitle')) document.getElementById('modalTitle').textContent = "Edit Beneficiary Record";
+      if (document.getElementById('modalTitle')) document.getElementById('modalTitle').textContent = "Edit Beneficiary";
       if (document.getElementById('modalSub')) document.getElementById('modalSub').textContent = "Review and update the beneficiary details step by step.";
       if (document.getElementById('btnSubmitForm')) {
           document.getElementById('btnSubmitForm').innerHTML = '<i class="ph-bold ph-check-circle" style="margin-right:6px;"></i> Save Changes';
@@ -4249,7 +4249,7 @@ function toggleBatchScheduleFields(select) {
 
       document.querySelectorAll('#openAddBeneficiaryModal, #openAddBeneficiaryModal2').forEach(btn => {
           if(btn) btn.addEventListener('click', () => {
-              document.getElementById('modalTitle').textContent = "Add Beneficiary Record";
+              document.getElementById('modalTitle').textContent = "Add Beneficiary";
               document.getElementById('modalSub').textContent = "Create a new profile under <?php echo h($selectedProgramName); ?>.";
               document.getElementById('btnSubmitForm').innerHTML = '<i class="ph-bold ph-check-circle" style="margin-right:6px;"></i> Save Beneficiary';
               document.getElementById('modalAction').value = "admin_add_beneficiary";
@@ -5151,8 +5151,8 @@ function toggleBatchScheduleFields(select) {
 
 })();
 </script>
-<script src="spes_form_modal.js?v=20260927"></script>
-<script src="msme_form_modal.js?v=20260927"></script>
+<script src="spes_form_modal.js?v=20260927b"></script>
+<script src="msme_form_modal.js?v=20260927b"></script>
 <script>
 (() => {
   const program = <?php echo json_encode(strtoupper($selectedProgramName)); ?>;

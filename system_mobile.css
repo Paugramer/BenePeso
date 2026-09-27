@@ -638,6 +638,244 @@
     .panel-title, .program-card-title) { overflow-wrap: anywhere; }
 }
 
+/* Compact-phone refinement (320-600px): keep information hierarchy clear
+   without letting decorative controls consume the usable form width. */
+@media (max-width: 600px) {
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #adminAddBeneficiaryModal {
+    padding: 0 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #adminAddBeneficiaryModal .modal-dialog {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .modal-head-alt:has(.beneficiary-modal-icon) {
+    grid-template-columns: 40px minmax(0, 1fr) 40px !important;
+    gap: 9px !important;
+    min-height: 96px !important;
+    padding: max(13px, env(safe-area-inset-top)) 14px 13px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .beneficiary-modal-icon,
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .modal-close-icon {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    border-radius: 50% !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .modal-close-icon {
+    color: #163c2c !important;
+    background: rgba(255,255,255,.96) !important;
+    border: 1px solid #d5e7de !important;
+    box-shadow: 0 5px 16px rgba(13,54,37,.09) !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .modal-title {
+    font-size: 18px !important;
+    line-height: 1.18 !important;
+    letter-spacing: -.2px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .modal-sub {
+    max-width: 25ch !important;
+    margin: 4px auto 0 !important;
+    font-size: 10.5px !important;
+    line-height: 1.38 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .wizard-nav {
+    padding: 9px 12px 8px !important;
+    box-shadow: inset 0 -1px #dce9e2 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal #multiStepForm .form-step.active {
+    padding: 16px 14px 22px !important;
+    scrollbar-gutter: stable;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .modal-footer-sticky {
+    gap: 8px !important;
+    padding: 11px 14px max(11px, env(safe-area-inset-bottom)) !important;
+    box-shadow: 0 -8px 24px rgba(13,54,37,.07) !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .modal-footer-sticky > button {
+    min-height: 46px !important;
+    border-radius: 12px !important;
+  }
+
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-head-sm {
+    display: grid !important;
+    grid-template-columns: 40px minmax(0, 1fr) 40px !important;
+    gap: 9px !important;
+    min-height: 100px !important;
+    padding: 14px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .beneficiary-modal-icon,
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-close-icon {
+    position: static !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    transform: none !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-title {
+    padding: 0 !important;
+    font-size: 18px !important;
+    line-height: 1.18 !important;
+    letter-spacing: -.2px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-sub {
+    max-width: 24ch !important;
+    margin: 4px auto 0 !important;
+    font-size: 10.5px !important;
+    line-height: 1.35 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #quickStatusModal .resubmission-option input[type="checkbox"] {
+    appearance: auto !important;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    flex: 0 0 20px !important;
+    margin: 2px 0 0 !important;
+    padding: 0 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .resubmission-option {
+    align-items: flex-start !important;
+    gap: 11px !important;
+    padding: 12px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .resubmission-copy strong {
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+  }
+
+  /* A compact identity hero and a dedicated name block make long names such
+     as "Jose Samplemsme" legible without repeating avatar-like decoration. */
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-card-left {
+    min-height: 94px !important;
+    height: 94px !important;
+    flex: 0 0 94px !important;
+    padding: 12px 58px 12px 14px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #profileModal .id-card-left > div:not(.id-card-pattern) {
+    justify-content: flex-start !important;
+    gap: 10px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-avatar-large {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    min-height: 50px !important;
+    flex-basis: 50px !important;
+    border-width: 3px !important;
+    font-size: 20px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .profile-badges-row {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    gap: 5px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .profile-badges-row > * {
+    max-width: 100% !important;
+    padding: 5px 10px !important;
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-card-right-inner {
+    padding-top: 15px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-header {
+    padding: 0 0 11px !important;
+    margin-bottom: 14px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-header > div:first-child {
+    display: none !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .profile-name-stack::before {
+    content: "BENEFICIARY";
+    display: block;
+    margin-bottom: 3px;
+    color: #668073;
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: .11em;
+    line-height: 1.2;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-name {
+    font-size: clamp(18px, 5.5vw, 21px) !important;
+    letter-spacing: -.35px !important;
+    word-spacing: .08em !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .resume-section {
+    margin-bottom: 14px !important;
+    padding: 12px !important;
+    border-radius: 14px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-actions {
+    gap: 6px !important;
+    padding: 8px 10px max(8px, env(safe-area-inset-bottom)) !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal #pm_footer_actions {
+    gap: 6px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal #pm_footer_actions > button {
+    min-height: 41px !important;
+    border-radius: 11px !important;
+  }
+
+  .admin-add-staff-page .top-area {
+    padding: 13px !important;
+  }
+  .admin-add-staff-page .top-big { font-size: 21px !important; }
+  .admin-add-staff-page .top-sub {
+    max-width: 29ch !important;
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+  }
+  .admin-add-staff-page .form-card { padding: 0 14px 14px !important; }
+  .admin-add-staff-page .back-link-inner {
+    width: calc(100% + 28px) !important;
+    min-height: 44px !important;
+    margin: 0 -14px !important;
+    padding: 11px 16px !important;
+  }
+  .admin-add-staff-page .form-header {
+    min-height: 0 !important;
+    padding: 13px 14px 14px !important;
+  }
+  .admin-add-staff-page .form-header::before {
+    margin-bottom: 3px !important;
+    font-size: 9px !important;
+  }
+  .admin-add-staff-page .form-header h2 { font-size: 19px !important; }
+  .admin-add-staff-page .form-header p {
+    margin-top: 3px !important;
+    font-size: 10.5px !important;
+  }
+  .admin-add-staff-page .step-tracker {
+    min-height: 0 !important;
+    margin-bottom: 12px !important;
+    padding: 11px 14px !important;
+  }
+  .admin-add-staff-page .step-circle {
+    width: 31px !important;
+    height: 31px !important;
+    flex-basis: 31px !important;
+  }
+}
+
 @keyframes system-mobile-tab-settle {
   from { opacity: .72; transform: translateY(4px) scale(.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -1720,14 +1958,143 @@
     display: block !important;
     width: 100% !important;
     min-width: 0 !important;
-    margin: 0 0 16px !important;
-    padding: 0 44px 12px 0 !important;
+    margin: 0 0 14px !important;
+    padding: 0 0 11px !important;
   }
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-name {
     max-width: 100% !important;
-    font-size: clamp(18px, 6vw, 23px) !important;
+    font-size: clamp(18px, 5.5vw, 21px) !important;
     line-height: 1.18 !important;
+    letter-spacing: -.35px !important;
+    word-spacing: .08em !important;
     overflow-wrap: anywhere !important;
+  }
+
+  /* Page-specific selectors intentionally live in the final cascade block. */
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .modal-head-alt:has(.beneficiary-modal-icon) {
+    grid-template-columns: 40px minmax(0, 1fr) 40px !important;
+    gap: 9px !important;
+    min-height: 96px !important;
+    padding: max(13px, env(safe-area-inset-top)) 14px 13px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal :is(.beneficiary-modal-icon, .modal-close-icon) {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .modal-title {
+    font-size: 18px !important;
+    line-height: 1.18 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .modal-sub {
+    max-width: 25ch !important;
+    margin: 4px auto 0 !important;
+    font-size: 10.5px !important;
+    line-height: 1.38 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .wizard-nav {
+    padding: 9px 12px 8px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal #multiStepForm .form-step.active {
+    padding: 16px 14px 22px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .modal-footer-sticky {
+    gap: 8px !important;
+    padding: 11px 14px max(11px, env(safe-area-inset-bottom)) !important;
+  }
+
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-head-sm {
+    display: grid !important;
+    grid-template-columns: 40px minmax(0, 1fr) 40px !important;
+    gap: 9px !important;
+    min-height: 100px !important;
+    padding: 14px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #quickStatusModal :is(.beneficiary-modal-icon, .modal-close-icon) {
+    position: static !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    transform: none !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-title {
+    font-size: 18px !important;
+    line-height: 1.18 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-sub {
+    max-width: 24ch !important;
+    margin: 4px auto 0 !important;
+    font-size: 10.5px !important;
+    line-height: 1.35 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #quickStatusModal .resubmission-option input[type="checkbox"] {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    flex: 0 0 20px !important;
+    margin: 2px 0 0 !important;
+    padding: 0 !important;
+  }
+
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-card-left {
+    min-height: 94px !important;
+    height: 94px !important;
+    flex: 0 0 94px !important;
+    padding: 12px 58px 12px 14px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #profileModal .id-card-left > div:not(.id-card-pattern) {
+    justify-content: flex-start !important;
+    gap: 10px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-avatar-large {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    min-height: 50px !important;
+    flex-basis: 50px !important;
+    font-size: 20px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-header > div:first-child {
+    display: none !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .profile-name-stack::before {
+    content: "BENEFICIARY";
+    display: block;
+    margin-bottom: 3px;
+    color: #668073;
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: .11em;
+    line-height: 1.2;
+  }
+
+  .admin-add-staff-page .form-card { padding: 0 14px 14px !important; }
+  .admin-add-staff-page .back-link-inner {
+    min-height: 44px !important;
+    margin: 0 -14px !important;
+    padding: 11px 16px !important;
+  }
+  .admin-add-staff-page .form-header {
+    min-height: 0 !important;
+    padding: 13px 14px 14px !important;
+  }
+  .admin-add-staff-page .step-tracker {
+    min-height: 0 !important;
+    margin-bottom: 12px !important;
+    padding: 11px 14px !important;
   }
 
   .bp-back-to-top {
@@ -1746,5 +2113,24 @@
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
+  }
+}
+
+@media (max-width: 340px) {
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal .modal-head-alt:has(.beneficiary-modal-icon),
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #quickStatusModal .modal-head-sm {
+    grid-template-columns: 36px minmax(0, 1fr) 36px !important;
+    gap: 7px !important;
+    padding-inline: 10px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #adminAddBeneficiaryModal :is(.beneficiary-modal-icon, .modal-close-icon),
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #quickStatusModal :is(.beneficiary-modal-icon, .modal-close-icon) {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
   }
 }
