@@ -185,7 +185,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=21">
+<link rel="stylesheet" href="system_mobile.css?v=22">
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 </head>
@@ -458,8 +458,8 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
             <button type="button" class="activity-detail-close" data-close-activity-modal aria-label="Close details"><i class="ph ph-x"></i></button>
         </header>
         <div class="activity-detail-body"><div class="activity-detail-grid">
-            <div><span>Date</span><strong data-detail="date"></strong></div>
-            <div><span>Time</span><strong data-detail="time"></strong></div>
+            <div class="activity-detail-date-card"><span>Date</span><strong data-detail="date"></strong></div>
+            <div class="activity-detail-time-card"><span>Time</span><strong data-detail="time"></strong></div>
             <div><span>Actor</span><strong data-detail="actor"></strong><small data-detail="role"></small></div>
             <div><span>Module</span><strong data-detail="module"></strong></div>
             <div><span>Action</span><strong data-detail="action"></strong></div>
