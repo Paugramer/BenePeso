@@ -1151,10 +1151,10 @@
     top: 14px !important;
     right: 14px !important;
     left: auto !important;
-    width: 38px !important;
-    height: 38px !important;
-    min-width: 38px !important;
-    min-height: 38px !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
     transform: none !important;
   }
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)

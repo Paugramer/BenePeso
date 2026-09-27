@@ -60,7 +60,11 @@ $user_display_name = !empty($user_display_name) ? $user_display_name : "User";
 
 $basic_name = trim($fn . " " . $ln);
 
-$profile_pic = !empty($user['profile_pic']) ? "uploads/" . htmlspecialchars($user['profile_pic']) : "img/default_user.svg";
+$stored_profile_pic = basename(trim((string)($user['profile_pic'] ?? '')));
+$stored_profile_path = $stored_profile_pic !== '' ? __DIR__ . '/uploads/' . $stored_profile_pic : '';
+$profile_pic = $stored_profile_path !== '' && is_file($stored_profile_path)
+    ? 'uploads/' . htmlspecialchars($stored_profile_pic, ENT_QUOTES, 'UTF-8')
+    : 'img/default_user.svg';
 $first_char = !empty($fn) ? strtoupper(substr($fn, 0, 1)) : "U";
 
 $prog_stmt = $conn->prepare("
@@ -396,10 +400,10 @@ while ($row = $activity_logs_result->fetch_assoc()) {
     </section>
 
     <nav class="profile-tabs-nav stagger-2" role="tablist" aria-label="Profile sections">
-        <button class="tab-link active" id="tab-personal-info" role="tab" aria-selected="true" aria-controls="personal-info" tabindex="0" onclick="switchTab(event, 'personal-info')"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg><span>Personal Details</span></button>
-        <button class="tab-link" id="tab-my-programs" role="tab" aria-selected="false" aria-controls="my-programs" tabindex="-1" onclick="switchTab(event, 'my-programs')"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 6V4h8v2M5 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"></path><path d="M3 12h18M10 12v2h4v-2"></path></svg><span>My Applications</span></button>
-        <button class="tab-link" id="tab-activity-log" role="tab" aria-selected="false" aria-controls="activity-log" tabindex="-1" onclick="switchTab(event, 'activity-log')"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5M12 7v5l3 2"></path></svg><span>Activity Logs</span></button>
-        <button class="tab-link" id="tab-security" role="tab" aria-selected="false" aria-controls="security" tabindex="-1" onclick="switchTab(event, 'security')"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"></path></svg><span>Security</span></button>
+        <button type="button" class="tab-link active" id="tab-personal-info" role="tab" aria-selected="true" aria-controls="personal-info" tabindex="0" onclick="switchTab(event, 'personal-info')"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg><span>Personal Details</span></button>
+        <button type="button" class="tab-link" id="tab-my-programs" role="tab" aria-selected="false" aria-controls="my-programs" tabindex="-1" onclick="switchTab(event, 'my-programs')"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 6V4h8v2M5 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"></path><path d="M3 12h18M10 12v2h4v-2"></path></svg><span>My Applications</span></button>
+        <button type="button" class="tab-link" id="tab-activity-log" role="tab" aria-selected="false" aria-controls="activity-log" tabindex="-1" onclick="switchTab(event, 'activity-log')"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5M12 7v5l3 2"></path></svg><span>Activity Logs</span></button>
+        <button type="button" class="tab-link" id="tab-security" role="tab" aria-selected="false" aria-controls="security" tabindex="-1" onclick="switchTab(event, 'security')"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"></path></svg><span>Security</span></button>
     </nav>
 
     <section class="profile-main stagger-3">
@@ -532,9 +536,9 @@ while ($row = $activity_logs_result->fetch_assoc()) {
             <div class="results-grid" id="availedProgramsContainer"></div>
             
             <div class="pagination-controls" id="progPaginationControls" style="display: none;">
-                <button class="pagination-btn" id="progPrevBtn" onclick="changeProgPage(-1)" disabled>← Previous</button>
+                <button type="button" class="pagination-btn" id="progPrevBtn" onclick="changeProgPage(-1)" disabled>← Previous</button>
                 <span class="pagination-info" id="progPageInfo">Page 1 of 1</span>
-                <button class="pagination-btn" id="progNextBtn" onclick="changeProgPage(1)" disabled>Next →</button>
+                <button type="button" class="pagination-btn" id="progNextBtn" onclick="changeProgPage(1)" disabled>Next →</button>
             </div>
             
             <?php if (count($availed_programs) == 0): ?>
@@ -572,9 +576,9 @@ while ($row = $activity_logs_result->fetch_assoc()) {
             <div class="log-timeline" id="activityLogContainer"></div>
 
             <div class="pagination-controls" id="logPaginationControls" style="display: none;">
-                <button class="pagination-btn" id="logPrevBtn" onclick="changeLogPage(-1)" disabled>← Previous</button>
+                <button type="button" class="pagination-btn" id="logPrevBtn" onclick="changeLogPage(-1)" disabled>← Previous</button>
                 <span class="pagination-info" id="logPageInfo">Page 1 of 1</span>
-                <button class="pagination-btn" id="logNextBtn" onclick="changeLogPage(1)" disabled>Next →</button>
+                <button type="button" class="pagination-btn" id="logNextBtn" onclick="changeLogPage(1)" disabled>Next →</button>
             </div>
 
             <?php if (count($activity_logs) == 0): ?>
@@ -746,7 +750,7 @@ while ($row = $activity_logs_result->fetch_assoc()) {
         <h4 id="toastTitle">Notification</h4>
         <p id="toastMessage">Message goes here.</p>
     </div>
-    <button class="toast-close" onclick="closeToast()">×</button>
+    <button type="button" class="toast-close" onclick="closeToast()" aria-label="Close notification">×</button>
 </div>
 
 <footer class="site-footer">

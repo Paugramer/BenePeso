@@ -1267,7 +1267,7 @@ if ($barangay_summary_result) {
         </div>
         <h2 style="color:#1a6d41; margin-bottom:10px; font-weight:800;">Application Submitted</h2>
         <p style="font-size:14px; color:#555; margin-bottom:25px; font-weight:500;"><?php echo $success_message; ?></p>
-        <button class="btn-primary" style="width:100%; box-shadow:none;" onclick="closeModal('submissionSuccessModal')">Continue</button>
+        <button type="button" class="btn-primary" style="width:100%; box-shadow:none;" onclick="closeModal('submissionSuccessModal')">Continue</button>
     </div>
 </div>
 <?php endif; ?>
@@ -1284,14 +1284,14 @@ if ($barangay_summary_result) {
         <p class="notice-lead">This application requires verification under the TUPAD one-beneficiary-per-household policy.</p>
         <div class="notice-message"><?= h($error_message) ?></div>
         <p class="notice-guidance">If the household information is incorrect or needs updating, please coordinate with the Public Employment Service Office (PESO) Vinzons before submitting another application.</p>
-        <button class="btn-primary notice-button" onclick="closeModal('submissionErrorModal')">I Understand</button>
+        <button type="button" class="btn-primary notice-button" onclick="closeModal('submissionErrorModal')">I Understand</button>
         <?php else: ?>
         <div style="margin-bottom: 15px; color: #d32f2f; display: flex; justify-content: center;">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
         </div>
         <h2 style="color:#a32222; margin-bottom:10px; font-weight:800;">Submission Failed</h2>
         <p style="font-size:14px; color:#555; margin-bottom:25px; font-weight:500;"><?= h($error_message) ?></p>
-        <button class="btn-primary" style="background:#eee; color:#333; width:100%; box-shadow:none;" onclick="closeModal('submissionErrorModal')">Close</button>
+        <button type="button" class="btn-primary" style="background:#eee; color:#333; width:100%; box-shadow:none;" onclick="closeModal('submissionErrorModal')">Close</button>
         <?php endif; ?>
     </div>
 </div>
@@ -1299,17 +1299,17 @@ if ($barangay_summary_result) {
 
 <div class="modal" id="alertModal">
     <div class="modal-content alert-box">
-        <button class="modal-close" onclick="closeModal('alertModal')">✕</button>
+        <button type="button" class="modal-close" onclick="closeModal('alertModal')" aria-label="Close notice">✕</button>
         <h2 id="alertTitle" style="color:#a32222; margin-bottom:10px;">Notice</h2>
         <p id="alertMessage" style="font-size:14px; color:#555; margin-bottom:20px;"></p>
-        <button class="btn-primary" style="background:#eee; color:#333; width:auto; box-shadow:none;" onclick="closeModal('alertModal')">Okay</button>
+        <button type="button" class="btn-primary" style="background:#eee; color:#333; width:auto; box-shadow:none;" onclick="closeModal('alertModal')">Okay</button>
     </div>
 </div>
 
 <!-- ARCHIVE SUMMARY MODAL -->
 <div class="modal" id="archiveModal">
     <div class="modal-content alert-box archive-summary-dialog">
-        <button class="modal-close" onclick="closeModal('archiveModal')">✕</button>
+        <button type="button" class="modal-close" onclick="closeModal('archiveModal')" aria-label="Close archive summary">✕</button>
         <div class="archive-summary-icon">
             <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
         </div>
@@ -1340,7 +1340,7 @@ if ($barangay_summary_result) {
         </section>
 
         <p class="archive-summary-note">This batch concluded in <strong id="archEnd"></strong>. Figures reflect approved beneficiaries recorded by PESO.</p>
-        <button class="btn-secondary archive-summary-close" onclick="closeModal('archiveModal')">Close Summary</button>
+        <button type="button" class="btn-secondary archive-summary-close" onclick="closeModal('archiveModal')">Close Summary</button>
     </div>
 </div>
 
@@ -1442,7 +1442,7 @@ if ($barangay_summary_result) {
 
 <div class="modal" id="successEligibleModal">
     <div class="modal-content alert-box" style="max-width: 520px; text-align: left; padding: 40px 35px;">
-        <button class="modal-close" onclick="closeModal('successEligibleModal')">✕</button>
+        <button type="button" class="modal-close" onclick="closeModal('successEligibleModal')" aria-label="Close eligibility notice">✕</button>
         <div class="modal-icon icon-success" style="margin-bottom: 15px; color: #2e7d32; display: flex; justify-content: center;">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
         </div>
@@ -1459,23 +1459,23 @@ if ($barangay_summary_result) {
             </div>
         </div>
 
-        <button class="btn-primary" style="width:100%; box-shadow:none;" onclick="proceedToForm()">Proceed to Application Form</button>
+        <button type="button" class="btn-primary" style="width:100%; box-shadow:none;" onclick="proceedToForm()">Proceed to Application Form</button>
     </div>
 </div>
 
 <div class="modal" id="statusModal">
     <div class="modal-content alert-box" style="padding-top: 40px; max-width: 500px;">
-        <button class="modal-close" onclick="closeModal('statusModal')">✕</button>
+        <button type="button" class="modal-close" onclick="closeModal('statusModal')" aria-label="Close status">✕</button>
         <div class="modal-icon" id="statusIcon"></div>
         <h2 id="statusModalTitle" style="margin-bottom:10px; font-weight:800;">Status</h2>
         <div id="statusModalBody" style="font-size:14px; color:#555; margin-bottom:25px; font-weight:500; text-align: left;"></div>
-        <button class="btn-primary" style="width:100%; box-shadow:none;" onclick="closeModal('statusModal')">Close Status</button>
+        <button type="button" class="btn-primary" style="width:100%; box-shadow:none;" onclick="closeModal('statusModal')">Close Status</button>
     </div>
 </div>
 
 <div class="modal" id="applicationModal" aria-hidden="true">
     <div class="modal-content" style="max-width: 850px;" role="dialog" aria-modal="true" aria-labelledby="applicationFormTitle" tabindex="-1">
-        <button class="modal-close" onclick="closeModal('applicationModal')" aria-label="Close application form">✕</button>
+        <button type="button" class="modal-close" onclick="closeModal('applicationModal')" aria-label="Close application form">✕</button>
         <div class="application-modal-heading">
             <span class="application-modal-eyebrow"><i aria-hidden="true"></i>Secure resident application</span>
             <h2 id="applicationFormTitle">Application Form</h2>

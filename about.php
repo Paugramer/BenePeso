@@ -592,7 +592,7 @@ try {
                 <p>"Dedicated to bridging the gap between the hardworking citizens of Vinzons and meaningful employment opportunities. Our office is open to serve, guide, and empower our local workforce."</p>
             </div>
             
-            <button class="btn-primary" style="width: 100%; margin-top: 20px;" onclick="closeManagerModal()">Close Profile</button>
+            <button type="button" class="btn-primary" style="width: 100%; margin-top: 20px;" onclick="closeManagerModal()">Close Profile</button>
         </div>
     </div>
 </div>
