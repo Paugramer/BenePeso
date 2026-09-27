@@ -49,7 +49,7 @@ $barangays = beneficiary_barangay_options();
   <link rel="stylesheet" href="style.css?v=34" />
   <link rel="stylesheet" href="frontend_polish.css?v=20260921">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=19">
+  <link rel="stylesheet" href="auth_refresh.css?v=20">
   <link rel="stylesheet" href="beneficiary_mobile.css?v=19">
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>

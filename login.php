@@ -91,7 +91,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   <link rel="stylesheet" href="style.css?v=34" />
   <link rel="stylesheet" href="frontend_polish.css?v=20260921">
   <link rel="stylesheet" href="beneficiary_responsive.css?v=9">
-  <link rel="stylesheet" href="auth_refresh.css?v=19">
+  <link rel="stylesheet" href="auth_refresh.css?v=20">
   <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
@@ -205,10 +205,9 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
           <?php if (benepeso_turnstile_enabled()): ?>
             <div class="auth-turnstile auth-turnstile--managed" aria-label="Cloudflare security verification">
               <div id="loginTurnstile" data-sitekey="<?= htmlspecialchars(benepeso_turnstile_site_key(), ENT_QUOTES, 'UTF-8') ?>" hidden></div>
-              <div class="auth-turnstile-state" id="turnstileState" data-state="idle" role="status" aria-live="polite">
+              <div class="auth-turnstile-state" id="turnstileState" role="status" aria-live="polite">
                 <span class="auth-turnstile-spinner" aria-hidden="true"></span>
-                <span id="turnstileStateText">Security check ready.</span>
-                <button type="button" id="turnstileStart">Verify I&apos;m human</button>
+                <span id="turnstileStateText">Preparing secure verification&hellip;</span>
                 <button type="button" id="turnstileRetry" hidden>Retry</button>
               </div>
             </div>
@@ -533,19 +532,16 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   const turnstileHost = document.getElementById('loginTurnstile');
   const turnstileState = document.getElementById('turnstileState');
   const turnstileStateText = document.getElementById('turnstileStateText');
-  const turnstileStart = document.getElementById('turnstileStart');
   const turnstileRetry = document.getElementById('turnstileRetry');
   let turnstileWidgetId = null;
   let turnstileVerified = !turnstileEnabled;
   let turnstileLoadTimer = null;
-  let turnstileRequested = false;
 
   const setTurnstileState = (state, message, allowRetry = false) => {
     if (!turnstileState) return;
     turnstileState.dataset.state = state;
     turnstileState.closest('.auth-turnstile')?.classList.toggle('is-error', state === 'error');
     if (turnstileStateText) turnstileStateText.textContent = message;
-    if (turnstileStart) turnstileStart.hidden = state !== 'idle';
     if (turnstileRetry) turnstileRetry.hidden = !allowRetry;
   };
 
@@ -569,7 +565,7 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   };
 
   const renderTurnstile = () => {
-    if (!turnstileRequested || !turnstileEnabled || !turnstileHost || !window.turnstile || turnstileWidgetId !== null) return;
+    if (!turnstileEnabled || !turnstileHost || !window.turnstile || turnstileWidgetId !== null) return;
     window.clearTimeout(turnstileLoadTimer);
     setTurnstileState('loading', 'Starting secure verification…');
     showTurnstileHost(true);
@@ -615,7 +611,6 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
   };
 
   const retryTurnstile = () => {
-    turnstileRequested = true;
     turnstileVerified = false;
     setTurnstileState('loading', 'Restarting secure verification…');
     syncLoginButton();
@@ -638,19 +633,13 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
     renderTurnstile();
   };
 
-  const beginTurnstile = () => {
-    turnstileRequested = true;
-    setTurnstileState('loading', 'Starting secure verification…');
-    renderTurnstile();
-  };
-
-  turnstileStart?.addEventListener('click', beginTurnstile);
   turnstileRetry?.addEventListener('click', retryTurnstile);
   window.addEventListener('benepeso-turnstile-ready', renderTurnstile);
+  if (window.benepesoTurnstileLoaded) renderTurnstile();
   if (turnstileEnabled) {
     syncLoginButton();
     turnstileLoadTimer = window.setTimeout(() => {
-      if (turnstileRequested && !window.turnstile && !turnstileVerified) {
+      if (!window.turnstile && !turnstileVerified) {
         setTurnstileState('error', 'Secure check could not connect.', true);
       }
     }, 4000);
@@ -660,9 +649,8 @@ $lock_seconds = $locked ? ($lock_until - $now) : 0;
     loginForm.addEventListener("submit", event => {
       if (turnstileEnabled && !turnstileVerified) {
         event.preventDefault();
-        if (!turnstileRequested) beginTurnstile();
-        else if (window.turnstile && turnstileWidgetId === null) renderTurnstile();
-        setTurnstileState('error', 'Complete the security check before logging in.', true);
+        if (window.turnstile && turnstileWidgetId === null) renderTurnstile();
+        setTurnstileState('error', 'Complete the secure checkbox before logging in.', true);
         turnstileState?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         return;
       }
