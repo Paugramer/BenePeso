@@ -1603,3 +1603,148 @@
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
+
+/* Phone finishing pass shared by every Admin and PESO Staff workspace.
+   Kept at the end of the cascade so older page-specific mobile rules cannot
+   hide controls or force desktop dimensions back into compact dialogs. */
+@media (max-width: 600px) {
+  :is(.admin-mobile-page, .staff-mobile-page) .side-area #sideClose {
+    display: grid !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  :is(.admin-mobile-page, .staff-mobile-page) :is(.modal-head-alt, .modal-head-sm) {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 42px !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-height: 82px !important;
+    padding: 14px !important;
+    text-align: left !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :is(.modal-head-alt, .modal-head-sm) > div {
+    width: auto !important;
+    min-width: 0 !important;
+    text-align: left !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :is(.modal-head-alt, .modal-head-sm) .modal-title {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: clamp(17px, 5vw, 20px) !important;
+    line-height: 1.2 !important;
+    overflow-wrap: anywhere !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :is(.modal-head-alt, .modal-head-sm) .modal-sub {
+    margin: 4px 0 0 !important;
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+    overflow-wrap: anywhere !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) :is(.modal-head-alt, .modal-head-sm) .modal-close-icon {
+    position: static !important;
+    justify-self: end !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+
+  /* Headers with a leading context icon get three real columns. This prevents
+     the title from sitting underneath either circular action. */
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    :is(.modal-head-alt, .modal-head-sm):has(.beneficiary-modal-icon) {
+    grid-template-columns: 42px minmax(0, 1fr) 42px !important;
+    min-height: 92px !important;
+    padding: 14px !important;
+    text-align: center !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    :is(.modal-head-alt, .modal-head-sm):has(.beneficiary-modal-icon) .beneficiary-modal-icon,
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    :is(.modal-head-alt, .modal-head-sm):has(.beneficiary-modal-icon) .modal-close-icon {
+    position: static !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    :is(.modal-head-alt, .modal-head-sm):has(.beneficiary-modal-icon) > div {
+    width: 100% !important;
+    min-width: 0 !important;
+    text-align: center !important;
+  }
+
+  /* Long values such as examination schedules remain readable instead of
+     being reduced to a single ellipsized line. */
+  :is(.admin-mobile-page, .staff-mobile-page) .bp-select-trigger {
+    min-height: 48px !important;
+    height: auto !important;
+    padding: 10px 12px !important;
+  }
+  :is(.admin-mobile-page, .staff-mobile-page) .bp-select-value {
+    display: -webkit-box !important;
+    overflow: hidden !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+  .bp-select-menu.is-phone-menu {
+    max-width: calc(100vw - 24px) !important;
+    overscroll-behavior: contain !important;
+    scrollbar-gutter: stable;
+  }
+  .bp-select-menu.is-phone-menu .bp-select-option {
+    min-height: 46px !important;
+    align-content: center;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-card-right-inner {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 18px 14px 10px !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-header {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 0 16px !important;
+    padding: 0 44px 12px 0 !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-name {
+    max-width: 100% !important;
+    font-size: clamp(18px, 6vw, 23px) !important;
+    line-height: 1.18 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .bp-back-to-top {
+    right: max(8px, env(safe-area-inset-right)) !important;
+    bottom: max(10px, env(safe-area-inset-bottom)) !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+    padding: 4px !important;
+    border-radius: 50% !important;
+    box-shadow: 0 7px 20px rgba(12, 56, 38, .22) !important;
+  }
+  .bp-back-to-top span { display: none !important; }
+  :is(.admin-mobile-page, .staff-mobile-page):has(.modal.show, .spes-form-modal.is-open) .bp-back-to-top {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}
