@@ -2203,23 +2203,23 @@
     padding: 16px 72px 16px 16px !important;
   }
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
-    #profileModal .id-card-left > div:not(.id-card-pattern) {
+    #profileModal .profile-identity-row {
     display: grid !important;
-    grid-template-columns: 54px minmax(0, 1fr) !important;
+    grid-template-columns: 60px minmax(0, 1fr) !important;
     width: 100% !important;
     min-width: 0 !important;
+    margin: 0 !important;
     align-items: center !important;
-    justify-content: flex-start !important;
     gap: 14px !important;
   }
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-avatar-large {
-    width: 54px !important;
-    height: 54px !important;
-    min-width: 54px !important;
-    min-height: 54px !important;
-    flex-basis: 54px !important;
+    width: 60px !important;
+    height: 60px !important;
+    min-width: 60px !important;
+    min-height: 60px !important;
+    flex-basis: 60px !important;
     margin: 0 !important;
-    font-size: 21px !important;
+    font-size: 23px !important;
   }
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .profile-badges-row {
     display: flex !important;
@@ -2227,21 +2227,37 @@
     min-width: 0 !important;
     max-width: 100% !important;
     flex-direction: column !important;
-    align-items: flex-start !important;
+    align-items: stretch !important;
     justify-content: center !important;
     gap: 7px !important;
   }
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
     #profileModal .profile-badges-row > * {
-    width: fit-content !important;
+    width: 100% !important;
     min-width: 0 !important;
     max-width: 100% !important;
+    margin: 0 !important;
   }
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
     #profileModal #pm_availment_badge {
     display: flex !important;
     align-items: center !important;
-    justify-content: flex-start !important;
+    justify-content: center !important;
+  }
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page)
+    #profileModal :is(#pm_program_header, #pm_availment_badge > .pill) {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 28px !important;
+    margin: 0 !important;
+    padding: 5px 9px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    text-align: center !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
   :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal .id-header > div:first-child {
     display: none !important;

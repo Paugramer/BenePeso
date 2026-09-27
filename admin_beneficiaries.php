@@ -1710,7 +1710,7 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
 <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
-  <link rel="stylesheet" href="system_mobile.css?v=23">
+  <link rel="stylesheet" href="system_mobile.css?v=24">
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
@@ -3000,7 +3000,7 @@ function toggleBatchScheduleFields(select) {
     
     <div class="id-card-left" style="width: 320px; background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; border-right: 1px solid #eaecf0;">
        <div class="id-card-pattern" style="position: absolute; top:0; left:0; right:0; bottom:0; opacity: 0.1; background-image: radial-gradient(#1f7a54 1px, transparent 1px); background-size: 10px 10px; z-index: 1;"></div>
-       <div style="z-index: 2; display: flex; flex-direction: column; align-items: center;">
+       <div class="profile-identity-row" style="z-index: 2; display: flex; flex-direction: column; align-items: center;">
            <div class="id-avatar-large" id="pm_avatar" style="width: 100px; height: 100px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 800; color: #0d2618; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 24px;">?</div>
            
            <div class="profile-badges-row" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
