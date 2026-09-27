@@ -36,17 +36,10 @@ if ($is_logged_in) {
         }
         $profile_filename = basename((string)($row['profile_pic'] ?? ''));
         if ($profile_filename !== '' && is_file(__DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $profile_filename)) {
-            $user_profile_src = 'uploads/' . rawurlencode($profile_filename);
+            $user_profile_src = 'user_avatar.php';
         }
     }
 }
-
-// ==========================================
-// FETCH REAL DATA FOR STATS BAR
-// ==========================================
-$total_beneficiaries = 0;
-$total_programs = 0;
-$barangays_reached = 0;
 
 $community_activities = [
     [
@@ -141,33 +134,6 @@ $community_activities = [
     ]
 ];
 
-try {
-    // Count approved beneficiary records only; pending and rejected applications
-    // are not presented as residents already served by PESO.
-    $b_query = $conn->query("SELECT COUNT(*) as total FROM beneficiaries WHERE approval_status = 'Approved'");
-    if ($b_query) {
-        $total_beneficiaries = (int)$b_query->fetch_assoc()['total'];
-    }
-
-    // Count active approved programs
-    $p_query = $conn->query("SELECT COUNT(*) as total FROM programs
-        WHERE approval_status = 'Approved'
-          AND (UPPER(program_name) LIKE '%TUPAD%' OR UPPER(program_name) LIKE '%SPES%' OR UPPER(program_name) LIKE '%MSME%')
-          AND LOWER(COALESCE(status, '')) <> 'completed'
-          AND (end_date IS NULL OR end_date = '' OR end_date >= CURDATE())
-          AND (start_date IS NULL OR end_date IS NULL OR end_date = '' OR end_date >= start_date)");
-    if ($p_query) {
-        $total_programs = (int)$p_query->fetch_assoc()['total'];
-    }
-
-    // Count the communities represented by beneficiary records.
-    $barangay_query = $conn->query("SELECT COUNT(DISTINCT TRIM(barangay)) as total FROM beneficiaries WHERE approval_status = 'Approved' AND barangay IS NOT NULL AND TRIM(barangay) <> ''");
-    if ($barangay_query) {
-        $barangays_reached = (int)$barangay_query->fetch_assoc()['total'];
-    }
-} catch (Throwable $e) {
-    // Fallback gracefully
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -183,7 +149,7 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="about.css?v=18">
+    <link rel="stylesheet" href="about.css?v=19">
     <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -270,36 +236,29 @@ try {
         </div>
     </section>
 
-    <!-- LIVE STATS BAR -->
+    <!-- RESIDENT SERVICE GUIDE -->
     <section class="stats-bar-section stagger-3">
         <div class="content-wrap">
             <div class="stats-glass-panel">
                 <div class="stat-item">
                     <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="m16 11 2 2 4-4"></path></svg></span>
-                    <div class="stat-num-wrap">
-                        <span class="stat-num counter" data-target="<?php echo $total_beneficiaries; ?>">0</span>
-                        <?php if($total_beneficiaries > 1000): ?><span class="stat-plus">+</span><?php endif; ?>
-                    </div>
-                    <span class="stat-label">Approved Beneficiaries</span>
+                    <strong class="stat-service-title">Explore programs</strong>
+                    <span class="stat-label">See official services even between batches</span>
                 </div>
                 <div class="stat-divider"></div>
                 <div class="stat-item">
                     <span class="stat-icon stat-icon-gold" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="15" rx="2"></rect><path d="M8 5V3h8v2M3 11h18M9 11v2h6v-2"></path></svg></span>
-                    <div class="stat-num-wrap">
-                        <span class="stat-num counter" data-target="<?php echo $total_programs; ?>">0</span>
-                    </div>
-                    <span class="stat-label">Active Listings</span>
+                    <strong class="stat-service-title">Apply securely</strong>
+                    <span class="stat-label">Use one verified resident profile</span>
                 </div>
                 <div class="stat-divider"></div>
                 <div class="stat-item">
                     <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 5.5-8 11-8 11S4 15.5 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg></span>
-                    <div class="stat-num-wrap">
-                        <span class="stat-num counter" data-target="<?php echo $barangays_reached; ?>">0</span>
-                    </div>
-                    <span class="stat-label">Barangays Reached</span>
+                    <strong class="stat-service-title">Track updates</strong>
+                    <span class="stat-label">Follow PESO validation and next steps</span>
                 </div>
             </div>
-            <p class="stats-data-note">Verified service totals based on approved BENEPESO records maintained by PESO Vinzons.</p>
+            <p class="stats-data-note">BENEPESO is the resident-facing portal for program information, applications, and official status guidance.</p>
         </div>
     </section>
 

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/auth_session.php';
 require "db.php";
+require_once __DIR__ . '/program_catalog.php';
 
 /** * SMART REDIRECTION 
  * If Staff or Admin is already logged in, skip the public page.
@@ -105,6 +106,21 @@ while ($program = $batch_result->fetch_assoc()) {
     unset($family);
 }
 $stmt->close();
+
+// Keep permanent program families discoverable even between application
+// batches. A family without a current batch opens an availability notice.
+if ($status_filter === '') {
+    $visible_families = [];
+    foreach ($program_families as $program) {
+        $family = benepeso_program_family_key((string)($program['program_name'] ?? ''));
+        if ($family !== '') $visible_families[$family] = true;
+    }
+    foreach (benepeso_program_catalog() as $family => $catalog_program) {
+        if (isset($visible_families[$family])) continue;
+        if ($search_query !== '' && stripos($catalog_program['name'] . ' ' . $catalog_program['description'], $search_query) === false) continue;
+        $program_families['catalog_' . $family] = benepeso_unavailable_program($family, $catalog_program);
+    }
+}
 
 $all_programs = array_values($program_families);
 $total_rows = count($all_programs);
@@ -307,17 +323,17 @@ if ($updated_stmt) {
                     <div class="section-heading-copy">
                         <div class="section-heading-meta">
                             <span class="section-kicker">Official PESO Directory</span>
-                            <span class="listing-count" aria-label="<?= $total_rows ?> available program listings">
+                            <span class="listing-count" aria-label="<?= $total_rows ?> PESO programs">
                                 <strong><?= $total_rows ?></strong>
-                                <span>Open programs</span>
+                                <span>Programs</span>
                             </span>
                         </div>
-                        <h2>Available Programs</h2>
+                        <h2>PESO Programs</h2>
                         <p>
                             <?php if ($search_query !== '' || $status_filter !== ''): ?>
                                 <?= $total_rows ?> result<?= $total_rows === 1 ? '' : 's' ?><?= $search_query !== '' ? ' for “' . htmlspecialchars($search_query) . '”' : '' ?> · Page <?= $page ?> of <?= $total_pages ?>
                             <?php else: ?>
-                                Showing page <?= $page ?> of <?= $total_pages ?>
+                                Browse each service and check current batch availability &middot; Page <?= $page ?> of <?= $total_pages ?>
                             <?php endif; ?>
                         </p>
                     </div>
@@ -375,8 +391,9 @@ if ($updated_stmt) {
                         foreach ($programs as $row):
                             $img = !empty($row['image_path']) ? htmlspecialchars($row['image_path']) : 'img/pesologo.png';
                             $remaining_slots = max(0, (int)$row['remaining_slots']);
-                            $batch_count = max(1, (int)$row['batch_count']);
-                            $batch_label = $batch_count > 1 ? $batch_count . ' open batches' : $row['program_code'];
+                            $is_available = empty($row['catalog_only']);
+                            $batch_count = $is_available ? max(1, (int)$row['batch_count']) : 0;
+                            $batch_label = !$is_available ? 'No active batch' : ($batch_count > 1 ? $batch_count . ' open batches' : $row['program_code']);
                             $variant_names = array_values(array_filter(array_map(function ($category) {
                                 return trim((string)preg_replace('/\bTUPAD\b/i', '', $category));
                             }, $row['categories'] ?? [])));
@@ -394,22 +411,23 @@ if ($updated_stmt) {
                                 'desc' => $row['description'],
                                 'eligibility' => $row['eligibility'],
                                 'reqs' => $row['requirements'],
-                                'img' => $img
+                                'img' => $img,
+                                'noBatch' => !$is_available
                             ]), ENT_QUOTES, 'UTF-8');
                         ?>
-                            <article class="program-card reveal" style="transition-delay: <?= $delay ?>s;" onclick="if (!event.target.closest('button, a')) openProgramModal(this.querySelector('.program-btn'))">
+                            <article class="program-card<?= !$is_available ? ' program-card--unavailable' : '' ?> reveal" style="transition-delay: <?= $delay ?>s;" onclick="if (!event.target.closest('button, a')) openProgramModal(this.querySelector('.program-btn'))">
                                 <div class="card-img-wrapper">
                                     <img src="<?= $img ?>" alt="<?= htmlspecialchars($row['program_name']) ?> program poster" class="card-img" decoding="async" onerror="this.onerror=null; this.src='img/pesologo.png';">
                                     <div class="program-image-badges" aria-hidden="true">
                                         <span class="program-code-badge"><?= htmlspecialchars($batch_label) ?></span>
                                         <span class="program-slot-badge <?= $remaining_slots <= 0 ? 'is-full' : '' ?>">
-                                            <?= $remaining_slots > 0 ? number_format($remaining_slots) . ' slots' : 'Full' ?>
+                                            <?= !$is_available ? 'Unavailable' : ($remaining_slots > 0 ? number_format($remaining_slots) . ' slots' : 'Full') ?>
                                         </span>
                                     </div>
                                 </div>
                                 <div class="card-content">
                                     <h3 class="card-title"><?= htmlspecialchars($row['program_name']) ?></h3>
-                                    <span class="card-status"><?= htmlspecialchars($row['status']) ?> &middot; <?= htmlspecialchars($status_detail) ?></span>
+                                    <span class="card-status"><?= !$is_available ? 'Program information &middot; No batches available' : htmlspecialchars($row['status']) . ' &middot; ' . htmlspecialchars($status_detail) ?></span>
                                     <p class="card-excerpt">
                                         <?= htmlspecialchars(mb_strimwidth($row['description'] ?? 'No description provided.', 0, 100, "...")) ?>
                                     </p>
@@ -420,11 +438,11 @@ if ($updated_stmt) {
                                         </span>
                                         <span>
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                                            Until <?= format_date($row['end_date']) ?>
+                                            <?= !$is_available ? 'Next schedule TBA' : 'Until ' . format_date($row['end_date']) ?>
                                         </span>
                                     </div>
                                     <div class="card-footer-info">
-                                        <button type="button" class="program-btn" data-program="<?= $modalData ?>" aria-label="View <?= htmlspecialchars($row['program_name']) ?><?= $batch_count > 1 ? ' open batches' : ' details' ?>" onclick="openProgramModal(this)">View Program Details</button>
+                                        <button type="button" class="program-btn" data-program="<?= $modalData ?>" aria-label="View <?= htmlspecialchars($row['program_name']) ?><?= $batch_count > 1 ? ' open batches' : ' details' ?>" onclick="openProgramModal(this)"><?= $is_available ? 'View Program Details' : 'Check Batch Availability' ?></button>
                                     </div>
                                 </div>
                             </article>
@@ -602,9 +620,9 @@ if ($updated_stmt) {
                     </div>
                 </div>
                 
-                <div class="modal-footer">
-                    <div><strong>Ready to continue?</strong><span>Sign in to use your verified BENEPESO profile.</span></div>
-                    <button type="button" class="btn-main" onclick="clickApply()">Sign in to Apply <span aria-hidden="true">&rarr;</span></button>
+                <div class="modal-footer" id="publicProgramModalFooter">
+                    <div><strong id="publicProgramModalFooterTitle">Ready to continue?</strong><span id="publicProgramModalFooterText">Sign in to use your verified BENEPESO profile.</span></div>
+                    <button type="button" class="btn-main" id="publicProgramApplyButton" onclick="clickApply()">Sign in to Apply <span aria-hidden="true">&rarr;</span></button>
                 </div>
             </div>
         </div>
@@ -667,20 +685,27 @@ if ($updated_stmt) {
 
     function openProgramModal(trigger) {
         const data = JSON.parse(trigger.getAttribute('data-program'));
+        const noBatch = Boolean(data.noBatch);
         lastProgramTrigger = trigger;
         
         document.getElementById('m_img').src = data.img;
         document.getElementById('m_img').alt = data.title + ' program poster';
         document.getElementById('m_title').textContent = data.title;
-        document.getElementById('m_code').textContent = 'Batch Code: ' + (data.code || 'N/A');
+        document.getElementById('m_code').textContent = noBatch ? 'No active batch' : 'Batch Code: ' + (data.code || 'N/A');
         
         document.getElementById('m_desc').textContent = data.desc || 'No description provided.';
-        document.getElementById('m_slots').textContent = data.slots || '0';
+        document.getElementById('m_slots').textContent = noBatch ? 'No batches available' : (data.slots || '0');
         document.getElementById('m_venue').textContent = data.venue || 'TBA';
         document.getElementById('m_start').textContent = data.start;
         document.getElementById('m_end').textContent = data.end;
         renderProgramList('m_eligibility', data.eligibility, 'No eligibility criteria specified.');
         renderProgramList('m_reqs', data.reqs, 'No requirements specified.');
+
+        document.getElementById('publicProgramModalFooterTitle').textContent = noBatch ? 'Applications are not open yet' : 'Ready to continue?';
+        document.getElementById('publicProgramModalFooterText').textContent = noBatch
+            ? 'PESO Vinzons has not published an active batch for this program. Please check again later.'
+            : 'Sign in to use your verified BENEPESO profile.';
+        document.getElementById('publicProgramApplyButton').hidden = noBatch;
 
         setModalVisibility(programModal, true);
         focusModal(programModal);

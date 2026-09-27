@@ -11,6 +11,7 @@ require_once "tupad_document_helper.php";
 require_once "spes_schema_helper.php";
 require_once "spes_lifecycle_helper.php";
 require_once __DIR__ . '/activity_log_helper.php';
+require_once __DIR__ . '/program_catalog.php';
 
 check_user_role('user');
 
@@ -116,7 +117,7 @@ if ($res && $res->num_rows === 1) {
     if (!empty($fn)) $first_char = strtoupper(substr($fn, 0, 1));
     $profile_filename = basename((string)($user_data['profile_pic'] ?? ''));
     if ($profile_filename !== '' && is_file(__DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $profile_filename)) {
-        $user_profile_src = 'uploads/' . rawurlencode($profile_filename);
+        $user_profile_src = 'user_avatar.php';
     }
 }
 $stmt->close();
@@ -847,6 +848,17 @@ if ($result && $result->num_rows > 0) {
         }
     }
 }
+
+$active_program_families = [];
+foreach ($active_programs as $program) {
+    $family = benepeso_program_family_key((string)($program['program_name'] ?? ''));
+    if ($family !== '') $active_program_families[$family] = true;
+}
+foreach (benepeso_program_catalog() as $family => $catalog_program) {
+    if (!isset($active_program_families[$family])) {
+        $active_programs[] = benepeso_unavailable_program($family, $catalog_program);
+    }
+}
 // Public archive summaries use aggregate counts only; no personal data is exposed.
 $program_barangay_counts = [];
 $barangay_summary_sql = "SELECT program_id,
@@ -879,7 +891,7 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="programs.css?v=40">
+    <link rel="stylesheet" href="programs.css?v=41">
     <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -1035,18 +1047,19 @@ if ($barangay_summary_result) {
                             $isClosingSoon = $daysUntilDeadline >= 0 && $daysUntilDeadline <= 14;
                             $daysUntilStart = !empty($row['start_date']) ? (int)floor((strtotime($row['start_date']) - strtotime(date('Y-m-d'))) / 86400) : 0;
                             $isComingSoon = strtolower(trim((string)($row['status'] ?? ''))) === 'upcoming' || $daysUntilStart > 0;
-                            $scheduleState = $isComingSoon ? 'upcoming' : ($isClosingSoon ? 'ending' : 'open');
+                            $scheduleState = !empty($row['catalog_only']) ? 'unavailable' : ($isComingSoon ? 'upcoming' : ($isClosingSoon ? 'ending' : 'open'));
                             $programUpdatedAt = $row['updated_at'] ?: $row['created_at'];
                             $missingProgramDetails = [];
                             foreach (['description' => 'description', 'eligibility' => 'eligibility rules', 'requirements' => 'document requirements', 'venue' => 'venue', 'start_date' => 'program start date', 'end_date' => 'application deadline'] as $field => $label) {
                                 if (trim((string)($row[$field] ?? '')) === '' || in_array($row[$field] ?? '', ['0000-00-00', 'TBA'], true)) $missingProgramDetails[] = $label;
                             }
 
-                            $action_type = $user_status ? 'status' : 'apply';
+                            $is_available = empty($row['catalog_only']);
+                            $action_type = !$is_available ? 'unavailable' : ($user_status ? 'status' : 'apply');
                             $badge_class = $user_status ? 'slots-badge current-program' : (($remaining_slots <= 5) ? 'slots-badge warning' : 'slots-badge');
-                            $badge_text = $user_status ? 'Your Current Program' : $remaining_slots . ' Slots';
+                            $badge_text = !$is_available ? 'No active batch' : ($user_status ? 'Your Current Program' : $remaining_slots . ' Slots');
                     ?>
-                        <article class="program-card" 
+                        <article class="program-card<?= !$is_available ? ' program-card--unavailable' : '' ?>"
                                  style="animation-delay: <?= $delay ?>s;"
                                  data-action="<?= $action_type ?>"
                                  data-prog-id="<?= $row['program_id'] ?>"
@@ -1082,17 +1095,19 @@ if ($barangay_summary_result) {
                             
                             <div class="card-body">
                                 <h3 class="card-title"><?= $safe_title ?></h3>
-                                <div class="batch-code">BATCH: <?= $safe_batch ?></div>
+                                <div class="batch-code"><?= $is_available ? 'BATCH: ' . $safe_batch : 'BATCH AVAILABILITY: NONE' ?></div>
                                 <?php if ($tupadCategory !== ''): ?><div class="program-category-badge"><?= h($tupadCategory) ?></div><?php endif; ?>
                                 <p class="card-desc"><?= mb_strimwidth($safe_desc, 0, 110, "...") ?></p>
                                 
                                 <div class="card-footer-info">
                                     <div class="program-card-schedule">
-                                        <span><small>Program starts</small><strong><?= $safe_start ?></strong></span>
-                                        <span><small>Application deadline</small><strong><?= $safe_end ?></strong></span>
+                                        <span><small>Program starts</small><strong><?= $is_available ? $safe_start : 'Not scheduled' ?></strong></span>
+                                        <span><small>Application deadline</small><strong><?= $is_available ? $safe_end : 'No open batch' ?></strong></span>
                                     </div>
                                     
-                                    <?php if ($user_status): ?>
+                                    <?php if (!$is_available): ?>
+                                        <button type="button" class="program-btn">Check Batch Availability</button>
+                                    <?php elseif ($user_status): ?>
                                         <button type="button" class="btn-check-status">View Your Status</button>
                                     <?php else: ?>
                                         <button type="button" class="program-btn">View Details</button>
@@ -2415,6 +2430,11 @@ if ($barangay_summary_result) {
             const requestedCard = cards.find(card => card.dataset.progId === requestedId);
             if (requestedCard) window.setTimeout(() => openProgramDetails(requestedCard), 180);
         }
+        const requestedFamily = new URLSearchParams(window.location.search).get('family');
+        if (requestedFamily) {
+            const requestedCard = cards.find(card => card.dataset.family === requestedFamily.toLowerCase());
+            if (requestedCard) window.setTimeout(() => openProgramDetails(requestedCard), 180);
+        }
     }
 
     function openBatchChooser(cards) {
@@ -2578,6 +2598,19 @@ if ($barangay_summary_result) {
     function openProgramDetails(element) {
         const action = element.getAttribute('data-action');
         if (action === 'none') return;
+        if (action === 'unavailable') {
+            const modal = document.getElementById('statusModal');
+            const title = element.getAttribute('data-title') || 'Program';
+            const icon = document.getElementById('statusIcon');
+            icon.className = 'modal-icon';
+            icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>';
+            document.getElementById('statusModalTitle').textContent = 'No Batches Available';
+            document.getElementById('statusModalTitle').style.color = 'var(--green-dark)';
+            document.getElementById('statusModalBody').innerHTML = `<div style="text-align:center;"><h3 style="color:var(--green-dark);font-size:17px;margin-bottom:10px;font-weight:800;">${escapeHtml(title)} remains a PESO program</h3><p style="font-size:14px;color:#444;line-height:1.6;">There is no active application batch for this program right now. Please check again later for an official schedule, eligibility rules, and requirements.</p></div>`;
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            return;
+        }
         if (action === 'status') {
             viewStatus(
                 (element.getAttribute('data-status') || '').trim().toLowerCase(),

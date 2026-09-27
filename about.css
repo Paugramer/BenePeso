@@ -1672,7 +1672,7 @@ body {
 .about-page .about-hero-secondary { background: rgba(255, 255, 255, .1); backdrop-filter: blur(8px); }
 .about-page .about-hero-primary:hover,
 .about-page .about-hero-secondary:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, .78); background: #116844; }
-.about-page .about-hero-primary span { font-size: 17px; transition: transform .2s ease; }
+.about-page .about-hero-primary span { display: inline-grid; width: 18px; height: 18px; place-items: center; font-size: 17px; line-height: 1; transition: transform .2s ease; }
 .about-page .about-hero-primary:hover span { transform: translateX(3px); }
 
 .about-page .about-hero-assurance {
@@ -1739,6 +1739,8 @@ body {
 
 /* About-page activity gallery, statistics, and location refinements V16. */
 .about-page .stat-item { gap: 7px; }
+.about-page .stat-service-title { color: #063d2b; font-size: 15px; line-height: 1.25; text-align: center; }
+.about-page .stat-service-title + .stat-label { max-width: 190px; letter-spacing: 0; line-height: 1.45; text-transform: none; }
 
 .about-page .stat-icon {
     width: 42px;
@@ -1828,6 +1830,8 @@ body {
 
 .about-page .activity-gallery-frame::before { left: 0; background: linear-gradient(90deg, #f4f8f6, transparent); }
 .about-page .activity-gallery-frame::after { right: 0; background: linear-gradient(-90deg, #f4f8f6, transparent); }
+.about-page .activity-gallery-frame::before,
+.about-page .activity-gallery-frame::after { display: none; }
 
 .about-page .activity-gallery-track {
     display: flex;

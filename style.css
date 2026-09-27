@@ -1812,9 +1812,10 @@ body.auth-page.auth-page-leaving .box {
   }
 }
 .privacy-acknowledgment {
-  display: flex;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
   align-items: flex-start;
-  gap: 10px;
+  column-gap: 7px;
   margin: 18px 0 4px;
   padding: 12px 14px;
   border: 1px solid rgba(31, 77, 56, 0.18);
@@ -1826,6 +1827,7 @@ body.auth-page.auth-page-leaving .box {
   text-align: left;
 }
 .privacy-acknowledgment input { width: 16px; height: 16px; margin-top: 2px; flex: 0 0 auto; accent-color: #1f6a49; }
+.privacy-acknowledgment > span { min-width: 0; margin: 0; letter-spacing: 0; line-height: 1.5; text-transform: none; }
 .privacy-acknowledgment a { color: #17633f; font-weight: 700; text-decoration: underline; }
 .privacy-notice-link {
   padding: 0;

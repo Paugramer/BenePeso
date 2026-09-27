@@ -32,7 +32,7 @@ if ($res && $res->num_rows === 1) {
     $first_char = !empty($fn) ? strtoupper(substr($fn, 0, 1)) : "U";
     $profile_filename = basename((string)($user_data['profile_pic'] ?? ''));
     if ($profile_filename !== '' && is_file(__DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $profile_filename)) {
-        $user_profile_src = 'uploads/' . rawurlencode($profile_filename);
+        $user_profile_src = 'user_avatar.php';
     }
 }
 

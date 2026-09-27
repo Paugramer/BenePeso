@@ -629,6 +629,7 @@ body.auth-page::before {
 }
 
 .auth-page .auth-turnstile-state[data-state="success"] { color: #12613e; }
+.auth-page .auth-turnstile-state[data-state="idle"] .auth-turnstile-spinner { display: none; }
 .auth-page .auth-turnstile-state[data-state="success"] .auth-turnstile-spinner {
   border: 0;
   animation: none;

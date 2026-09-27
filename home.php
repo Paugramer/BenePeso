@@ -1,6 +1,7 @@
 <?php
 require "auth.php"; // This handles session_start() and the routing logic
 require "db.php";
+require_once __DIR__ . '/program_catalog.php';
 check_user_role("user"); // Protects this page for standard users only
 
 // If they pass all checks, they are a user. Continue loading page...
@@ -42,7 +43,7 @@ if ($res && $res->num_rows === 1) {
 
     $profile_filename = basename((string)($row['profile_pic'] ?? ''));
     if ($profile_filename !== '' && is_file(__DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $profile_filename)) {
-        $user_profile_src = 'uploads/' . rawurlencode($profile_filename);
+        $user_profile_src = 'user_avatar.php';
     }
 }
 
@@ -94,6 +95,17 @@ try {
     if ($advisoryQuery) $official_advisory = $advisoryQuery->fetch_assoc() ?: null;
 } catch (Throwable $e) {
     $has_programs_table = false;
+}
+
+$home_program_families = [];
+foreach ($programs as $program) {
+    $family = benepeso_program_family_key((string)($program['program_name'] ?? ''));
+    if ($family !== '') $home_program_families[$family] = true;
+}
+foreach (benepeso_program_catalog() as $family => $catalog_program) {
+    if (!isset($home_program_families[$family])) {
+        $programs[] = benepeso_unavailable_program($family, $catalog_program);
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -357,18 +369,19 @@ try {
             <div class="program-heading-copy">
                 <div class="program-heading-meta">
                     <span class="home-section-eyebrow">Official PESO directory</span>
-                    <span class="program-listing-count" aria-label="<?= count($programs) ?> featured open programs"><strong><?= count($programs) ?></strong> Featured</span>
+                    <span class="program-listing-count" aria-label="<?= count($programs) ?> PESO programs"><strong><?= count($programs) ?></strong> Programs</span>
                 </div>
-                <h2 class="area-title" id="homeProgramsTitle">Available Programs</h2>
-                <p class="area-sub">Current and upcoming PESO opportunities that are still accepting beneficiaries.</p>
+                <h2 class="area-title" id="homeProgramsTitle">PESO Programs</h2>
+                <p class="area-sub">Explore each service and check whether an application batch is currently available.</p>
             </div>
             <a class="see-more" href="programs.php">Review directory <span aria-hidden="true">&rarr;</span></a>
         </div>
 
         <div class="program-list">
-            <?php if ($has_programs_table && count($programs) > 0): ?>
+            <?php if (count($programs) > 0): ?>
                 <?php foreach($programs as $p): ?>
-                    <a href="programs.php?program_id=<?php echo (int)$p["program_id"]; ?>" class="program-card reveal">
+                    <?php $program_available = empty($p['catalog_only']); ?>
+                    <a href="<?= $program_available ? 'programs.php?program_id=' . (int)$p['program_id'] : 'programs.php?family=' . rawurlencode((string)$p['program_family']) ?>" class="program-card<?= !$program_available ? ' program-card--unavailable' : '' ?> reveal">
                         <?php
                             $program_title = trim($p["program_name"] ?? "Program");
                             $program_key = strtolower($program_title);
@@ -403,7 +416,7 @@ try {
                                         <svg viewBox="0 0 24 24"><path d="M6 8h12l1 12H5L6 8Z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2M9 13h6"></path></svg>
                                     <?php endif; ?>
                             </span>
-                            <span class="home-program-status<?= $program_is_upcoming ? ' is-upcoming' : '' ?>"><i aria-hidden="true"></i> <?= $program_is_upcoming ? 'Coming soon' : 'Open now' ?></span>
+                            <span class="home-program-status<?= $program_is_upcoming || !$program_available ? ' is-upcoming' : '' ?>"><i aria-hidden="true"></i> <?= !$program_available ? 'No active batch' : ($program_is_upcoming ? 'Coming soon' : 'Open now') ?></span>
                         </div>
 
                         <h3 class="program-title"><?php echo htmlspecialchars($program_title); ?></h3>
@@ -415,12 +428,12 @@ try {
                         </p>
 
                         <div class="home-program-meta">
-                            <span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"></path></svg><?php echo !empty($p["end_date"]) && $p["end_date"] !== '0000-00-00'
+                            <span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"></path></svg><?php echo !$program_available ? 'Next schedule TBA' : (!empty($p["end_date"]) && $p["end_date"] !== '0000-00-00'
                                 ? 'Open until ' . htmlspecialchars(date("M d, Y", strtotime($p["end_date"])))
-                                : (!empty($p["start_date"]) ? 'Starts ' . htmlspecialchars(date("M d, Y", strtotime($p["start_date"]))) : "Schedule available"); ?></span>
+                                : (!empty($p["start_date"]) ? 'Starts ' . htmlspecialchars(date("M d, Y", strtotime($p["start_date"]))) : "Schedule available")); ?></span>
                             <span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 21s7-5 7-12a7 7 0 1 0-14 0c0 7 7 12 7 12Z"></path><circle cx="12" cy="9" r="2"></circle></svg>PESO Vinzons</span>
                         </div>
-                        <div class="program-btn">View program details <span aria-hidden="true">&rarr;</span></div>
+                        <div class="program-btn"><?= $program_available ? 'View program details' : 'Check batch availability' ?> <span aria-hidden="true">&rarr;</span></div>
                     </a>
                 <?php endforeach; ?>
             <?php else: ?>

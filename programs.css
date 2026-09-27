@@ -2300,9 +2300,10 @@ input[type="number"] { -moz-appearance: textfield; }
     .notice-title { font-size: 21px; }
 }
 .privacy-acknowledgment {
-  display: flex;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
+  column-gap: 7px;
   min-height: 58px;
   margin: 10px 0 0;
   padding: 13px 15px;
@@ -2315,6 +2316,7 @@ input[type="number"] { -moz-appearance: textfield; }
   line-height: 1.5;
 }
 .privacy-acknowledgment input { width: 16px; height: 16px; margin: 0; flex: 0 0 auto; accent-color: #1f6a49; }
+.privacy-acknowledgment > span { min-width: 0; margin: 0; letter-spacing: 0; line-height: 1.5; text-transform: none; }
 .privacy-acknowledgment a { color: #17633f; font-weight: 700; text-decoration: underline; }
 
 #tupad-step-3 .tupad-fitness-field {

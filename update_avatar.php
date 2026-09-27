@@ -40,6 +40,7 @@ $destination = $uploadDirectory . DIRECTORY_SEPARATOR . $filename;
 if (!move_uploaded_file($upload['tmp_name'], $destination)) {
     avatar_return('Profile picture could not be saved. Please try again.');
 }
+@chmod($destination, 0644);
 
 $stmt = $conn->prepare('SELECT profile_pic FROM users WHERE user_id = ? LIMIT 1');
 $userId = (int)$_SESSION['user_id'];

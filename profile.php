@@ -63,7 +63,7 @@ $basic_name = trim($fn . " " . $ln);
 $stored_profile_pic = basename(trim((string)($user['profile_pic'] ?? '')));
 $stored_profile_path = $stored_profile_pic !== '' ? __DIR__ . '/uploads/' . $stored_profile_pic : '';
 $profile_pic = $stored_profile_path !== '' && is_file($stored_profile_path)
-    ? 'uploads/' . htmlspecialchars($stored_profile_pic, ENT_QUOTES, 'UTF-8')
+    ? 'user_avatar.php'
     : 'img/default_user.svg';
 $first_char = !empty($fn) ? strtoupper(substr($fn, 0, 1)) : "U";
 

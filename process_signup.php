@@ -289,6 +289,9 @@ if ($profile_upload !== null) {
         header('Location: signup.php');
         exit();
     }
+    // Files renamed from a temporary directory can retain restrictive modes on
+    // shared hosting. Keep uploaded images readable by the web process.
+    @chmod($uploaded_profile_path, 0644);
 }
 
 $hash = password_hash($google_registration ? bin2hex(random_bytes(32)) : $password, PASSWORD_DEFAULT);
