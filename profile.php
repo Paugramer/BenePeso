@@ -865,10 +865,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    document.getElementById('profileForm')?.addEventListener('submit', function() {
-        profileHasUnsavedChanges = false;
-    });
-
     document.querySelectorAll('#profileForm .form-input:not(.disabled-input)').forEach(field => {
         field.addEventListener('input', updateProfileDirtyState);
         field.addEventListener('change', updateProfileDirtyState);

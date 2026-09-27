@@ -1,7 +1,8 @@
 <?php
-require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth.php';
 auth_enable_csrf_form_injection();
 require "db.php";
+check_user_role('admin');
 require_once "beneficiary_choices.php";
 require_once "email_helper.php"; 
 require_once "program_eligibility_helper.php";
@@ -26,14 +27,6 @@ if (file_exists("functions.php")) {
 
 if (!isset($conn) || !($conn instanceof mysqli)) {
   die("Database connection not found. Please check db.php");
-}
-
-/* ==========================================
-   PROFESSIONAL FIX: Unified Admin Role Check
-========================================== */
-if (!isset($_SESSION["admin_id"])) {
-  header("Location: login.php");
-  exit();
 }
 
 $admin_id = (int) $_SESSION["admin_id"];

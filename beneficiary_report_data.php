@@ -1,18 +1,18 @@
 <?php
-require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/spes_lifecycle_helper.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: private, no-store, max-age=0');
 
-$isAdmin = auth_has_role('admin');
-$isStaff = auth_has_role('peso_staff');
-if (!$isAdmin && !$isStaff) {
+$activeRole = auth_first_active_role(['admin', 'peso_staff']);
+if ($activeRole === null) {
     http_response_code(401);
     echo json_encode(['ok' => false, 'message' => 'Your session has expired. Please sign in again.']);
     exit;
 }
+$isAdmin = $activeRole === 'admin';
 
 $programName = trim((string)($_GET['program_name'] ?? ''));
 if ($programName === '' || mb_strlen($programName) > 120) {

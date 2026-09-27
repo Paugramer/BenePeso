@@ -1,7 +1,8 @@
 <?php
-require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth.php';
 auth_enable_csrf_form_injection();
 require "db.php";
+check_user_role('admin');
 require_once "batch_code_helper.php";
 require_once "program_eligibility_helper.php";
 require_once "tupad_category_helper.php";
@@ -29,7 +30,6 @@ if (!function_exists('time_ago')) {
     }
 }
 
-if (!isset($_SESSION["admin_id"])) { header("Location: login.php"); exit(); }
 sync_program_statuses($conn);
 
 $admin_id = (int)$_SESSION["admin_id"];
@@ -206,6 +206,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
         if (!valid_batch_date_range($start_date, $end_date)) {
             $_SESSION["flash"] = "The end date must be the same as or later than the start date.";
+            $_SESSION["flash_type"] = "error";
+            $redirect = $active_program ? "?program=".urlencode($active_program) : "";
+            header("Location: admin_program.php" . $redirect); exit();
+        }
+
+        $approvedCountStmt = $conn->prepare("SELECT COUNT(*) AS approved_count FROM beneficiaries WHERE program_id = ? AND approval_status = 'Approved'");
+        $approvedCountStmt->bind_param('i', $pid);
+        $approvedCountStmt->execute();
+        $approvedCount = (int)($approvedCountStmt->get_result()->fetch_assoc()['approved_count'] ?? 0);
+        $approvedCountStmt->close();
+        if ($slots < $approvedCount) {
+            $_SESSION["flash"] = "This batch already has {$approvedCount} approved beneficiaries. Slots cannot be reduced below that count.";
             $_SESSION["flash_type"] = "error";
             $redirect = $active_program ? "?program=".urlencode($active_program) : "";
             header("Location: admin_program.php" . $redirect); exit();

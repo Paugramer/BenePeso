@@ -1,7 +1,8 @@
 <?php
-require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth.php';
 auth_enable_csrf_form_injection();
 require "db.php";
+check_user_role('admin');
 
 function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES, "UTF-8"); }
 function e($v){ return h($v); }
@@ -9,11 +10,6 @@ function e($v){ return h($v); }
 function navClass($fileName){
     $current = basename($_SERVER["PHP_SELF"]);
     return ($current === $fileName) ? "nav-item active" : "nav-item";
-}
-
-if (!isset($_SESSION["admin_id"])) {
-    header("Location: login.php");
-    exit();
 }
 
 $admin_id = (int)$_SESSION["admin_id"];

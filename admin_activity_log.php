@@ -1,11 +1,7 @@
 <?php
-require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth.php';
 require "db.php";
-
-if (!isset($_SESSION["admin_id"])) {
-    header("Location: login.php");
-    exit();
-}
+check_user_role('admin');
 
 $admin_id = (int)$_SESSION["admin_id"];
 $admin_name = "PESO Vinzons";
@@ -27,6 +23,11 @@ function buildQuery(array $overrides = []) {
     $query = array_merge($_GET, $overrides);
     foreach ($query as $k => $v) { if ($v === null || $v === "") unset($query[$k]); }
     return "?" . http_build_query($query);
+}
+
+function activityCsvValue($value): string {
+    $value = (string)($value ?? '');
+    return preg_match('/^[=+\-@]/', $value) ? "'" . $value : $value;
 }
 
 $total_logs = $conn->query("SELECT COUNT(*) as c FROM activity_logs")->fetch_assoc()['c'] ?? 0;
@@ -88,6 +89,12 @@ if ($filter_module !== '') {
     }
 }
 
+if ($filter_action !== '') {
+    $whereParts[] = "action_type = ?";
+    $params[] = $filter_action;
+    $types .= "s";
+}
+
 if ($date_from !== '') {
     $whereParts[] = "DATE(created_at) >= ?";
     $params[] = $date_from;
@@ -113,7 +120,9 @@ if (($_GET['export'] ?? '') === 'csv') {
     $output = fopen('php://output', 'w');
     fwrite($output, "\xEF\xBB\xBF");
     fputcsv($output, ['Date and Time', 'Actor', 'Role', 'Module', 'Action', 'Target', 'IP Address', 'Description']);
-    while ($exportRow = $exportResult->fetch_assoc()) fputcsv($output, $exportRow);
+    while ($exportRow = $exportResult->fetch_assoc()) {
+        fputcsv($output, array_map('activityCsvValue', array_values($exportRow)));
+    }
     fclose($output);
     exit();
 }
@@ -148,12 +157,6 @@ if ($staff_name_result) {
         $resolved = trim(($staff_row['first_name'] ?? '') . ' ' . ($staff_row['last_name'] ?? ''));
         if ($resolved !== '') $staff_names[(int)$staff_row['staff_id']] = $resolved;
     }
-}
-
-if ($filter_action !== '') {
-    $whereParts[] = "action_type = ?";
-    $params[] = $filter_action;
-    $types .= "s";
 }
 
 $clean_modules = [

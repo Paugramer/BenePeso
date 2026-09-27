@@ -1,7 +1,13 @@
 Options -Indexes
 
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Development metadata and runtime artifacts must never be web-accessible.
+    RewriteRule ^(?:\.git|storage)(?:/|$) - [R=404,L,NC]
+</IfModule>
+
 # Never serve local secrets, repository metadata, database dumps, or archives.
-<FilesMatch "(^\.env(?:\..*)?$|^\.git|\.(?:sql|zip|bak|ini|log)$)">
+<FilesMatch "(^\.env(?:\..*)?$|^\.git|^composer\.(?:json|lock)$|\.(?:sql|zip|bak|ini|log)$)">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
