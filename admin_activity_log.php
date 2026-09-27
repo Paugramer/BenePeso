@@ -185,7 +185,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="admin_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=20">
+<link rel="stylesheet" href="system_mobile.css?v=21">
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 </head>
@@ -400,7 +400,7 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
                                         $pillClass = "pill-red";
                                     }
                                 ?>
-                                <tr class="table-row-animate activity-log-row" tabindex="0" data-date="<?= h(date('M d, Y h:i A', strtotime($row['created_at']))) ?>" data-actor="<?= $actor_name ?>" data-role="<?= $display_role ?>" data-module="<?= $module_name ?>" data-action="<?= $action_title ?>" data-target="<?= h($row['target_name'] ?? 'Not specified') ?>" data-ip="<?= h($row['ip_address'] ?? 'Not recorded') ?>" data-description="<?= $desc ?>">
+                                <tr class="table-row-animate activity-log-row" tabindex="0" data-date="<?= h(date('M d, Y', strtotime($row['created_at']))) ?>" data-time="<?= h(date('h:i A', strtotime($row['created_at']))) ?>" data-actor="<?= $actor_name ?>" data-role="<?= $display_role ?>" data-module="<?= $module_name ?>" data-action="<?= $action_title ?>" data-target="<?= h($row['target_name'] ?? 'Not specified') ?>" data-ip="<?= h(trim((string) ($row['ip_address'] ?? ''))) ?>" data-description="<?= $desc ?>">
                                     <td data-label="Date &amp; time">
                                         <div style="font-weight: 800; color: var(--text); font-size: 13px;"><?= date("M d, Y", strtotime($row['created_at'])) ?> <span style="color:var(--muted); font-weight:600; font-size:12px; margin-left:4px;">&bull; <?= date("h:i A", strtotime($row['created_at'])) ?></span></div>
                                     </td>
@@ -458,11 +458,12 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
             <button type="button" class="activity-detail-close" data-close-activity-modal aria-label="Close details"><i class="ph ph-x"></i></button>
         </header>
         <div class="activity-detail-body"><div class="activity-detail-grid">
-            <div><span>Date and time</span><strong data-detail="date"></strong></div>
+            <div><span>Date</span><strong data-detail="date"></strong></div>
+            <div><span>Time</span><strong data-detail="time"></strong></div>
             <div><span>Actor</span><strong data-detail="actor"></strong><small data-detail="role"></small></div>
             <div><span>Module</span><strong data-detail="module"></strong></div>
             <div><span>Action</span><strong data-detail="action"></strong></div>
-            <div class="activity-detail-wide"><span>IP address</span><strong data-detail="ip"></strong></div>
+            <div class="activity-detail-wide" data-ip-detail-card hidden><span>IP address</span><strong data-detail="ip"></strong></div>
             <div class="activity-detail-wide"><span>Target</span><strong data-detail="target"></strong></div>
             <div class="activity-detail-wide"><span>Description</span><p data-detail="description"></p></div>
         </div></div>
@@ -510,10 +511,15 @@ if ($action_result) while ($action_row = $action_result->fetch_assoc()) $action_
         const closeDetail = () => { detailModal.classList.remove('show'); detailModal.setAttribute('aria-hidden', 'true'); };
         document.querySelectorAll('.activity-log-row').forEach(row => {
             const openDetail = () => {
-                ['date','actor','role','module','action','target','ip','description'].forEach(key => {
+                ['date','time','actor','role','module','action','target','description'].forEach(key => {
                     const node = detailModal.querySelector(`[data-detail="${key}"]`);
                     if (node) node.textContent = row.dataset[key] || 'Not specified';
                 });
+                const ipAddress = (row.dataset.ip || '').trim();
+                const ipCard = detailModal.querySelector('[data-ip-detail-card]');
+                const ipValue = detailModal.querySelector('[data-detail="ip"]');
+                if (ipCard) ipCard.hidden = !ipAddress;
+                if (ipValue) ipValue.textContent = ipAddress;
                 detailModal.classList.add('show');
                 detailModal.setAttribute('aria-hidden', 'false');
                 detailModal.querySelector('.activity-detail-close').focus();

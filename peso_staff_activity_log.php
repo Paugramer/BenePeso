@@ -46,6 +46,18 @@ function format_activity_datetime($value): string {
   return $ts ? date('M d, Y', $ts) . ' • ' . date('h:i A', $ts) : (string)$value;
 }
 
+function format_activity_date($value): string {
+  if (!$value) return 'Not specified';
+  $ts = strtotime((string)$value);
+  return $ts ? date('M d, Y', $ts) : (string)$value;
+}
+
+function format_activity_time($value): string {
+  if (!$value) return 'Not specified';
+  $ts = strtotime((string)$value);
+  return $ts ? date('h:i A', $ts) : 'Not specified';
+}
+
 function activity_label($value): string {
   $raw = trim((string)$value);
   $key = strtolower($raw);
@@ -257,7 +269,7 @@ if ($stmt) {
 <link rel="stylesheet" href="frontend_polish.css?v=20260921">
 <link rel="stylesheet" href="peso_staff_responsive.css?v=23">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
-<link rel="stylesheet" href="system_mobile.css?v=20">
+<link rel="stylesheet" href="system_mobile.css?v=21">
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 </head>
@@ -417,7 +429,7 @@ if ($stmt) {
             </thead>
             <tbody>
               <?php foreach ($logs as $log): ?>
-                <tr class="activity-log-row" tabindex="0" data-date="<?php echo h(format_activity_datetime($log['created_at'] ?? '')); ?>" data-actor="<?php echo h($staff_name); ?>" data-role="PESO Staff" data-module="<?php echo h(activity_label($log['module_name'] ?? '')); ?>" data-action="<?php echo h(activity_label($log['action_type'] ?? '')); ?>" data-target="<?php echo h($log['target_name'] ?? 'Not specified'); ?>" data-description="<?php echo h($log['description'] ?? 'Not specified'); ?>">
+                <tr class="activity-log-row" tabindex="0" data-date="<?php echo h(format_activity_date($log['created_at'] ?? '')); ?>" data-time="<?php echo h(format_activity_time($log['created_at'] ?? '')); ?>" data-actor="<?php echo h($staff_name); ?>" data-role="PESO Staff" data-module="<?php echo h(activity_label($log['module_name'] ?? '')); ?>" data-action="<?php echo h(activity_label($log['action_type'] ?? '')); ?>" data-target="<?php echo h($log['target_name'] ?? 'Not specified'); ?>" data-description="<?php echo h($log['description'] ?? 'Not specified'); ?>">
                   <td class="datetime-col" data-label="Date &amp; time"><?php echo h(format_activity_datetime($log["created_at"] ?? "")); ?></td>
                   <td class="module-col text-center" data-label="Module"><?php echo h($log["module_name"] ?? "—"); ?></td>
                   
@@ -466,7 +478,7 @@ if ($stmt) {
   <div class="activity-detail-backdrop" data-close-activity-modal></div>
   <section class="activity-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="activityDetailTitle">
     <header class="activity-detail-head"><div class="activity-detail-icon"><i class="ph ph-clock-counter-clockwise"></i></div><div><div class="activity-detail-kicker">MY ACTIVITY</div><h2 id="activityDetailTitle">Activity details</h2></div><button type="button" class="activity-detail-close" data-close-activity-modal aria-label="Close details"><i class="ph ph-x"></i></button></header>
-    <div class="activity-detail-body"><div class="activity-detail-grid"><div><span>Date and time</span><strong data-detail="date"></strong></div><div><span>Actor</span><strong data-detail="actor"></strong><small data-detail="role"></small></div><div><span>Module</span><strong data-detail="module"></strong></div><div><span>Action</span><strong data-detail="action"></strong></div><div class="activity-detail-wide"><span>Target</span><strong data-detail="target"></strong></div><div class="activity-detail-wide"><span>Description</span><p data-detail="description"></p></div></div></div>
+    <div class="activity-detail-body"><div class="activity-detail-grid"><div><span>Date</span><strong data-detail="date"></strong></div><div><span>Time</span><strong data-detail="time"></strong></div><div><span>Actor</span><strong data-detail="actor"></strong><small data-detail="role"></small></div><div><span>Module</span><strong data-detail="module"></strong></div><div><span>Action</span><strong data-detail="action"></strong></div><div class="activity-detail-wide"><span>Target</span><strong data-detail="target"></strong></div><div class="activity-detail-wide"><span>Description</span><p data-detail="description"></p></div></div></div>
     <footer class="activity-detail-footer"><button type="button" class="activity-detail-done" data-close-activity-modal>Done</button></footer>
   </section>
 </div>
@@ -528,7 +540,7 @@ if ($stmt) {
         actionPill.appendChild(document.createTextNode(' ' + (row.dataset.action || 'Not specified')));
       }
       const openDetail = () => {
-        ['date','actor','role','module','action','target','description'].forEach(key => {
+        ['date','time','actor','role','module','action','target','description'].forEach(key => {
           const node = detailModal.querySelector(`[data-detail="${key}"]`);
           if (node) node.textContent = row.dataset[key] || 'Not specified';
         });
