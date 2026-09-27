@@ -1650,7 +1650,7 @@ body {
 .about-page .about-hero-secondary {
     min-height: 46px;
     display: inline-flex;
-    gap: 10px;
+    gap: 7px;
     padding: 11px 18px;
     align-items: center;
     justify-content: center;
@@ -1672,7 +1672,8 @@ body {
 .about-page .about-hero-secondary { background: rgba(255, 255, 255, .1); backdrop-filter: blur(8px); }
 .about-page .about-hero-primary:hover,
 .about-page .about-hero-secondary:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, .78); background: #116844; }
-.about-page .about-hero-primary span { position: static; display: inline-grid; width: 18px; height: 18px; flex: 0 0 18px; place-items: center; font-size: 17px; line-height: 1; transform: none; transition: transform .2s ease; }
+.about-page .about-hero-primary span { position: static; display: inline-grid; width: 18px; height: 18px; flex: 0 0 18px; place-items: center; line-height: 1; transform: none; transition: transform .2s ease; }
+.about-page .about-hero-primary span svg { display: block; width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .about-page .about-hero-primary:hover span { transform: translateX(3px); }
 
 .about-page .about-hero-assurance {

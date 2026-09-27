@@ -149,7 +149,7 @@ $community_activities = [
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="about.css?v=21">
+    <link rel="stylesheet" href="about.css?v=22">
     <link rel="stylesheet" href="frontend_polish.css?v=20260921">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -228,7 +228,7 @@ $community_activities = [
                     One trusted resident portal for official PESO programs, secure applications, validated status updates, and clear guidance from the local employment service office.
                 </p>
                 <div class="about-hero-actions" aria-label="About page actions">
-                    <a class="about-hero-primary" href="programs.php">Explore Programs <span aria-hidden="true">&rarr;</span></a>
+                    <a class="about-hero-primary" href="programs.php">Explore Programs <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5"></path></svg></span></a>
                     <a class="about-hero-secondary" href="#peso-office">Visit Our Office</a>
                 </div>
                 <div class="about-hero-assurance"><span aria-hidden="true"></span> Official PESO Vinzons information and resident services</div>

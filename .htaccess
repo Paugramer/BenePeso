@@ -4,6 +4,21 @@ Options -Indexes
     RewriteEngine On
     # Development metadata and runtime artifacts must never be web-accessible.
     RewriteRule ^(?:\.git|storage)(?:/|$) - [R=404,L,NC]
+
+    # Keep browser-facing page URLs clean without disrupting POST requests.
+    RewriteCond %{REQUEST_METHOD} ^(?:GET|HEAD)$
+    RewriteCond %{THE_REQUEST} \s/+(.*/)?index\.php(?:[?\s]) [NC]
+    RewriteRule ^index\.php$ /%1 [R=301,L,NE]
+
+    RewriteCond %{REQUEST_METHOD} ^(?:GET|HEAD)$
+    RewriteCond %{THE_REQUEST} \s/+(.+?)\.php(?:[?\s]) [NC]
+    RewriteRule ^(.+)\.php$ /%1 [R=301,L,NE]
+
+    # Resolve extensionless requests internally to their existing PHP pages.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^(.+?)/?$ $1.php [END,QSA]
 </IfModule>
 
 # Never serve local secrets, repository metadata, database dumps, or archives.
