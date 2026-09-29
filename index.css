@@ -2784,14 +2784,28 @@ html { scroll-behavior: smooth; }
 
 /* The directory owns the only search/filter control on the public page. */
 .results-area .public-directory-search {
+    position: relative;
+    z-index: 30;
     max-width: none;
     margin: 0 0 14px;
+    overflow: visible;
     border: 1px solid #d1e2d9;
     border-radius: 13px;
     background: rgba(255,255,255,.96);
     box-shadow: 0 12px 30px rgba(10,61,41,.08);
 }
 .results-area .public-directory-search .input-wrapper { position: relative; }
+.results-area .public-directory-search .public-schedule-select { z-index: 2; }
+.results-area .public-directory-search .public-schedule-menu {
+    width: min(310px, calc(100vw - 28px));
+    padding: 6px;
+    border-radius: 12px;
+    box-shadow: 0 14px 32px rgba(16,65,45,.16);
+}
+.results-area .public-directory-search .public-schedule-menu [role="option"] {
+    min-height: 50px;
+    padding: 8px 9px;
+}
 .results-area .public-directory-search input,
 .results-area .public-directory-search .public-schedule-toggle,
 .results-area .public-directory-search .btn-main { min-height: 48px; height: 48px; }

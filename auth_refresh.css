@@ -588,10 +588,8 @@ body.auth-page::before {
 }
 
 .auth-page #loginTurnstile {
-  width: 300px;
-  max-width: 100%;
+  width: 100%;
   min-height: 0;
-  margin-inline: auto;
 }
 
 .auth-page #loginTurnstile[hidden] { display: none !important; }
@@ -600,7 +598,10 @@ body.auth-page::before {
 .auth-page .auth-turnstile--managed.has-widget .auth-turnstile-state { display: none; }
 
 .auth-page #loginTurnstile > div,
-.auth-page #loginTurnstile iframe { max-width: 100% !important; }
+.auth-page #loginTurnstile iframe {
+  width: 100% !important;
+  max-width: 100% !important;
+}
 
 .auth-page .auth-turnstile-state {
   width: 100%;
