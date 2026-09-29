@@ -98,8 +98,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $end_date = $_POST["end_date"];
         $venue = trim($_POST["venue"] ?? "PESO Vinzons");
         $tupadCategory = submitted_tupad_category($_POST, $title);
-        [$batchEligibleSex, $batchMinimumAge, $batchMaximumAge, $batchOnePerHousehold] = clean_eligibility_rules($_POST);
-
         if ($title === '' || $slots <= 0) {
             $_SESSION["flash"] = "Select a valid program and enter at least one slot.";
             $_SESSION["flash_type"] = "error";
@@ -118,6 +116,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $_SESSION["flash_type"] = "error";
             header("Location: peso_staff_program.php"); exit();
         }
+        // Staff schedule the batch; eligibility remains controlled by the
+        // administrator-approved master program configuration.
+        [$batchEligibleSex, $batchMinimumAge, $batchMaximumAge, $batchOnePerHousehold] = clean_eligibility_rules($catData);
         
         $batchYear = batch_year_from_date($start_date);
         if (!acquire_batch_code_lock($conn, $batchYear)) {
@@ -209,7 +210,7 @@ if ($active_program) {
     <title>BENEPESO | PESO Staff Programs</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="peso_staff_program.css?v=20260905-card-responsive">
+    <link rel="stylesheet" href="peso_staff_program.css?v=20260929-eligibility-rules">
     <link rel="stylesheet" href="shared_sidebar.css">
 <link rel="stylesheet" href="program_filter_polish.css?v=8">
     <script src="program_filter_polish.js?v=2" defer></script>
@@ -636,10 +637,14 @@ if ($active_program) {
                 <div class="form-group"><label>End Date *</label><input type="date" name="end_date" class="batch-end-date" required><small class="date-range-help">Must be the same as or later than the start date.</small></div>
                 <div class="form-group"><label>Venue *</label><input type="text" name="venue" value="PESO Vinzons" required></div>
                 <div class="form-group"><label>Total Slots *</label><input type="number" name="slots" min="1" placeholder="e.g. 100" required></div>
-                <div class="form-group"><label>Eligible Sex *</label><select name="eligible_sex" required><option value="Any" <?php echo ($activeCategoryRules['eligible_sex'] ?? 'Any') === 'Any' ? 'selected' : ''; ?>>Any sex</option><option value="Male" <?php echo ($activeCategoryRules['eligible_sex'] ?? '') === 'Male' ? 'selected' : ''; ?>>Male only</option><option value="Female" <?php echo ($activeCategoryRules['eligible_sex'] ?? '') === 'Female' ? 'selected' : ''; ?>>Female only</option></select></div>
-                <div class="form-group"><label>Minimum Age *</label><input type="number" name="minimum_age" min="0" max="120" value="<?php echo (int)($activeCategoryRules['minimum_age'] ?? 18); ?>" required></div>
-                <div class="form-group"><label>Maximum Age</label><input type="number" name="maximum_age" min="0" max="120" value="<?php echo e($activeCategoryRules['maximum_age'] ?? ''); ?>" placeholder="No maximum"></div>
-                <label class="form-group span-2" style="display:flex;gap:9px;align-items:center"><input type="checkbox" name="one_per_household" value="1" style="width:auto" <?php echo !empty($activeCategoryRules['one_per_household']) ? 'checked' : ''; ?>> One pending or active beneficiary per household</label>
+                <div class="form-group span-2 batch-eligibility-summary" role="note" aria-label="Program eligibility applied to this batch">
+                    <div class="batch-eligibility-summary__head"><i class="ph ph-shield-check" aria-hidden="true"></i><span><strong>Program eligibility applies automatically</strong><small>These administrator-approved rules cannot be changed per batch.</small></span></div>
+                    <div class="batch-eligibility-summary__rules">
+                        <span><b>Sex</b><?php echo ($activeCategoryRules['eligible_sex'] ?? 'Any') === 'Any' ? 'Any sex (no restriction)' : e($activeCategoryRules['eligible_sex']) . ' only'; ?></span>
+                        <span><b>Age</b><?php echo (int)($activeCategoryRules['minimum_age'] ?? 18); ?><?php echo ($activeCategoryRules['maximum_age'] ?? '') !== '' && $activeCategoryRules['maximum_age'] !== null ? '&ndash;' . (int)$activeCategoryRules['maximum_age'] : '+'; ?></span>
+                        <span><b>Household</b><?php echo !empty($activeCategoryRules['one_per_household']) ? 'One active beneficiary' : 'No household limit'; ?></span>
+                    </div>
+                </div>
             </div>
 
             <div class="modal-actions">
