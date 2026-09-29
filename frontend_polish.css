@@ -887,16 +887,16 @@ html.bp-page-loading body {
 
 .bp-loader-visual {
   position: relative;
-  width: clamp(176px, 23vw, 218px);
-  height: 168px;
+  width: clamp(136px, 18vw, 168px);
+  height: 132px;
   display: grid;
   place-items: center;
 }
 
 .bp-loader-glow {
   position: absolute;
-  width: 142px;
-  height: 142px;
+  width: 108px;
+  height: 108px;
   border-radius: 50%;
   background: rgba(31, 122, 84, .1);
   animation: bp-loader-breathe 1.8s ease-in-out infinite;
@@ -1074,7 +1074,7 @@ html.bp-page-loading body {
 
 @media (max-width: 480px) {
   .bp-page-loader { gap: 9px; }
-  .bp-loader-visual { width: 184px; height: 150px; }
+  .bp-loader-visual { width: 124px; height: 108px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1134,12 +1134,12 @@ html.bp-action-loading body {
 
 .bp-action-visual {
   position: relative;
-  width: clamp(128px, 17vw, 154px);
-  height: clamp(128px, 17vw, 154px);
+  width: clamp(94px, 13vw, 112px);
+  height: clamp(94px, 13vw, 112px);
   display: grid;
   place-items: center;
   border: 1px solid color-mix(in srgb, var(--bp-action-color) 18%, white);
-  border-radius: 36%;
+  border-radius: 32%;
   color: var(--bp-action-color);
   background: radial-gradient(circle, #fff 0 50%, var(--bp-action-soft) 51% 100%);
   box-shadow: 0 19px 42px color-mix(in srgb, var(--bp-action-color) 16%, transparent);
@@ -1289,7 +1289,7 @@ html.bp-action-loading body {
 
 @media (max-width: 480px) {
   .bp-action-loader { gap: 11px; padding: 20px; }
-  .bp-action-visual { width: 126px; height: 126px; }
+  .bp-action-visual { width: 92px; height: 92px; }
   .bp-action-copy { width: min(310px, calc(100vw - 36px)); }
 }
 

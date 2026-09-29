@@ -430,7 +430,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 </style>
 <link rel="stylesheet" href="admin_accounts_polish.css?v=14">
-<link rel="stylesheet" href="frontend_polish.css?v=20260921">
+<link rel="stylesheet" href="frontend_polish.css?v=20260929">
 <link rel="stylesheet" href="admin_responsive.css?v=17">
 <link rel="stylesheet" href="system_mobile.css?v=24">
 <link rel="stylesheet" href="system_readability.css?v=1">

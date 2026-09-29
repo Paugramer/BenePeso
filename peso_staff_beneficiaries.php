@@ -1286,7 +1286,7 @@ if ($selectedProgramName !== "") {
       .spreadsheet-table th, .spreadsheet-table td { border: 1px solid #ccc; padding: 6px 3px; font-size: 9px; white-space: normal; overflow-wrap: anywhere; }
       .spreadsheet-table thead th { background: #e6f4ed; color: #0d2618; position: sticky; top: 0; z-index: 10; font-weight: 700;}
   </style>
-<link rel="stylesheet" href="frontend_polish.css?v=20260921">
+<link rel="stylesheet" href="frontend_polish.css?v=20260929">
   <link rel="stylesheet" href="peso_staff_responsive.css?v=24">
   <link rel="stylesheet" href="system_search_polish.css?v=1">
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">

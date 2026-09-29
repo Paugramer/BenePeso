@@ -165,7 +165,7 @@ if ($updated_stmt) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="home.css?v=17">
     
-    <link rel="stylesheet" href="frontend_polish.css?v=20260921">
+    <link rel="stylesheet" href="frontend_polish.css?v=20260929">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="index.css?v=36">
     <link rel="stylesheet" href="beneficiary_mobile.css?v=18">

@@ -1180,6 +1180,10 @@
     overflow-wrap: anywhere;
   }
 
+  .beneficiary-programs-page #applicationModal .wizard-step-indicator.is-current .wizard-number {
+    animation: beneficiaryWizardStepIn .36s cubic-bezier(.2, .8, .2, 1) both;
+  }
+
   /* About activity gallery: align the complete heading group, not only its
      text, and keep the photograph/card inside the phone content column. */
   .about-page .activity-gallery-heading {
@@ -1309,6 +1313,12 @@
     height: 7px !important;
     transform: translateY(-50%);
   }
+}
+
+@keyframes beneficiaryWizardStepIn {
+  0% { transform: scale(.82); }
+  65% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
 
 /* Paired signup fields fit comfortably from large-phone width upward. */
@@ -1554,5 +1564,234 @@
     scroll-behavior: auto !important;
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+
+/* Program dialogs: final phone cascade.
+ * These rules intentionally live last because this stylesheet is the mobile
+ * authority and earlier shared modal rules are broader than these two dialogs. */
+@media (max-width: 600px) {
+  .beneficiary-programs-page #programDetailsModal,
+  .beneficiary-programs-page #applicationModal {
+    padding: 8px !important;
+    align-items: flex-end !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-dialog,
+  .beneficiary-programs-page #applicationModal .modal-content {
+    width: calc(100% - 16px) !important;
+    height: calc(100dvh - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    box-sizing: border-box;
+    border-radius: 18px 18px 6px 6px !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-dialog {
+    overflow: hidden !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-split {
+    height: 100% !important;
+    max-height: none !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-identity {
+    grid-template-columns: 82px minmax(0, 1fr) !important;
+    gap: 12px !important;
+    padding: 15px 58px 15px 15px !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-image-wrap {
+    width: 82px !important;
+    height: 64px !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-content {
+    min-height: 0 !important;
+    overflow: hidden;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-scroll {
+    flex: 1 1 auto;
+    padding: 18px 15px 20px !important;
+    overscroll-behavior: contain;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-review-heading {
+    gap: 5px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-section {
+    margin-bottom: 18px !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-section h3 {
+    font-size: 15px !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-section > p {
+    font-size: 13px !important;
+    line-height: 1.65 !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-schedule-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-schedule-item {
+    min-height: 72px !important;
+    padding: 10px 8px !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-schedule-label {
+    font-size: 8px !important;
+    line-height: 1.35;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-schedule-value {
+    font-size: 11px !important;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-detail-list {
+    gap: 8px !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-detail-list li {
+    min-height: 46px;
+    padding: 11px 12px 11px 34px !important;
+    font-size: 12px;
+    line-height: 1.5 !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-detail-list li::before {
+    left: 14px !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .details-footer {
+    flex: 0 0 auto;
+    padding: 12px 15px max(12px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal #detAction .btn-primary {
+    min-height: 48px;
+    padding-inline: 14px;
+    white-space: normal;
+    line-height: 1.3;
+  }
+
+  .beneficiary-programs-page #applicationModal .modal-content {
+    padding: 17px 16px 0 !important;
+    overflow: hidden !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .application-modal-heading {
+    padding: 2px 48px 14px 4px !important;
+    text-align: left;
+  }
+
+  .beneficiary-programs-page #applicationModal .application-modal-heading h2 {
+    font-size: 24px !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .wizard-nav {
+    margin-inline: -16px !important;
+    padding: 12px 12px 13px !important;
+    overflow-x: auto !important;
+    scroll-padding-inline: 12px;
+  }
+
+  .beneficiary-programs-page #applicationModal .wizard-nav--scrollable .wizard-step-indicator {
+    min-width: 88px !important;
+    flex-basis: 88px !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .wizard-label {
+    min-height: 27px !important;
+    font-size: 9px !important;
+    line-height: 1.3 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .beneficiary-programs-page #applicationModal .application-progress-summary {
+    margin-inline: -16px !important;
+    padding: 10px 16px !important;
+    gap: 10px !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .application-progress-summary strong {
+    font-size: 10px !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .application-progress-summary span {
+    font-size: 9.5px !important;
+    line-height: 1.4;
+  }
+
+  .beneficiary-programs-page #applicationModal #multiStepForm {
+    margin: 0 -5px 0 0 !important;
+    padding: 16px 5px max(22px, env(safe-area-inset-bottom)) 0 !important;
+    scroll-padding-block: 16px 24px;
+    overscroll-behavior: contain;
+  }
+
+  .beneficiary-programs-page #applicationModal .form-grid {
+    gap: 14px 10px !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .form-group label {
+    font-size: 9.5px !important;
+    line-height: 1.4 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .beneficiary-programs-page #applicationModal .form-group input:not([type="checkbox"]):not([type="file"]),
+  .beneficiary-programs-page #applicationModal .form-group select,
+  .beneficiary-programs-page #applicationModal .form-group textarea {
+    min-height: 48px !important;
+    padding: 10px 11px !important;
+    font-size: 14px !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .form-actions {
+    gap: 10px !important;
+    margin-top: 22px !important;
+    padding-top: 14px !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .form-actions .btn-primary,
+  .beneficiary-programs-page #applicationModal .form-actions .btn-secondary {
+    min-height: 48px !important;
+    font-size: 12px !important;
+  }
+}
+
+@media (min-width: 341px) and (max-width: 600px) {
+  .beneficiary-programs-page #applicationModal .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .form-grid > .span-2,
+  .beneficiary-programs-page #applicationModal .form-grid > .mobile-wide,
+  .beneficiary-programs-page #applicationModal .form-grid > .section-title,
+  .beneficiary-programs-page #applicationModal .form-grid > .dynamic-table-wrap,
+  .beneficiary-programs-page #applicationModal .form-grid > .form-group:has(textarea),
+  .beneficiary-programs-page #applicationModal .form-grid > .form-group:has(input[type="file"]),
+  .beneficiary-programs-page #applicationModal .form-grid > .form-group:has(.checkbox-grid),
+  .beneficiary-programs-page #applicationModal .form-grid > .form-group:has(.dynamic-table-wrap) {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .beneficiary-programs-page #applicationModal .form-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .form-grid > * {
+    grid-column: 1 !important;
   }
 }

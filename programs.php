@@ -892,12 +892,12 @@ if ($barangay_summary_result) {
     
     <link rel="stylesheet" href="home.css?v=17">
     <link rel="stylesheet" href="programs.css?v=41">
-    <link rel="stylesheet" href="frontend_polish.css?v=20260921">
+    <link rel="stylesheet" href="frontend_polish.css?v=20260929">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=20">
     <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
@@ -3090,7 +3090,10 @@ if ($barangay_summary_result) {
 
     function showStep(step) {
         document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.wizard-step-indicator').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.wizard-step-indicator').forEach(el => {
+            el.classList.remove('active', 'is-current');
+            el.removeAttribute('aria-current');
+        });
         
         let targetStep = step === 1 ? document.getElementById('step-1') : document.getElementById(`${currentFormType}-step-${step}`);
         if(targetStep) targetStep.classList.add('active');
@@ -3110,13 +3113,18 @@ if ($barangay_summary_result) {
         const wizardNav = document.getElementById('wizardNav');
         const currentIndicator = document.getElementById(`ind-step-${step}`);
         if (wizardNav && currentIndicator) {
+            currentIndicator.classList.add('is-current');
+            currentIndicator.setAttribute('aria-current', 'step');
             window.requestAnimationFrame(() => {
-                const centeredPosition = currentIndicator.offsetLeft
-                    - ((wizardNav.clientWidth - currentIndicator.offsetWidth) / 2);
-                const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                wizardNav.scrollTo({
-                    left: Math.max(0, centeredPosition),
-                    behavior: reducedMotion ? 'auto' : 'smooth'
+                window.requestAnimationFrame(() => {
+                    const centeredPosition = currentIndicator.offsetLeft
+                        - ((wizardNav.clientWidth - currentIndicator.offsetWidth) / 2);
+                    const maxPosition = Math.max(0, wizardNav.scrollWidth - wizardNav.clientWidth);
+                    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                    wizardNav.scrollTo({
+                        left: Math.min(maxPosition, Math.max(0, centeredPosition)),
+                        behavior: reducedMotion ? 'auto' : 'smooth'
+                    });
                 });
             });
         }

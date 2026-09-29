@@ -300,7 +300,7 @@ if ($active_program) {
     <link rel="stylesheet" href="shared_sidebar.css">
 <link rel="stylesheet" href="program_filter_polish.css?v=8">
     <script src="program_filter_polish.js?v=2" defer></script>
-<link rel="stylesheet" href="frontend_polish.css?v=20260921">
+<link rel="stylesheet" href="frontend_polish.css?v=20260929">
 <link rel="stylesheet" href="admin_responsive.css?v=24">
 <link rel="stylesheet" href="system_search_polish.css?v=1">
 <link rel="stylesheet" href="system_mobile.css?v=24">
