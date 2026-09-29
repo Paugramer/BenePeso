@@ -897,7 +897,7 @@ if ($barangay_summary_result) {
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=24">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=25">
     <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
@@ -2334,8 +2334,9 @@ if ($barangay_summary_result) {
     
     let lastModalTrigger = null;
     document.addEventListener('click', event => {
-        if (event.target.closest('[onclick*="Modal"], [data-modal-target], .program-card')) {
-            lastModalTrigger = event.target.closest('button, a, .program-card');
+        const candidate = event.target.closest('[onclick*="Modal"], [data-modal-target], .program-card');
+        if (candidate && !candidate.closest('.modal')) {
+            lastModalTrigger = candidate.closest('button, a, .program-card');
         }
     }, true);
 
@@ -2349,6 +2350,7 @@ if ($barangay_summary_result) {
     function closeModal(id) {
         const modal = document.getElementById(id);
         if (!modal) return;
+        if (modal.contains(document.activeElement)) document.activeElement.blur();
         modal.classList.remove('show');
         modal.setAttribute('aria-hidden', 'true');
         if (id === 'alertModal' && noticeBackgroundModal) {
@@ -3033,6 +3035,7 @@ if ($barangay_summary_result) {
                 other.removeAttribute('required');
             }
         }
+        window.requestAnimationFrame(() => updateMobileGridFill(input.closest('.form-step')));
     }
 
     function toggleSpesGsisOther(select) {
@@ -3136,6 +3139,7 @@ if ($barangay_summary_result) {
         if (applicationStepStatus) applicationStepStatus.textContent = `Step ${step} of ${totalSteps} · ${currentLabel}`;
         const applicationForm = document.getElementById('multiStepForm');
         if (applicationForm) applicationForm.scrollTop = 0;
+        updateMobileGridFill(targetStep);
         updateWizardNavigationState();
 
         // Keep the current wizard step visible on narrow screens in both directions.
@@ -3157,6 +3161,36 @@ if ($barangay_summary_result) {
                 });
             });
         }
+    }
+
+    function updateMobileGridFill(stepContainer = document.querySelector('.form-step.active')) {
+        if (!stepContainer) return;
+        stepContainer.querySelectorAll(':scope > .form-grid').forEach(grid => {
+            const children = [...grid.children]
+                .map((child, index) => ({ child, index, order: Number.parseInt(window.getComputedStyle(child).order, 10) || 0 }))
+                .filter(item => !item.child.hidden && item.child.style.display !== 'none')
+                .sort((first, second) => first.order - second.order || first.index - second.index)
+                .map(item => item.child);
+            children.forEach(child => child.classList.remove('mobile-fill-row'));
+            let rowCandidates = [];
+            const finishGroup = () => {
+                if (rowCandidates.length % 2 === 1) rowCandidates[rowCandidates.length - 1]?.classList.add('mobile-fill-row');
+                rowCandidates = [];
+            };
+            children.forEach(child => {
+                const spansRow = child.classList.contains('span-2')
+                    || child.classList.contains('mobile-wide')
+                    || child.classList.contains('section-title')
+                    || child.classList.contains('dynamic-table-wrap')
+                    || child.matches('.form-group:has(textarea), .form-group:has(input[type="file"]), .form-group:has(.checkbox-grid), .form-group:has(.dynamic-table-wrap), .form-group:has([name="owner_full_address"])');
+                if (spansRow) {
+                    finishGroup();
+                    return;
+                }
+                if (child.classList.contains('form-group')) rowCandidates.push(child);
+            });
+            finishGroup();
+        });
     }
 
     function updateWizardNavigationState() {

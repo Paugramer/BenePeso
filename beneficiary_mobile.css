@@ -1755,8 +1755,17 @@
   }
 
   .beneficiary-programs-page #applicationModal .application-modal-heading {
-    padding: 1px 46px 10px 3px !important;
-    text-align: left;
+    padding: 1px 46px 10px !important;
+    text-align: center;
+  }
+
+  .beneficiary-programs-page #applicationModal .application-modal-eyebrow {
+    justify-content: center;
+  }
+
+  .beneficiary-programs-page #applicationModal .application-modal-heading h2,
+  .beneficiary-programs-page #applicationModal .application-modal-heading p {
+    text-align: center !important;
   }
 
   .beneficiary-programs-page #applicationModal .application-modal-heading h2 {
@@ -1929,6 +1938,14 @@
     font-size: 10.5px !important;
     line-height: 1.35 !important;
     overflow-wrap: anywhere;
+  }
+
+  .beneficiary-programs-page #applicationModal .checkbox-grid > label:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .beneficiary-programs-page #applicationModal .form-grid > .mobile-fill-row {
+    grid-column: 1 / -1 !important;
   }
 
   .beneficiary-programs-page #applicationModal .checkbox-grid input[type="checkbox"] {
