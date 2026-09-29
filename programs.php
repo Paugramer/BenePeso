@@ -891,13 +891,13 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="programs.css?v=42">
+    <link rel="stylesheet" href="programs.css?v=43">
     <link rel="stylesheet" href="frontend_polish.css?v=20260929">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=21">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=22">
     <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
@@ -1598,8 +1598,9 @@ if ($barangay_summary_result) {
                         <div class="form-group" id="spes_citizenship_wrap" style="order:2;"><label>Citizenship</label><input type="text" name="citizenship" value="Filipino"></div>
                         <div class="form-group" id="spes_gsis_relationship_wrap" hidden style="display:none;order:2;"><label>Relationship to GSIS Beneficiary</label><select name="gsis_relationship" class="not-required" onchange="toggleSpesGsisOther(this)"><option value="">--Select relationship--</option><option value="Father">Father</option><option value="Mother">Mother</option><option value="Guardian">Guardian</option><option value="Spouse">Spouse</option><option value="Others">Others</option></select><input type="text" name="other_gsis_relationship" id="other_gsis_relationship" class="not-required" style="display:none;margin-top:5px" placeholder="Specify relationship"></div>
                         <?php $spesBirthMunicipality = trim((string)($user_data['municipality'] ?? '')) ?: 'Vinzons'; $spesBirthProvince = trim((string)($user_data['district'] ?? '')) ?: 'Camarines Norte'; ?>
-                        <div class="form-group" style="order:3;"><label>Place of Birth</label><input type="text" name="place_of_birth" id="spes_place_of_birth"><label class="inline-check-option"><input type="checkbox" class="not-required" onchange="toggleSpesBirthplace(this)" data-birthplace="<?php echo h($spesBirthMunicipality . ', ' . $spesBirthProvince); ?>"> Use my registered municipality and province</label></div>
+                        <div class="form-group" style="order:3;"><label>Place of Birth</label><input type="text" name="place_of_birth" id="spes_place_of_birth"></div>
                         <div class="form-group" style="order:4;"><label>Social Media URLs (Optional)</label><input type="text" name="social_urls" class="not-required" placeholder="Facebook, LinkedIn..."></div>
+                        <div class="form-group span-2 spes-birthplace-option" style="order:5;"><label class="inline-check-option"><input type="checkbox" class="not-required" onchange="toggleSpesBirthplace(this)" data-birthplace="<?php echo h($spesBirthMunicipality . ', ' . $spesBirthProvince); ?>"> Use my registered municipality and province</label></div>
                         <div class="form-group" style="order:6;"><label>Email</label><input type="email" value="<?php echo h($user_data['email']??''); ?>" readonly></div>
                         <div class="form-group" style="order:6;"><label>Date of Birth</label><input type="text" value="<?php echo h($user_data['birthdate']??''); ?>" readonly></div>
                     </div>

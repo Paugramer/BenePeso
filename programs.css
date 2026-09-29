@@ -608,6 +608,32 @@ input[type="number"] { -moz-appearance: textfield; }
     accent-color: var(--green);
 }
 
+#applicationModal .inline-check-option {
+    display: inline-flex;
+    width: max-content;
+    max-width: 100%;
+    min-height: 32px;
+    gap: 8px;
+    margin: 0;
+    padding: 3px 2px;
+    align-items: center;
+    color: #315342;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0;
+    text-transform: none;
+    cursor: pointer;
+}
+
+#applicationModal .inline-check-option input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 17px;
+    margin: 0;
+    accent-color: var(--green);
+}
+
 .file-input {
     padding: 10px;
     border: 2px dashed #cedcd4;
