@@ -174,9 +174,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $_SESSION["flash_type"] = "error";
             header("Location: admin_program.php"); exit();
         }
-        // Eligibility is a master program rule. A new batch must inherit the
-        // approved category values instead of accepting client-side overrides.
-        [$batchEligibleSex, $batchMinimumAge, $batchMaximumAge, $batchOnePerHousehold] = clean_eligibility_rules($catData);
+        $batchRuleSource = $catData;
+        if (stripos($title, 'TUPAD') !== false) {
+            $batchRuleSource['eligible_sex'] = $_POST['eligible_sex'] ?? $catData['eligible_sex'];
+            $batchRuleSource['minimum_age'] = $_POST['minimum_age'] ?? $catData['minimum_age'];
+            $batchRuleSource['maximum_age'] = array_key_exists('maximum_age', $_POST) ? $_POST['maximum_age'] : $catData['maximum_age'];
+            $batchRuleSource['one_per_household'] = !empty($_POST['one_per_household']) ? 1 : 0;
+        }
+        [$batchEligibleSex, $batchMinimumAge, $batchMaximumAge, $batchOnePerHousehold] = clean_eligibility_rules($batchRuleSource);
         
         $batchYear = batch_year_from_date($start_date);
         if (!acquire_batch_code_lock($conn, $batchYear)) {
@@ -297,7 +302,7 @@ if ($active_program) {
     <title>BENEPESO | Admin Programs</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <link rel="stylesheet" href="admin_program.css?v=20260929-eligibility-rules">
+  <link rel="stylesheet" href="admin_program.css?v=20260929-tupad-rules">
     <link rel="stylesheet" href="shared_sidebar.css">
 <link rel="stylesheet" href="program_filter_polish.css?v=8">
     <script src="program_filter_polish.js?v=2" defer></script>
@@ -817,17 +822,15 @@ if ($active_program) {
                 <div class="form-group span-2"><label>TUPAD Category *</label><select name="tupad_category" id="tupadCategorySelect" required onchange="document.getElementById('otherTupadCategory').style.display=this.value==='Other TUPAD Initiative'?'block':'none'; document.getElementById('otherTupadCategory').required=this.value==='Other TUPAD Initiative';"><?php foreach ($tupadCategoryOptions as $category): ?><option value="<?php echo e($category); ?>"><?php echo e($category); ?></option><?php endforeach; ?></select><input type="text" name="other_tupad_category" id="otherTupadCategory" style="display:none;margin-top:8px" maxlength="120" placeholder="Enter the TUPAD category"><small>Select the specific TUPAD initiative for this batch.</small></div>
                 <?php endif; ?>
                 <div class="form-group"><label>Start Date *</label><input type="date" name="start_date" class="batch-start-date" required></div>
-                <div class="form-group"><label>End Date *</label><input type="date" name="end_date" class="batch-end-date" required><small class="date-range-help">Must be the same as or later than the start date.</small></div>
+                <div class="form-group"><label>End Date *</label><input type="date" name="end_date" class="batch-end-date" required></div>
                 <div class="form-group"><label>Venue *</label><input type="text" name="venue" value="PESO Vinzons" required></div>
                 <div class="form-group"><label>Total Slots *</label><input type="number" name="slots" min="1" placeholder="e.g. 100" required></div>
-                <div class="form-group span-2 batch-eligibility-summary" role="note" aria-label="Program eligibility applied to this batch">
-                    <div class="batch-eligibility-summary__head"><i class="ph ph-shield-check" aria-hidden="true"></i><span><strong>Program eligibility applies automatically</strong><small>Manage these rules in Edit Program. They cannot be changed per batch.</small></span></div>
-                    <div class="batch-eligibility-summary__rules">
-                        <span><b>Sex</b><?php echo ($activeCategoryRules['eligible_sex'] ?? 'Any') === 'Any' ? 'Any sex (no restriction)' : e($activeCategoryRules['eligible_sex']) . ' only'; ?></span>
-                        <span><b>Age</b><?php echo (int)($activeCategoryRules['minimum_age'] ?? 18); ?><?php echo ($activeCategoryRules['maximum_age'] ?? '') !== '' && $activeCategoryRules['maximum_age'] !== null ? '&ndash;' . (int)$activeCategoryRules['maximum_age'] : '+'; ?></span>
-                        <span><b>Household</b><?php echo !empty($activeCategoryRules['one_per_household']) ? 'One active beneficiary' : 'No household limit'; ?></span>
-                    </div>
-                </div>
+                <?php if ($active_program && stripos($active_program, 'TUPAD') !== false): ?>
+                <div class="form-group span-2"><label>Sex Eligibility *</label><select name="eligible_sex" required><option value="Any" <?php echo ($activeCategoryRules['eligible_sex'] ?? 'Any') === 'Any' ? 'selected' : ''; ?>>Any sex (no restriction)</option><option value="Male" <?php echo ($activeCategoryRules['eligible_sex'] ?? '') === 'Male' ? 'selected' : ''; ?>>Male only</option><option value="Female" <?php echo ($activeCategoryRules['eligible_sex'] ?? '') === 'Female' ? 'selected' : ''; ?>>Female only</option></select><small>Select Male only for a TUPAD initiative that officially requires male beneficiaries.</small></div>
+                <div class="form-group"><label>Minimum Age *</label><input type="number" name="minimum_age" min="0" max="120" value="<?php echo (int)($activeCategoryRules['minimum_age'] ?? 18); ?>" required></div>
+                <div class="form-group"><label>Maximum Age</label><input type="number" name="maximum_age" min="0" max="120" value="<?php echo e($activeCategoryRules['maximum_age'] ?? ''); ?>" placeholder="No maximum"></div>
+                <label class="form-group span-2" style="display:flex;gap:9px;align-items:center"><input type="checkbox" name="one_per_household" value="1" style="width:auto" <?php echo !empty($activeCategoryRules['one_per_household']) ? 'checked' : ''; ?>> One pending or active beneficiary per household</label>
+                <?php endif; ?>
             </div>
 
             <div class="modal-actions">
@@ -852,7 +855,7 @@ if ($active_program) {
             <div class="form-grid">
                 <div class="form-group span-2"><label>Batch Number</label><input type="text" id="edit_code" readonly title="Official batch numbers cannot be changed after creation."></div>
                 <div class="form-group"><label>Start Date *</label><input type="date" name="start_date" id="edit_start" class="batch-start-date" required></div>
-                <div class="form-group"><label>End Date *</label><input type="date" name="end_date" id="edit_end" class="batch-end-date" required><small class="date-range-help">Must be the same as or later than the start date.</small></div>
+                <div class="form-group"><label>End Date *</label><input type="date" name="end_date" id="edit_end" class="batch-end-date" required></div>
                 <div class="form-group"><label>Venue *</label><input type="text" name="venue" id="edit_venue" required></div>
                 <div class="form-group"><label>Total Slots *</label><input type="number" name="slots" id="edit_slots" min="1" required></div>
             </div>

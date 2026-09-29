@@ -686,40 +686,8 @@ table.data-table tbody { display: table-row-group !important; height: auto !impo
   box-shadow: 0 0 0 4px rgba(31,122,84,.09);
   background: #fff;
 }
-.batch-eligibility-summary {
-  grid-column: 1 / -1;
-  width: 100%;
-  padding: 14px;
-  border: 1px solid rgba(31,122,84,.18);
-  border-radius: 12px;
-  background: linear-gradient(145deg,#f8fcfa,#eef8f3);
-}
-.batch-eligibility-summary__head {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 11px;
-}
-.batch-eligibility-summary__head > i {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  flex: 0 0 34px;
-  place-items: center;
-  border-radius: 9px;
-  background: #dff1e8;
-  color: #176b49;
-  font-size: 18px;
-}
-.batch-eligibility-summary__head span,
-.batch-eligibility-summary__head strong,
-.batch-eligibility-summary__head small { display: block; }
-.batch-eligibility-summary__head strong {
-  color: #183f2f;
-  font-size: 12px;
-}
-.batch-eligibility-summary__head small,
 .eligibility-field-help {
+  display: block;
   margin-top: 2px;
   color: #647a70;
   font-size: 10px;
@@ -727,36 +695,6 @@ table.data-table tbody { display: table-row-group !important; height: auto !impo
   line-height: 1.45;
   text-transform: none;
   letter-spacing: 0;
-}
-.batch-eligibility-summary__rules {
-  display: grid;
-  grid-template-columns: repeat(3,minmax(0,1fr));
-  gap: 7px;
-}
-.batch-eligibility-summary__rules > span {
-  min-width: 0;
-  padding: 9px 10px;
-  border: 1px solid rgba(31,122,84,.12);
-  border-radius: 9px;
-  background: rgba(255,255,255,.82);
-  color: #355e4c;
-  font-size: 11px;
-  font-weight: 650;
-}
-.batch-eligibility-summary__rules b {
-  display: block;
-  margin-bottom: 2px;
-  color: #6c8177;
-  font-size: 8.5px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-}
-@media (max-width: 760px) {
-  .batch-eligibility-summary__rules { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .batch-eligibility-summary__rules > span:last-child:nth-child(odd) { grid-column: 1 / -1; }
-}
-@media (max-width: 480px) {
-  .batch-eligibility-summary__rules { grid-template-columns: 1fr; }
 }
 .upload-zone {
   min-height: 230px;
