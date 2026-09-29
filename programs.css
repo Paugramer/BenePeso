@@ -1317,6 +1317,15 @@ input[type="number"] { -moz-appearance: textfield; }
     padding-top: 40px;
 }
 
+/* Validation notices must sit above an already-open application dialog. */
+#alertModal {
+    z-index: 2400;
+}
+
+#alertModal .alert-box {
+    isolation: isolate;
+}
+
 .modal-icon {
     width: 72px;
     height: 72px;

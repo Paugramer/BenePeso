@@ -891,7 +891,7 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="programs.css?v=45">
+    <link rel="stylesheet" href="programs.css?v=46">
     <link rel="stylesheet" href="frontend_polish.css?v=20260929">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -2289,7 +2289,7 @@ if ($barangay_summary_result) {
     }
 
     let activeProgramId = 0, activeProgramName = "", currentFormType = "tupad", totalSteps = 3;
-    let currentWizardStep = 1, highestReachedStep = 1, pendingNoticeFocus = null;
+    let currentWizardStep = 1, highestReachedStep = 1, pendingNoticeFocus = null, noticeBackgroundModal = null;
     const eligibilityResultCache = new Map();
     const isReturningSpesBeneficiary = <?= $is_spes_returning ? 'true' : 'false' ?>;
     const spesPreviousDetails = <?= json_encode($spes_prefill, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
@@ -2351,6 +2351,11 @@ if ($barangay_summary_result) {
         if (!modal) return;
         modal.classList.remove('show');
         modal.setAttribute('aria-hidden', 'true');
+        if (id === 'alertModal' && noticeBackgroundModal) {
+            noticeBackgroundModal.removeAttribute('inert');
+            if (noticeBackgroundModal.classList.contains('show')) noticeBackgroundModal.setAttribute('aria-hidden', 'false');
+            noticeBackgroundModal = null;
+        }
         if (id === 'alertModal' && pendingNoticeFocus && document.contains(pendingNoticeFocus)) {
             const focusTarget = pendingNoticeFocus;
             pendingNoticeFocus = null;
@@ -2507,6 +2512,11 @@ if ($barangay_summary_result) {
         if (titleElement) titleElement.textContent = title;
         messageElement.textContent = message;
         pendingNoticeFocus = focusTarget;
+        noticeBackgroundModal = [...document.querySelectorAll('.modal.show')].find(openModal => openModal !== modal) || null;
+        if (noticeBackgroundModal) {
+            noticeBackgroundModal.setAttribute('inert', '');
+            noticeBackgroundModal.setAttribute('aria-hidden', 'true');
+        }
         modal.classList.add('show');
         modal.setAttribute('aria-hidden', 'false');
         modal.querySelector('.btn-primary')?.focus();
