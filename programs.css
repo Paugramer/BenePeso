@@ -3363,9 +3363,16 @@ input[type="number"] { -moz-appearance: textfield; }
 .beneficiary-programs-page #applicationModal .form-group input:not([type="checkbox"]):not([type="file"]):invalid:focus,
 .beneficiary-programs-page #applicationModal .form-group select:invalid:focus,
 .beneficiary-programs-page #applicationModal .form-group textarea:invalid:focus {
-    outline: 0;
+    outline: 2px solid rgba(35, 132, 93, .34) !important;
+    outline-offset: 1px !important;
     border-color: #23845d;
-    box-shadow: 0 0 0 3px rgba(35, 132, 93, .13);
+    box-shadow: 0 0 0 2px rgba(35, 132, 93, .09);
+}
+
+.beneficiary-programs-page :is(#programDetailsModal, #applicationModal)
+    :is(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid rgba(35, 132, 93, .42) !important;
+    outline-offset: 1px !important;
 }
 
 /* Laptop and large-screen readability: preserve the layout while raising tiny UI copy. */

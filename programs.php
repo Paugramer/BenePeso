@@ -891,13 +891,13 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="programs.css?v=43">
+    <link rel="stylesheet" href="programs.css?v=44">
     <link rel="stylesheet" href="frontend_polish.css?v=20260929">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=22">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=23">
     <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
@@ -1758,7 +1758,7 @@ if ($barangay_summary_result) {
                                 <option value="5th Year">5th Year</option>
                                 <option value="Graduated">Graduated</option>
                             </select>
-                            <small id="spesFourthYearNotice" style="display:none;color:#a32222;font-weight:600;margin-top:7px;">Fourth-year college students are not eligible for this PESO Vinzons SPES batch.</small>
+                            <small id="spesFourthYearNotice" style="display:none;color:#a32222;font-weight:600;margin-top:7px;">College applicants in fourth year or beyond are not eligible for this PESO Vinzons SPES batch.</small>
                         </div>
                         <div class="form-group"><label>Inclusive Dates of Attendance</label><input type="text" name="tert_date_attendance" class="not-required" placeholder="e.g. 2022-2026" oninput="this.value = this.value.replace(/[^0-9\s-]/g, '')"></div>
                         <div class="span-2 divider-line"></div>
@@ -2963,17 +2963,20 @@ if ($barangay_summary_result) {
     function validateSpesYearLevel(select) {
         if (!select) return;
         const isStudent = (document.getElementById('spes_type')?.value || '').trim().toLowerCase() === 'student';
-        const blocked = !isReturningSpesBeneficiary && isStudent && select.value.trim().toLowerCase() === '4th year';
+        const selectedLevel = select.value.trim().toLowerCase();
+        const ineligibleLevels = new Set(['4th year', '5th year', 'graduated']);
+        const blocked = !isReturningSpesBeneficiary && isStudent && ineligibleLevels.has(selectedLevel);
         const notice = document.getElementById('spesFourthYearNotice');
-        select.setCustomValidity(blocked ? 'Fourth-year college students are not eligible for this PESO Vinzons SPES batch.' : '');
-        if (notice && isReturningSpesBeneficiary && select.value.trim().toLowerCase() === '4th year') {
+        const ineligibleMessage = 'College applicants in fourth year or beyond are not eligible for this PESO Vinzons SPES batch.';
+        select.setCustomValidity(blocked ? ineligibleMessage : '');
+        if (notice && isReturningSpesBeneficiary && selectedLevel === '4th year') {
             notice.style.display = 'block';
             notice.style.color = '#17623f';
             notice.textContent = 'After completing this SPES cycle, your profile will be recognized as SPES Graduate.';
         } else if (notice) {
             notice.style.display = blocked ? 'block' : 'none';
             notice.style.color = '#a32222';
-            notice.textContent = 'Fourth-year college students are not eligible for this PESO Vinzons SPES batch.';
+            notice.textContent = ineligibleMessage;
         }
         if (blocked) select.reportValidity();
     }

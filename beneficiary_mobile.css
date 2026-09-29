@@ -1602,7 +1602,7 @@
       "program-image program-heading"
       "program-slots program-heading";
     gap: 8px 14px !important;
-    padding: 15px 58px 15px 15px !important;
+    padding: 13px 54px 13px 13px !important;
     align-items: center;
   }
 
@@ -1648,17 +1648,17 @@
 
   .beneficiary-programs-page #programDetailsModal .program-details-scroll {
     flex: 1 1 auto;
-    padding: 18px 15px 20px !important;
+    padding: 15px 13px 17px !important;
     overscroll-behavior: contain;
   }
 
   .beneficiary-programs-page #programDetailsModal .program-details-review-heading {
     gap: 5px !important;
-    margin-bottom: 16px !important;
+    margin-bottom: 13px !important;
   }
 
   .beneficiary-programs-page #programDetailsModal .program-details-section {
-    margin-bottom: 18px !important;
+    margin-bottom: 15px !important;
   }
 
   .beneficiary-programs-page #programDetailsModal .program-details-section h3 {
@@ -1676,8 +1676,8 @@
   }
 
   .beneficiary-programs-page #programDetailsModal .program-schedule-item {
-    min-height: 72px !important;
-    padding: 10px 8px !important;
+    min-height: 68px !important;
+    padding: 8px 7px !important;
   }
 
   .beneficiary-programs-page #programDetailsModal .program-schedule-label {
@@ -1708,7 +1708,7 @@
 
   .beneficiary-programs-page #programDetailsModal .details-footer {
     flex: 0 0 auto;
-    padding: 12px 15px max(12px, env(safe-area-inset-bottom)) !important;
+    padding: 10px 13px max(10px, env(safe-area-inset-bottom)) !important;
   }
 
   .beneficiary-programs-page #programDetailsModal #detAction .btn-primary {
@@ -1719,12 +1719,12 @@
   }
 
   .beneficiary-programs-page #applicationModal .modal-content {
-    padding: 17px 16px 0 !important;
+    padding: 14px 13px 0 !important;
     overflow: hidden !important;
   }
 
   .beneficiary-programs-page #applicationModal .application-modal-heading {
-    padding: 2px 48px 14px 4px !important;
+    padding: 1px 46px 10px 3px !important;
     text-align: left;
   }
 
@@ -1733,8 +1733,8 @@
   }
 
   .beneficiary-programs-page #applicationModal .wizard-nav {
-    margin-inline: -16px !important;
-    padding: 6px 12px 7px !important;
+    margin-inline: -13px !important;
+    padding: 5px 10px 6px !important;
     display: flex;
     flex-wrap: wrap;
     justify-content: center !important;
@@ -1782,9 +1782,9 @@
   }
 
   .beneficiary-programs-page #applicationModal .application-progress-summary {
-    margin-inline: -16px !important;
-    min-height: 40px;
-    padding: 9px 16px !important;
+    margin-inline: -13px !important;
+    min-height: 36px;
+    padding: 7px 13px !important;
     justify-content: center !important;
     text-align: center;
   }
@@ -1795,13 +1795,13 @@
 
   .beneficiary-programs-page #applicationModal #multiStepForm {
     margin: 0 -5px 0 0 !important;
-    padding: 16px 5px max(22px, env(safe-area-inset-bottom)) 0 !important;
-    scroll-padding-block: 16px 24px;
+    padding: 12px 5px max(17px, env(safe-area-inset-bottom)) 0 !important;
+    scroll-padding-block: 12px 20px;
     overscroll-behavior: contain;
   }
 
   .beneficiary-programs-page #applicationModal .form-grid {
-    gap: 14px 10px !important;
+    gap: 11px 9px !important;
   }
 
   .beneficiary-programs-page #applicationModal .form-group label {
@@ -1853,8 +1853,8 @@
   .beneficiary-programs-page #applicationModal .checkbox-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     grid-auto-rows: auto;
-    gap: 8px !important;
-    padding: 10px !important;
+    gap: 7px !important;
+    padding: 8px !important;
   }
 
   .beneficiary-programs-page #applicationModal .checkbox-grid label {
@@ -1863,7 +1863,7 @@
     min-height: 44px !important;
     height: auto !important;
     gap: 8px !important;
-    padding: 8px 9px !important;
+    padding: 7px 8px !important;
     align-items: center;
     border: 1px solid #deebe4;
     border-radius: 7px;
@@ -1891,21 +1891,106 @@
   .beneficiary-programs-page #applicationModal .form-group input:not([type="checkbox"]):not([type="file"]),
   .beneficiary-programs-page #applicationModal .form-group select,
   .beneficiary-programs-page #applicationModal .form-group textarea {
-    min-height: 48px !important;
-    padding: 10px 11px !important;
+    min-height: 46px !important;
+    padding: 9px 10px !important;
     font-size: 14px !important;
   }
 
   .beneficiary-programs-page #applicationModal .form-actions {
     gap: 10px !important;
-    margin-top: 22px !important;
-    padding-top: 14px !important;
+    margin-top: 17px !important;
+    padding-top: 10px !important;
   }
 
   .beneficiary-programs-page #applicationModal .form-actions .btn-primary,
   .beneficiary-programs-page #applicationModal .form-actions .btn-secondary {
     min-height: 48px !important;
     font-size: 12px !important;
+  }
+
+  /* The four-column SPES history grid becomes readable record cards on phones. */
+  .beneficiary-programs-page #applicationModal .dynamic-table-wrap:has(#spesTable) {
+    padding: 7px !important;
+    overflow: visible !important;
+  }
+
+  .beneficiary-programs-page #applicationModal #spesTable {
+    min-width: 0 !important;
+    border: 0;
+  }
+
+  .beneficiary-programs-page #applicationModal #spesTable thead {
+    display: none;
+  }
+
+  .beneficiary-programs-page #applicationModal #spesTable tbody {
+    display: grid;
+    gap: 9px;
+  }
+
+  .beneficiary-programs-page #applicationModal #spesTable tbody tr {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px 8px;
+    padding: 34px 9px 10px;
+    border: 1px solid #d8e7df;
+    border-radius: 9px;
+    background: #fbfdfc;
+  }
+
+  .beneficiary-programs-page #applicationModal #spesTable tbody tr::before {
+    content: "SPES record";
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: #527064;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .beneficiary-programs-page #applicationModal #spesTable td {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+    padding: 0 !important;
+    border: 0;
+  }
+
+  .beneficiary-programs-page #applicationModal #spesTable td:not(.action-cell)::before {
+    color: #49685a;
+    font-size: 8px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-transform: uppercase;
+  }
+
+  .beneficiary-programs-page #applicationModal #spesTable td:nth-child(1)::before { content: "Availment no."; }
+  .beneficiary-programs-page #applicationModal #spesTable td:nth-child(2)::before { content: "Establishment"; }
+  .beneficiary-programs-page #applicationModal #spesTable td:nth-child(3)::before { content: "Year"; }
+  .beneficiary-programs-page #applicationModal #spesTable td:nth-child(4)::before { content: "SPES ID no."; }
+
+  .beneficiary-programs-page #applicationModal #spesTable .action-cell {
+    position: absolute;
+    top: 5px;
+    right: 6px;
+    display: block;
+  }
+
+  .beneficiary-programs-page #applicationModal #spesTable .btn-remove-row {
+    width: 27px;
+    min-width: 27px;
+    height: 27px;
+    min-height: 27px;
+    padding: 0;
+    border-radius: 7px;
+  }
+
+  .beneficiary-programs-page #applicationModal #spesTable input {
+    width: 100%;
+    min-width: 0;
   }
 }
 

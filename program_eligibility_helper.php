@@ -97,8 +97,9 @@ function evaluate_spes_local_eligibility(array $application, bool $returningSpes
     }
     $studentType = strtolower(trim((string)($application['spes_type'] ?? '')));
     $collegeYear = strtolower(trim((string)($application['tert_year_level'] ?? '')));
-    if (!$returningSpesBeneficiary && $studentType === 'student' && $collegeYear === '4th year') {
-        return ['eligible' => false, 'message' => 'Fourth-year college students are not eligible for this PESO Vinzons SPES batch.'];
+    $ineligibleCollegeLevels = ['4th year', '5th year', 'graduated'];
+    if (!$returningSpesBeneficiary && $studentType === 'student' && in_array($collegeYear, $ineligibleCollegeLevels, true)) {
+        return ['eligible' => false, 'message' => 'College applicants in fourth year or beyond are not eligible for this PESO Vinzons SPES batch.'];
     }
     return ['eligible' => true, 'message' => 'The applicant meets the PESO Vinzons college-year rule.'];
 }
