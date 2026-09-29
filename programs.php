@@ -891,13 +891,13 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="programs.css?v=44">
+    <link rel="stylesheet" href="programs.css?v=45">
     <link rel="stylesheet" href="frontend_polish.css?v=20260929">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=23">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=24">
     <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
@@ -1880,10 +1880,10 @@ if ($barangay_summary_result) {
                         </div>
 
                         <div class="form-group"><label>Year Started</label><select name="year_started"><option value="">--Select year--</option><?php for ($year = (int)date('Y'); $year >= 1900; $year--): ?><option value="<?php echo $year; ?>"><?php echo $year; ?></option><?php endfor; ?></select></div>
-                        <div class="form-group"><label>Business Permit No.</label><input type="text" name="business_permit_no"></div>
-                        <div class="form-group"><label>Permit Valid Until</label><input type="date" name="permit_valid_until"></div>
-                        <div class="form-group"><label>DTI Reg No.</label><input type="text" name="dti_no"></div>
-                        <div class="form-group"><label>TIN</label><input type="text" name="tin_no" oninput="this.value = this.value.replace(/[^0-9-]/g, '')"></div>
+                        <div class="form-group"><label>Business Permit No. (Optional)</label><input type="text" name="business_permit_no" class="not-required"></div>
+                        <div class="form-group"><label>Permit Valid Until (Optional)</label><input type="date" name="permit_valid_until" class="not-required"></div>
+                        <div class="form-group"><label>DTI Reg No. (Optional)</label><input type="text" name="dti_no" class="not-required"></div>
+                        <div class="form-group"><label>TIN (Optional)</label><input type="text" name="tin_no" class="not-required" oninput="this.value = this.value.replace(/[^0-9-]/g, '')"></div>
                         <div class="form-group"><label>Business Email</label><input type="email" name="business_email" placeholder="business@example.com"></div>
                         <div class="form-group span-2"><label>Website / Social Media (Optional)</label><input type="text" name="business_social_media" class="not-required" data-text-input="true" autocomplete="url" placeholder="Website or Facebook page"></div>
                     </div>
@@ -2289,6 +2289,7 @@ if ($barangay_summary_result) {
     }
 
     let activeProgramId = 0, activeProgramName = "", currentFormType = "tupad", totalSteps = 3;
+    let currentWizardStep = 1, highestReachedStep = 1, pendingNoticeFocus = null;
     const eligibilityResultCache = new Map();
     const isReturningSpesBeneficiary = <?= $is_spes_returning ? 'true' : 'false' ?>;
     const spesPreviousDetails = <?= json_encode($spes_prefill, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
@@ -2350,6 +2351,12 @@ if ($barangay_summary_result) {
         if (!modal) return;
         modal.classList.remove('show');
         modal.setAttribute('aria-hidden', 'true');
+        if (id === 'alertModal' && pendingNoticeFocus && document.contains(pendingNoticeFocus)) {
+            const focusTarget = pendingNoticeFocus;
+            pendingNoticeFocus = null;
+            window.setTimeout(() => focusTarget.focus({ preventScroll: true }), 0);
+            return;
+        }
         if (lastModalTrigger && document.contains(lastModalTrigger)) lastModalTrigger.focus();
     }
 
@@ -2492,13 +2499,14 @@ if ($barangay_summary_result) {
         render();
     }
 
-    function showProfessionalNotice(message, title = 'Information Required') {
+    function showProfessionalNotice(message, title = 'Information Required', focusTarget = null) {
         const modal = document.getElementById('alertModal');
         const titleElement = document.getElementById('alertTitle');
         const messageElement = document.getElementById('alertMessage');
         if (!modal || !messageElement) return;
         if (titleElement) titleElement.textContent = title;
         messageElement.textContent = message;
+        pendingNoticeFocus = focusTarget;
         modal.classList.add('show');
         modal.setAttribute('aria-hidden', 'false');
         modal.querySelector('.btn-primary')?.focus();
@@ -3029,13 +3037,15 @@ if ($barangay_summary_result) {
         let navHtml = '';
         totalSteps = stepsArray.length;
         stepsArray.forEach((stepName, idx) => {
-            navHtml += `<div class="wizard-step-indicator" id="ind-step-${idx+1}"><span class="wizard-number">${idx+1}</span><span class="wizard-label">${stepName}</span></div>`;
+            const stepNumber = idx + 1;
+            navHtml += `<button type="button" class="wizard-step-indicator" id="ind-step-${stepNumber}" onclick="goToWizardStep(${stepNumber})" aria-label="Go to step ${stepNumber}: ${stepName}"><span class="wizard-number">${stepNumber}</span><span class="wizard-label">${stepName}</span></button>`;
         });
         const wizardNav = document.getElementById('wizardNav');
         wizardNav.innerHTML = navHtml;
         wizardNav.classList.toggle('wizard-nav--compact', stepsArray.length <= 4);
         wizardNav.classList.toggle('wizard-nav--scrollable', stepsArray.length > 4);
         wizardNav.dataset.stepCount = String(stepsArray.length);
+        updateWizardNavigationState();
     }
 
     function proceedToForm() {
@@ -3052,6 +3062,8 @@ if ($barangay_summary_result) {
         else if (uName.includes('MSME')) currentFormType = 'msme';
         else currentFormType = 'tupad';
 
+        currentWizardStep = 1;
+        highestReachedStep = 1;
         if(currentFormType === 'msme') {
             buildWizardNav(["Basic Info", "Business Profile", "Owner Info", "Operations", "Human Resources", "Financials", "Gov Assistance", "Challenges", "Confirmation"]);
         } else if (currentFormType === 'spes') {
@@ -3099,6 +3111,9 @@ if ($barangay_summary_result) {
         });
         
         let targetStep = step === 1 ? document.getElementById('step-1') : document.getElementById(`${currentFormType}-step-${step}`);
+        if (!targetStep) return;
+        currentWizardStep = step;
+        highestReachedStep = Math.max(highestReachedStep, step);
         if(targetStep) targetStep.classList.add('active');
         
         for(let i=1; i<=step; i++) {
@@ -3111,6 +3126,7 @@ if ($barangay_summary_result) {
         if (applicationStepStatus) applicationStepStatus.textContent = `Step ${step} of ${totalSteps} · ${currentLabel}`;
         const applicationForm = document.getElementById('multiStepForm');
         if (applicationForm) applicationForm.scrollTop = 0;
+        updateWizardNavigationState();
 
         // Keep the current wizard step visible on narrow screens in both directions.
         const wizardNav = document.getElementById('wizardNav');
@@ -3133,23 +3149,77 @@ if ($barangay_summary_result) {
         }
     }
 
-    function nextStep(currentStep) {
-        let currentContainer = currentStep === 1 ? document.getElementById('step-1') : document.getElementById(`${currentFormType}-step-${currentStep}`);
+    function updateWizardNavigationState() {
+        document.querySelectorAll('#wizardNav .wizard-step-indicator').forEach((indicator, index) => {
+            const stepNumber = index + 1;
+            const isAvailable = stepNumber <= highestReachedStep;
+            indicator.disabled = !isAvailable;
+            indicator.classList.toggle('is-available', isAvailable);
+            indicator.setAttribute('aria-disabled', isAvailable ? 'false' : 'true');
+        });
+    }
+
+    function fieldLabel(input) {
+        const group = input.closest('.form-group');
+        const label = group?.querySelector(':scope > label:not(.inline-check-option)');
+        if (label?.textContent.trim()) return label.textContent.replace(/\s*\*\s*$/, '').trim();
+        if (input.closest('.privacy-acknowledgment')) return 'Confirmation checkbox';
+        return input.getAttribute('aria-label') || input.name?.replace(/\[\]$/, '').replaceAll('_', ' ') || 'This field';
+    }
+
+    function validationMessageFor(input) {
+        const label = fieldLabel(input);
+        if (input.validity.customError && input.validationMessage) return input.validationMessage;
+        if (input.validity.valueMissing) return `${label} is required. Please complete it before continuing.`;
+        if (input.validity.typeMismatch && input.type === 'email') return `Enter a valid email address for ${label}, such as name@example.com.`;
+        if (input.validity.patternMismatch) return `${label} is not in the expected format. Please review the value and try again.`;
+        if (input.validity.rangeUnderflow || input.validity.rangeOverflow) return `${label} is outside the allowed range.`;
+        return `${label} contains an invalid value. Please review it before continuing.`;
+    }
+
+    function showFieldValidationNotice(input) {
+        if (!input) return;
+        document.querySelectorAll('#multiStepForm [aria-invalid="true"]').forEach(field => field.removeAttribute('aria-invalid'));
+        input.setAttribute('aria-invalid', 'true');
+        input.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+        showProfessionalNotice(validationMessageFor(input), 'Check Your Information', input);
+    }
+
+    function validateStep(currentStep) {
+        const currentContainer = currentStep === 1
+            ? document.getElementById('step-1')
+            : document.getElementById(`${currentFormType}-step-${currentStep}`);
+        if (!currentContainer) return false;
         if (currentFormType === 'msme' && currentStep === 2) {
             const selectedNature = currentContainer.querySelector('input[name="business_nature_arr[]"]:checked');
-            if (!selectedNature) { showProfessionalNotice('Please select at least one nature of business before continuing.'); return; }
+            if (!selectedNature) {
+                showProfessionalNotice('Select at least one nature of business before continuing.', 'Business Profile Incomplete');
+                return false;
+            }
             const product = [...currentContainer.querySelectorAll('input[name="prod_name[]"]')].find(input => input.value.trim() !== '');
-            if (!product) { showProfessionalNotice('Please provide at least one primary product or service before continuing.'); return; }
+            if (!product) {
+                showProfessionalNotice('Enter at least one primary product or service before continuing.', 'Business Profile Incomplete');
+                return false;
+            }
         }
-        let inputs = currentContainer.querySelectorAll('[required], [data-eligibility-check]');
-        let isValid = true;
-        inputs.forEach(input => { 
-            if (!input.checkValidity()) { 
-                input.reportValidity(); 
-                isValid = false; 
-            } 
-        });
-        if (isValid) showStep(currentStep + 1);
+        const firstInvalid = [...currentContainer.querySelectorAll('[required], [data-eligibility-check]')]
+            .find(input => !input.validity.valid);
+        if (firstInvalid) {
+            showFieldValidationNotice(firstInvalid);
+            return false;
+        }
+        currentContainer.querySelectorAll('[aria-invalid="true"]').forEach(input => input.removeAttribute('aria-invalid'));
+        return true;
+    }
+
+    function goToWizardStep(targetStep) {
+        if (targetStep === currentWizardStep || targetStep > highestReachedStep) return;
+        if (targetStep > currentWizardStep && !validateStep(currentWizardStep)) return;
+        showStep(targetStep);
+    }
+
+    function nextStep(currentStep) {
+        if (validateStep(currentStep)) showStep(currentStep + 1);
     }
     function prevStep(currentStep) { showStep(currentStep - 1); }
 
@@ -3170,6 +3240,24 @@ if ($barangay_summary_result) {
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
         })[character]);
     }
+
+    let submitValidationNoticeScheduled = false;
+    document.getElementById('multiStepForm')?.addEventListener('invalid', function (event) {
+        event.preventDefault();
+        if (submitValidationNoticeScheduled) return;
+        submitValidationNoticeScheduled = true;
+        const invalidField = event.target;
+        window.setTimeout(() => {
+            submitValidationNoticeScheduled = false;
+            showFieldValidationNotice(invalidField);
+        }, 0);
+    }, true);
+
+    document.getElementById('multiStepForm')?.addEventListener('input', function (event) {
+        if (event.target.matches('[aria-invalid="true"]') && event.target.validity.valid) {
+            event.target.removeAttribute('aria-invalid');
+        }
+    });
 
     document.getElementById('multiStepForm')?.addEventListener('submit', function () {
         const submitButton = this.querySelector('button[type="submit"]');

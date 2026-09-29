@@ -1659,6 +1659,18 @@ input[type="number"] { -moz-appearance: textfield; }
     box-shadow: none;
     color: #7b8f83;
     scroll-snap-align: center;
+    border: 0;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.wizard-step-indicator:disabled {
+    opacity: .64;
+    cursor: default;
+}
+
+.wizard-step-indicator.is-available:not(.is-current):hover .wizard-number {
+    border-color: #79ad94;
 }
 
 .wizard-step-indicator::after {
@@ -2344,6 +2356,19 @@ input[type="number"] { -moz-appearance: textfield; }
 .privacy-acknowledgment input { width: 16px; height: 16px; margin: 0; flex: 0 0 auto; accent-color: #1f6a49; }
 .privacy-acknowledgment > span { min-width: 0; margin: 0; letter-spacing: 0; line-height: 1.5; text-transform: none; }
 .privacy-acknowledgment a { color: #17633f; font-weight: 700; text-decoration: underline; }
+.privacy-acknowledgment .privacy-notice-link {
+  display: inline;
+  min-height: 0 !important;
+  padding: 0 !important;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+#applicationModal :is(input, select, textarea)[aria-invalid="true"] {
+  border-color: #b73535 !important;
+  background-color: #fffafa !important;
+  box-shadow: 0 0 0 2px rgba(183, 53, 53, .10) !important;
+}
 
 #tupad-step-3 .tupad-fitness-field {
   display: grid;

@@ -1819,11 +1819,11 @@
   .beneficiary-programs-page #applicationModal .form-group > .inline-check-option {
     width: max-content;
     max-width: 100%;
-    min-height: 30px !important;
+    min-height: 22px !important;
     display: flex !important;
     gap: 7px !important;
     margin: 0 !important;
-    padding: 3px 2px !important;
+    padding: 0 2px !important;
     align-items: center !important;
     border: 0;
     border-radius: 0;
@@ -1846,8 +1846,35 @@
   }
 
   .beneficiary-programs-page #applicationModal .spes-birthplace-option {
-    min-height: 30px;
-    margin-top: -4px;
+    min-height: 22px;
+    margin: -5px 0 -5px;
+    gap: 0 !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .privacy-acknowledgment {
+    min-height: 0 !important;
+    margin: 6px 0 0 !important;
+    padding: 9px 10px !important;
+    grid-template-columns: 17px minmax(0, 1fr);
+    column-gap: 8px;
+    align-items: start !important;
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .privacy-acknowledgment input {
+    width: 17px !important;
+    height: 17px !important;
+    margin: 1px 0 0 !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .privacy-acknowledgment > span {
+    line-height: 1.4 !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .form-step:has(> .privacy-acknowledgment) .form-grid {
+    gap: 4px !important;
+    margin-bottom: 3px;
   }
 
   .beneficiary-programs-page #applicationModal .checkbox-grid {
