@@ -1596,14 +1596,49 @@
   }
 
   .beneficiary-programs-page #programDetailsModal .program-details-identity {
-    grid-template-columns: 82px minmax(0, 1fr) !important;
-    gap: 12px !important;
+    grid-template-columns: 92px minmax(0, 1fr) !important;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "program-image program-heading"
+      "program-slots program-heading";
+    gap: 8px 14px !important;
     padding: 15px 58px 15px 15px !important;
+    align-items: center;
   }
 
   .beneficiary-programs-page #programDetailsModal .program-details-image-wrap {
-    width: 82px !important;
-    height: 64px !important;
+    grid-area: program-image;
+    width: 92px !important;
+    height: 68px !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-identity > .slots-badge {
+    grid-area: program-slots;
+    max-width: 92px;
+    margin: 0 auto !important;
+    padding: 5px 7px;
+    justify-content: center;
+    font-size: 9px;
+    line-height: 1.3;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-identity .details-header {
+    grid-area: program-heading;
+    align-self: center;
+    text-align: center !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-identity .details-heading-row {
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+
+  .beneficiary-programs-page #programDetailsModal .program-details-identity .details-heading-row h2,
+  .beneficiary-programs-page #programDetailsModal .program-details-identity .details-header .batch-code {
+    width: 100%;
+    text-align: center !important;
   }
 
   .beneficiary-programs-page #programDetailsModal .program-details-content {
@@ -1700,13 +1735,30 @@
   .beneficiary-programs-page #applicationModal .wizard-nav {
     margin-inline: -16px !important;
     padding: 12px 12px 13px !important;
-    overflow-x: auto !important;
-    scroll-padding-inline: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center !important;
+    gap: 9px 0;
+    overflow: visible !important;
+    scroll-snap-type: none;
   }
 
   .beneficiary-programs-page #applicationModal .wizard-nav--scrollable .wizard-step-indicator {
-    min-width: 88px !important;
-    flex-basis: 88px !important;
+    min-width: 0 !important;
+    flex: 0 0 25% !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .wizard-nav[data-step-count="9"] .wizard-step-indicator {
+    flex-basis: 20% !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .wizard-nav[data-step-count="4"] .wizard-step-indicator {
+    flex-basis: 25% !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .wizard-nav[data-step-count="7"] .wizard-step-indicator:nth-child(4)::after,
+  .beneficiary-programs-page #applicationModal .wizard-nav[data-step-count="9"] .wizard-step-indicator:nth-child(5)::after {
+    content: none;
   }
 
   .beneficiary-programs-page #applicationModal .wizard-label {
@@ -1718,17 +1770,14 @@
 
   .beneficiary-programs-page #applicationModal .application-progress-summary {
     margin-inline: -16px !important;
-    padding: 10px 16px !important;
-    gap: 10px !important;
+    min-height: 40px;
+    padding: 9px 16px !important;
+    justify-content: center !important;
+    text-align: center;
   }
 
   .beneficiary-programs-page #applicationModal .application-progress-summary strong {
-    font-size: 10px !important;
-  }
-
-  .beneficiary-programs-page #applicationModal .application-progress-summary span {
-    font-size: 9.5px !important;
-    line-height: 1.4;
+    font-size: 10.5px !important;
   }
 
   .beneficiary-programs-page #applicationModal #multiStepForm {
@@ -1746,6 +1795,77 @@
     font-size: 9.5px !important;
     line-height: 1.4 !important;
     overflow-wrap: anywhere;
+  }
+
+  .beneficiary-programs-page #applicationModal .form-grid > .form-group > label:first-child:not(.inline-check-option) {
+    min-height: 2.8em;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .beneficiary-programs-page #applicationModal .form-group > .inline-check-option {
+    min-height: 44px !important;
+    display: flex !important;
+    gap: 9px !important;
+    margin: 8px 0 0 !important;
+    padding: 8px 10px !important;
+    align-items: center !important;
+    border: 1px solid #d7e6de;
+    border-radius: 8px;
+    color: #315342;
+    background: #f7faf8;
+    font-size: 10.5px !important;
+    font-weight: 600 !important;
+    line-height: 1.35 !important;
+    letter-spacing: 0;
+    text-transform: none;
+    cursor: pointer;
+  }
+
+  .beneficiary-programs-page #applicationModal .inline-check-option input[type="checkbox"] {
+    width: 18px !important;
+    height: 18px !important;
+    flex: 0 0 18px;
+    margin: 0;
+    accent-color: var(--green);
+  }
+
+  .beneficiary-programs-page #applicationModal .checkbox-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-rows: auto;
+    gap: 8px !important;
+    padding: 10px !important;
+  }
+
+  .beneficiary-programs-page #applicationModal .checkbox-grid label {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px !important;
+    height: auto !important;
+    gap: 8px !important;
+    padding: 8px 9px !important;
+    align-items: center;
+    border: 1px solid #deebe4;
+    border-radius: 7px;
+    background: #fff;
+    font-size: 10.5px !important;
+    line-height: 1.35 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .beneficiary-programs-page #applicationModal .checkbox-grid input[type="checkbox"] {
+    width: 17px !important;
+    height: 17px !important;
+    flex: 0 0 17px;
+    margin: 0;
+  }
+
+  .beneficiary-programs-page #applicationModal .form-grid > .form-group:has([name="owner_full_address"]) {
+    grid-column: 1 / -1 !important;
+  }
+
+  .beneficiary-programs-page #applicationModal #productsTable {
+    min-width: 100%;
   }
 
   .beneficiary-programs-page #applicationModal .form-group input:not([type="checkbox"]):not([type="file"]),

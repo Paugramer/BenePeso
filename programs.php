@@ -891,13 +891,13 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="programs.css?v=41">
+    <link rel="stylesheet" href="programs.css?v=42">
     <link rel="stylesheet" href="frontend_polish.css?v=20260929">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
     <link rel="stylesheet" href="beneficiary_content_polish.css?v=9">
     <link rel="stylesheet" href="authenticated_experience.css?v=6">
-    <link rel="stylesheet" href="beneficiary_mobile.css?v=20">
+    <link rel="stylesheet" href="beneficiary_mobile.css?v=21">
     <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
     <script src="beneficiary_content_polish.js?v=1" defer></script>
@@ -1378,13 +1378,13 @@ if ($barangay_summary_result) {
                 <div class="program-details-image-wrap">
                     <img id="detImage" src="img/pesologo.png" alt="" onerror="this.onerror=null;this.src='img/pesologo.png';">
                 </div>
+                <span class="slots-badge" id="detBadge"></span>
                 <div class="details-header">
                     <span class="program-details-kicker">Official PESO program</span>
                     <div class="details-heading-row">
                         <h2 id="detTitle"></h2>
                     </div>
                     <div class="batch-code" id="detBatch"></div>
-                    <span class="slots-badge" id="detBadge"></span>
                 </div>
                 <ol class="program-details-path" aria-label="Application steps">
                     <li><b>01</b><span><strong>Review</strong><small>Confirm the batch details</small></span></li>
@@ -1502,7 +1502,6 @@ if ($barangay_summary_result) {
         </div>
         <div class="application-progress-summary">
             <strong id="applicationStepStatus">Step 1</strong>
-            <span>Complete the required fields marked with an asterisk.</span>
         </div>
 
         <form method="POST" action="programs.php" id="multiStepForm" autocomplete="off">
@@ -1599,7 +1598,7 @@ if ($barangay_summary_result) {
                         <div class="form-group" id="spes_citizenship_wrap" style="order:2;"><label>Citizenship</label><input type="text" name="citizenship" value="Filipino"></div>
                         <div class="form-group" id="spes_gsis_relationship_wrap" hidden style="display:none;order:2;"><label>Relationship to GSIS Beneficiary</label><select name="gsis_relationship" class="not-required" onchange="toggleSpesGsisOther(this)"><option value="">--Select relationship--</option><option value="Father">Father</option><option value="Mother">Mother</option><option value="Guardian">Guardian</option><option value="Spouse">Spouse</option><option value="Others">Others</option></select><input type="text" name="other_gsis_relationship" id="other_gsis_relationship" class="not-required" style="display:none;margin-top:5px" placeholder="Specify relationship"></div>
                         <?php $spesBirthMunicipality = trim((string)($user_data['municipality'] ?? '')) ?: 'Vinzons'; $spesBirthProvince = trim((string)($user_data['district'] ?? '')) ?: 'Camarines Norte'; ?>
-                        <div class="form-group" style="order:3;"><label>Place of Birth</label><input type="text" name="place_of_birth" id="spes_place_of_birth"><label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;font-weight:500;"><input type="checkbox" class="not-required" onchange="toggleSpesBirthplace(this)" data-birthplace="<?php echo h($spesBirthMunicipality . ', ' . $spesBirthProvince); ?>" style="width:auto;"> Same as my registered municipality and province</label></div>
+                        <div class="form-group" style="order:3;"><label>Place of Birth</label><input type="text" name="place_of_birth" id="spes_place_of_birth"><label class="inline-check-option"><input type="checkbox" class="not-required" onchange="toggleSpesBirthplace(this)" data-birthplace="<?php echo h($spesBirthMunicipality . ', ' . $spesBirthProvince); ?>"> Use my registered municipality and province</label></div>
                         <div class="form-group" style="order:4;"><label>Social Media URLs (Optional)</label><input type="text" name="social_urls" class="not-required" placeholder="Facebook, LinkedIn..."></div>
                         <div class="form-group" style="order:6;"><label>Email</label><input type="email" value="<?php echo h($user_data['email']??''); ?>" readonly></div>
                         <div class="form-group" style="order:6;"><label>Date of Birth</label><input type="text" value="<?php echo h($user_data['birthdate']??''); ?>" readonly></div>
@@ -1655,8 +1654,8 @@ if ($barangay_summary_result) {
                         </div>
                         <div class="form-group span-2">
                             <label>Permanent Address</label>
-                            <label style="font-size: 11.5px; display:flex; align-items:center; gap:6px; text-transform:none; margin-bottom:5px; font-weight:600; cursor:pointer;">
-                                <input type="checkbox" id="sameAddressCheck" onclick="copyAddress()" style="width:14px; height:14px; accent-color:var(--green);"> Same as Current Address
+                            <label class="inline-check-option">
+                                <input type="checkbox" id="sameAddressCheck" onclick="copyAddress()"> Use my current address
                             </label>
                             <input type="text" name="permanent_address" id="perm_address" placeholder="Enter permanent address">
                         </div>

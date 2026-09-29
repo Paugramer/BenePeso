@@ -2619,7 +2619,11 @@ input[type="number"] { -moz-appearance: textfield; }
     text-align: left;
 }
 
-.beneficiary-programs-page #programDetailsModal .details-header .slots-badge { display: inline-flex; }
+.beneficiary-programs-page #programDetailsModal .program-details-identity > .slots-badge {
+    display: inline-flex;
+    margin: -8px auto 18px;
+    align-self: center;
+}
 .beneficiary-programs-page .program-details-trust {
     display: flex;
     gap: 10px;
@@ -3313,7 +3317,7 @@ input[type="number"] { -moz-appearance: textfield; }
     text-align: center;
 }
 
-.beneficiary-programs-page #programDetailsModal .program-details-identity .details-header .slots-badge {
+.beneficiary-programs-page #programDetailsModal .program-details-identity > .slots-badge {
     margin-inline: auto;
 }
 
