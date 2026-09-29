@@ -890,8 +890,8 @@ if ($barangay_summary_result) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="home.css?v=17">
-    <link rel="stylesheet" href="programs.css?v=46">
+    <link rel="stylesheet" href="home.css?v=18">
+    <link rel="stylesheet" href="programs.css?v=47">
     <link rel="stylesheet" href="frontend_polish.css?v=20260929">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -1222,7 +1222,7 @@ if ($barangay_summary_result) {
                     endforeach;
                 else: 
                 ?>
-                    <div style="text-align:center; padding:20px; background:#fff; border-radius:12px; color:var(--text-muted); font-size: 13.5px; border: 1px solid var(--border-light);">
+                    <div class="completed-empty-state" role="status">
                         No completed programs yet.
                     </div>
                 <?php endif; ?>

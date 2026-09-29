@@ -1217,6 +1217,21 @@ input[type="number"] { -moz-appearance: textfield; }
     gap: 12px;
 }
 
+.completed-empty-state {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 78px;
+    display: grid;
+    place-items: center;
+    padding: 18px 20px;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    text-align: center;
+}
+
 .completed-item {
     min-width: 0;
     padding: 16px 18px;
