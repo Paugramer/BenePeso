@@ -85,6 +85,18 @@ window.organizeApplicationActions = (data, role) => {
         (button.classList.contains('btn-quick-status') || button.textContent.includes('Edit Information'))) rememberProfile();
     if (parentState && event.target.closest('[data-close-modal], [data-close-quick]')) setTimeout(restoreProfile, 0);
   }, true);
+  window.addEventListener('click', event => {
+    const target = event.target instanceof Element ? event.target : event.target.parentElement;
+    const dialog = target?.closest('.application-extra-dialog');
+    if (dialog && target.closest('.application-extra-header button')) {
+      event.preventDefault(); event.stopImmediatePropagation(); dialog.close(); return;
+    }
+    if (target?.closest('[data-close-profile]')) {
+      event.preventDefault(); event.stopImmediatePropagation(); parentState = null;
+      profile()?.classList.remove('show');profile()?.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';return;
+    }
+  }, true);
   const makeDialog = title => {
     const dialog = document.createElement('dialog');dialog.className = 'application-extra-dialog';
     const header = document.createElement('header');header.className = 'application-extra-header';

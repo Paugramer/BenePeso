@@ -1626,6 +1626,7 @@ if ($selectedProgramName !== "") {
 
   ensure_application_requirements($conn);
   $whereParts = ["p.program_name = ?", "NOT " . historical_record_condition()];
+  if (($_GET['requirements_review'] ?? '') === 'followup') $whereParts[] = "(b.approval_status='Approved' AND (b.availment_status='Not Yet Availed' OR " . application_requirements_issue_sql() . "))";
   if (($_GET['requirements_review'] ?? '') === 'issues') $whereParts[] = application_requirements_issue_sql();
   $params = [$selectedProgramName];
   $types = "s";
@@ -1722,10 +1723,10 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
   <link rel="stylesheet" href="system_mobile.css?v=24">
 <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=9">
+<link rel="stylesheet" href="application_refinements.css?v=10">
 <script src="frontend_polish.js?v=20260925" defer></script>
 <script src="beneficiary_workspace_polish.js?v=4" defer></script>
-<script src="application_actions.js?v=9" defer></script>
+<script src="application_actions.js?v=10" defer></script>
 </head>
 <body class="admin-mobile-page admin-beneficiaries-page">
   <div class="page-wrap">
@@ -1866,10 +1867,10 @@ if ($selectedProgramName !== "") {
       <section class="panel-card animate-fade-in" style="flex: 1; animation-delay: 0.1s; margin-top: 8px; display: flex; flex-direction: column;">
         <div class="records-toolbar">
             <div class="custom-tabs">
-                <a href="admin_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'All' && $spesGroup === 'all' ? 'active' : ''; ?>">Active Applications</a>
-                <a href="admin_application.php?<?php echo h(build_query(['approval' => 'Pending', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Pending' && $spesGroup === 'all' ? 'active' : ''; ?>">Needs Approval</a>
-                <a href="admin_application.php?<?php echo h(build_query(['approval' => 'Approved', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Approved' && $spesGroup === 'all' ? 'active' : ''; ?>">Accepted</a>
-                <a href="admin_beneficiaries.php?program_name=<?php echo urlencode($selectedProgramName); ?>&amp;program_id=<?php echo (int)$selectedProgramId; ?>" class="tab-item">Beneficiary Records</a>
+                <a href="admin_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'all', 'requirements_review'=>'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'All' && $spesGroup === 'all' && ($_GET['requirements_review'] ?? '')!=='followup' ? 'active' : ''; ?>">Active Applications</a>
+                <a href="admin_application.php?<?php echo h(build_query(['approval' => 'Pending', 'availment' => 'All', 'spes_group' => 'all', 'requirements_review'=>'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Pending' && $spesGroup === 'all' && ($_GET['requirements_review'] ?? '')!=='followup' ? 'active' : ''; ?>">Needs Approval</a>
+                <a href="admin_application.php?<?php echo h(build_query(['approval' => 'Approved', 'availment' => 'All', 'spes_group' => 'all', 'requirements_review'=>'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Approved' && $spesGroup === 'all' && ($_GET['requirements_review'] ?? '')!=='followup' ? 'active' : ''; ?>">Accepted</a>
+                <a href="admin_application.php?<?php echo h(build_query(['approval'=>'Approved','availment'=>'All','spes_group'=>'all','requirements_review'=>'followup','page'=>1])); ?>" class="tab-item <?php echo ($_GET['requirements_review'] ?? '')==='followup'?'active':''; ?>">For Submission / Resubmission</a>
                 <?php if (stripos($selectedProgramName, 'SPES') !== false): ?>
                 <a href="admin_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'baby', 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'baby' ? 'active' : ''; ?>">SPES Baby</a>
                 <a href="admin_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'graduate', 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'graduate' ? 'active' : ''; ?>">Graduated</a>
@@ -1919,7 +1920,7 @@ if ($selectedProgramName !== "") {
               <option value="All">All Barangays</option>
               <?php foreach ($barangays as $barangay): ?><option value="<?php echo h($barangay); ?>" <?php echo $selectedBarangay === $barangay ? 'selected' : ''; ?>><?php echo h($barangay); ?></option><?php endforeach; ?>
             </select>
-            <select name="requirements_review" aria-label="Requirements review" onchange="this.form.querySelector('input[name=page]').value=1;this.form.requestSubmit()"><option value="all">All Requirements</option><option value="issues" <?=($_GET['requirements_review'] ?? '')==='issues'?'selected':''?>>Missing / Needs Resubmission</option></select>
+            <select name="requirements_review" aria-label="Requirements review" onchange="this.form.querySelector('input[name=page]').value=1;this.form.requestSubmit()"><option value="all">All Requirements</option><option value="followup" <?=($_GET['requirements_review'] ?? '')==='followup'?'selected':''?>>For Submission / Resubmission</option><option value="issues" <?=($_GET['requirements_review'] ?? '')==='issues'?'selected':''?>>Missing / Needs Resubmission</option></select>
               <select name="availment" class="filter-select auto-submit">
               <option value="All" <?php echo $availmentFilter === 'All' ? 'selected' : ''; ?>>All Status</option>
               <option value="Not Yet Availed" <?php echo $availmentFilter === 'Not Yet Availed' ? 'selected' : ''; ?>>Waiting for Requirements</option>
@@ -2022,7 +2023,7 @@ if ($selectedProgramName !== "") {
                               </div>
                           </td>
                           <td style="font-weight: 600; text-transform: uppercase; color: var(--text); font-size: 13px;">
-                              <i class="ph-fill ph-map-pin" style="color: var(--muted); margin-right:4px;"></i><?php echo h($beneficiary["barangay"] ?? "—"); ?>
+                              <span class="application-barangay"><i class="ph-fill ph-map-pin" aria-hidden="true"></i><span><?php echo h($beneficiary["barangay"] ?? "—"); ?></span></span>
                           </td>
                           <td><div style="font-weight: 700; color: var(--muted); font-size: 12.5px;"><?php echo h($beneficiary["program_code"] ?? "—"); ?></div></td>
                           <td style="text-align: center;">
@@ -3738,7 +3739,10 @@ function toggleBatchScheduleFields(select) {
           const parsed = new Date(String(value).replace(' ', 'T'));
           return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
       };
-      const address = [data.street_purok_zone, data.barangay, data.municipality, data.district].filter(hasValue).join(', ');
+      const municipality = /^vinzons$/i.test(String(data.municipality || '').trim()) ? 'Vinzons' : data.municipality;
+      const province = /^(cn|camarines norte)$/i.test(String(data.district || '').trim()) ? 'Camarines Norte' : data.district;
+      const address = [data.street_purok_zone, data.barangay, municipality, province].filter(hasValue).join(', ');
+      if (String(categoryLabel).toUpperCase().includes('APPLICANT')) categoryValue = ({SE:'Self-employed',WE:'Wage-employed'})[String(categoryValue).toUpperCase()] || categoryValue;
       const programUpper = String(data.program || '').toUpperCase();
       const lastAvailmentRaw = data.last_availed_at || data.date_availed;
       const lastAvailmentYearMatch = hasValue(lastAvailmentRaw) ? String(lastAvailmentRaw).match(/\b(19|20)\d{2}\b/) : null;
