@@ -85,15 +85,16 @@ function official_report_value(array $row, string $key): string {
         return implode("\n",$entries);
     }
     if (in_array($key, ['reserved_f','reserved_g'], true)) return '';
-    if ($key === 'report_parent_name') return (string)(($row['report_parent_name'] ?? '') ?: (($row['father_name'] ?? '') ?: ($row['mother_name'] ?? '')));
+    if ($key === 'report_parent_name') return (string)(($row['father_name'] ?? '') ?: (($row['mother_name'] ?? '') ?: ($row['report_parent_name'] ?? '')));
     if ($key === 'report_parent_occupation') {
-        if (!empty($row['report_parent_occupation'])) return (string)$row['report_parent_occupation'];
-        // An explicitly chosen guardian must not inherit another person's occupation.
-        if (!empty($row['report_parent_name'])) return '';
-        return (string)(!empty($row['father_name']) ? ($row['father_occupation'] ?? '') : ($row['mother_occupation'] ?? ''));
+        if (!empty($row['father_name'])) return (string)($row['father_occupation'] ?? '');
+        if (!empty($row['mother_name'])) return (string)($row['mother_occupation'] ?? '');
+        return (string)($row['report_parent_occupation'] ?? '');
     }
     if ($key === 'report_province') return (string)(($row['province'] ?? '') ?: 'Camarines Norte');
     if ($key === 'report_remarks') return (string)(($row['report_remarks'] ?? '') ?: ($row['approval_note'] ?? ''));
+    if ($key === 'employment_start' && in_array($row['availment_status'] ?? '', ['Ongoing','Completed'], true) && !empty($row['date_availed'])) $row[$key] = $row['date_availed'];
+    if ($key === 'employment_end' && ($row['availment_status'] ?? '') === 'Completed' && !empty($row['date_completed'])) $row[$key] = $row['date_completed'];
     if (in_array($key, ['birthdate','created_at','employment_start','employment_end'], true)) {
         $value = trim((string)($row[$key] ?? ''));
         if ($value === '') return '';

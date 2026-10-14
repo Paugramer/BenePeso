@@ -56,4 +56,8 @@ foreach(['SPES','TUPAD','MSME'] as $program) {
 phase2_check(official_report_value(['report_parent_name'=>'Explicit Guardian','father_occupation'=>'Unrelated occupation'],'report_parent_occupation')==='','Guardian inherited an unrelated occupation');
 phase2_check(official_report_value(['approval_status'=>'Approved','availment_status'=>'Not Qualified'],'approval_status')==='DISQUALIFIED','Explicit disqualification reported as qualified');
 phase2_check(official_report_value(['approval_status'=>'Approved','availment_status'=>'Cancelled'],'approval_status')==='QUALIFIED','Cancellation changed the qualification decision');
+phase2_check(official_report_value(['father_name'=>'Application Parent','report_parent_name'=>'Old Override'],'report_parent_name')==='Application Parent','Application parent data was not reused');
+phase2_check(official_report_value(['availment_status'=>'Orientation','date_availed'=>'2026-03-01'],'employment_start')==='', 'Orientation date was exported as employment start');
+phase2_check(official_report_value(['availment_status'=>'Completed','date_availed'=>'2026-04-01','date_completed'=>'2026-04-20'],'employment_start')==='2026/04/01','Status start date not reused');
+phase2_check(official_report_value(['availment_status'=>'Completed','date_completed'=>'2026-04-20'],'employment_end')==='2026/04/20','Status completion date not reused');
 echo "Blank import templates and guardian mapping checks passed\n";

@@ -2,6 +2,7 @@
 require_once __DIR__.'/auth.php';
 require_once __DIR__.'/db.php';
 require_once __DIR__.'/historical_report_helper.php';
+require_once __DIR__.'/report_columns.php';
 require_once __DIR__.'/module_shell.php';
 require_once __DIR__.'/functions.php';
 $requestedRole=(string)($_GET['role'] ?? '');
@@ -22,14 +23,14 @@ $record=enrich_reporting_rows($conn,[$record])[0];
 $error='';
 if ($_SERVER['REQUEST_METHOD']==='POST') {
     if (!auth_verify_csrf($_POST['csrf_token'] ?? null)) { http_response_code(403);exit('Invalid request token.'); }
-    $assignment=trim((string)($_POST['work_assignment'] ?? ''));
-    $parent=trim((string)($_POST['report_parent_name'] ?? ''));
-    $occupation=trim((string)($_POST['report_parent_occupation'] ?? ''));
-    $remarks=trim((string)($_POST['report_remarks'] ?? ''));
-    $secondary=trim((string)($_POST['report_remarks_secondary'] ?? ''));
+    $assignment=trim((string)($_POST['work_assignment'] ?? ($record['work_assignment'] ?? '')));
+    $parent=trim((string)($_POST['report_parent_name'] ?? ($record['report_parent_name'] ?? '')));
+    $occupation=trim((string)($_POST['report_parent_occupation'] ?? ($record['report_parent_occupation'] ?? '')));
+    $remarks=trim((string)($_POST['report_remarks'] ?? ($record['report_remarks'] ?? '')));
+    $secondary=trim((string)($_POST['report_remarks_secondary'] ?? ($record['report_remarks_secondary'] ?? '')));
     $twoDay=trim((string)($_POST['nm_two_day_earnings'] ?? ($record['nm_two_day_earnings'] ?? '')));
     $totalEarnings=trim((string)($_POST['nm_total_earnings'] ?? ($record['nm_total_earnings'] ?? '')));
-    $start=trim((string)($_POST['employment_start'] ?? ''));$end=trim((string)($_POST['employment_end'] ?? ''));
+    $start=trim((string)($_POST['employment_start'] ?? ($record['employment_start'] ?? '')));$end=trim((string)($_POST['employment_end'] ?? ($record['employment_end'] ?? '')));
     foreach([$start,$end] as $date) if ($date!=='') { $parsed=DateTime::createFromFormat('!Y-m-d',$date); if (!$parsed || $parsed->format('Y-m-d')!==$date) $error='Enter valid employment dates.'; }
     if ($start!=='' && $end!=='' && $end<$start) $error='Employment end must be on or after the start date.';
     if (mb_strlen($assignment)>250 || mb_strlen($parent)>200 || mb_strlen($occupation)>200 || mb_strlen($remarks)>3000 || mb_strlen($secondary)>3000) $error='One or more fields exceed the allowed length.';
@@ -50,25 +51,32 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     }
 }
 $record=enrich_reporting_rows($conn,[$record])[0];
-if ($_SERVER['REQUEST_METHOD']==='POST') foreach(['work_assignment','employment_start','employment_end','report_parent_name','report_parent_occupation','report_remarks','report_remarks_secondary','nm_two_day_earnings','nm_total_earnings'] as $field) $record[$field]=(string)($_POST[$field] ?? '');
+if ($_SERVER['REQUEST_METHOD']==='POST') foreach(['work_assignment','employment_start','employment_end','report_parent_name','report_parent_occupation','report_remarks','report_remarks_secondary','nm_two_day_earnings','nm_total_earnings'] as $field) $record[$field]=(string)($_POST[$field] ?? ($record[$field] ?? ''));
 $prefix=$role==='admin'?'admin':'peso_staff';
-module_shell_start($role,'application','Application Report Details','Record verified report information before completing the application.');
+$description = stripos($record['program_name'],'SPES') !== false
+    ? 'Enter the assigned work. Parent information and dates come from the application and Status updates.'
+    : (stripos($record['program_name'],'MSME') !== false
+        ? 'Add verified night-market earnings for the MSME report. Leave unknown amounts blank.'
+        : 'Add remarks for the TUPAD beneficiary report. Both remarks fields are optional.');
+$pageTitle = stripos($record['program_name'],'SPES') !== false ? 'Work Assignment' : (stripos($record['program_name'],'MSME') !== false ? 'Night-market Earnings' : 'Remarks');
+module_shell_start($role,'application',$pageTitle,$description,'report-details-page');
 ?>
 <section class="module-panel"><h2><?=module_escape($record['full_name'])?></h2><p><?=module_escape($record['program_name'])?></p><a href="<?=module_escape($prefix.'_application.php?'.http_build_query(['program_name'=>$record['program_name'],'program_id'=>$record['program_id']]))?>" class="module-btn secondary">Back to Application</a></section>
 <?php if($error!==''):?><p role="alert" class="module-note"><?=module_escape($error)?></p><?php endif?><?php if(isset($_GET['saved'])):?><p role="status" class="module-note">Report details saved.</p><?php endif?>
+<?php if(stripos($record['program_name'],'SPES')!==false): ?>
+<section class="module-panel"><h2>From the application</h2><p>These details are displayed automatically. Update parent information through Full Edit and program dates through Status.</p><dl class="report-source-details">
+<?php foreach(['report_parent_name'=>'Parent / guardian','report_parent_occupation'=>'Parent occupation','employment_start'=>'Program start date','employment_end'=>'Program completion date'] as $key=>$label): ?><div><dt><?=module_escape($label)?></dt><dd><?=module_escape(official_report_value($record,$key) ?: 'Not yet recorded')?></dd></div><?php endforeach ?>
+</dl></section>
+<?php endif ?>
 <section class="module-panel"><form method="post"><?=auth_csrf_input()?><div class="module-edit-grid">
 <?php if(stripos($record['program_name'],'SPES')!==false):?>
 <div class="module-field"><label for="work_assignment">Work assignment</label><input id="work_assignment" name="work_assignment" maxlength="250" value="<?=module_escape($record['work_assignment'] ?? '')?>"></div>
-<div class="module-field"><label for="report_parent_name">Report parent / guardian name</label><input id="report_parent_name" name="report_parent_name" maxlength="200" value="<?=module_escape($record['report_parent_name'] ?? '')?>"><small>Leave blank to use the recorded father or mother.</small></div>
-<div class="module-field"><label for="report_parent_occupation">Report parent / guardian occupation</label><input id="report_parent_occupation" name="report_parent_occupation" maxlength="200" value="<?=module_escape($record['report_parent_occupation'] ?? '')?>"></div>
-<div class="module-field"><label for="employment_start">Actual employment start</label><input type="date" name="employment_start" id="employment_start" value="<?=module_escape($record['employment_start'] ?? '')?>"></div>
-<div class="module-field"><label for="employment_end">Actual employment end</label><input type="date" name="employment_end" id="employment_end" value="<?=module_escape($record['employment_end'] ?? '')?>"></div>
 <?php endif?>
 <?php if(stripos($record['program_name'],'MSME')!==false):?>
 <div class="module-field"><label for="nm_two_day_earnings">Earnings for the two night-market days each week</label><input name="nm_two_day_earnings" id="nm_two_day_earnings" maxlength="100" value="<?=module_escape($record['nm_two_day_earnings'] ?? '')?>" placeholder="Verified amount in PHP"></div>
 <div class="module-field"><label for="nm_total_earnings">Total earnings since starting at the night market</label><input name="nm_total_earnings" id="nm_total_earnings" maxlength="100" value="<?=module_escape($record['nm_total_earnings'] ?? '')?>" placeholder="Verified amount in PHP"></div>
 <?php endif?>
-<div class="module-field"><label for="report_remarks">Report remarks</label><textarea name="report_remarks" id="report_remarks" maxlength="3000"><?=module_escape($record['report_remarks'] ?? '')?></textarea></div>
-<?php if(stripos($record['program_name'],'TUPAD')!==false):?><div class="module-field"><label for="report_remarks_secondary">Second remarks column</label><textarea name="report_remarks_secondary" id="report_remarks_secondary" maxlength="3000"><?=module_escape($record['report_remarks_secondary'] ?? '')?></textarea><small>Leave blank unless PESO requires this column.</small></div><?php endif?>
-</div><div class="module-actions"><button type="submit" class="module-btn">Save Report Details</button></div></form></section>
+<div class="module-field"><label for="report_remarks">Remarks (optional)</label><textarea name="report_remarks" id="report_remarks" maxlength="3000"><?=module_escape($record['report_remarks'] ?? '')?></textarea></div>
+<?php if(stripos($record['program_name'],'TUPAD')!==false):?><div class="module-field"><label for="report_remarks_secondary">Additional remarks (optional)</label><textarea name="report_remarks_secondary" id="report_remarks_secondary" maxlength="3000"><?=module_escape($record['report_remarks_secondary'] ?? '')?></textarea><small>Use this only when PESO requests notes in the second remarks field.</small></div><?php endif?>
+</div><div class="module-actions"><button type="submit" class="module-btn">Save Changes</button></div></form></section>
 <?php module_shell_end();

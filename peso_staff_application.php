@@ -1304,6 +1304,7 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
   <link rel="stylesheet" href="system_mobile.css?v=24">
   <link rel="stylesheet" href="system_readability.css?v=1">
+<link rel="stylesheet" href="application_refinements.css?v=1">
 <script src="frontend_polish.js?v=20260925" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
 </head>
@@ -1498,7 +1499,7 @@ if ($selectedProgramName !== "") {
               <?php foreach ($barangays as $barangay): ?><option value="<?php echo h($barangay); ?>" <?php echo $selectedBarangay === $barangay ? 'selected' : ''; ?>><?php echo h($barangay); ?></option><?php endforeach; ?>
             </select>
             <select name="availment" class="filter-select auto-submit">
-              <option value="All" <?php echo $availmentFilter === 'All' ? 'selected' : ''; ?>>All Statuses</option>
+              <option value="All" <?php echo $availmentFilter === 'All' ? 'selected' : ''; ?>>All Status</option>
               <option value="Not Yet Availed" <?php echo $availmentFilter === 'Not Yet Availed' ? 'selected' : ''; ?>>Waiting for Requirements</option>
               <option value="Requirements Received" <?php echo $availmentFilter === 'Requirements Received' ? 'selected' : ''; ?>>Requirements Received</option>
               <option value="Orientation" <?php echo $availmentFilter === 'Orientation' ? 'selected' : ''; ?>>Orientation</option>
@@ -1610,7 +1611,7 @@ if ($selectedProgramName !== "") {
                           <td style="text-align: center;" onclick="event.stopPropagation();">
                                <div class="action-menu-wrap" style="justify-content: center;">
                                   <?php if ($beneficiaryApproval === 'Approved'): ?>
-                                      <a class="btn-edit" href="application_reporting.php?id=<?php echo $bId; ?>&amp;role=peso_staff">Report Details</a>
+                                      <a class="btn-edit" href="application_reporting.php?id=<?php echo $bId; ?>&amp;role=peso_staff" title="Edit additional report information"><i class="ph ph-file-text" aria-hidden="true"></i><span><?php echo h(stripos($selectedProgramName, 'SPES') !== false ? 'Work Assignment' : (stripos($selectedProgramName, 'MSME') !== false ? 'Night-market Earnings' : 'Remarks')); ?></span></a>
                                       <button type="button" class="beneficiary-availment-button" onclick="openQuickStatusModal(<?php echo $bId; ?>, '<?php echo addslashes($availmentStatus); ?>', '<?php echo addslashes($beneficiary['date_availed'] ?? ''); ?>', '<?php echo addslashes($beneficiary['date_completed'] ?? ''); ?>')" title="Update status">
                                           <i class="ph-bold ph-timer" aria-hidden="true"></i>
                                           <span>Status</span>
