@@ -303,3 +303,8 @@
   .bulk-selected-actions { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; }
   .bulk-selected-preview { white-space: normal; }
 }
+
+/* Keep profile actions centered and give bulk actions a clear gap. */
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page) #profileModal #pm_footer_actions{justify-content:center!important;flex-wrap:wrap!important;gap:10px!important}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page) #profileModal #pm_footer_actions>button{margin-left:0!important;margin-right:0!important}
+#bulkStatusActionModal .modal-actions-flex{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}

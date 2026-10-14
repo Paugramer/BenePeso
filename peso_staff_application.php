@@ -281,7 +281,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           $stmt->close();
           if (function_exists('logActivity')) logActivity($conn, $peso_staff_id, 'Beneficiaries', 'Bulk Status Update', 'Beneficiary Records', "Staff updated $updated beneficiaries to $bulkStatus");
           $_SESSION['show_success_modal'] = true;
-          $_SESSION['success_modal_message'] = "$updated beneficiaries updated to $bulkStatus. $sent email notification(s) will be sent automatically" . ($failed ? "; $failed email notification(s) could not be scheduled" : "") . ($blocked ? "; $blocked TUPAD applicant(s) could not complete document verification" : "") . ($invalidFlow ? "; $invalidFlow record(s) were skipped because the required previous stage is not complete" : "") . ($spesExamSkipped ? "; $spesExamSkipped returning SPES Baby record(s) skipped because they are exam-exempt" : "") . ($outOfScope ? "; $outOfScope record(s) outside the selected program or batch were skipped" : "") . ".";
+          $skipped = $blocked + $invalidFlow + $spesExamSkipped + $outOfScope;
+          $_SESSION['success_modal_message'] = $updated
+              ? "$updated updated to $bulkStatus." . ($skipped ? " $skipped skipped." : "") . ($failed ? " $failed emails could not be scheduled." : ($sent ? " Emails scheduled." : ""))
+              : ($invalidFlow || $blocked ? "No records updated. Complete the previous stage first." : "No eligible records to update.");
           $_SESSION['modal_icon'] = "✓";
       }
       header("Location: " . beneficiary_return_location('peso_staff_application.php', $program_name_post));
@@ -1346,12 +1349,12 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="frontend_polish.css?v=20260929">
   <link rel="stylesheet" href="peso_staff_responsive.css?v=24">
   <link rel="stylesheet" href="system_search_polish.css?v=1">
-  <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
+  <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=4">
   <link rel="stylesheet" href="system_mobile.css?v=24">
   <link rel="stylesheet" href="system_readability.css?v=1">
 <link rel="stylesheet" href="application_refinements.css?v=17">
 <script src="frontend_polish.js?v=20261014-dialog" defer></script>
-<script src="beneficiary_workspace_polish.js?v=12" defer></script>
+<script src="beneficiary_workspace_polish.js?v=13" defer></script>
 <script src="application_actions.js?v=16" defer></script>
 </head>
 <body class="staff-mobile-page peso-staff-beneficiaries-page">
@@ -2753,7 +2756,7 @@ function toggleBatchScheduleFields(select) {
       </div>
       <button type="button" class="btn-main import-summary-close" data-close-success>Close Summary</button>
     <?php else: ?>
-      <div class="success-title">Processed</div>
+      <div class="success-title"><?php echo strpos((string)$successModalMessage, "No ") === 0 ? "No Changes" : "Processed"; ?></div>
       <div class="modal-text">
         <?php echo h($successModalMessage ?: "Operation completed successfully."); ?>
       </div>

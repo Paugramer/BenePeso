@@ -1,6 +1,7 @@
 (() => {
  function initialize(){
   const modal=document.getElementById('generateReportModal'),open=document.getElementById('openReportModal');if(!modal||!open)return;
+  const filterToggle=modal.querySelector('.report-filter-toggle');if(filterToggle)modal.querySelector('.report-view-toolbar').prepend(filterToggle);
   const viewport=modal.querySelector('.scrollable-table-wrap'),form=modal.querySelector('.report-form'),message=document.createElement('p');
   message.className='report-preview-message';message.setAttribute('role','status');viewport.before(message);
   const sheetBar=document.createElement('div');sheetBar.className='report-sheet-tabs';modal.querySelector('.report-column-pagination').before(sheetBar);

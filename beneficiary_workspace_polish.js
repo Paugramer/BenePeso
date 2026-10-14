@@ -164,8 +164,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const stages = [...new Set(chosen.map((box) => box.dataset.beneficiaryStatus || '').filter(Boolean))];
         bulkGuidance.classList.toggle('is-warning', stages.length > 1);
         bulkGuidance.innerHTML = stages.length > 1
-          ? '<i class="ph ph-warning-circle"></i><span>These records are in different stages. The system will update only records eligible for the selected next stage.</span>'
-          : '<i class="ph ph-shield-check"></i><span>Each record will be validated against the required program sequence before it is updated.</span>';
+          ? '<i class="ph ph-warning-circle"></i><span>Only eligible records will be updated.</span>'
+          : '<i class="ph ph-shield-check"></i><span>The previous stage must be complete.</span>';
       }
     };
 
