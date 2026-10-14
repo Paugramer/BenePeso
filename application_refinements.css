@@ -30,3 +30,5 @@
 .application-requirements{margin-top:18px;border-top:1px solid #dce9e2;padding-top:14px}.application-requirements>summary{font-size:13px;font-weight:700;color:#176b45;cursor:pointer;padding:8px 0}.application-requirements:not([open])>summary{margin:0}@media(min-width:761px){:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page) .panel-card .data-table :is(th,td):nth-child(5){text-align:center!important;padding-left:12px!important}}
 
 .application-flow-note{font-size:12px;color:#61776c;line-height:1.6;margin:14px 0 0}
+
+.application-barangay{display:inline-flex;align-items:center;gap:8px;max-width:100%;line-height:1.5}.application-barangay>i{flex-shrink:0;color:var(--muted);margin:0!important}.application-barangay>span{overflow-wrap:anywhere}

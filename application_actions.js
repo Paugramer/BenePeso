@@ -43,7 +43,7 @@ window.organizeApplicationActions = (data, role) => {
     if(flowNote.textContent)progress.append(flowNote);
   }
   const id = Number(data.id);
-  if (Number.isSafeInteger(id) && id > 0 && data.approval === 'Approved' && ['Not Yet Availed','Requirements Received'].includes(data.availment_status || data.availment)) window.mountApplicationRequirements?.(modal, id);
+  if (Number.isSafeInteger(id) && id > 0 && data.approval === 'Approved' && (data.availment_status || data.availment) === 'Requirements Received') window.mountApplicationRequirements?.(modal, id);
   if (data.approval === 'Approved' && progress && Number.isSafeInteger(id) && id > 0) {
     const program = String(data.program || '').toUpperCase();
     const label = program.includes('SPES') ? 'Work Assignment' : program.includes('MSME') ? 'Night Market Earnings' : 'Remarks';
@@ -179,7 +179,7 @@ window.mountApplicationRequirements = async (modal, id) => {
 };
 window.renderRequirementSummary=(row,items)=>{
  row.querySelector('.requirement-summary')?.remove();const cell=row.cells?.[4];if(!cell)return;
- const data=JSON.parse(row.dataset.profile);if(data.approval!=='Approved'||!['Not Yet Availed','Requirements Received'].includes(data.availment_status || data.availment))return;
+ const data=JSON.parse(row.dataset.profile);if(data.approval!=='Approved'||(data.availment_status || data.availment) !== 'Requirements Received')return;
  const issues=Object.values(items||{}).filter(item=>['Missing','Needs Resubmission'].includes(item.status)).length;
  if(!issues)return;
  const summary=document.createElement('small');summary.className='requirement-summary';summary.textContent=`${issues} requirement${issues===1?'':'s'} need attention`;cell.append(summary);

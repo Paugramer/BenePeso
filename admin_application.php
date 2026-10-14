@@ -1722,10 +1722,10 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
   <link rel="stylesheet" href="system_mobile.css?v=24">
 <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=8">
+<link rel="stylesheet" href="application_refinements.css?v=9">
 <script src="frontend_polish.js?v=20260925" defer></script>
 <script src="beneficiary_workspace_polish.js?v=4" defer></script>
-<script src="application_actions.js?v=8" defer></script>
+<script src="application_actions.js?v=9" defer></script>
 </head>
 <body class="admin-mobile-page admin-beneficiaries-page">
   <div class="page-wrap">
