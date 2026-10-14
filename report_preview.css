@@ -54,7 +54,7 @@
 #generateReportModal .report-worksheet .preview-header h2{font:700 18px/1.4 Arial,sans-serif!important;color:#183b2b!important}
 #generateReportModal .report-worksheet .preview-header p{font:600 12px/1.4 Arial,sans-serif!important;margin-top:4px!important}
 #generateReportModal .report-worksheet .official-template-table{border-collapse:separate!important;border-spacing:0!important;border:0!important;outline:0!important}
-#generateReportModal .report-worksheet .official-template-table :is(th,td){border:0!important;border-right:1px solid #d4dfd8!important;border-bottom:1px solid #d4dfd8!important;box-shadow:none!important;backdrop-filter:none!important}
+#generateReportModal .report-worksheet .official-template-table :is(th,td){border:0!important;border-right:1px solid #8fbea5!important;border-bottom:1px solid #8fbea5!important;box-shadow:none!important;backdrop-filter:none!important}
 #generateReportModal .report-worksheet .official-template-table th{height:58px!important;padding:10px 8px!important;color:#163b2a!important}
 #generateReportModal .report-worksheet .official-template-table thead tr:not(:last-child) th{height:38px!important;padding:8px!important}
 #generateReportModal .report-worksheet .official-template-table tbody td[colspan]:not([data-column-start]){border:0!important;background:#fff!important;padding:18px 10px!important;color:#61776c!important}
