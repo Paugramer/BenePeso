@@ -44,3 +44,9 @@ function application_requirements_issue_sql(?mysqli $connection = null): string 
  if(!$conditions) return '(1=0)';
  return "(b.approval_status='Approved' AND b.availment_status='Requirements Received' AND (".implode(' OR ',$conditions)."))";
 }
+
+function application_requirements_are_verified(array $items): bool {
+ if(!$items)return false;
+ foreach($items as $item)if(!in_array($item['status'] ?? '',['Verified','Not Applicable'],true))return false;
+ return true;
+}

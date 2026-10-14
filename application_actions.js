@@ -125,6 +125,9 @@ window.organizeApplicationActions = (data, role) => {
     const dialog=makeDialog('Review Requirements');const body=document.createElement('div');body.className='application-review-body';dialog.append(body);dialog.showModal();
     window.loadRequirementChecklist(body,id);
   };
+  window.continueRequirementSchedule=(id,stage,dialog)=>{
+    dialog.addEventListener('close',()=>setTimeout(()=>{rememberProfile();window.openQuickStatusModal?.(id,stage,'','');},0),{once:true});dialog.close();
+  };
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('openBulkResubmission')?.addEventListener('click', event => {
       const ids = [...document.querySelectorAll('.beneficiary-select:checked')].map(box => Number(box.value));
@@ -176,7 +179,7 @@ window.loadRequirementChecklist = async (modal, id) => {
     if(Number(cached?.id)===id && cached.requirement_items && csrf){ result={items:cached.requirement_items,editable:cached.approval==='Approved' && (cached.availment_status || cached.availment)==='Requirements Received',csrf_token:csrf}; }
     else {const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),15000);try{const response=await fetch(`application_requirements.php?id=${id}`,{credentials:'same-origin',signal:controller.signal});result=await response.json();if(!response.ok)throw new Error(result.error);}finally{clearTimeout(timeout);}}
     if(!section.isConnected)return;
-    const form = document.createElement('form');
+    const form = document.createElement('form');form.id=`applicationRequirementForm-${id}`;
     const controls = {};
     Object.entries(result.items).forEach(([key,item],index)=>{
       const row=document.createElement('div');row.className='requirement-review-row';
@@ -194,7 +197,10 @@ window.loadRequirementChecklist = async (modal, id) => {
     const count=Object.values(result.items).filter(item=>['Missing','Needs Resubmission','Invalid Document'].includes(item.status)).length;
     feedback.textContent=Object.keys(result.items).length?count ? `${count} requirement${count===1?'':'s'} need attention.` : Object.values(result.items).some(item=>['Not Reviewed','Received'].includes(item.status)) ? 'Review is not yet complete.' : 'Requirements reviewed.':'No requirements configured for this batch. Set the requirements in Programs first.';
     if(result.editable&&Object.keys(controls).length){
-      const save=document.createElement('button');save.type='submit';save.className='btn-main';save.textContent='Save Checklist';const actions=document.createElement('div');actions.className='application-dialog-actions';actions.append(save);form.append(actions);
+      const save=document.createElement('button');save.type='submit';save.className='btn-main';save.textContent='Save Checklist';save.setAttribute('form',form.id);const actions=document.createElement('div');actions.className='application-dialog-actions application-review-footer';actions.append(save);
+      const dialog=modal.closest('dialog');if(dialog)dialog.append(actions);else form.append(actions);
+      const ready=()=>Object.values(controls).length>0 && Object.values(controls).every(({select})=>['Verified','Not Applicable'].includes(select.value));
+      const updateContinue=()=>{save.textContent=ready()?'Save & Continue':'Save Checklist';};Object.values(controls).forEach(({select})=>select.addEventListener('change',updateContinue));updateContinue();
       form.addEventListener('submit',async event=>{
         event.preventDefault();const items={};
         for(const [key,{select,note}] of Object.entries(controls)){
@@ -202,9 +208,10 @@ window.loadRequirementChecklist = async (modal, id) => {
           items[key]={status:select.value,note:note.hidden?(select.value==='Not Applicable'?note.value:''):note.value};
         }
         save.disabled=true;feedback.textContent='Saving...';
-        try{const r=await fetch(`application_requirements.php?id=${id}`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({items,csrf_token:result.csrf_token})});const saved=await r.json();if(!r.ok)throw new Error(saved.error);feedback.textContent='Checklist saved. No email sent.';
+        try{const r=await fetch(`application_requirements.php?id=${id}`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({items,csrf_token:result.csrf_token})});const saved=await r.json();if(!r.ok)throw new Error(saved.error);feedback.textContent=saved.next_step?'Requirements verified. Continue to schedule '+saved.next_step+'.':'Checklist saved. No email sent.';
           const tableRow=[...document.querySelectorAll('tr[data-profile]')].find(row=>{try{return Number(JSON.parse(row.dataset.profile).id)===id||Number(JSON.parse(row.dataset.profile).beneficiary_id)===id;}catch{return false;}});
           if(tableRow){const data=JSON.parse(tableRow.dataset.profile);data.requirement_items=saved.items;if(Number(window.currentProfileData?.id)===id)window.currentProfileData.requirement_items=saved.items;tableRow.dataset.profile=JSON.stringify(data);window.renderRequirementSummary?.(tableRow,saved.items);}
+          if(saved.next_step && ready() && dialog)window.continueRequirementSchedule(id,saved.next_step,dialog);
         }catch(error){feedback.textContent=error.message;}finally{save.disabled=false;}
       });
     }

@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__.'/auth.php';require_once __DIR__.'/db.php';require_once __DIR__.'/historical_report_helper.php';require_once __DIR__.'/functions.php';require_once __DIR__.'/application_requirements_helper.php';
+require_once __DIR__.'/auth.php';require_once __DIR__.'/db.php';require_once __DIR__.'/historical_report_helper.php';require_once __DIR__.'/functions.php';require_once __DIR__.'/spes_lifecycle_helper.php';require_once __DIR__.'/beneficiary_lifecycle_helper.php';require_once __DIR__.'/application_requirements_helper.php';
 header('Content-Type: application/json; charset=utf-8');
 function rq_fail(int $code,string $message): void {http_response_code($code);echo json_encode(['error'=>$message]);exit;}
 $role=auth_first_active_role(['admin','peso_staff']);if(!$role)rq_fail(403,'Authorized PESO reviewers only.');
@@ -18,6 +18,13 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
  foreach($entries as $key=>$e){$reviewStatus=$e['status'];$status=$reviewStatus;$note=trim($e['note']);$name=$items[$key]['name'];
  if($items[$key]['source']==='tupad'){$status=in_array($status,['Missing','Needs Resubmission','Invalid Document'],true)?'Needs Resubmission':($status==='Verified'?'Verified':'Pending');$s=$conn->prepare('INSERT INTO beneficiary_documents (beneficiary_id,document_type,verification_status,reviewer_note,reviewed_by_role,reviewed_by_id,reviewed_at) VALUES (?,?,?,?,?,?,NOW()) ON DUPLICATE KEY UPDATE verification_status=VALUES(verification_status),reviewer_note=VALUES(reviewer_note),reviewed_by_role=VALUES(reviewed_by_role),reviewed_by_id=VALUES(reviewed_by_id),reviewed_at=NOW()');$s->bind_param('issssi',$id,$key,$status,$note,$role,$actor);$s->execute();$s->close();}
  $status=$reviewStatus;{$s=$conn->prepare('INSERT INTO application_requirement_reviews (beneficiary_id,requirement_key,requirement_name,review_status,reviewer_note,reviewed_by_role,reviewed_by_id) VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE review_status=VALUES(review_status),reviewer_note=VALUES(reviewer_note),reviewed_by_role=VALUES(reviewed_by_role),reviewed_by_id=VALUES(reviewed_by_id),reviewed_at=NOW()');$s->bind_param('isssssi',$id,$key,$name,$status,$note,$role,$actor);}$s->execute();$s->close();
- }if(count($entries))logActivity($conn,$actor,'Beneficiaries','Requirements Review','Beneficiary Record','Reviewed requirements for beneficiary ID: '.$id);$conn->commit();}catch(Throwable $e){$conn->rollback();rq_fail(409,'Checklist could not be saved. Refresh and try again.');}
+ }if(application_requirements_are_verified(application_requirement_items($conn,$record)) && application_requirements_table_available($conn,'application_document_submissions')){$clear=$conn->prepare('UPDATE application_document_submissions SET requested_at=NULL,resubmission_deadline=NULL WHERE beneficiary_id=?');$clear->bind_param('i',$id);$clear->execute();$clear->close();}
+ if(count($entries))logActivity($conn,$actor,'Beneficiaries','Requirements Review','Beneficiary Record','Reviewed requirements for beneficiary ID: '.$id);$conn->commit();}catch(Throwable $e){$conn->rollback();rq_fail(409,'Checklist could not be saved. Refresh and try again.');}
 }elseif($_SERVER['REQUEST_METHOD']!=='GET')rq_fail(405,'Method not allowed.');
-echo json_encode(['items'=>application_requirement_items($conn,$record),'editable'=>$active,'csrf_token'=>auth_csrf_token()]);
+$reviewItems=application_requirement_items($conn,$record);
+$nextStep=null;
+if($active && application_requirements_are_verified($reviewItems)){
+ $returning=stripos($record['program_name'],'SPES')!==false && spes_beneficiary_is_returning($conn,$id);
+ $flow=beneficiary_lifecycle_flow($record['program_name'],$returning);$nextStep=$flow[2] ?? null;
+}
+echo json_encode(['items'=>$reviewItems,'editable'=>$active,'csrf_token'=>auth_csrf_token(),'next_step'=>$nextStep]);
