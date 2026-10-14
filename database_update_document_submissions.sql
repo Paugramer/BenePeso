@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS application_document_submissions (beneficiary_id INT PRIMARY KEY, received_at DATETIME NOT NULL, resubmission_deadline DATE NULL, resubmission_note VARCHAR(3000) NOT NULL DEFAULT '', requested_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

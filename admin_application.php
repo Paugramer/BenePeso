@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__.'/application_requirements_helper.php';
+require_once __DIR__.'/document_submission_helper.php';
 require_once __DIR__ . '/auth.php';
 auth_enable_csrf_form_injection();
 require "db.php";
@@ -703,6 +704,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
       $date_availed = empty($_POST["date_availed"]) ? null : $_POST["date_availed"];
       $date_completed = empty($_POST["date_completed"]) ? null : $_POST["date_completed"];
+      $resubmission_deadline = trim((string)($_POST['resubmission_deadline'] ?? ''));
+      if ($availment_status === 'Requirements Received') {
+          if ($needs_resubmission && !document_submission_deadline_valid($resubmission_deadline)) {
+              $_SESSION['show_error_modal']=true;$_SESSION['error_modal_message']='Choose a valid resubmission deadline today or later.';
+              header("Location: " . beneficiary_return_location('admin_application.php', $program_name_post));exit();
+          }
+          $date_availed = document_submission_today();
+          if ($needs_resubmission) {
+              $receivedStmt=$conn->prepare('SELECT date_availed FROM beneficiaries WHERE beneficiary_id=?');$receivedStmt->bind_param('i',$beneficiary_id);$receivedStmt->execute();$date_availed=$receivedStmt->get_result()->fetch_assoc()['date_availed'] ?? document_submission_today();$receivedStmt->close();
+          }
+          try { ensure_document_submission_schema($conn); } catch (Throwable $e) {
+              error_log('Document submission schema: '.$e->getMessage());$_SESSION['show_error_modal']=true;$_SESSION['error_modal_message']='Document dates could not be saved. Contact the administrator.';
+              header("Location: " . beneficiary_return_location('admin_application.php', $program_name_post));exit();
+          }
+      }
+
       $last_availed_at = (!empty($date_availed)) ? $date_availed . " 00:00:00" : null;
 
       if ($beneficiary_id > 0) {
@@ -753,10 +770,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       header("Location: " . beneficiary_return_location('admin_application.php', $program_name_post));
               exit();
           }
+          $conn->begin_transaction();
           $stmt = $conn->prepare("UPDATE beneficiaries SET availment_status = ?, date_availed = ?, date_completed = ?, last_availed_at = ?, updated_at = NOW() WHERE beneficiary_id = ?");
           if ($stmt) {
               $stmt->bind_param("ssssi", $availment_status, $date_availed, $date_completed, $last_availed_at, $beneficiary_id);
               if ($stmt->execute()) {
+                  try {
+                      if ($availment_status==='Requirements Received') save_document_submission($conn,$beneficiary_id,$needs_resubmission,$resubmission_deadline,$status_message);
+                      $conn->commit();
+                  } catch(Throwable $e) {
+                      $conn->rollback();error_log('Document submission save: '.$e->getMessage());$_SESSION['show_error_modal']=true;$_SESSION['error_modal_message']='Status and document dates could not be saved. Please try again.';
+                      header("Location: " . beneficiary_return_location('admin_application.php', $program_name_post));exit();
+                  }
+                  if($needs_resubmission) $status_message .= "\nResubmission deadline: " . (new DateTimeImmutable($resubmission_deadline))->format('F j, Y');
+
                   $email_sent = false;
                   $email_attempted = false;
                   if (function_exists('logActivity')) {
@@ -779,6 +806,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   }
                   $_SESSION["modal_icon"] = "✓";
               } else {
+                  $conn->rollback();
                   $_SESSION["show_error_modal"] = true;
                   error_log('Admin beneficiary status update failed: ' . $stmt->error);
                   $_SESSION["error_modal_message"] = "The beneficiary status could not be saved. Please try again.";
@@ -2754,12 +2782,14 @@ if ($selectedProgramName !== "") {
         <input type="text" name="schedule_place" id="quick_schedule_place" placeholder="Enter venue or distribution place">
       </div>
 
+      <p class="status-field-help" id="quick_received_help" style="display:none">Date received is recorded automatically when Documents Submitted is saved.</p>
       <div class="form-group" id="quick_resubmission_container" style="display:none;">
         <label class="resubmission-option" for="quick_needs_resubmission">
           <input type="checkbox" name="needs_resubmission" id="quick_needs_resubmission" value="1" onchange="toggleQuickDateFields()">
           <span class="resubmission-copy"><strong>Request document resubmission</strong><small>Use when requirements are incorrect, incomplete, expired, or unreadable.</small></span>
         </label>
       </div>
+      <div class="form-group" id="quick_resubmission_deadline_container" style="display:none"><label for="quick_resubmission_deadline">Resubmission Deadline *</label><input type="date" id="quick_resubmission_deadline" name="resubmission_deadline" min="<?=h(document_submission_today())?>"></div>
       <div class="form-group" id="quick_message_container" style="display:none;">
         <label>Reason for this status *</label>
         <textarea name="status_message" id="quick_status_message" rows="3" placeholder="Explain why the applicant is not qualified or why the availment was cancelled."></textarea>
@@ -3983,6 +4013,7 @@ function toggleBatchScheduleFields(select) {
       placeGroup.style.display = 'none';
       placeInput.removeAttribute('required');
       const isRequirements = status === 'Requirements Received';
+      document.getElementById('quick_received_help').style.display=isRequirements?'block':'none';
       resubmissionGroup.style.display = isRequirements ? 'block' : 'none';
       if (!isRequirements) resubmissionInput.checked = false;
       const needsMessage = status === 'Not Qualified' || status === 'Cancelled' || (isRequirements && resubmissionInput.checked);
@@ -3991,6 +4022,11 @@ function toggleBatchScheduleFields(select) {
       messageGroup.querySelector('label').textContent = isRequirements && resubmissionInput.checked ? 'Reason and resubmission instructions *' : 'Reason for this status *';
       messageInput.placeholder = isRequirements && resubmissionInput.checked ? 'Explain what is incorrect or missing and what documents must be resubmitted.' : 'Explain why the applicant is not qualified or why the availment was cancelled.';
       if (!needsMessage) messageInput.value = '';
+      const deadline=document.getElementById('quick_resubmission_deadline');
+      const needsDeadline=isRequirements && resubmissionInput.checked;
+      document.getElementById('quick_resubmission_deadline_container').style.display=needsDeadline?'block':'none';
+      deadline.required=needsDeadline;deadline.disabled=!needsDeadline;
+      if(!needsDeadline)deadline.value='';
       dateRow.style.gridTemplateColumns = 'minmax(0, 1fr) minmax(0, 1fr)';
 
       if (status === 'Orientation' || status === 'Examination' || status === 'Salary Distribution') {
@@ -4002,11 +4038,9 @@ function toggleBatchScheduleFields(select) {
           placeGroup.style.display = 'block';
           placeInput.setAttribute('required', 'required');
       } else if (status === 'Requirements Received') {
-          wrapper.style.display = 'block';
-          dateRow.style.gridTemplateColumns = 'minmax(0, 1fr)';
-          group1.style.display = 'block';
-          label1.textContent = 'Date Received *';
-          input1.setAttribute('required', 'required');
+          wrapper.style.display = 'none';
+          input1.removeAttribute('required');
+          input1.value = '';
       } else if (status === 'Ongoing') {
           wrapper.style.display = 'block';
           group1.style.display = 'block';

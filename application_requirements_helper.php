@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__.'/tupad_document_helper.php';
 function application_requirements_table_available(mysqli $conn, string $table): bool {
- if (!in_array($table,['application_requirement_reviews','beneficiary_documents','beneficiary_tupad_details'],true)) return false;
+ if (!in_array($table,['application_requirement_reviews','beneficiary_documents','beneficiary_tupad_details','application_document_submissions'],true)) return false;
  try { return (bool)$conn->query("SELECT 1 FROM `$table` LIMIT 0"); }
  catch (Throwable $e) { return false; }
 }
@@ -40,6 +40,7 @@ function application_requirements_issue_sql(?mysqli $connection = null): string 
  $conditions = [];
  if(application_requirements_table_available($connection,'application_requirement_reviews')) $conditions[] = "EXISTS (SELECT 1 FROM application_requirement_reviews ar WHERE ar.beneficiary_id=b.beneficiary_id AND ar.review_status IN ('Missing','Needs Resubmission') AND LOCATE(CONVERT(ar.requirement_name USING utf8mb4) COLLATE utf8mb4_unicode_ci,CONVERT(p.requirements USING utf8mb4) COLLATE utf8mb4_unicode_ci)>0)";
  if(application_requirements_table_available($connection,'beneficiary_documents')) $conditions[] = "EXISTS (SELECT 1 FROM beneficiary_documents bd WHERE bd.beneficiary_id=b.beneficiary_id AND bd.verification_status='Needs Resubmission')";
+ if(application_requirements_table_available($connection,'application_document_submissions')) $conditions[] = "EXISTS (SELECT 1 FROM application_document_submissions ds WHERE ds.beneficiary_id=b.beneficiary_id AND ds.requested_at IS NOT NULL)";
  if(!$conditions) return '(1=0)';
  return "(b.approval_status='Approved' AND b.availment_status='Requirements Received' AND (".implode(' OR ',$conditions)."))";
 }
