@@ -47,10 +47,16 @@
 #generateReportModal .report-worksheet .preview-header p{background:none!important;border-radius:0!important;padding:0!important;letter-spacing:.04em}
 #generateReportModal .report-worksheet .official-template-table :is(th,td){border:1px solid #8a9e91!important}
 
-/* Remove the frame around the preview; only interior table dividers remain. */
-#generateReportModal .report-worksheet .official-template-table{border:0!important;outline:0!important;box-shadow:none!important}
-#generateReportModal .report-worksheet .official-template-table tr>:first-child{border-left:0!important}
-#generateReportModal .report-worksheet .official-template-table tr>:last-child{border-right:0!important}
-#generateReportModal .report-worksheet .official-template-table thead tr:first-child>th{border-top:0!important}
-#generateReportModal .report-worksheet .official-template-table tbody tr:last-child>td{border-bottom:0!important}
-#generateReportModal .report-worksheet .official-template-table tbody td[colspan]:not([data-column-start]){border:0!important;background:#fff!important;padding:16px 10px!important}
+/* Match the original spreadsheet presentation with consistent cell rules. */
+#generateReportModal .scrollable-table-wrap{padding:12px!important;background:#f3f6f4!important;background-image:none!important}
+#generateReportModal .report-worksheet{background:#fff;min-height:100%;border:0!important;padding:0!important}
+#generateReportModal .report-worksheet .preview-header{padding:18px 16px 14px!important}
+#generateReportModal .report-worksheet .preview-header h2{font:700 18px/1.4 Arial,sans-serif!important;color:#183b2b!important}
+#generateReportModal .report-worksheet .preview-header p{font:600 12px/1.4 Arial,sans-serif!important;margin-top:4px!important}
+#generateReportModal .report-worksheet .official-template-table{border-collapse:separate!important;border-spacing:0!important;border:0!important;outline:0!important}
+#generateReportModal .report-worksheet .official-template-table :is(th,td){border:0!important;border-right:1px solid #d4dfd8!important;border-bottom:1px solid #d4dfd8!important;box-shadow:none!important;backdrop-filter:none!important}
+#generateReportModal .report-worksheet .official-template-table th{height:58px!important;padding:10px 8px!important;color:#163b2a!important}
+#generateReportModal .report-worksheet .official-template-table thead tr:not(:last-child) th{height:38px!important;padding:8px!important}
+#generateReportModal .report-worksheet .official-template-table tbody td[colspan]:not([data-column-start]){border:0!important;background:#fff!important;padding:18px 10px!important;color:#61776c!important}
+#generateReportModal .report-template-metadata{font-family:Arial,sans-serif;gap:6px 20px;padding:12px 14px 18px}
+@media(max-width:760px){#generateReportModal .scrollable-table-wrap{padding:6px!important}#generateReportModal .report-worksheet .preview-header h2{font-size:14px!important}#generateReportModal .report-worksheet .official-template-table th{font-size:12px!important}}
