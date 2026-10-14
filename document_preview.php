@@ -22,7 +22,7 @@ if(pathinfo($file,PATHINFO_EXTENSION)==='docx'){
  $merged=[];$covered=[];foreach($xp->query('//m:mergeCell')as$merge){if(!preg_match('/^([A-Z]+)([0-9]+):([A-Z]+)([0-9]+)$/',$merge->getAttribute('ref'),$parts))continue;$l=preview_col($parts[1]);$r=preview_col($parts[3]);$t=(int)$parts[2];$b=(int)$parts[4];$merged[$t][$l]=[$r-$l+1,$b-$t+1];for($y=$t;$y<=$b;$y++)for($x=$l;$x<=$r;$x++)if($y!==$t||$x!==$l)$covered[$y][$x]=true;}
  $lastRow=min(250,$lastRow);$lastCol=min(80,$lastCol);$firstCol=min($firstCol,$lastCol);$visible=[];for($c=$firstCol;$c<=$lastCol;$c++)if(!isset($hidden[$c]))$visible[]=$c;
  $header='';if(isset($zip['xl/media/peso_header.png']))$header='<img class="template-letterhead" alt="PESO official letterhead" src="data:image/png;base64,'.base64_encode($zip['xl/media/peso_header.png']->getContent()).'">';
- $body.='<section><h2>'.preview_escape($name).'</h2>'.$header.'<div class="sheet-scroll"><table class="excel-table" style="width:'.array_sum(array_map(static fn($c)=>$widths[$c]??$defaultWidth,$visible)).'px"><colgroup>';foreach($visible as$c)$body.='<col style="width:'.($widths[$c]??$defaultWidth).'px">';$body.='</colgroup>';
+ $body.='<section>'.$header.'<div class="sheet-scroll"><table class="excel-table" style="width:'.array_sum(array_map(static fn($c)=>$widths[$c]??$defaultWidth,$visible)).'px"><colgroup>';foreach($visible as$c)$body.='<col style="width:'.($widths[$c]??$defaultWidth).'px">';$body.='</colgroup>';
  for($r=1;$r<=$lastRow;$r++){
   $hasText=false;$hasMerge=false;foreach($visible as$c){if(trim($cells[$r][$c][0]??'')!=='')$hasText=true;if(isset($covered[$r][$c])||isset($merged[$r][$c]))$hasMerge=true;}
   if(!$hasText&&!$hasMerge&&strpos($file,'_Import_Blank.xlsx')===false)continue;if($r===1&&$header!=='')continue;
