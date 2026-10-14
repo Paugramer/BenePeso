@@ -36,6 +36,11 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     if ($start!=='' && $end!=='' && $end<$start) $error='Employment end must be on or after the start date.';
     if (mb_strlen($assignment)>250 || mb_strlen($parent)>200 || mb_strlen($occupation)>200 || mb_strlen($remarks)>3000 || mb_strlen($secondary)>3000) $error='One or more fields exceed the allowed length.';
     if (mb_strlen($twoDay)>100 || mb_strlen($totalEarnings)>100) $error='Earnings fields must be at most 100 characters.';
+    foreach (['nm_two_day_earnings','nm_total_earnings'] as $amountField) {
+        if (!array_key_exists($amountField, $_POST)) continue;
+        $amount = $_POST[$amountField];
+        if (!is_string($amount) || (trim($amount) !== '' && !preg_match('/^\d{1,12}(?:\.\d{1,2})?$/D', trim($amount)))) $error='Enter a non-negative amount with up to two decimal places.';
+    }
     if ($error==='') {
         $conn->begin_transaction();
         try {
@@ -58,10 +63,10 @@ $description = stripos($record['program_name'],'SPES') !== false
     ? 'Update the work assignment and remarks.'
     : (stripos($record['program_name'],'MSME') !== false
         ? 'Record verified night market earnings.'
-        : 'Update the remarks for this beneficiary.');
+        : 'Status records the progress, such as Completed. Add report notes only when there is an extra detail to explain; otherwise leave them blank.');
 $pageTitle = stripos($record['program_name'],'SPES') !== false ? 'Work Assignment' : (stripos($record['program_name'],'MSME') !== false ? 'Night-market Earnings' : 'Remarks');
 if ($embedded) {
-    ?><!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=module_escape($pageTitle)?></title><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="module_center.css"><link rel="stylesheet" href="application_refinements.css?v=5"></head><body class="report-details-page application-embedded"><main class="module-main"><p class="application-editor-description"><?=module_escape($description)?></p><?php
+    ?><!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=module_escape($pageTitle)?></title><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="module_center.css"><link rel="stylesheet" href="application_refinements.css?v=7"></head><body class="report-details-page application-embedded"><main class="module-main"><p class="application-editor-description"><?=module_escape($description)?></p><?php
 } else module_shell_start($role,'application',$pageTitle,$description,'report-details-page');
 ?>
 <section class="module-panel application-editor-identity"><h2><?=module_escape($record['full_name'])?></h2><p><?=module_escape($record['program_name'])?></p><?php if (!$embedded): ?><a href="<?=module_escape($prefix.'_application.php?'.http_build_query(['program_name'=>$record['program_name'],'program_id'=>$record['program_id']]))?>" class="module-btn secondary">Back to Application</a><?php endif ?></section>
@@ -76,10 +81,10 @@ if ($embedded) {
 <div class="module-field"><label for="work_assignment">Work assignment</label><input id="work_assignment" name="work_assignment" maxlength="250" value="<?=module_escape($record['work_assignment'] ?? '')?>"></div>
 <?php endif?>
 <?php if(stripos($record['program_name'],'MSME')!==false):?>
-<div class="module-field"><label for="nm_two_day_earnings">Weekly earnings (2 market days)</label><input name="nm_two_day_earnings" id="nm_two_day_earnings" maxlength="100" value="<?=module_escape($record['nm_two_day_earnings'] ?? '')?>" placeholder="Amount in PHP"></div>
-<div class="module-field"><label for="nm_total_earnings">Total night market earnings</label><input name="nm_total_earnings" id="nm_total_earnings" maxlength="100" value="<?=module_escape($record['nm_total_earnings'] ?? '')?>" placeholder="Amount in PHP"></div>
+<div class="module-field"><label for="nm_two_day_earnings">Weekly earnings (2 market days)</label><input type="number" min="0" max="999999999999.99" step="0.01" inputmode="decimal" name="nm_two_day_earnings" id="nm_two_day_earnings" maxlength="100" value="<?=module_escape($record['nm_two_day_earnings'] ?? '')?>" placeholder="Amount in PHP"></div>
+<div class="module-field"><label for="nm_total_earnings">Total night market earnings</label><input type="number" min="0" max="999999999999.99" step="0.01" inputmode="decimal" name="nm_total_earnings" id="nm_total_earnings" maxlength="100" value="<?=module_escape($record['nm_total_earnings'] ?? '')?>" placeholder="Amount in PHP"></div>
 <?php endif?>
-<div class="module-field application-remarks-field"><label for="report_remarks">Remarks</label><textarea name="report_remarks" id="report_remarks" maxlength="3000"><?=module_escape($record['report_remarks'] ?? '')?></textarea></div>
-<?php if(stripos($record['program_name'],'TUPAD')!==false):?><div class="module-field application-remarks-field"><label for="report_remarks_secondary">Additional remarks</label><textarea name="report_remarks_secondary" id="report_remarks_secondary" maxlength="3000"><?=module_escape($record['report_remarks_secondary'] ?? '')?></textarea></div><?php endif?>
+<div class="module-field application-remarks-field"><label for="report_remarks">Remarks</label><textarea name="report_remarks" id="report_remarks" maxlength="3000" aria-describedby="remarks_help"><?=module_escape($record['report_remarks'] ?? '')?></textarea><small id="remarks_help">Report notes, such as a correction or the reason work was not completed. Do not repeat the Status. Saving notes does not send an email.</small></div>
+<?php if(stripos($record['program_name'],'TUPAD')!==false):?><details class="application-remarks-field application-secondary-remarks" <?=trim((string)($record['report_remarks_secondary'] ?? ''))!=='' ? 'open' : ''?>><summary>Second report notes field</summary><div class="module-field application-remarks-field"><label for="report_remarks_secondary">Additional remarks</label><textarea name="report_remarks_secondary" id="report_remarks_secondary" maxlength="3000"><?=module_escape($record['report_remarks_secondary'] ?? '')?></textarea><small>For the second Remarks column in the TUPAD report template.</small></div></details><?php endif?>
 </div><div class="module-actions"><button type="submit" class="module-btn">Save Changes</button></div></form></section>
 <?php if ($embedded) echo '</main></body></html>'; else module_shell_end();

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/application_requirements_helper.php';
 require_once __DIR__ . '/auth.php';
 auth_enable_csrf_form_injection();
 require "db.php";
@@ -1623,7 +1624,9 @@ if ($selectedProgramName !== "") {
       $stmt->close();
   }
 
+  ensure_application_requirements($conn);
   $whereParts = ["p.program_name = ?", "NOT " . historical_record_condition()];
+  if (($_GET['requirements_review'] ?? '') === 'issues') $whereParts[] = application_requirements_issue_sql();
   $params = [$selectedProgramName];
   $types = "s";
 
@@ -1661,7 +1664,7 @@ if ($selectedProgramName !== "") {
       ? "b.created_at ASC, b.beneficiary_id ASC"
       : "b.created_at DESC, b.beneficiary_id DESC";
 
-  $sqlList = "SELECT b.*, p.program_code, u.profile_pic AS user_profile_pic,
+  $sqlList = "SELECT b.*, p.program_code, p.requirements, p.program_name AS requirement_program_name, u.profile_pic AS user_profile_pic,
       CASE WHEN b.user_id IS NOT NULL THEN 'Online Applicant'
            WHEN b.application_source = 'Admin' THEN 'Administrator'
            WHEN b.application_source = 'PESO Staff' THEN COALESCE(NULLIF(TRIM(CONCAT(s.first_name, ' ', s.last_name)), ''), 'PESO Staff')
@@ -1683,6 +1686,8 @@ if ($selectedProgramName !== "") {
     $stmt->execute();
     $res = $stmt->get_result();
     while ($row = $res->fetch_assoc()) {
+        $requirementRecord = $row; $requirementRecord['program_name'] = $selectedProgramName;
+        $row['requirement_items'] = application_requirement_items($conn, $requirementRecord);
         if ($isSpesProgram) {
             $row = array_merge($row, spes_beneficiary_lifecycle_details($conn, (int)$row['beneficiary_id']));
         }
@@ -1717,10 +1722,10 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
   <link rel="stylesheet" href="system_mobile.css?v=24">
 <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=5">
+<link rel="stylesheet" href="application_refinements.css?v=7">
 <script src="frontend_polish.js?v=20260925" defer></script>
 <script src="beneficiary_workspace_polish.js?v=4" defer></script>
-<script src="application_actions.js?v=5" defer></script>
+<script src="application_actions.js?v=7" defer></script>
 </head>
 <body class="admin-mobile-page admin-beneficiaries-page">
   <div class="page-wrap">
@@ -1914,7 +1919,8 @@ if ($selectedProgramName !== "") {
               <option value="All">All Barangays</option>
               <?php foreach ($barangays as $barangay): ?><option value="<?php echo h($barangay); ?>" <?php echo $selectedBarangay === $barangay ? 'selected' : ''; ?>><?php echo h($barangay); ?></option><?php endforeach; ?>
             </select>
-            <select name="availment" class="filter-select auto-submit">
+            <select name="requirements_review" aria-label="Requirements review" onchange="this.form.querySelector('input[name=page]').value=1;this.form.requestSubmit()"><option value="all">All Requirements</option><option value="issues" <?=($_GET['requirements_review'] ?? '')==='issues'?'selected':''?>>Missing / Needs Resubmission</option></select>
+              <select name="availment" class="filter-select auto-submit">
               <option value="All" <?php echo $availmentFilter === 'All' ? 'selected' : ''; ?>>All Status</option>
               <option value="Not Yet Availed" <?php echo $availmentFilter === 'Not Yet Availed' ? 'selected' : ''; ?>>Waiting for Requirements</option>
               <option value="Requirements Received" <?php echo $availmentFilter === 'Requirements Received' ? 'selected' : ''; ?>>Requirements Received</option>
