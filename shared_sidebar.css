@@ -190,4 +190,4 @@
 
 /* Keep Forms & Templates and Application on the same sidebar typography and logo treatment. */
 .side-area{font-family:Poppins,sans-serif!important}
-.side-logo{display:block!important;visibility:visible!important;flex:0 0 46px;border:2px solid rgba(31,122,84,.1);background:#fff;box-shadow:0 2px 8px rgba(13,54,37,.06)}
+.side-logo{display:block!important;visibility:visible!important;flex:0 0 46px;box-sizing:border-box!important;padding:4px!important;border:2px solid rgba(31,122,84,.2)!important;border-radius:50%!important;background:#fff!important;box-shadow:0 2px 8px rgba(13,54,37,.06)!important}

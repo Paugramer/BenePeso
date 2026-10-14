@@ -1744,7 +1744,7 @@ if ($selectedProgramName !== "") {
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head><link rel="icon" type="image/png" href="img/pesologo.png">
   <link rel="icon" type="image/png" href="img/pesologo.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1769,7 +1769,7 @@ if ($selectedProgramName !== "") {
 <script src="frontend_polish.js?v=20261014-dialog" defer></script>
 <script src="beneficiary_workspace_polish.js?v=13" defer></script>
 <script src="application_actions.js?v=16" defer></script>
-<link rel="stylesheet" href="shared_sidebar.css?v=2">
+<link rel="stylesheet" href="shared_sidebar.css?v=3">
 </head>
 <body class="admin-mobile-page admin-beneficiaries-page">
   <div class="page-wrap">
