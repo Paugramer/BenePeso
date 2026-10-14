@@ -1248,7 +1248,7 @@ if ($selectedProgramName !== "") {
   if (($_GET['requirements_review'] ?? '') === 'issues') $whereParts[] = application_requirements_issue_sql();
   $params = [$selectedProgramName];
   $types = "s";
-  $reasonFilter=trim((string)($_GET['resubmission_reason_filter'] ?? ''));
+  $reasonFilter=($_GET['requirements_review'] ?? '')==='followup' ? trim((string)($_GET['resubmission_reason_filter'] ?? '')) : '';
   if(in_array($reasonFilter,document_resubmission_reasons(),true)){
       if(document_submission_reason_available($conn)){ $whereParts[]="EXISTS (SELECT 1 FROM application_document_submissions ds WHERE ds.beneficiary_id=b.beneficiary_id AND ds.requested_at IS NOT NULL AND ds.resubmission_reason=?)";$params[]=$reasonFilter;$types.='s'; }else $whereParts[]='1=0';
   }
@@ -1346,7 +1346,7 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
   <link rel="stylesheet" href="system_mobile.css?v=24">
   <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=11">
+<link rel="stylesheet" href="application_refinements.css?v=12">
 <script src="frontend_polish.js?v=20260925" defer></script>
 <script src="beneficiary_workspace_polish.js?v=12" defer></script>
 <script src="application_actions.js?v=11" defer></script>
@@ -1489,13 +1489,13 @@ if ($selectedProgramName !== "") {
       <section class="panel-card animate-fade-in" style="flex: 1; animation-delay: 0.1s; margin-top: 8px; display: flex; flex-direction: column;">
         <div class="records-toolbar">
             <div class="custom-tabs">
-                <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'all', 'requirements_review'=>'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'All' && $spesGroup === 'all' && ($_GET['requirements_review'] ?? '')!=='followup' ? 'active' : ''; ?>">Active Applications</a>
-                <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'Pending', 'availment' => 'All', 'spes_group' => 'all', 'requirements_review'=>'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Pending' && $spesGroup === 'all' && ($_GET['requirements_review'] ?? '')!=='followup' ? 'active' : ''; ?>">Needs Approval</a>
-                <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'Approved', 'availment' => 'All', 'spes_group' => 'all', 'requirements_review'=>'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Approved' && $spesGroup === 'all' && ($_GET['requirements_review'] ?? '')!=='followup' ? 'active' : ''; ?>">Accepted</a>
+                <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'all', 'requirements_review'=>'all', 'resubmission_reason_filter'=>null, 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'All' && $spesGroup === 'all' && ($_GET['requirements_review'] ?? '')!=='followup' ? 'active' : ''; ?>">Active Applications</a>
+                <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'Pending', 'availment' => 'All', 'spes_group' => 'all', 'requirements_review'=>'all', 'resubmission_reason_filter'=>null, 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Pending' && $spesGroup === 'all' && ($_GET['requirements_review'] ?? '')!=='followup' ? 'active' : ''; ?>">Needs Approval</a>
+                <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'Approved', 'availment' => 'All', 'spes_group' => 'all', 'requirements_review'=>'all', 'resubmission_reason_filter'=>null, 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Approved' && $spesGroup === 'all' && ($_GET['requirements_review'] ?? '')!=='followup' ? 'active' : ''; ?>">Accepted</a>
                 <a href="peso_staff_application.php?<?php echo h(build_query(['approval'=>'Approved','availment'=>'All','spes_group'=>'all','requirements_review'=>'followup','page'=>1])); ?>" class="tab-item <?php echo ($_GET['requirements_review'] ?? '')==='followup'?'active':''; ?>">Needs Resubmission</a>
                 <?php if (stripos($selectedProgramName, 'SPES') !== false): ?>
-                <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'baby', 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'baby' ? 'active' : ''; ?>">SPES Baby</a>
-                <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'graduate', 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'graduate' ? 'active' : ''; ?>">Graduated</a>
+                <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'baby', 'requirements_review'=>'all','resubmission_reason_filter'=>null, 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'baby' ? 'active' : ''; ?>">SPES Baby</a>
+                <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'graduate', 'requirements_review'=>'all','resubmission_reason_filter'=>null, 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'graduate' ? 'active' : ''; ?>">Graduated</a>
                 <?php endif; ?>
             </div>
 
@@ -1503,9 +1503,9 @@ if ($selectedProgramName !== "") {
         </div>
 
         <div class="bulk-selection-bar" id="bulkSelectionBar" hidden>
-          <div class="bulk-selection-copy"><div><strong id="bulkSelectedCount">0</strong> selected <span>Choose a bulk action for these beneficiaries.</span></div><div class="bulk-selected-preview" id="bulkSelectedPreview" aria-live="polite"></div></div>
+          <div class="bulk-selection-copy"><div class="bulk-selection-total"><strong id="bulkSelectedCount">0</strong><span>selected</span></div><span id="selectionScopeNote" role="status" class="selection-scope-note"></span><div class="bulk-selected-preview" id="bulkSelectedPreview" aria-live="polite"></div></div>
           <div class="bulk-selection-actions">
-            <span id="selectionScopeNote" role="status" class="selection-scope-note"></span><button type="button" class="btn-light" id="clearBulkSelection">Clear Selection</button>
+            <button type="button" class="btn-light" id="clearBulkSelection">Clear Selection</button>
             <button type="button" class="btn-light" id="openBulkResubmission" data-program="<?=h($selectedProgramName)?>" data-role="peso_staff">Request Resubmission</button>
             <button type="button" class="btn-main" id="openBulkStatusModal"><i class="ph-bold ph-arrows-clockwise"></i> Update Status & Email</button>
           </div>
@@ -1542,7 +1542,7 @@ if ($selectedProgramName !== "") {
               <option value="All">All Barangays</option>
               <?php foreach ($barangays as $barangay): ?><option value="<?php echo h($barangay); ?>" <?php echo $selectedBarangay === $barangay ? 'selected' : ''; ?>><?php echo h($barangay); ?></option><?php endforeach; ?>
             </select>
-            <select name="resubmission_reason_filter" aria-label="Resubmission reason" onchange="this.form.querySelector('input[name=page]').value=1;this.form.requestSubmit()"><option value="">All Resubmission Reasons</option><?php foreach(document_resubmission_reasons() as $reason):?><option value="<?=h($reason)?>" <?=($_GET['resubmission_reason_filter'] ?? '')===$reason?'selected':''?>><?=h($reason)?></option><?php endforeach?></select>
+            <?php if(($_GET['requirements_review'] ?? '')==='followup'): ?><select name="resubmission_reason_filter" aria-label="Resubmission reason" onchange="this.form.querySelector('input[name=page]').value=1;this.form.requestSubmit()"><option value="">All Resubmission Reasons</option><?php foreach(document_resubmission_reasons() as $reason):?><option value="<?=h($reason)?>" <?=($_GET['resubmission_reason_filter'] ?? '')===$reason?'selected':''?>><?=h($reason)?></option><?php endforeach?></select><?php endif; ?>
             <input type="hidden" name="requirements_review" value="<?=($_GET['requirements_review'] ?? '')==='followup'?'followup':'all'?>">
               <select name="availment" class="filter-select auto-submit">
               <option value="All" <?php echo $availmentFilter === 'All' ? 'selected' : ''; ?>>All Status</option>

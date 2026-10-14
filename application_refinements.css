@@ -38,3 +38,16 @@
 .application-bulk-remarks-form :is(select,input){box-sizing:border-box;width:100%;min-height:44px;padding:12px;border:1px solid #cddfd4;border-radius:10px;font:13px Poppins,Arial,sans-serif;color:#183c2c;background:#fff}.application-bulk-remarks-form textarea{min-height:100px}.requirement-summary{max-width:290px;margin:8px auto 0;color:#a15d00;overflow-wrap:anywhere}
 
 #bulkSelectedCount{margin-right:5px}.selection-scope-note{font-size:12px;line-height:1.5;color:#61776c;max-width:270px}
+
+/* Keep selection context separate from bulk actions. */
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page) #bulkSelectionBar{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 18px;flex-wrap:wrap}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page) #bulkSelectionBar[hidden]{display:none!important}
+#bulkSelectionBar .bulk-selection-copy{flex:1 1 240px;min-width:0;max-width:100%}
+#bulkSelectionBar .bulk-selection-total{display:flex;align-items:baseline;gap:6px;line-height:1.5}
+#bulkSelectionBar #bulkSelectedCount{margin:0}
+#bulkSelectionBar .selection-scope-note{display:block;max-width:none;margin-top:4px;font-size:12px;line-height:1.5}
+#bulkSelectionBar .selection-scope-note:empty{display:none}
+#bulkSelectionBar .bulk-selection-actions{display:flex;flex:0 1 auto;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap;min-width:0;max-width:100%}
+#bulkSelectionBar .bulk-selection-actions>button{margin:0!important;min-height:44px;white-space:normal;line-height:1.4;padding:12px 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+@media(max-width:1200px){#bulkSelectionBar .bulk-selection-copy{flex-basis:100%}#bulkSelectionBar .bulk-selection-actions{flex:1 1 100%;justify-content:flex-start}}
+@media(max-width:600px){:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page) #bulkSelectionBar{padding:14px;gap:14px}#bulkSelectionBar .bulk-selection-actions{display:grid;grid-template-columns:1fr;width:100%;gap:8px}#bulkSelectionBar .bulk-selection-actions>button{width:100%;min-width:0}}
