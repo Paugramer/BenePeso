@@ -1356,6 +1356,7 @@ if ($selectedProgramName !== "") {
 <script src="frontend_polish.js?v=20261014-dialog" defer></script>
 <script src="beneficiary_workspace_polish.js?v=13" defer></script>
 <script src="application_actions.js?v=16" defer></script>
+<link rel="stylesheet" href="shared_sidebar.css?v=2">
 </head>
 <body class="staff-mobile-page peso-staff-beneficiaries-page">
   <div class="page-wrap">
@@ -1390,7 +1391,7 @@ if ($selectedProgramName !== "") {
       <a href="peso_staff_program.php" class="nav-item"><i class="ph-fill ph-briefcase"></i> Program</a>
       <a href="peso_staff_application.php" class="nav-item active"><i class="ph ph-file-text"></i> Application</a>
       <a href="peso_staff_beneficiaries.php" class="nav-item"><i class="ph ph-chart-bar"></i> Report</a>
-      <a href="forms_downloads.php?role=peso_staff" class="nav-item"><i class="ph ph-download-simple"></i> Forms &amp; Downloads</a>
+      <a href="forms_downloads.php?role=peso_staff" class="nav-item"><i class="ph ph-download-simple"></i> Forms &amp; Templates</a>
       <a href="peso_staff_activity_log.php" class="nav-item"><i class="ph-fill ph-clock-counter-clockwise"></i> Activity Log</a>
       <form method="POST" action="logout.php" class="sidebar-logout-form"><?php echo auth_csrf_input(); ?><input type="hidden" name="role" value="peso_staff"><button type="submit" class="nav-item logout-item"><i class="ph-bold ph-sign-out"></i> Logout</button></form>
     </nav>

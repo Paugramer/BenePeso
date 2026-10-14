@@ -322,7 +322,7 @@ if ($view === 'banned') $panelTitle = 'Banned Accounts Directory';
         <a href="admin_program.php" class="<?php echo navClass('admin_program.php'); ?>"><i class="ph ph-briefcase"></i> Programs</a>
         <a href="admin_application.php" class="nav-item"><i class="ph ph-file-text"></i> Application</a>
       <a href="admin_beneficiaries.php" class="nav-item"><i class="ph ph-chart-bar"></i> Report</a>
-      <a href="forms_downloads.php?role=admin" class="nav-item"><i class="ph ph-download-simple"></i> Forms &amp; Downloads</a>
+      <a href="forms_downloads.php?role=admin" class="nav-item"><i class="ph ph-download-simple"></i> Forms &amp; Templates</a>
         <a href="admin_accounts.php" class="<?php echo navClass('admin_accounts.php'); ?>"><i class="ph ph-user-circle-gear"></i> Manage Accounts</a>
         <a href="admin_activity_log.php" class="<?php echo navClass('admin_activity_log.php'); ?>"><i class="ph ph-clock-counter-clockwise"></i> System Logs</a>
         <form method="POST" action="logout.php" class="sidebar-logout-form"><?php echo auth_csrf_input(); ?><input type="hidden" name="role" value="admin"><button type="submit" class="nav-item logout-item"><i class="ph ph-sign-out"></i> Logout</button></form>

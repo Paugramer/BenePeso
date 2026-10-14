@@ -6,7 +6,7 @@ $requestedRole=(string)($_GET['role'] ?? '');
 $role=in_array($requestedRole,['admin','peso_staff'],true) ? $requestedRole : auth_first_active_role(['admin','peso_staff']);
 if (!$role) { http_response_code(403); exit('Please sign in as Admin or PESO Staff.'); }
 check_user_role($role);
-module_shell_start($role,'forms','Forms & Downloads','Printable forms and blank templates, grouped by program.');
+module_shell_start($role,'forms','Forms & Templates','Printable forms and blank templates, grouped by program.');
 $documents=[
  'TUPAD'=>[
  ['TUPAD Beneficiary Form','assets/templates/Tupadforms.xlsx'],
