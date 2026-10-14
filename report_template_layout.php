@@ -2,6 +2,7 @@
 /** Shared workbook presentation and browser rendering of the actual export template. */
 function normalize_report_workbook(PharData $archive, string $program): void {
     $ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+    $headerPositions=[];
     foreach (['xl/worksheets/sheet1.xml','xl/worksheets/sheet2.xml'] as $path) {
         if (!isset($archive[$path])) continue;
         $doc = new DOMDocument(); $doc->loadXML($archive[$path]->getContent(), LIBXML_NONET);
@@ -19,7 +20,28 @@ function normalize_report_workbook(PharData $archive, string $program): void {
         $headerRow=stripos($program,'MSME')!==false?($path==='xl/worksheets/sheet1.xml'?4:6):(stripos($program,'SPES')!==false?3:10);
         $header=$xp->query('//m:row[@r="'.$headerRow.'"]')->item(0);
         if($header){$header->setAttribute('ht',(string)max((float)$header->getAttribute('ht'),stripos($program,'SPES')!==false?60:90));$header->setAttribute('customHeight','1');}
+        // Center the drawing against the visible report columns, including hidden-column offsets.
+        $default=(float)$xp->evaluate('string(//m:sheetFormatPr/@defaultColWidth)');$default=($default>0?$default:8.43)*7+5;
+        $widths=[];foreach($xp->query('//m:cols/m:col')as$column)for($c=(int)$column->getAttribute('min');$c<=(int)$column->getAttribute('max');$c++)$widths[$c]=$column->getAttribute('hidden')==='1'?0:(float)$column->getAttribute('width')*7+5;
+        $last=1;foreach($xp->query('//m:row[@r="'.$headerRow.'"]/m:c')as$cell){preg_match('/^([A-Z]+)/',$cell->getAttribute('r'),$parts);$last=max($last,report_column_number($parts[1]));}
+        $first=stripos($program,'MSME')!==false&&$path==='xl/worksheets/sheet1.xml'?2:1;$tableWidth=0;$leading=0;
+        for($c=1;$c<=$last;$c++){if($c<$first)$leading+=$widths[$c]??$default;else$tableWidth+=$widths[$c]??$default;}
+        $left=$leading+max(0,($tableWidth-1460)/2);$anchor=1;
+        while($anchor<$last&&($widths[$anchor]??$default)<=$left){$left-=$widths[$anchor]??$default;$anchor++;}
+        $headerPositions[basename($path)]=[$anchor-1,(int)round($left*9525)];
         $archive[$path] = $doc->saveXML();
+    }
+    // MSME sheets need separate anchors because their column widths differ.
+    $relationship='xl/worksheets/_rels/sheet2.xml.rels';
+    if(isset($archive[$relationship])&&isset($archive['xl/drawings/drawing1.xml'])&&!isset($archive['xl/drawings/drawing2.xml'])){
+        $relationships=$archive[$relationship]->getContent();
+        if(strpos($relationships,'../drawings/drawing1.xml')!==false){
+            $archive['xl/drawings/drawing2.xml']=$archive['xl/drawings/drawing1.xml']->getContent();
+            if(isset($archive['xl/drawings/_rels/drawing1.xml.rels']))$archive['xl/drawings/_rels/drawing2.xml.rels']=$archive['xl/drawings/_rels/drawing1.xml.rels']->getContent();
+            $archive[$relationship]=str_replace('../drawings/drawing1.xml','../drawings/drawing2.xml',$relationships);
+            $types=new DOMDocument();$types->loadXML($archive['[Content_Types].xml']->getContent(),LIBXML_NONET);
+            $override=$types->createElementNS('http://schemas.openxmlformats.org/package/2006/content-types','Override');$override->setAttribute('PartName','/xl/drawings/drawing2.xml');$override->setAttribute('ContentType','application/vnd.openxmlformats-officedocument.drawing+xml');$types->documentElement->appendChild($override);$archive['[Content_Types].xml']=$types->saveXML();
+        }
     }
     foreach (['xl/drawings/drawing1.xml','xl/drawings/drawing2.xml'] as $path) {
         if (!isset($archive[$path])) continue;
@@ -28,6 +50,8 @@ function normalize_report_workbook(PharData $archive, string $program): void {
         foreach ($xp->query('//*[local-name()="ext" and @cx and @cy]') as $extent) {
             $extent->setAttribute('cx','13906500'); $extent->setAttribute('cy','1580300');
         }
+        $sheet=str_replace('drawing','sheet',basename($path));
+        if(isset($headerPositions[$sheet])){[$column,$offset]=$headerPositions[$sheet];foreach($xp->query('//*[local-name()="oneCellAnchor"]/*[local-name()="from"]')as$from){foreach(['col'=>$column,'colOff'=>$offset,'row'=>0,'rowOff'=>95250]as$name=>$value){$node=$xp->query('*[local-name()="'.$name.'"]',$from)->item(0);if($node)$node->nodeValue=(string)$value;}}}
         $archive[$path] = $doc->saveXML();
     }
     $doc=new DOMDocument();$doc->loadXML($archive['xl/workbook.xml']->getContent(),LIBXML_NONET);
