@@ -15,5 +15,6 @@
   close?.addEventListener('click', () => setMenu(false));
   overlay?.addEventListener('click', () => setMenu(false));
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && toggle?.getAttribute('aria-expanded') === 'true') setMenu(false); });
+  window.addEventListener('resize', () => { if (document.body.classList.contains('forms-workspace') && innerWidth > 992 && document.body.classList.contains('sidebar-open')) setMenu(false); });
   document.querySelector('[data-print-report]')?.addEventListener('click', () => window.print());
 })();
