@@ -27,6 +27,10 @@ foreach(['SPES','TUPAD','MSME'] as $program) {
     $path=build_official_template_report($program,[$sample,$second]);
     try {
         $zip=new PharData($path,0,null,Phar::ZIP);$sheet=phase2_sheet($zip,1);
+        phase2_check($sheet->evaluate('string(//m:sheetView/@view)')==='normal','Workbook opens in shaded page-break preview');
+        phase2_check((float)$sheet->evaluate('string(//m:row[@r="1"]/@ht)')>=110,'Report letterhead row is too short');
+        $drawing=new DOMDocument();$drawing->loadXML($zip['xl/drawings/drawing1.xml']->getContent(),LIBXML_NONET);$dx=new DOMXPath($drawing);
+        phase2_check((int)$dx->evaluate('string(//*[local-name()="ext" and @cx]/@cx)')>=11430000,'Report letterhead is too narrow');
         phase2_check(!isset($zip['xl/sharedStrings.xml']),'Cached sample strings leaked into export');
         if ($program==='SPES') {
             phase2_check(phase2_cell($sheet,'J4')==='09123456789','Phone lost its leading zero');
@@ -48,6 +52,10 @@ foreach(['SPES','TUPAD','MSME'] as $program) {
                 phase2_check((int)$merges->getAttribute('count')===$xp->query('m:mergeCell',$merges)->length,'Invalid merged-cell count');
             }
         }
+        $preview=report_template_sheets($program,[$sample,$second]);
+        phase2_check(count($preview)===($program==='MSME'?2:1),'Preview lost a template worksheet');
+        if($program==='SPES')phase2_check(array_slice($preview[0]['column_keys'],0,4)===['_number','last_name','first_name','middle_name'],'SPES preview order differs from workbook');
+        if($program==='TUPAD')phase2_check(array_slice($preview[0]['column_keys'],0,4)===['_number','first_name','middle_name','last_name'],'TUPAD preview order differs from workbook');
         echo "$program template export checks passed\n";
     } finally { unset($zip);if(is_file($path))unlink($path); }
     $parsed=readBeneficiaryXlsxRows(__DIR__.'/../assets/templates/'.$program.'_Import_Blank.xlsx');

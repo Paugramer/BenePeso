@@ -11,6 +11,13 @@ function build_msme_template_report(array $records): string {
         foreach([1=>5,2=>7] as $sheet=>$firstData) {
             $path='xl/worksheets/sheet'.$sheet.'.xml';$doc=new DOMDocument();$doc->loadXML($archive[$path]->getContent(),LIBXML_NONET);
             $xpath=new DOMXPath($doc);$xpath->registerNamespace('m',$ns);$data=$xpath->query('/m:worksheet/m:sheetData')->item(0);
+            if($sheet===1){
+                $header=$xpath->query('m:row[@r="4"]',$data)->item(0);$cell=$xpath->query('m:c[@r="B4"]',$header)->item(0);
+                if(!$cell){$cell=$doc->createElementNS($ns,'c');$cell->setAttribute('r','B4');$header->insertBefore($cell,$header->firstChild);}
+                foreach(iterator_to_array($cell->childNodes) as $child)$cell->removeChild($child);
+                $cell->setAttribute('t','inlineStr');$inline=$doc->createElementNS($ns,'is');$text=$doc->createElementNS($ns,'t','No.');$inline->appendChild($text);$cell->appendChild($inline);
+            }
+
             $prototype=[];
             for($offset=0;$offset<10;$offset++) $prototype[]=$xpath->query('m:row[@r="'.($firstData+$offset).'"]',$data)->item(0)->cloneNode(true);
             foreach(iterator_to_array($xpath->query('m:row',$data)) as $row) if((int)$row->getAttribute('r') >= $firstData) $data->removeChild($row);
@@ -60,6 +67,7 @@ function build_msme_template_report(array $records): string {
             $dimension=$xpath->query('/m:worksheet/m:dimension')->item(0);if($dimension)$dimension->setAttribute('ref','A1:'.($sheet===1?'AC':'Z').max($firstData-1,$cursor-1));
             $archive[$path]=$doc->saveXML();
         }
+        normalize_report_workbook($archive,'MSME');
         unset($archive);return $temporary;
     } catch(Throwable $e) { unset($archive);if(is_file($temporary))unlink($temporary);throw $e; }
 }

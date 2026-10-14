@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__.'/historical_report_helper.php';
+require_once __DIR__.'/report_template_layout.php';
 require_once __DIR__.'/msme_template_export.php';
 
 /** Populate the sanitized template without changing its column order or styles. */
@@ -50,6 +51,7 @@ function build_official_template_report(string $program, array $rows): string {
             }
         }
         $archive['xl/worksheets/sheet1.xml']=$doc->saveXML();
+        normalize_report_workbook($archive,$program);
         unset($archive);
         return $temporary;
     } catch (Throwable $e) { unset($archive);if(is_file($temporary)) unlink($temporary);throw $e; }

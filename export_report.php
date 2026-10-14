@@ -72,7 +72,7 @@ if (stripos($program_name, 'SPES') !== false && in_array($spes_group, ['baby', '
 $reportOutcome = (string)($_GET['report_outcome'] ?? 'All');
 if (in_array($reportOutcome, ['Completed','Rejected','Not Qualified','Exam Failed','Cancelled'], true)) {
     if ($reportOutcome === 'Rejected') $whereParts[] = "b.approval_status = 'Rejected'";
-    else { $whereParts[] = 'b.availment_status = ?'; $params[] = $reportOutcome; $types .= 's'; }
+    else { $whereParts[] = "b.approval_status = 'Approved'"; $whereParts[] = 'b.availment_status = ?'; $params[] = $reportOutcome; $types .= 's'; }
 }
 $reportSearch = mb_substr(trim((string)($_GET['report_search'] ?? '')), 0, 120);
 if ($reportSearch !== '') {

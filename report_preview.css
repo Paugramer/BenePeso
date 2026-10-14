@@ -1,0 +1,23 @@
+/* Scoped fixes: preserve the original beneficiary workspace and report layout. */
+#generateReportModal .report-view-toolbar{padding-right:82px!important;min-height:64px}
+#generateReportModal .report-close-button{top:12px!important;right:12px!important;width:44px!important;height:44px!important}
+#generateReportModal .preview-header{padding:12px 20px!important;min-height:72px}
+#generateReportModal .preview-header h2{font-size:18px!important;line-height:1.4!important;max-width:100%;margin:0 auto 6px!important}
+#generateReportModal .preview-header p{font-size:11px!important}
+#generateReportModal .official-template-table{width:100%!important;min-width:0!important;table-layout:fixed!important;border-collapse:collapse;font-family:Arial,sans-serif}
+#generateReportModal .official-template-table th{font-size:13px!important;line-height:1.5!important;padding:14px 10px!important;height:76px;white-space:pre-line!important;overflow-wrap:break-word!important;vertical-align:middle!important}
+#generateReportModal .official-template-table td{font-size:12px!important;line-height:1.5!important;padding:9px 8px!important;white-space:pre-line!important;vertical-align:middle!important}
+#generateReportModal .official-template-table :is(th,td){border:1px solid #9eb8aa!important}
+#generateReportModal .official-template-table [hidden]{display:none!important}
+.report-preview-message{flex:none;padding:8px 12px;font-size:12px;color:#61776c;margin:0}
+.report-template-metadata{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 20px;padding:12px;margin:0;background:#fff;font-size:12px}
+.report-template-metadata>div{display:flex;gap:8px;min-width:0}.report-template-metadata dt{font-weight:600}.report-template-metadata dd{margin:0;overflow-wrap:anywhere}
+.report-sheet-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:8px 12px;background:#f5faf7;flex:none}
+.report-sheet-tabs:empty{display:none}
+.report-sheet-tabs button{border:1px solid #c9dfd2;border-radius:9px;background:white;color:#176b45;padding:9px 12px;font:600 12px Poppins,sans-serif;cursor:pointer}
+.report-sheet-tabs button.active{background:#1f7a54;color:white}
+#beneficiaryNoticeModal [hidden]{display:none!important}
+#beneficiaryNoticeModal .modal-actions-flex{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important;gap:12px}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page) .beneficiary-filter-count{display:none!important}
+#generateReportModal .report-preview-format-note{font-size:11px;line-height:1.5;color:#61776c;margin:10px 0}
+@media(max-width:760px){#generateReportModal .preview-header h2{font-size:15px!important}#generateReportModal .official-template-table th{font-size:12px!important;padding:12px 7px!important}#generateReportModal .report-view-toolbar{padding-right:64px!important;gap:6px}#generateReportModal .report-close-button{width:38px!important;height:38px!important}.report-sheet-tabs button{font-size:10px}}
