@@ -3,6 +3,7 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/spes_lifecycle_helper.php';
 require_once __DIR__ . '/historical_report_helper.php';
+require_once __DIR__ . '/report_columns.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: private, no-store, max-age=0');
@@ -58,4 +59,5 @@ if (stripos($programName, 'SPES') !== false && $rows) {
 }
 
 $rows = enrich_reporting_rows($conn, $rows);
-echo json_encode(['ok' => true, 'records' => $rows], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+$reportColumns=official_report_columns($programName);$previewRows=[];foreach($rows as $row){$values=[];foreach($reportColumns as $column)$values[]=official_report_value($row,$column['key']);$previewRows[]=['batch_id'=>(int)$row['program_id'],'batch'=>$row['program_code'],'name'=>trim(implode(' ',array_filter([$row['first_name'] ?? '',$row['middle_name'] ?? '',$row['last_name'] ?? '']))),'barangay'=>$row['barangay'],'status'=>$row['approval_status']==='Rejected'?'Rejected':$row['availment_status'],'classification'=>$row['spes_lifecycle'] ?? 'none','values'=>$values];}
+echo json_encode(['ok' => true, 'records' => $rows,'report_columns'=>$reportColumns,'report_rows'=>$previewRows], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
