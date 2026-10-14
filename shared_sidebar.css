@@ -191,3 +191,6 @@
 /* Keep Forms & Templates and Application on the same sidebar typography and logo treatment. */
 .side-area{font-family:Poppins,sans-serif!important}
 .side-logo{display:block!important;visibility:visible!important;flex:0 0 46px;box-sizing:border-box!important;padding:4px!important;border:2px solid rgba(31,122,84,.2)!important;border-radius:50%!important;background:#fff!important;box-shadow:0 2px 8px rgba(13,54,37,.06)!important}
+
+/* Avatar frame copied from the Application sidebar. */
+.side-area .user-pic-wrap{border:2px solid rgba(255,255,255,.8)!important;box-shadow:0 2px 8px rgba(0,0,0,.1)!important}
