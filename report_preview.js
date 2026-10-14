@@ -11,10 +11,13 @@
    const sheet=sheets[sheetIndex];if(!sheet)return;viewport.innerHTML=sheet.html;
    const selected=new Set(columns.filter(input=>input.checked).map(input=>input.value));
    const indices=sheet.column_keys.map((key,index)=>({key,index})).filter(item=>item.key!=='_number'&&selected.has(item.key)).map(item=>item.index);
-   const perPage=innerWidth<=520?2:innerWidth<=900?4:8,total=Math.max(1,Math.ceil(indices.length/perPage));columnPage=Math.min(columnPage,total-1);
+   const perPage=Math.max(1,Math.min(8,Math.floor((viewport.clientWidth||innerWidth)/140)-1)),total=Math.max(1,Math.ceil(indices.length/perPage));columnPage=Math.min(columnPage,total-1);
    const visible=new Set([0,...indices.slice(columnPage*perPage,(columnPage+1)*perPage)]);
-   viewport.querySelectorAll('col').forEach(col=>col.hidden=!visible.has(Number(col.dataset.templateColumn)));
+   viewport.querySelectorAll('col').forEach(col=>{if(!visible.has(Number(col.dataset.templateColumn)))col.remove();});
    viewport.querySelectorAll('[data-column-start]').forEach(cell=>{const start=Number(cell.dataset.columnStart),end=Number(cell.dataset.columnEnd);let width=0;for(let i=start;i<=end;i++)if(visible.has(i))width++;cell.hidden=!width;if(width)cell.colSpan=width;});
+   // Empty-state rows have no workbook coordinates: they must span this page,
+   // otherwise the browser allocates all original columns and compresses headers.
+   viewport.querySelectorAll('tbody td[colspan]:not([data-column-start])').forEach(cell=>cell.colSpan=visible.size);
    viewport.querySelector('.official-template-table').style.zoom=String(zoom);
    modal.querySelector('.report-column-page-status').textContent=indices.length?`Columns ${columnPage*perPage+1}–${Math.min(indices.length,(columnPage+1)*perPage)} of ${indices.length}`:'No preview columns selected';
    modal.querySelector('[data-report-column-page="previous"]').disabled=columnPage===0;modal.querySelector('[data-report-column-page="next"]').disabled=columnPage>=total-1;
@@ -24,7 +27,7 @@
   async function refresh(){
    const sequence=++requestNumber;controller?.abort();controller=new AbortController();loaded=false;message.textContent='Preparing report preview…';field('report_print_button').disabled=true;
    const selectedBarangay=field('report_brgy_select');field('preview_subtitle_top').textContent=selectedBarangay?.value==='All'?'Municipality of Vinzons':`Barangay ${selectedBarangay?.value}, Vinzons`;
-   try{const response=await fetch('beneficiary_report_data.php?'+filters(),{credentials:'same-origin',signal:controller.signal});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.message||'Unable to prepare report. Please try again.');if(sequence!==requestNumber)return;sheets=data.sheets;count=data.count;sheetIndex=Math.min(sheetIndex,sheets.length-1);columnPage=0;loaded=true;message.textContent=count?`${count} beneficiary records. Preview, print, and export use the original report template.`:'No records match these filters.';draw();field('report_print_button').disabled=false;}
+   try{const response=await fetch('beneficiary_report_data.php?'+filters(),{credentials:'same-origin',signal:controller.signal});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.message||'Unable to prepare report. Please try again.');if(sequence!==requestNumber)return;sheets=data.sheets;count=data.count;sheetIndex=Math.min(sheetIndex,sheets.length-1);columnPage=0;loaded=true;message.textContent=count?`${count} beneficiary records. Preview, print, and export use the original report template.`:'';message.hidden=!count;draw();field('report_print_button').disabled=false;}
    catch(error){if(error.name==='AbortError')return;message.textContent=error.message;viewport.replaceChildren();}
   }
   open.addEventListener('click',()=>{modal.classList.add('show');modal.setAttribute('aria-hidden','false');refresh();});

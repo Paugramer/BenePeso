@@ -5,7 +5,7 @@
 #generateReportModal .preview-header h2{font-size:18px!important;line-height:1.4!important;max-width:100%;margin:0 auto 6px!important}
 #generateReportModal .preview-header p{font-size:11px!important}
 #generateReportModal .official-template-table{width:100%!important;min-width:0!important;table-layout:fixed!important;border-collapse:collapse;font-family:Arial,sans-serif}
-#generateReportModal .official-template-table th{font-size:13px!important;line-height:1.5!important;padding:14px 10px!important;height:76px;white-space:pre-line!important;overflow-wrap:break-word!important;vertical-align:middle!important}
+#generateReportModal .official-template-table th{font-size:13px!important;line-height:1.5!important;padding:14px 10px!important;height:76px;white-space:pre-line!important;word-break:normal!important;overflow-wrap:normal!important;vertical-align:middle!important}
 #generateReportModal .official-template-table td{font-size:12px!important;line-height:1.5!important;padding:9px 8px!important;white-space:pre-line!important;vertical-align:middle!important}
 #generateReportModal .official-template-table :is(th,td){border:1px solid #9eb8aa!important}
 #generateReportModal .official-template-table [hidden]{display:none!important}
@@ -21,3 +21,5 @@
 :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page) .beneficiary-filter-count{display:none!important}
 #generateReportModal .report-preview-format-note{font-size:11px;line-height:1.5;color:#61776c;margin:10px 0}
 @media(max-width:760px){#generateReportModal .preview-header h2{font-size:15px!important}#generateReportModal .official-template-table th{font-size:12px!important;padding:12px 7px!important}#generateReportModal .report-view-toolbar{padding-right:64px!important;gap:6px}#generateReportModal .report-close-button{width:38px!important;height:38px!important}.report-sheet-tabs button{font-size:10px}}
+
+.report-preview-message[hidden]{display:none!important}
