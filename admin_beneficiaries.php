@@ -899,10 +899,6 @@ if ($selectedProgramName !== "") {
     <div class="report-preview">
         <button type="button" class="report-filter-toggle" aria-controls="reportFiltersPanel" aria-expanded="false"><i class="ph-bold ph-funnel"></i><span>Filters</span></button>
         <div class="spreadsheet-container">
-            <div class="preview-header">
-                <h2><?php echo h($reportProgramTitle); ?></h2>
-                <p id="preview_subtitle_top">Municipality of Vinzons</p>
-            </div>
             <div class="report-view-toolbar" aria-label="Report preview controls">
                 <span class="report-view-label"><i class="ph-bold ph-magnifying-glass"></i><span>Preview size</span></span>
                 <div class="report-zoom-controls">
@@ -916,6 +912,10 @@ if ($selectedProgramName !== "") {
                 <button type="button" data-report-column-page="previous" aria-label="Previous report columns" title="Previous columns"><i class="ph-bold ph-caret-left"></i> Previous columns</button>
                 <span class="report-column-page-status">Columns 1–8</span>
                 <button type="button" data-report-column-page="next" aria-label="Next report columns" title="Next columns">Next columns <i class="ph-bold ph-caret-right"></i></button>
+            </div>
+            <div class="preview-header">
+                <h2><?php echo h($reportProgramTitle); ?></h2>
+                <p id="preview_subtitle_top">Municipality of Vinzons</p>
             </div>
             <div class="scrollable-table-wrap">
                 <table class="spreadsheet-table" id="preview_main_table">
