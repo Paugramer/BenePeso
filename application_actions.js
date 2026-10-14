@@ -142,13 +142,16 @@ window.organizeApplicationActions = (data, role) => {
       const input=document.createElement('textarea');input.id=label.htmlFor;input.maxLength=2500;input.rows=4;input.required=true;input.placeholder='Example: Submit a clear copy of the front and back of your National ID.';
       const dueLabel=document.createElement('label');dueLabel.textContent='Resubmission Deadline';dueLabel.htmlFor='bulkResubmissionDeadline';
       const due=document.createElement('input');due.type='date';due.id=dueLabel.htmlFor;due.required=true;due.min=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+      const otherLabel=document.createElement('label');otherLabel.textContent='Specify Other Reason';otherLabel.htmlFor='bulkOtherReason';
+      const other=document.createElement('input');other.id=otherLabel.htmlFor;other.maxLength=250;other.placeholder='Explain the reason for resubmission';
+      const updateOther=()=>{const required=reason.value==='Other';other.hidden=otherLabel.hidden=!required;other.required=required;other.disabled=!required;};reason.addEventListener('change',updateOther);updateOther();
       const status=document.createElement('p');status.setAttribute('role','status');
       const submit=document.createElement('button');submit.type='submit';submit.className='btn-main';submit.textContent='Save & Notify';
-      const actions=document.createElement('div');actions.className='application-dialog-actions';actions.append(submit);form.append(description,reasonLabel,reason,label,input,dueLabel,due,status,actions);dialog.append(form);dialog.showModal();reason.focus();
+      const actions=document.createElement('div');actions.className='application-dialog-actions';actions.append(submit);form.append(description,reasonLabel,reason,otherLabel,other,label,input,dueLabel,due,status,actions);dialog.append(form);dialog.showModal();reason.focus();
       form.addEventListener('submit',async event=>{
         event.preventDefault();submit.disabled=true;status.textContent='Saving requests and sending emails...';
         try{
-          const response=await fetch('application_bulk_resubmission.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids,reason:reason.value,instructions:input.value,deadline:due.value,role,program,csrf_token:document.querySelector('input[name="csrf_token"]')?.value})});
+          const response=await fetch('application_bulk_resubmission.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids,reason:reason.value,other_reason:other.value,instructions:input.value,deadline:due.value,role,program,csrf_token:document.querySelector('input[name="csrf_token"]')?.value})});
           const result=await response.json();if(!response.ok)throw new Error(result.error||'Resubmission requests could not be saved.');
           status.textContent=`Requests saved for ${result.count} beneficiaries. Emails sent: ${result.emails_sent}.`+(result.email_failures?` ${result.email_failures} emails could not be sent; contact those beneficiaries.`:'');submit.textContent='Saved';
           document.querySelectorAll('tr[data-profile]').forEach(row=>{const data=JSON.parse(row.dataset.profile);if(ids.includes(Number(data.id))){data.document_submission={requested_at:true,resubmission_reason:result.reason,resubmission_deadline:result.deadline,resubmission_note:result.instructions};row.dataset.profile=JSON.stringify(data);window.renderRequirementSummary(row,data.requirement_items);}});
@@ -200,7 +203,8 @@ window.loadRequirementChecklist = async (modal, id) => {
       const save=document.createElement('button');save.type='button';save.addEventListener('click',()=>form.requestSubmit());save.className='btn-main';save.textContent='Save Checklist';save.setAttribute('form',form.id);const actions=document.createElement('div');actions.className='application-dialog-actions application-review-footer';feedback.className='application-checklist-feedback';actions.append(feedback,save);
       const dialog=modal.closest('dialog');if(dialog)dialog.append(actions);else form.append(actions);
       const ready=()=>Object.values(controls).length>0 && Object.values(controls).every(({select})=>['Verified','Not Applicable'].includes(select.value));
-      const updateContinue=()=>{save.textContent=ready()?'Save & Continue':'Save Checklist';};Object.values(controls).forEach(({select})=>select.addEventListener('change',updateContinue));updateContinue();
+      const progressMessage=()=>{const pending=Object.entries(controls).filter(([,control])=>!['Verified','Not Applicable'].includes(control.select.value));const total=Object.keys(controls).length;return pending.length ? `${total-pending.length} of ${total} verified. Still to review: ${pending.map(([key])=>result.items[key].name).slice(0,2).join('; ')}${pending.length>2?`; and ${pending.length-2} more`:''}.` : `All ${total} requirements verified. Continue to schedule the next step.`;};
+      const updateContinue=()=>{save.textContent=ready()?'Save & Continue':'Save Checklist';feedback.textContent=progressMessage();};Object.values(controls).forEach(({select})=>select.addEventListener('change',updateContinue));updateContinue();
       form.addEventListener('submit',async event=>{
         event.preventDefault();if(save.disabled)return;const items={};
         for(const [key,{select,note}] of Object.entries(controls)){
@@ -208,9 +212,9 @@ window.loadRequirementChecklist = async (modal, id) => {
           items[key]={status:select.value,note:note.hidden?(select.value==='Not Applicable'?note.value:''):note.value};
         }
         save.disabled=true;feedback.textContent='Saving...';
-        try{const r=await fetch(`application_requirements.php?id=${id}`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({items,csrf_token:result.csrf_token})});let saved;try{saved=await r.json();}catch{throw new Error('The server did not return a valid save response. Please try again.');}if(!r.ok)throw new Error(saved.error || 'Checklist could not be saved.');feedback.textContent=saved.next_step?'Requirements verified. Continue to schedule '+saved.next_step+'.':'Checklist saved. No email sent.';
+        try{const r=await fetch(`application_requirements.php?id=${id}`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({items,csrf_token:result.csrf_token})});let saved;try{saved=await r.json();}catch{throw new Error('The server did not return a valid save response. Please try again.');}if(!r.ok)throw new Error(saved.error || 'Checklist could not be saved.');feedback.textContent=saved.next_step?'All requirements verified. Continue to schedule '+saved.next_step+'.':'Review saved. '+progressMessage();
           const tableRow=[...document.querySelectorAll('tr[data-profile]')].find(row=>{try{return Number(JSON.parse(row.dataset.profile).id)===id||Number(JSON.parse(row.dataset.profile).beneficiary_id)===id;}catch{return false;}});
-          if(tableRow){const data=JSON.parse(tableRow.dataset.profile);data.requirement_items=saved.items;if(Number(window.currentProfileData?.id)===id)window.currentProfileData.requirement_items=saved.items;tableRow.dataset.profile=JSON.stringify(data);window.renderRequirementSummary?.(tableRow,saved.items);}
+          if(tableRow){const data=JSON.parse(tableRow.dataset.profile);data.requirement_items=saved.items;data.next_requirement_step=saved.next_step;if(Number(window.currentProfileData?.id)===id){window.currentProfileData.requirement_items=saved.items;window.currentProfileData.next_requirement_step=saved.next_step;}tableRow.dataset.profile=JSON.stringify(data);window.renderRequirementSummary?.(tableRow,saved.items);}
           if(saved.next_step && ready() && dialog)window.continueRequirementSchedule(id,saved.next_step,dialog);
         }catch(error){feedback.textContent=error.message;}finally{save.disabled=false;}
       });
@@ -228,3 +232,9 @@ window.renderRequirementSummary=(row,items)=>{
  const summary=document.createElement('small');summary.className='requirement-summary';summary.textContent=`${issues} requirement${issues===1?'':'s'} need attention`;cell.append(summary);
 };
 document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('tr[data-profile]').forEach(row=>{try{window.renderRequirementSummary(row,JSON.parse(row.dataset.profile).requirement_items);}catch{}});});
+
+window.applicationRequirementsNextStep=data=>{
+ if(!data || (data.availment_status || data.availment)!=='Requirements Received')return null;
+ const items=Object.values(data.requirement_items || {});if(!items.length||!items.every(item=>['Verified','Not Applicable'].includes(item.status)))return null;
+ return data.next_requirement_step || (String(data.program || '').toUpperCase().includes('SPES') && Number(data.spes_completed_count || 0)===0 ? 'Examination' : 'Orientation');
+};

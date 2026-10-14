@@ -9,6 +9,7 @@ foreach(['reason','instructions','deadline','role','program','csrf_token'] as $f
 $role=auth_first_active_role(in_array($payload['role'],['admin','peso_staff'],true)?[$payload['role']]:[]);
 if(!$role||!auth_verify_csrf($payload['csrf_token']))rs_error(403,'Your session expired. Refresh and try again.');
 $actor=(int)$_SESSION[auth_role_id_key($role)];
+if($payload['reason']==='Other'){if(!is_string($payload['other_reason']??null)||trim($payload['other_reason'])===''||mb_strlen($payload['other_reason'])>250)rs_error(422,'Specify the other resubmission reason.');$payload['instructions']='Other reason: '.trim($payload['other_reason'])."\n".$payload['instructions'];}
 try{ensure_document_submission_schema($conn);$conn->begin_transaction();$ids=request_document_resubmission($conn,$payload['ids'],$payload['reason'],$payload['instructions'],$payload['deadline'],$role,$actor,$payload['program']);logActivity($conn,$actor,'Beneficiaries','Request Resubmission','Beneficiary Record','Requested document resubmission for '.count($ids).' selected applications.');$conn->commit();}
 catch(Throwable $e){$conn->rollback();error_log('Bulk resubmission: '.$e->getMessage());rs_error($e instanceof InvalidArgumentException?422:503,$e instanceof InvalidArgumentException?$e->getMessage():'Resubmission requests could not be saved. Please try again or contact the administrator.');}
 @set_time_limit(300);

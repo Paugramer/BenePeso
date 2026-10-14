@@ -298,8 +298,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $date_availed = trim($_POST["date_availed"] ?? "");
       $date_completed = trim($_POST["date_completed"] ?? "");
 
+      $other_resubmission_reason=trim((string)($_POST['other_resubmission_reason'] ?? ''));
       $resubmission_reason = trim((string)($_POST['resubmission_reason'] ?? ''));
       $resubmission_deadline = trim((string)($_POST['resubmission_deadline'] ?? ''));
+      if($needs_resubmission && $resubmission_reason==='Other'){if($other_resubmission_reason===''||mb_strlen($other_resubmission_reason)>250||$status_message===''){$_SESSION['show_error_modal']=true;$_SESSION['error_modal_message']='Specify the other resubmission reason.';header('Location: '.beneficiary_return_location('peso_staff_application.php',$program_name_post));exit();}$status_message='Other reason: '.$other_resubmission_reason."\n".$status_message;}
       if ($availment_status === 'Requirements Received') {
           if ($needs_resubmission && (!document_submission_deadline_valid($resubmission_deadline) || !in_array($resubmission_reason,document_resubmission_reasons(),true))) {
               $_SESSION['show_error_modal']=true;$_SESSION['error_modal_message']='Choose a resubmission reason and a valid deadline today or later.';
@@ -1346,10 +1348,10 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
   <link rel="stylesheet" href="system_mobile.css?v=24">
   <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=16">
+<link rel="stylesheet" href="application_refinements.css?v=17">
 <script src="frontend_polish.js?v=20261014-dialog" defer></script>
 <script src="beneficiary_workspace_polish.js?v=12" defer></script>
-<script src="application_actions.js?v=15" defer></script>
+<script src="application_actions.js?v=16" defer></script>
 </head>
 <body class="staff-mobile-page peso-staff-beneficiaries-page">
   <div class="page-wrap">
@@ -2365,7 +2367,8 @@ if ($selectedProgramName !== "") {
           <span class="resubmission-copy"><strong>Request document resubmission</strong><small>Use when requirements are incorrect, incomplete, expired, or unreadable.</small></span>
         </label>
       </div>
-      <div class="form-group" id="quick_resubmission_reason_container" style="display:none"><label for="quick_resubmission_reason">Resubmission Reason *</label><select name="resubmission_reason" id="quick_resubmission_reason"><option value="">Select a reason</option><?php foreach(document_resubmission_reasons() as $reason):?><option value="<?=h($reason)?>"><?=h($reason)?></option><?php endforeach?></select></div>
+      <div class="form-group" id="quick_resubmission_reason_container" style="display:none"><label for="quick_resubmission_reason">Resubmission Reason *</label><select name="resubmission_reason" id="quick_resubmission_reason" onchange="toggleQuickDateFields()"><option value="">Select a reason</option><?php foreach(document_resubmission_reasons() as $reason):?><option value="<?=h($reason)?>"><?=h($reason)?></option><?php endforeach?></select></div>
+      <div class="form-group" id="quick_other_reason_container" style="display:none"><label for="quick_other_reason">Specify Other Reason *</label><input name="other_resubmission_reason" id="quick_other_reason" maxlength="250" placeholder="Explain the resubmission reason"></div>
       <div class="form-group" id="quick_resubmission_deadline_container" style="display:none"><label for="quick_resubmission_deadline">Resubmission Deadline *</label><input type="date" id="quick_resubmission_deadline" name="resubmission_deadline" min="<?=h(document_submission_today())?>"></div>
       <div class="form-group" id="quick_message_container" style="display:none;">
         <label>Reason for this status *</label>
@@ -3495,8 +3498,9 @@ function toggleBatchScheduleFields(select) {
       document.getElementById('profileModal')?.classList.remove('show');
       document.getElementById('adminAddBeneficiaryModal')?.classList.remove('show');
       document.getElementById('quick_beneficiary_id').value = id;
-      document.getElementById('quick_availment_status').value = currentStatus || 'Not Yet Availed';
-      document.getElementById('quick_date_availed').value = dateAvailed || '';
+      const nextStep=window.applicationRequirementsNextStep?.(window.currentProfileData);
+      document.getElementById('quick_availment_status').value = nextStep || currentStatus || 'Not Yet Availed';
+      document.getElementById('quick_date_availed').value = nextStep ? '' : (dateAvailed || '');
       document.getElementById('quick_date_completed').value = dateCompleted || '';
       document.getElementById('quick_schedule_place').value = '';
       document.getElementById('quick_status_message').value = '';
@@ -3549,6 +3553,7 @@ function toggleBatchScheduleFields(select) {
       const reason=document.getElementById('quick_resubmission_reason');reason.required=needsDeadline;reason.disabled=!needsDeadline;
       document.getElementById('quick_resubmission_reason_container').style.display=needsDeadline?'block':'none';
       if(!needsDeadline)reason.value='';
+      const other=document.getElementById('quick_other_reason');const needsOther=needsDeadline && reason.value==='Other';other.required=needsOther;other.disabled=!needsOther;document.getElementById('quick_other_reason_container').style.display=needsOther?'block':'none';
       if(!needsDeadline)deadline.value='';
 
       dateRow.style.gridTemplateColumns = 'minmax(0, 1fr) minmax(0, 1fr)';

@@ -22,9 +22,11 @@ function application_requirement_items(mysqli $conn,array $record): array {
  foreach(preg_split('/\r?\n/',(string)($record['requirements']??'')) as $line){
   $line=trim(preg_replace('/^\s*[-?]\s*/u','',$line));
   if($line===''||substr($line,-1)===':')continue;
+  if(stripos($record['program_name'],'SPES')!==false && preg_match('/plastic\s+envelope/i',$line))continue;
   if($tupad&&preg_match('/\bID\b/i',$line))continue;
   $key=hash('sha256',$line);$items[$key]=['name'=>$line,'source'=>'general'];
  }
+ if(stripos($record['program_name'],'SPES')!==false){$hasForm=false;foreach($items as $item)if(stripos($item['name'],'application form')!==false)$hasForm=true;if(!$hasForm)$items=[hash('sha256','SPES Application Form')=>['name'=>'SPES Application Form','source'=>'general']]+$items;}
  if(application_requirements_table_available($conn,'application_requirement_reviews')) {
  $s=$conn->prepare('SELECT * FROM application_requirement_reviews WHERE beneficiary_id=?');$s->bind_param('i',$record['beneficiary_id']);$s->execute();foreach($s->get_result() as $r)if(isset($items[$r['requirement_key']]))$items[$r['requirement_key']]+= ['status'=>$r['review_status'],'note'=>$r['reviewer_note']];$s->close();
  }
@@ -38,7 +40,7 @@ function application_requirements_issue_sql(?mysqli $connection = null): string 
  global $conn;
  $connection = $connection ?? $conn;
  $conditions = [];
- if(application_requirements_table_available($connection,'application_requirement_reviews')) $conditions[] = "EXISTS (SELECT 1 FROM application_requirement_reviews ar WHERE ar.beneficiary_id=b.beneficiary_id AND ar.review_status IN ('Missing','Needs Resubmission','Invalid Document') AND LOCATE(CONVERT(ar.requirement_name USING utf8mb4) COLLATE utf8mb4_unicode_ci,CONVERT(p.requirements USING utf8mb4) COLLATE utf8mb4_unicode_ci)>0)";
+ if(application_requirements_table_available($connection,'application_requirement_reviews')) $conditions[] = "EXISTS (SELECT 1 FROM application_requirement_reviews ar WHERE ar.beneficiary_id=b.beneficiary_id AND ar.review_status IN ('Missing','Needs Resubmission','Invalid Document') AND LOWER(ar.requirement_name) NOT LIKE '%plastic%envelope%' AND (LOCATE(CONVERT(ar.requirement_name USING utf8mb4) COLLATE utf8mb4_unicode_ci,CONVERT(p.requirements USING utf8mb4) COLLATE utf8mb4_unicode_ci)>0 OR (p.program_name LIKE 'SPES%' AND ar.requirement_name='SPES Application Form')))";
  if(application_requirements_table_available($connection,'beneficiary_documents')) $conditions[] = "EXISTS (SELECT 1 FROM beneficiary_documents bd WHERE bd.beneficiary_id=b.beneficiary_id AND bd.verification_status='Needs Resubmission')";
  if(application_requirements_table_available($connection,'application_document_submissions')) $conditions[] = "EXISTS (SELECT 1 FROM application_document_submissions ds WHERE ds.beneficiary_id=b.beneficiary_id AND ds.requested_at IS NOT NULL)";
  if(!$conditions) return '(1=0)';
