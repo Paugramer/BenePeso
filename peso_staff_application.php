@@ -241,6 +241,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       } else {
           $updated = $sent = $failed = $blocked = $outOfScope = $spesExamSkipped = $invalidFlow = 0;
           $dateAvailed = in_array($bulkStatus, ['Orientation','Examination','Ongoing','Salary Distribution'], true) && $bulkDate !== '' ? $bulkDate : null;
+          if($bulkStatus==='Requirements Received')$dateAvailed=document_submission_today();
           $dateCompleted = $bulkStatus === 'Completed' && $bulkDate !== '' ? $bulkDate : null;
           $lastAvailed = $dateAvailed ? $dateAvailed . ' 00:00:00' : null;
           $stmt = $conn->prepare("UPDATE beneficiaries SET availment_status=?, date_availed=COALESCE(?,date_availed), date_completed=COALESCE(?,date_completed), last_availed_at=COALESCE(?,last_availed_at), updated_at=NOW() WHERE beneficiary_id=?");
@@ -459,6 +460,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           $date_completed = null;
       } elseif ($availment_status === 'Requirements Received') {
           $date_completed = null;
+          if($action==='admin_add_beneficiary')$date_availed=document_submission_today();
       }
 
       // TUPAD Data
@@ -643,6 +645,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               }
                $statusStmt->close();
            }
+          if($availment_status==='Requirements Received'&&($previous_availment_status!=='Requirements Received'||!$date_availed))$date_availed=document_submission_today();
           if ($previous_availment_status !== null && $previous_availment_status !== $availment_status) {
               $transition = beneficiary_validate_status_transition($conn, $bid, $availment_status);
               if (!$transition['allowed']) {
@@ -861,6 +864,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
   // BULK IMPORT FILE
   if ($action === "bulk_upload_beneficiaries") {
+      unset($_SESSION['import_summary']);$_SESSION['show_success_modal']=false;
       $program_id = (int)($_POST["program_id"] ?? 0);
       $batch_availment = trim($_POST["batch_availment_status"] ?? "Not Yet Availed");
       $batch_message = trim($_POST["batch_status_message"] ?? "");
@@ -875,6 +879,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           $emailFailureReasons = [];
 
           if (in_array($ext, ["csv", "xlsx"], true)) {
+              try {
               $checkStmt = $conn->prepare("SELECT beneficiary_id FROM beneficiaries WHERE program_id = ? AND LOWER(TRIM(full_name)) = LOWER(TRIM(?))");
 
               $header_map = [
@@ -943,7 +948,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   $importRows = readBeneficiaryImportRows($file["tmp_name"], $ext);
               } catch (Throwable $error) {
                   $_SESSION["show_error_modal"] = true;
-                  $_SESSION["error_modal_message"] = "Import failed: " . $error->getMessage();
+                  error_log("Beneficiary import read: ".$error->getMessage());
+                  $_SESSION["error_modal_message"] = "Import Invalid";
       header("Location: " . beneficiary_return_location('peso_staff_application.php', $program_name_post));
                   exit();
               }
@@ -970,7 +976,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
               if (!$header_found) {
                   $_SESSION["show_error_modal"] = true;
-                  $_SESSION["error_modal_message"] = "Invalid Template. Could not find column headers (First Name, Last Name, Full Name, or Owner Name) in the file.";
+                  $_SESSION["error_modal_message"] = "Import Invalid";
       header("Location: " . beneficiary_return_location('peso_staff_application.php', $program_name_post));
                   exit();
               }
@@ -987,6 +993,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   }
               }
 
+              $preparedRows=[];
               for ($importIndex = $headerIndex + 1, $rowTotal = count($importRows); $importIndex < $rowTotal; $importIndex++) {
                   $data = $importRows[$importIndex];
                   if (empty(trim(implode("", $data)))) continue;
@@ -1055,6 +1062,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   $last_name = $row_data['last_name'] ?? "";
                   $full_name = $row_data['full_name'] ?? "";
                   $row_data['middle_name'] = $middle_name;
+                  if(trim($full_name)===''&&(trim($first_name)===''||trim($last_name)==='')){$failedCount++;continue;}
 
                   if (empty($full_name)) {
                       $full_name = trim("$first_name $middle_name $last_name");
@@ -1062,7 +1070,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   }
 
                   if (empty($full_name)) {
-                      $skippedCount++;
+                      $failedCount++;
                       continue;
                   }
                   $full_name = preg_replace('/\s+/u', ' ', cleanBeneficiaryImportText($full_name));
@@ -1075,8 +1083,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                       }
                   }
 
+                  if($batch_availment==='Requirements Received')$row_data['date_availed']=document_submission_today();
+                  $preparedRows[]=$row_data;
+              }
+              if($failedCount||!$preparedRows)throw new RuntimeException('Invalid import rows.');
+              if(!isset($mapped_headers)||(!in_array('full_name',$mapped_headers,true)&&(!in_array('first_name',$mapped_headers,true)||!in_array('last_name',$mapped_headers,true))))throw new RuntimeException('Missing name headers.');
+              prepareBeneficiaryImportOutbox($conn);
+              runBeneficiaryImportTransaction($conn,$preparedRows,function($row_data)use($conn,$checkStmt,$program_id,$batch_availment,$batch_message,$batch_schedule_date,$batch_schedule_place,$peso_staff_id,&$successCount,&$updatedCount,&$failedCount,&$emailSentCount,&$emailFailedCount,&$emailFailureReasons){
+                  $full_name=$row_data['full_name'];
                   $checkStmt->bind_param("is", $program_id, $full_name);
-                  $checkStmt->execute();
+                  if(!$checkStmt->execute())throw new RuntimeException('Import duplicate check failed.');
                   $res = $checkStmt->get_result();
 
                   $savedBeneficiaryId = 0;
@@ -1101,30 +1117,32 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   if ($savedBeneficiaryId > 0) {
                       if (in_array($batch_availment, ['Orientation', 'Examination', 'Salary Distribution'], true) && $batch_schedule_date !== '') {
                           $scheduleStmt = $conn->prepare("UPDATE beneficiaries SET date_availed = ?, last_availed_at = ? WHERE beneficiary_id = ?");
+                          if (!$scheduleStmt)throw new RuntimeException('Import schedule could not be prepared.');
                           if ($scheduleStmt) {
                               $batch_last_availed = $batch_schedule_date . ' 00:00:00';
                               $scheduleStmt->bind_param('ssi', $batch_schedule_date, $batch_last_availed, $savedBeneficiaryId);
-                              $scheduleStmt->execute();
+                              if(!$scheduleStmt->execute())throw new RuntimeException('Import date could not be saved.');
                               $scheduleStmt->close();
                           }
                       }
-                      if (queueBENEPESOStatusEmail($conn, $savedBeneficiaryId, $batch_availment, $batch_message, $batch_schedule_date, $batch_schedule_place)) {
+                      if (queueBeneficiaryImportEmail($conn, $savedBeneficiaryId, $batch_availment, $batch_message, $batch_schedule_date, $batch_schedule_place)) {
                           $emailSentCount++;
                       } else {
-                          $emailFailedCount++;
-                          $emailFailureReason = 'The notification could not be added to the delivery queue.';
-                          $emailFailureReasons[$emailFailureReason] = ($emailFailureReasons[$emailFailureReason] ?? 0) + 1;
-                          error_log("BENEPESO bulk import email not sent for beneficiary_id={$savedBeneficiaryId}: " . $emailFailureReason);
+                          throw new RuntimeException('Import notification could not be queued.');
+
                       }
                   }
-              }
+
+                  if(!$savedBeneficiaryId)throw new RuntimeException('Import record could not be saved.');
+              });
+
               $checkStmt->close();
 
               $emailSummary = " Status emails: $emailSentCount will be sent automatically, $emailFailedCount could not be scheduled.";
 
               if ($failedCount > 0) {
                   $_SESSION["show_error_modal"] = true;
-                  $_SESSION["error_modal_message"] = "$successCount new and $updatedCount existing records were saved, but $failedCount row(s) failed validation (for example, an invalid or ambiguous date, contact number, email, barangay, or numeric value). $skippedCount row(s) without a beneficiary name were skipped." . $emailSummary;
+                  $_SESSION["error_modal_message"] = "Import Invalid";
               } else {
                   $_SESSION["show_success_modal"] = true;
                   $_SESSION["success_modal_message"] = "$successCount new records uploaded (Pending). $updatedCount existing records fully updated to '$batch_availment'." . ($skippedCount ? " $skippedCount unnamed row(s) skipped." : "") . $emailSummary;
@@ -1138,15 +1156,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                       "status" => $batch_availment
                   ];
               }
+              } catch(Throwable $error){
+                  error_log('Beneficiary import: '.$error->getMessage());
+                  unset($_SESSION['import_summary']);$_SESSION['show_success_modal']=false;
+                  $_SESSION['show_error_modal']=true;$_SESSION['error_modal_message']='Import Invalid';
+              }
           } else {
               $_SESSION["show_error_modal"] = true;
-              $_SESSION["error_modal_message"] = "Invalid file type. Please upload a valid Excel (.xlsx) or CSV (.csv) file.";
+              $_SESSION["error_modal_message"] = "Import Invalid";
           }
       } else {
           $_SESSION["show_error_modal"] = true;
-          $_SESSION["error_modal_message"] = $program_id <= 0
-              ? "Please select a valid program batch before importing."
-              : "The selected file could not be uploaded. Please check its size and try again.";
+          $_SESSION["error_modal_message"] = "Import Invalid";
       }
       header("Location: " . beneficiary_return_location('peso_staff_application.php', $program_name_post));
       exit();
@@ -1352,13 +1373,14 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=4">
   <link rel="stylesheet" href="system_mobile.css?v=24">
   <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=17">
+<link rel="stylesheet" href="application_refinements.css?v=18">
 <script src="frontend_polish.js?v=20261014-dialog" defer></script>
 <script src="beneficiary_workspace_polish.js?v=13" defer></script>
 <script src="application_actions.js?v=16" defer></script>
 <link rel="stylesheet" href="shared_sidebar.css?v=6">
+<script src="application_workflow.js?v=1" defer></script>
 </head>
-<body class="staff-mobile-page peso-staff-beneficiaries-page">
+<body class="application-workflow-page staff-mobile-page peso-staff-beneficiaries-page">
   <div class="page-wrap">
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
@@ -2454,9 +2476,10 @@ if ($selectedProgramName !== "") {
       </div>
 
       <div class="form-group">
+        <a class="btn-light import-template-link" download="<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import.xlsx" href="assets/templates/<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import_Blank.xlsx"><i class="ph ph-download-simple" aria-hidden="true"></i> Download Template</a>
         <label>Upload File *</label>
         <div class="file-upload-box-dashed">
-            <input type="file" name="csv_file" id="bulkFileInput" accept=".csv,.xlsx" required style="width:100%; padding:15px;">
+            <input type="file" name="csv_file" id="bulkFileInput" aria-describedby="bulkFileError" accept=".csv,.xlsx" required style="width:100%; padding:15px;">
             <div style="font-size: 32px; color: var(--green); margin-bottom: 8px;"><i class="ph-fill ph-file-text"></i></div>
             <div class="file-help-text" id="bulkFileName">Select an Excel (.xlsx) or CSV (.csv) file</div>
         </div>
@@ -2507,6 +2530,7 @@ function toggleBatchScheduleFields(select) {
             <div class="report-filter-list" style="flex: 1; overflow-y: auto; padding-right: 8px; display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px;">
                 <div class="form-group" style="margin:0;">
                     <label>Select Batch Filter</label>
+        <p id="bulkFileError" class="import-inline-error" role="alert" hidden></p>
                     <select name="program_id" id="report_batch_select">
                         <option value="0">All Batches</option>
                         <?php foreach($batches as $b): ?><option value="<?php echo $b['program_id']; ?>"><?php echo h($b['program_code']); ?></option><?php endforeach; ?>
@@ -2587,7 +2611,6 @@ function toggleBatchScheduleFields(select) {
         <button type="button" class="report-filter-toggle" aria-controls="reportFiltersPanel" aria-expanded="false"><i class="ph-bold ph-funnel"></i><span>Filters</span></button>
         <div class="spreadsheet-container">
             <div class="preview-header">
-                <img class="official-report-header" src="assets/peso_official_report_header.png?v=20260820-compact" alt="PESO Vinzons official letterhead">
                 <h2><?php echo h($reportProgramTitle); ?></h2>
                 <p id="preview_subtitle_top">Municipality of Vinzons</p>
             </div>

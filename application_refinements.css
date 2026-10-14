@@ -61,3 +61,13 @@
 .application-review-footer .application-checklist-feedback{flex:1;min-width:0;margin:0 14px 0 0;font-size:12px;line-height:1.6;color:#315b45}.application-review-footer>button{flex-shrink:0}@media(max-width:600px){.application-review-footer{flex-wrap:wrap}.application-review-footer .application-checklist-feedback{flex-basis:100%;margin:0 0 8px}}
 
 .application-bulk-remarks-form :is(label,input)[hidden]{display:none!important}.application-checklist-feedback{overflow-wrap:anywhere}
+
+/* Import controls only. */
+#bulkUploadModal .import-template-link{display:inline-flex;align-items:center;gap:8px;margin:0 0 12px;padding:10px 14px;text-decoration:none}
+#bulkUploadModal .import-inline-error{margin:8px 0 0;color:#b42318;font-size:12px;line-height:1.5}
+#bulkUploadModal .import-inline-error[hidden]{display:none!important}
+
+/* Report modal only: compact heading after removal of the preview letterhead. */
+.application-workflow-page #generateReportModal .preview-header{padding:12px 18px;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.application-workflow-page #generateReportModal .preview-header h2{margin:0;line-height:1.4}
+.application-workflow-page #generateReportModal .preview-header p{margin:0}

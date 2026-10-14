@@ -290,9 +290,8 @@ function updateImportedBeneficiary(mysqli $conn, int $beneficiaryId, array $rowD
     if (!$stmt) return false;
     $stmt->bind_param($types, ...$values);
     $saved = $stmt->execute();
-    $changed = $stmt->affected_rows > 0;
     $stmt->close();
-    return $saved && $changed;
+    return $saved;
 }
 
 function insertImportedBeneficiary(
@@ -339,4 +338,36 @@ function insertImportedBeneficiary(
     $saved = $stmt->execute();
     $stmt->close();
     return $saved;
+}
+
+/** Prepare storage before any transaction; import never runs DDL during record writes. */
+function prepareBeneficiaryImportOutbox(mysqli $conn): void {
+    $conn->query("CREATE TABLE IF NOT EXISTS notification_outbox (
+        notification_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        dedupe_key CHAR(64) NOT NULL UNIQUE,
+        beneficiary_id INT NOT NULL,
+        status_name VARCHAR(80) NOT NULL,
+        custom_message TEXT NULL,
+        schedule_date VARCHAR(20) NULL,
+        schedule_place VARCHAR(255) NULL,
+        attempts INT NOT NULL DEFAULT 0,
+        last_error VARCHAR(500) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_notification_outbox_created (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+    $result=$conn->query("SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('beneficiaries','notification_outbox')");
+    $tables=[];while($row=$result->fetch_assoc())$tables[$row['TABLE_NAME']]=strtolower($row['ENGINE']);
+    if(($tables['beneficiaries']??'')!=='innodb'||($tables['notification_outbox']??'')!=='innodb')throw new RuntimeException('Import requires transactional storage.');
+}
+function queueBeneficiaryImportEmail(mysqli $conn,int $id,string $status,string $message,string $date,string $place): bool {
+    $dedupe=hash('sha256',implode('|',[$id,$status,$message,$date,$place]));
+    $stmt=$conn->prepare("INSERT INTO notification_outbox (dedupe_key,beneficiary_id,status_name,custom_message,schedule_date,schedule_place,last_error) VALUES (?,?,?,?,?,?, '') ON DUPLICATE KEY UPDATE last_error='',updated_at=NOW()");
+    if(!$stmt)return false;$stmt->bind_param('sissss',$dedupe,$id,$status,$message,$date,$place);$ok=$stmt->execute();$stmt->close();return $ok;
+}
+function runBeneficiaryImportTransaction(mysqli $conn,array $rows,callable $save): void {
+    if(!$rows)throw new RuntimeException('No import records.');
+    if(!$conn->begin_transaction())throw new RuntimeException('Import transaction could not start.');
+    try {foreach($rows as$row)$save($row);if(!$conn->commit())throw new RuntimeException('Import commit failed.');}
+    catch(Throwable $error){$conn->rollback();throw $error;}
 }
