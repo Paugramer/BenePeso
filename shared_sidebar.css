@@ -194,3 +194,10 @@
 
 /* Avatar frame copied from the Application sidebar. */
 .side-area .user-pic-wrap{border:2px solid rgba(255,255,255,.8)!important;box-shadow:0 2px 8px rgba(0,0,0,.1)!important}
+
+/* Explicit sidebar type metrics prevent page-specific body rules from changing them. */
+body .side-area .side-title{font-family:Poppins,sans-serif!important;font-size:21px!important;line-height:1.08!important;font-weight:900!important}
+body .side-area .side-sub,body .side-area .user-role{font-family:Poppins,sans-serif!important;font-size:12px!important;line-height:1.35!important;font-weight:600!important}
+body .side-area .user-name{font-family:Poppins,sans-serif!important;font-size:13.5px!important;line-height:1.3!important;font-weight:800!important}
+body .side-area .nav-item{font-family:Poppins,sans-serif!important;font-size:13.5px!important;line-height:1!important;font-weight:650!important}
+@media(max-width:600px){body .side-area .side-sub,body .side-area .user-role{font-size:10.5px!important}body .side-area .nav-item{font-size:12px!important}}

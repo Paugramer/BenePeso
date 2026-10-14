@@ -1356,7 +1356,7 @@ if ($selectedProgramName !== "") {
 <script src="frontend_polish.js?v=20261014-dialog" defer></script>
 <script src="beneficiary_workspace_polish.js?v=13" defer></script>
 <script src="application_actions.js?v=16" defer></script>
-<link rel="stylesheet" href="shared_sidebar.css?v=4">
+<link rel="stylesheet" href="shared_sidebar.css?v=5">
 </head>
 <body class="staff-mobile-page peso-staff-beneficiaries-page">
   <div class="page-wrap">
