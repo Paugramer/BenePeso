@@ -24,8 +24,8 @@
 
 .report-preview-message[hidden]{display:none!important}
 
-/* Worksheet grid stays in the preview; official print/export templates are unchanged. */
-#generateReportModal .scrollable-table-wrap{background-color:#fff!important;background-image:linear-gradient(to right,#e1e9e4 1px,transparent 1px),linear-gradient(to bottom,#e1e9e4 1px,transparent 1px)!important;background-size:140px 36px!important;overflow:auto!important}
+/* Keep the preview clean outside the official report cells. */
+#generateReportModal .scrollable-table-wrap{background-color:#fff!important;background-image:none!important;overflow:auto!important}
 @media(max-width:760px){
  #generateReportModal .report-view-toolbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto;padding:10px 12px!important;gap:8px!important;flex:none}
  #generateReportModal .report-filter-toggle{position:static!important;transform:none!important;grid-column:1;grid-row:1;width:auto!important;justify-self:start;padding:0 12px!important;min-height:40px}
