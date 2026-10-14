@@ -1663,7 +1663,7 @@ if ($selectedProgramName !== "") {
   $types = "s";
   $reasonFilter=($_GET['requirements_review'] ?? '')==='followup' ? trim((string)($_GET['resubmission_reason_filter'] ?? '')) : '';
   if(in_array($reasonFilter,document_resubmission_reasons(),true)){
-      if(document_submission_reason_available($conn)){ $whereParts[]="EXISTS (SELECT 1 FROM application_document_submissions ds WHERE ds.beneficiary_id=b.beneficiary_id AND ds.requested_at IS NOT NULL AND ds.resubmission_reason=?)";$params[]=$reasonFilter;$types.='s'; }else $whereParts[]='1=0';
+      if(document_submission_reason_available($conn)){ $whereParts[]="EXISTS (SELECT 1 FROM application_document_submissions ds WHERE ds.beneficiary_id=b.beneficiary_id AND ds.requested_at IS NOT NULL AND (CASE WHEN ds.resubmission_reason IN ('Incomplete Document','Unreadable Document','Incorrect Information','Expired Document') THEN 'Invalid Document' ELSE ds.resubmission_reason END)=?)";$params[]=$reasonFilter;$types.='s'; }else $whereParts[]='1=0';
   }
 
   if ($selectedProgramId > 0) { $whereParts[] = "b.program_id = ?"; $params[] = $selectedProgramId; $types .= "i"; }
@@ -1759,10 +1759,10 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
   <link rel="stylesheet" href="system_mobile.css?v=24">
 <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=15">
+<link rel="stylesheet" href="application_refinements.css?v=16">
 <script src="frontend_polish.js?v=20261014-dialog" defer></script>
 <script src="beneficiary_workspace_polish.js?v=12" defer></script>
-<script src="application_actions.js?v=14" defer></script>
+<script src="application_actions.js?v=15" defer></script>
 </head>
 <body class="admin-mobile-page admin-beneficiaries-page">
   <div class="page-wrap">

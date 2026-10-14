@@ -50,3 +50,10 @@ function application_requirements_are_verified(array $items): bool {
  foreach($items as $item)if(!in_array($item['status'] ?? '',['Verified','Not Applicable'],true))return false;
  return true;
 }
+
+function save_application_requirement_reviews(mysqli $conn,int $id,array $entries,array $items,string $role,int $actor): void {
+ foreach($entries as $key=>$e){$reviewStatus=$e['status'];$status=$reviewStatus;$note=trim($e['note']);$name=$items[$key]['name'];
+ if($items[$key]['source']==='tupad'){$status=in_array($status,['Missing','Needs Resubmission','Invalid Document'],true)?'Needs Resubmission':($status==='Verified'?'Verified':'Pending');$s=$conn->prepare('INSERT INTO beneficiary_documents (beneficiary_id,document_type,verification_status,reviewer_note,reviewed_by_role,reviewed_by_id,reviewed_at) VALUES (?,?,?,?,?,?,NOW()) ON DUPLICATE KEY UPDATE verification_status=VALUES(verification_status),reviewer_note=VALUES(reviewer_note),reviewed_by_role=VALUES(reviewed_by_role),reviewed_by_id=VALUES(reviewed_by_id),reviewed_at=NOW()');$s->bind_param('issssi',$id,$key,$status,$note,$role,$actor);$s->execute();$s->close();}
+ $status=$reviewStatus;{$s=$conn->prepare('INSERT INTO application_requirement_reviews (beneficiary_id,requirement_key,requirement_name,review_status,reviewer_note,reviewed_by_role,reviewed_by_id) VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE review_status=VALUES(review_status),reviewer_note=VALUES(reviewer_note),reviewed_by_role=VALUES(reviewed_by_role),reviewed_by_id=VALUES(reviewed_by_id),reviewed_at=NOW()');$s->bind_param('isssssi',$id,$key,$name,$status,$note,$role,$actor);}$s->execute();$s->close();
+ }
+}

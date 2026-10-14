@@ -137,7 +137,7 @@ window.organizeApplicationActions = (data, role) => {
       const description=document.createElement('p');description.textContent=`Request corrected documents from ${ids.length} selected beneficiaries. Each beneficiary will receive the reason, instructions, and deadline by email.`;
       const reasonLabel=document.createElement('label');reasonLabel.textContent='Resubmission Reason';reasonLabel.htmlFor='bulkResubmissionReason';
       const reason=document.createElement('select');reason.id=reasonLabel.htmlFor;reason.required=true;
-      ['','Missing Requirement','Incomplete Document','Unreadable Document','Incorrect Information','Expired Document','Other'].forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value||'Select a reason';reason.append(option);});
+      ['','Missing Requirement','Invalid Document','Other'].forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value||'Select a reason';reason.append(option);});
       const label=document.createElement('label');label.textContent='Documents to Resubmit / Instructions';label.htmlFor='bulkResubmissionInstructions';
       const input=document.createElement('textarea');input.id=label.htmlFor;input.maxLength=2500;input.rows=4;input.required=true;input.placeholder='Example: Submit a clear copy of the front and back of your National ID.';
       const dueLabel=document.createElement('label');dueLabel.textContent='Resubmission Deadline';dueLabel.htmlFor='bulkResubmissionDeadline';
@@ -179,7 +179,7 @@ window.loadRequirementChecklist = async (modal, id) => {
     if(Number(cached?.id)===id && cached.requirement_items && csrf){ result={items:cached.requirement_items,editable:cached.approval==='Approved' && (cached.availment_status || cached.availment)==='Requirements Received',csrf_token:csrf}; }
     else {const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),15000);try{const response=await fetch(`application_requirements.php?id=${id}`,{credentials:'same-origin',signal:controller.signal});result=await response.json();if(!response.ok)throw new Error(result.error);}finally{clearTimeout(timeout);}}
     if(!section.isConnected)return;
-    const form = document.createElement('form');form.id=`applicationRequirementForm-${id}`;
+    const form = document.createElement('form');form.id=`applicationRequirementForm-${id}`;form.noValidate=true;form.setAttribute('data-no-action-loader','');
     const controls = {};
     Object.entries(result.items).forEach(([key,item],index)=>{
       const row=document.createElement('div');row.className='requirement-review-row';
@@ -188,7 +188,7 @@ window.loadRequirementChecklist = async (modal, id) => {
       const statuses=['Not Reviewed','Missing','Received','Verified','Invalid Document'];
       if(item.status==='Not Applicable')statuses.push('Not Applicable');
       const currentStatus=item.status==='Needs Resubmission'?'Invalid Document':item.status;
-      statuses.forEach(status=>{const option=document.createElement('option');option.value=status;option.textContent=status==='Not Applicable'?'Previously Exempted':status;option.selected=status===currentStatus;select.append(option);});
+      statuses.forEach(status=>{const option=document.createElement('option');option.value=status;option.textContent=status==='Not Applicable'?'Previously Exempted':status==='Missing'?'Missing Requirement':status;option.selected=status===currentStatus;select.append(option);});
       const note=document.createElement('input');note.value=item.note;note.maxLength=500;note.placeholder='What is missing or needs correction?';note.setAttribute('aria-label',`Review note: ${item.name}`);note.disabled=!result.editable;
       const updateNote=()=>{const needsNote=['Missing','Invalid Document'].includes(select.value);note.hidden=!needsNote;note.required=needsNote;note.disabled=!result.editable || !needsNote;};
       select.addEventListener('change',updateNote);updateNote();
@@ -197,18 +197,18 @@ window.loadRequirementChecklist = async (modal, id) => {
     const count=Object.values(result.items).filter(item=>['Missing','Needs Resubmission','Invalid Document'].includes(item.status)).length;
     feedback.textContent=Object.keys(result.items).length?count ? `${count} requirement${count===1?'':'s'} need attention.` : Object.values(result.items).some(item=>['Not Reviewed','Received'].includes(item.status)) ? 'Review is not yet complete.' : 'Requirements reviewed.':'No requirements configured for this batch. Set the requirements in Programs first.';
     if(result.editable&&Object.keys(controls).length){
-      const save=document.createElement('button');save.type='submit';save.className='btn-main';save.textContent='Save Checklist';save.setAttribute('form',form.id);const actions=document.createElement('div');actions.className='application-dialog-actions application-review-footer';actions.append(save);
+      const save=document.createElement('button');save.type='button';save.addEventListener('click',()=>form.requestSubmit());save.className='btn-main';save.textContent='Save Checklist';save.setAttribute('form',form.id);const actions=document.createElement('div');actions.className='application-dialog-actions application-review-footer';feedback.className='application-checklist-feedback';actions.append(feedback,save);
       const dialog=modal.closest('dialog');if(dialog)dialog.append(actions);else form.append(actions);
       const ready=()=>Object.values(controls).length>0 && Object.values(controls).every(({select})=>['Verified','Not Applicable'].includes(select.value));
       const updateContinue=()=>{save.textContent=ready()?'Save & Continue':'Save Checklist';};Object.values(controls).forEach(({select})=>select.addEventListener('change',updateContinue));updateContinue();
       form.addEventListener('submit',async event=>{
-        event.preventDefault();const items={};
+        event.preventDefault();if(save.disabled)return;const items={};
         for(const [key,{select,note}] of Object.entries(controls)){
           if(['Missing','Invalid Document'].includes(select.value)&&!note.value.trim()){feedback.textContent='Specify what is missing or why the document is invalid.';note.focus();return;}
           items[key]={status:select.value,note:note.hidden?(select.value==='Not Applicable'?note.value:''):note.value};
         }
         save.disabled=true;feedback.textContent='Saving...';
-        try{const r=await fetch(`application_requirements.php?id=${id}`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({items,csrf_token:result.csrf_token})});const saved=await r.json();if(!r.ok)throw new Error(saved.error);feedback.textContent=saved.next_step?'Requirements verified. Continue to schedule '+saved.next_step+'.':'Checklist saved. No email sent.';
+        try{const r=await fetch(`application_requirements.php?id=${id}`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({items,csrf_token:result.csrf_token})});let saved;try{saved=await r.json();}catch{throw new Error('The server did not return a valid save response. Please try again.');}if(!r.ok)throw new Error(saved.error || 'Checklist could not be saved.');feedback.textContent=saved.next_step?'Requirements verified. Continue to schedule '+saved.next_step+'.':'Checklist saved. No email sent.';
           const tableRow=[...document.querySelectorAll('tr[data-profile]')].find(row=>{try{return Number(JSON.parse(row.dataset.profile).id)===id||Number(JSON.parse(row.dataset.profile).beneficiary_id)===id;}catch{return false;}});
           if(tableRow){const data=JSON.parse(tableRow.dataset.profile);data.requirement_items=saved.items;if(Number(window.currentProfileData?.id)===id)window.currentProfileData.requirement_items=saved.items;tableRow.dataset.profile=JSON.stringify(data);window.renderRequirementSummary?.(tableRow,saved.items);}
           if(saved.next_step && ready() && dialog)window.continueRequirementSchedule(id,saved.next_step,dialog);
@@ -222,7 +222,7 @@ window.renderRequirementSummary=(row,items)=>{
  row.querySelector('.requirement-summary')?.remove();const cell=row.cells?.[4];if(!cell)return;
  const data=JSON.parse(row.dataset.profile);if(data.approval!=='Approved'||(data.availment_status || data.availment) !== 'Requirements Received')return;
  const request=data.document_submission;
- if(request?.requested_at){const summary=document.createElement('small');summary.className='requirement-summary';summary.textContent=`Needs Resubmission ? ${request.resubmission_reason || 'See instructions'}${request.resubmission_deadline ? ' ? Due '+request.resubmission_deadline : ''}`;summary.title=request.resubmission_note || '';cell.append(summary);return;}
+ if(request?.requested_at){const summary=document.createElement('small');summary.className='requirement-summary';summary.textContent=`Needs Resubmission ? ${['Incomplete Document','Unreadable Document','Incorrect Information','Expired Document'].includes(request.resubmission_reason)?'Invalid Document':(request.resubmission_reason || 'See instructions')}${request.resubmission_deadline ? ' ? Due '+request.resubmission_deadline : ''}`;summary.title=request.resubmission_note || '';cell.append(summary);return;}
  const issues=Object.values(items||{}).filter(item=>['Missing','Needs Resubmission','Invalid Document'].includes(item.status)).length;
  if(!issues)return;
  const summary=document.createElement('small');summary.className='requirement-summary';summary.textContent=`${issues} requirement${issues===1?'':'s'} need attention`;cell.append(summary);

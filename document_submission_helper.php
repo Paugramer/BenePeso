@@ -29,7 +29,7 @@ function document_submission_is_pending(mysqli $conn,int $id): bool {
  try {$s=$conn->prepare('SELECT requested_at FROM application_document_submissions WHERE beneficiary_id=?');$s->bind_param('i',$id);$s->execute();$row=$s->get_result()->fetch_assoc();$s->close();return !empty($row['requested_at']);}catch(Throwable $e){return false;}
 }
 
-function document_resubmission_reasons(): array {return ['Missing Requirement','Incomplete Document','Unreadable Document','Incorrect Information','Expired Document','Other'];}
+function document_resubmission_reasons(): array {return ['Missing Requirement','Invalid Document','Other'];}
 function document_submission_details(mysqli $conn,int $id): array {
  try {$s=$conn->prepare('SELECT * FROM application_document_submissions WHERE beneficiary_id=?');$s->bind_param('i',$id);$s->execute();$row=$s->get_result()->fetch_assoc();$s->close();return $row ?: [];}catch(Throwable $e){return [];}
 }
