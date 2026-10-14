@@ -1304,10 +1304,10 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
   <link rel="stylesheet" href="system_mobile.css?v=24">
   <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=2">
+<link rel="stylesheet" href="application_refinements.css?v=3">
 <script src="frontend_polish.js?v=20260925" defer></script>
-<script src="beneficiary_workspace_polish.js?v=3" defer></script>
-<script src="application_actions.js?v=1" defer></script>
+<script src="beneficiary_workspace_polish.js?v=4" defer></script>
+<script src="application_actions.js?v=2" defer></script>
 </head>
 <body class="staff-mobile-page peso-staff-beneficiaries-page">
   <div class="page-wrap">
@@ -1457,13 +1457,14 @@ if ($selectedProgramName !== "") {
                 <?php endif; ?>
             </div>
 
-            <a class="btn-main application-view-reports" style="margin-bottom:12px;text-decoration:none;gap:8px" href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($selectedProgramName); ?>&amp;program_id=<?php echo (int)$selectedProgramId; ?>"><i class="ph ph-chart-bar" aria-hidden="true"></i><span>View Reports</span></a>
+            <a class="btn-main application-view-reports" style="margin-bottom:0;text-decoration:none;gap:8px" href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($selectedProgramName); ?>&amp;program_id=<?php echo (int)$selectedProgramId; ?>"><i class="ph ph-chart-bar" aria-hidden="true"></i><span>View Reports</span></a>
         </div>
 
         <div class="bulk-selection-bar" id="bulkSelectionBar" hidden>
           <div class="bulk-selection-copy"><div><strong id="bulkSelectedCount">0</strong> selected <span>Choose a bulk action for these beneficiaries.</span></div><div class="bulk-selected-preview" id="bulkSelectedPreview" aria-live="polite"></div></div>
           <div class="bulk-selection-actions">
-            <button type="button" class="btn-light" id="clearBulkSelection">Clear</button>
+            <button type="button" class="btn-light" id="clearBulkSelection">Clear Selection</button>
+            <button type="button" class="btn-light" id="openBulkRemarks" data-role="peso_staff">Edit Remarks</button>
             <button type="button" class="btn-main" id="openBulkStatusModal"><i class="ph-bold ph-arrows-clockwise"></i> Update Status & Email</button>
           </div>
         </div>

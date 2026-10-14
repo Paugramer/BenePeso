@@ -14,8 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const updateCounter = () => {
     const count = activeSelects().length;
     if (!counter) return;
-    counter.textContent = String(count);
-    counter.hidden = count === 0;
+    counter.textContent = '';
+    counter.hidden = true;
   };
 
   const setExpanded = (expanded) => {
@@ -34,35 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const existing = form.nextElementSibling;
     if (existing && existing.classList.contains('beneficiary-active-filters')) existing.remove();
 
-    const active = activeSelects();
-    const hasSearch = Boolean(search && search.value.trim());
-    if (!active.length && !hasSearch) return;
-
-    const tray = document.createElement('div');
-    tray.className = 'beneficiary-active-filters';
-    tray.setAttribute('aria-label', 'Active beneficiary filters');
-
-    if (hasSearch) {
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'beneficiary-active-filter';
-      chip.innerHTML = '<i class="ph ph-magnifying-glass"></i><span></span><i class="ph ph-x"></i>';
-      chip.querySelector('span').textContent = `Search: ${search.value.trim()}`;
-      chip.addEventListener('click', () => { search.value = ''; submitFilters(); });
-      tray.appendChild(chip);
-    }
-
-    active.forEach((select) => {
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'beneficiary-active-filter';
-      chip.innerHTML = '<i class="ph ph-funnel"></i><span></span><i class="ph ph-x"></i>';
-      chip.querySelector('span').textContent = select.options[select.selectedIndex].text;
-      chip.addEventListener('click', () => { select.selectedIndex = 0; submitFilters(); });
-      tray.appendChild(chip);
-    });
-
-    form.insertAdjacentElement('afterend', tray);
+    // The selected values already appear in their dropdowns; no duplicate chip tray.
   };
 
   const hasActiveFilters = activeSelects().length > 0;

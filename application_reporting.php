@@ -5,6 +5,7 @@ require_once __DIR__.'/historical_report_helper.php';
 require_once __DIR__.'/report_columns.php';
 require_once __DIR__.'/module_shell.php';
 require_once __DIR__.'/functions.php';
+$embedded = ($_GET['embedded'] ?? '') === '1';
 $requestedRole=(string)($_GET['role'] ?? '');
 $role=in_array($requestedRole,['admin','peso_staff'],true) ? $requestedRole : auth_first_active_role(['admin','peso_staff']);
 if (!$role) { http_response_code(403); exit('Authorized PESO staff only.'); }
@@ -46,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
             $bindTypes='i'.str_repeat('s',10).'i';
             $stmt->bind_param($bindTypes,$id,$assignment,$start,$end,$parent,$occupation,$remarks,$secondary,$twoDay,$totalEarnings,$role,$actor);$stmt->execute();$stmt->close();
             logActivity($conn,$actor,'Beneficiaries','Report Details Update','Beneficiary Record','Updated report details for beneficiary ID: '.$id);
-            $conn->commit();header('Location: application_reporting.php?'.http_build_query(['id'=>$id,'role'=>$role,'saved'=>1]));exit;
+            $conn->commit();header('Location: application_reporting.php?'.http_build_query(['id'=>$id,'role'=>$role,'saved'=>1,'embedded'=>$embedded ? 1 : 0]));exit;
         } catch (Throwable $e) { $conn->rollback();$error='The details could not be saved. Refresh the application and try again.'; }
     }
 }
@@ -59,12 +60,14 @@ $description = stripos($record['program_name'],'SPES') !== false
         ? 'Add verified night-market earnings for the MSME report. Leave unknown amounts blank.'
         : 'Add remarks for the TUPAD beneficiary report. Both remarks fields are optional.');
 $pageTitle = stripos($record['program_name'],'SPES') !== false ? 'Work Assignment' : (stripos($record['program_name'],'MSME') !== false ? 'Night-market Earnings' : 'Remarks');
-module_shell_start($role,'application',$pageTitle,$description,'report-details-page');
+if ($embedded) {
+    ?><!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=module_escape($pageTitle)?></title><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="module_center.css"><link rel="stylesheet" href="application_refinements.css?v=3"></head><body class="report-details-page application-embedded"><main class="module-main"><header class="module-heading"><div><h1><?=module_escape($pageTitle)?></h1><p><?=module_escape($description)?></p></div></header><?php
+} else module_shell_start($role,'application',$pageTitle,$description,'report-details-page');
 ?>
-<section class="module-panel"><h2><?=module_escape($record['full_name'])?></h2><p><?=module_escape($record['program_name'])?></p><a href="<?=module_escape($prefix.'_application.php?'.http_build_query(['program_name'=>$record['program_name'],'program_id'=>$record['program_id']]))?>" class="module-btn secondary">Back to Application</a></section>
-<?php if($error!==''):?><p role="alert" class="module-note"><?=module_escape($error)?></p><?php endif?><?php if(isset($_GET['saved'])):?><p role="status" class="module-note">Report details saved.</p><?php endif?>
+<section class="module-panel"><h2><?=module_escape($record['full_name'])?></h2><p><?=module_escape($record['program_name'])?></p><?php if (!$embedded): ?><a href="<?=module_escape($prefix.'_application.php?'.http_build_query(['program_name'=>$record['program_name'],'program_id'=>$record['program_id']]))?>" class="module-btn secondary">Back to Application</a><?php endif ?></section>
+<?php if($error!==''):?><p role="alert" class="module-note"><?=module_escape($error)?></p><?php endif?><?php if(isset($_GET['saved'])):?><p role="status" class="module-note">Changes saved.</p><?php endif?>
 <?php if(stripos($record['program_name'],'SPES')!==false): ?>
-<section class="module-panel"><h2>From the application</h2><p>These details are displayed automatically. Update parent information through Full Edit and program dates through Status.</p><dl class="report-source-details">
+<section class="module-panel"><h2>From the application</h2><p>These details are displayed automatically. Update parent information through Edit Information and program dates through Status.</p><dl class="report-source-details">
 <?php foreach(['report_parent_name'=>'Parent / guardian','report_parent_occupation'=>'Parent occupation','employment_start'=>'Program start date','employment_end'=>'Program completion date'] as $key=>$label): ?><div><dt><?=module_escape($label)?></dt><dd><?=module_escape(official_report_value($record,$key) ?: 'Not yet recorded')?></dd></div><?php endforeach ?>
 </dl></section>
 <?php endif ?>
@@ -79,4 +82,4 @@ module_shell_start($role,'application',$pageTitle,$description,'report-details-p
 <div class="module-field"><label for="report_remarks">Remarks (optional)</label><textarea name="report_remarks" id="report_remarks" maxlength="3000"><?=module_escape($record['report_remarks'] ?? '')?></textarea></div>
 <?php if(stripos($record['program_name'],'TUPAD')!==false):?><div class="module-field"><label for="report_remarks_secondary">Additional remarks (optional)</label><textarea name="report_remarks_secondary" id="report_remarks_secondary" maxlength="3000"><?=module_escape($record['report_remarks_secondary'] ?? '')?></textarea><small>Use this only when PESO requests notes in the second remarks field.</small></div><?php endif?>
 </div><div class="module-actions"><button type="submit" class="module-btn">Save Changes</button></div></form></section>
-<?php module_shell_end();
+<?php if ($embedded) echo '</main></body></html>'; else module_shell_end();

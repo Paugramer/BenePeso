@@ -9,3 +9,5 @@
 - The source workbooks in Downloads are untouched. Published blank assets contain no source beneficiary/business rows, shared-string caches or author metadata. Import templates are separate from report templates.
 
 Validation: `C:\xampp\php\php.exe scripts\verify_phase2_exports.php` checks template positions, decision/date mapping, leading zeroes, duplicate product prices, extended product blocks, both MSME sheets and blank import parsing.
+
+Application refinements: filters appear only in their dropdowns, without duplicate chips/counts. Edit/Status cancellation returns to the same profile. Additional fields open in a sidebar-free embedded dialog. Selected accepted applications support applying the same remarks in one transaction; completed/rejected records are protected.

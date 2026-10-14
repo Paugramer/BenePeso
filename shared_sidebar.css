@@ -186,3 +186,4 @@
 @media (prefers-reduced-motion: reduce) {
   .side-area, .nav-item, .nav-item::before { transition-duration: .01ms !important; }
 }
+@media(min-width:993px){.side-close{display:none!important}}
