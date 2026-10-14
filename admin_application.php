@@ -3220,13 +3220,13 @@ function toggleBatchScheduleFields(select) {
         </div>
         <div class="import-summary-stat">
           <strong><?php echo number_format((int)$importSummary['emails_sent']); ?></strong>
-          <span>Emails awaiting delivery</span>
+          <span>Pending emails</span>
         </div>
       </div>
       <div class="import-summary-note">
-        <?php if ((int)$importSummary['added'] > 0): ?><span>New beneficiaries are accepted.</span><?php endif; ?>
-        <span>Imported status: <strong><?php echo h(beneficiary_lifecycle_label($importSummary['status'])); ?></strong>.</span>
-        <span>Email notifications will be sent automatically. They have not been delivered yet.</span>
+        <?php if ((int)$importSummary['added'] > 0): ?><span>Accepted.</span><?php endif; ?>
+        <span>Status: <strong><?php echo h(beneficiary_lifecycle_label($importSummary['status'])); ?></strong>.</span>
+        <span>Emails will be sent automatically.</span>
         <?php if ((int)$importSummary['emails_failed'] > 0): ?>
           <span class="import-summary-warning"><?php echo number_format((int)$importSummary['emails_failed']); ?> email notification(s) could not be queued for delivery.</span>
           <div class="import-summary-reasons">
