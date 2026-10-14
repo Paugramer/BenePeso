@@ -1577,7 +1577,7 @@ $search = trim($_GET["search"] ?? "");
 $sort = trim($_GET["sort"] ?? "newest");
 $approvalFilter = trim($_GET["approval"] ?? "All");
 $availmentFilter = trim($_GET["availment"] ?? "All");
-$spesGroup = trim($_GET['spes_group'] ?? 'all');
+$spesGroup = 'all';
 if (!in_array($spesGroup, ['all', 'baby', 'graduate'], true) || stripos($selectedProgramName, 'SPES') === false) $spesGroup = 'all';
 if (stripos($selectedProgramName, 'SPES') === false && in_array($availmentFilter, ['Examination', 'Exam Passed', 'Exam Failed'], true)) $availmentFilter = 'All';
 $selectedNature = trim($_GET["business_nature"] ?? "All");
@@ -1907,10 +1907,6 @@ if ($selectedProgramName !== "") {
                 <a href="admin_application.php?<?php echo h(build_query(['approval' => 'Pending', 'availment' => 'All', 'spes_group' => 'all', 'requirements_review'=>'all', 'resubmission_reason_filter'=>null, 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Pending' && $spesGroup === 'all' && ($_GET['requirements_review'] ?? '')!=='followup' ? 'active' : ''; ?>">Needs Approval</a>
                 <a href="admin_application.php?<?php echo h(build_query(['approval' => 'Approved', 'availment' => 'All', 'spes_group' => 'all', 'requirements_review'=>'all', 'resubmission_reason_filter'=>null, 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Approved' && $spesGroup === 'all' && ($_GET['requirements_review'] ?? '')!=='followup' ? 'active' : ''; ?>">Accepted</a>
                 <a href="admin_application.php?<?php echo h(build_query(['approval'=>'Approved','availment'=>'All','spes_group'=>'all','requirements_review'=>'followup','page'=>1])); ?>" class="tab-item <?php echo ($_GET['requirements_review'] ?? '')==='followup'?'active':''; ?>">Needs Resubmission</a>
-                <?php if (stripos($selectedProgramName, 'SPES') !== false): ?>
-                <a href="admin_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'baby', 'requirements_review'=>'all','resubmission_reason_filter'=>null, 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'baby' ? 'active' : ''; ?>">SPES Baby</a>
-                <a href="admin_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'graduate', 'requirements_review'=>'all','resubmission_reason_filter'=>null, 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'graduate' ? 'active' : ''; ?>">Graduated</a>
-                <?php endif; ?>
             </div>
 
             <a class="btn-main application-view-reports" style="margin-bottom:0;text-decoration:none;gap:8px" href="admin_beneficiaries.php?program_name=<?php echo urlencode($selectedProgramName); ?>&amp;program_id=<?php echo (int)$selectedProgramId; ?>"><i class="ph ph-chart-bar" aria-hidden="true"></i><span>View Reports</span></a>
