@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const renderBulkSelection = () => {
-      const chosen = bulkBoxes.filter((box) => box.checked);
+      const chosen = [...document.querySelectorAll('.beneficiary-select')].filter((box) => box.checked);
       const names = chosen.map((box) => box.dataset.beneficiaryName || `Beneficiary #${box.value}`);
 
       if (bulkPreview) {
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
           box.checked = false;
           box.dispatchEvent(new Event('change', { bubbles: true }));
         });
-        actions.append(edit, remove);
+        if(row)actions.append(edit);actions.append(remove);
         person.append(avatar, identity, actions);
         bulkPeople.appendChild(person);
       });

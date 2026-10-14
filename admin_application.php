@@ -704,10 +704,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
       $date_availed = empty($_POST["date_availed"]) ? null : $_POST["date_availed"];
       $date_completed = empty($_POST["date_completed"]) ? null : $_POST["date_completed"];
+      $resubmission_reason = trim((string)($_POST['resubmission_reason'] ?? ''));
       $resubmission_deadline = trim((string)($_POST['resubmission_deadline'] ?? ''));
       if ($availment_status === 'Requirements Received') {
-          if ($needs_resubmission && !document_submission_deadline_valid($resubmission_deadline)) {
-              $_SESSION['show_error_modal']=true;$_SESSION['error_modal_message']='Choose a valid resubmission deadline today or later.';
+          if ($needs_resubmission && (!document_submission_deadline_valid($resubmission_deadline) || !in_array($resubmission_reason,document_resubmission_reasons(),true))) {
+              $_SESSION['show_error_modal']=true;$_SESSION['error_modal_message']='Choose a resubmission reason and a valid deadline today or later.';
               header("Location: " . beneficiary_return_location('admin_application.php', $program_name_post));exit();
           }
           $date_availed = document_submission_today();
@@ -777,12 +778,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               $stmt->bind_param("ssssi", $availment_status, $date_availed, $date_completed, $last_availed_at, $beneficiary_id);
               if ($stmt->execute()) {
                   try {
-                      if ($availment_status==='Requirements Received') save_document_submission($conn,$beneficiary_id,$needs_resubmission,$resubmission_deadline,$status_message);
+                      if ($availment_status==='Requirements Received') save_document_submission($conn,$beneficiary_id,$needs_resubmission,$resubmission_deadline,$status_message,$resubmission_reason);
                       $conn->commit();
                   } catch(Throwable $e) {
                       $conn->rollback();error_log('Document submission save: '.$e->getMessage());$_SESSION['show_error_modal']=true;$_SESSION['error_modal_message']='Status and document dates could not be saved. Please try again.';
                       header("Location: " . beneficiary_return_location('admin_application.php', $program_name_post));exit();
                   }
+                  if($needs_resubmission) $status_message = $resubmission_reason . "\n" . $status_message;
                   if($needs_resubmission) $status_message .= "\nResubmission deadline: " . (new DateTimeImmutable($resubmission_deadline))->format('F j, Y');
 
                   $email_sent = false;
@@ -1659,6 +1661,10 @@ if ($selectedProgramName !== "") {
   if (($_GET['requirements_review'] ?? '') === 'issues') $whereParts[] = application_requirements_issue_sql();
   $params = [$selectedProgramName];
   $types = "s";
+  $reasonFilter=trim((string)($_GET['resubmission_reason_filter'] ?? ''));
+  if(in_array($reasonFilter,document_resubmission_reasons(),true)){
+      if(document_submission_reason_available($conn)){ $whereParts[]="EXISTS (SELECT 1 FROM application_document_submissions ds WHERE ds.beneficiary_id=b.beneficiary_id AND ds.requested_at IS NOT NULL AND ds.resubmission_reason=?)";$params[]=$reasonFilter;$types.='s'; }else $whereParts[]='1=0';
+  }
 
   if ($selectedProgramId > 0) { $whereParts[] = "b.program_id = ?"; $params[] = $selectedProgramId; $types .= "i"; }
   if (stripos($selectedProgramName, 'TUPAD') !== false && $selectedTupadCategory !== 'All') { $whereParts[] = "COALESCE(NULLIF(TRIM(p.tupad_category), ''), 'Regular TUPAD') = ?"; $params[] = $selectedTupadCategory; $types .= "s"; }
@@ -1718,6 +1724,7 @@ if ($selectedProgramName !== "") {
     while ($row = $res->fetch_assoc()) {
         $requirementRecord = $row; $requirementRecord['program_name'] = $selectedProgramName;
         $row['requirement_items'] = application_requirement_items($conn, $requirementRecord);
+        $row['document_submission'] = document_submission_details($conn,(int)$row['beneficiary_id']);
         if ($isSpesProgram) {
             $row = array_merge($row, spes_beneficiary_lifecycle_details($conn, (int)$row['beneficiary_id']));
         }
@@ -1752,10 +1759,10 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
   <link rel="stylesheet" href="system_mobile.css?v=24">
 <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=10">
+<link rel="stylesheet" href="application_refinements.css?v=11">
 <script src="frontend_polish.js?v=20260925" defer></script>
-<script src="beneficiary_workspace_polish.js?v=4" defer></script>
-<script src="application_actions.js?v=10" defer></script>
+<script src="beneficiary_workspace_polish.js?v=12" defer></script>
+<script src="application_actions.js?v=11" defer></script>
 </head>
 <body class="admin-mobile-page admin-beneficiaries-page">
   <div class="page-wrap">
@@ -1912,8 +1919,8 @@ if ($selectedProgramName !== "") {
         <div class="bulk-selection-bar" id="bulkSelectionBar" hidden>
           <div class="bulk-selection-copy"><div><strong id="bulkSelectedCount">0</strong> selected <span>Choose a bulk action for these beneficiaries.</span></div><div class="bulk-selected-preview" id="bulkSelectedPreview" aria-live="polite"></div></div>
           <div class="bulk-selection-actions">
-            <button type="button" class="btn-light" id="clearBulkSelection">Clear Selection</button>
-            <button type="button" class="btn-light" id="openBulkRemarks" data-role="admin">Edit Remarks</button>
+            <span id="selectionScopeNote" role="status" class="selection-scope-note"></span><button type="button" class="btn-light" id="clearBulkSelection">Clear Selection</button>
+            <button type="button" class="btn-light" id="openBulkResubmission" data-program="<?=h($selectedProgramName)?>" data-role="admin">Request Resubmission</button>
             <button type="button" class="btn-main" id="openBulkStatusModal"><i class="ph-bold ph-arrows-clockwise"></i> Update Status & Email</button>
           </div>
         </div>
@@ -1949,6 +1956,7 @@ if ($selectedProgramName !== "") {
               <option value="All">All Barangays</option>
               <?php foreach ($barangays as $barangay): ?><option value="<?php echo h($barangay); ?>" <?php echo $selectedBarangay === $barangay ? 'selected' : ''; ?>><?php echo h($barangay); ?></option><?php endforeach; ?>
             </select>
+            <select name="resubmission_reason_filter" aria-label="Resubmission reason" onchange="this.form.querySelector('input[name=page]').value=1;this.form.requestSubmit()"><option value="">All Resubmission Reasons</option><?php foreach(document_resubmission_reasons() as $reason):?><option value="<?=h($reason)?>" <?=($_GET['resubmission_reason_filter'] ?? '')===$reason?'selected':''?>><?=h($reason)?></option><?php endforeach?></select>
             <input type="hidden" name="requirements_review" value="<?=($_GET['requirements_review'] ?? '')==='followup'?'followup':'all'?>">
               <select name="availment" class="filter-select auto-submit">
               <option value="All" <?php echo $availmentFilter === 'All' ? 'selected' : ''; ?>>All Status</option>
@@ -1977,7 +1985,7 @@ if ($selectedProgramName !== "") {
 
         <?php if ($beneficiaries): ?>
         <label class="mobile-select-all-control">
-          <input type="checkbox" id="mobileSelectAllBeneficiaries" aria-label="Select all visible beneficiaries">
+          <input type="checkbox" id="mobileSelectAllBeneficiaries" aria-label="Select all matching beneficiaries across pages">
           <span>Select all visible beneficiaries</span>
         </label>
         <?php endif; ?>
@@ -1993,7 +2001,7 @@ if ($selectedProgramName !== "") {
               <table class="data-table">
                   <thead>
                       <tr>
-                           <th style="width: 62px; text-align: center;"><label class="bulk-check-label"><input type="checkbox" id="selectAllBeneficiaries" aria-label="Select all visible beneficiaries"><span>No.</span></label></th>
+                           <th style="width: 62px; text-align: center;"><label class="bulk-check-label"><input type="checkbox" id="selectAllBeneficiaries" aria-label="Select all matching beneficiaries across pages"><span>No.</span></label></th>
                           <th>Profile</th>
                           <th>Barangay</th>
                           <th>Batch Code</th>
@@ -2790,6 +2798,7 @@ if ($selectedProgramName !== "") {
           <span class="resubmission-copy"><strong>Request document resubmission</strong><small>Use when requirements are incorrect, incomplete, expired, or unreadable.</small></span>
         </label>
       </div>
+      <div class="form-group" id="quick_resubmission_reason_container" style="display:none"><label for="quick_resubmission_reason">Resubmission Reason *</label><select name="resubmission_reason" id="quick_resubmission_reason"><option value="">Select a reason</option><?php foreach(document_resubmission_reasons() as $reason):?><option value="<?=h($reason)?>"><?=h($reason)?></option><?php endforeach?></select></div>
       <div class="form-group" id="quick_resubmission_deadline_container" style="display:none"><label for="quick_resubmission_deadline">Resubmission Deadline *</label><input type="date" id="quick_resubmission_deadline" name="resubmission_deadline" min="<?=h(document_submission_today())?>"></div>
       <div class="form-group" id="quick_message_container" style="display:none;">
         <label>Reason for this status *</label>
@@ -4020,13 +4029,16 @@ function toggleBatchScheduleFields(select) {
       const needsMessage = status === 'Not Qualified' || status === 'Cancelled' || (isRequirements && resubmissionInput.checked);
       messageGroup.style.display = needsMessage ? 'block' : 'none';
       messageInput.required = needsMessage;
-      messageGroup.querySelector('label').textContent = isRequirements && resubmissionInput.checked ? 'Reason and resubmission instructions *' : 'Reason for this status *';
+      messageGroup.querySelector('label').textContent = isRequirements && resubmissionInput.checked ? 'Documents to Resubmit / Instructions *' : 'Reason for this status *';
       messageInput.placeholder = isRequirements && resubmissionInput.checked ? 'Explain what is incorrect or missing and what documents must be resubmitted.' : 'Explain why the applicant is not qualified or why the availment was cancelled.';
       if (!needsMessage) messageInput.value = '';
       const deadline=document.getElementById('quick_resubmission_deadline');
       const needsDeadline=isRequirements && resubmissionInput.checked;
       document.getElementById('quick_resubmission_deadline_container').style.display=needsDeadline?'block':'none';
       deadline.required=needsDeadline;deadline.disabled=!needsDeadline;
+      const reason=document.getElementById('quick_resubmission_reason');reason.required=needsDeadline;reason.disabled=!needsDeadline;
+      document.getElementById('quick_resubmission_reason_container').style.display=needsDeadline?'block':'none';
+      if(!needsDeadline)reason.value='';
       if(!needsDeadline)deadline.value='';
       dateRow.style.gridTemplateColumns = 'minmax(0, 1fr) minmax(0, 1fr)';
 
@@ -5081,7 +5093,7 @@ function toggleBatchScheduleFields(select) {
 
 <script>
 (() => {
-  const boxes = [...document.querySelectorAll('.beneficiary-select')];
+  const boxes = () => [...document.querySelectorAll('.beneficiary-select')];
   const selectAll = document.getElementById('selectAllBeneficiaries');
   const mobileSelectAll = document.getElementById('mobileSelectAllBeneficiaries');
   const bar = document.getElementById('bulkSelectionBar');
@@ -5090,27 +5102,46 @@ function toggleBatchScheduleFields(select) {
   const inputs = document.getElementById('bulkSelectedInputs');
   const status = document.getElementById('bulkAvailmentStatus');
   if (!bar || !count || !modal || !inputs || !status) return;
-  const selected = () => boxes.filter(box => box.checked);
+  const selected = () => boxes().filter(box => box.checked);
   const sync = () => {
     const chosen = selected();
+    if(document.getElementById('otherPageSelections'))document.getElementById('selectionScopeNote').textContent=`${chosen.length} matching beneficiaries selected across pages.`;
     count.textContent = chosen.length;
     document.querySelectorAll('.bulk-modal-count').forEach(el => el.textContent = chosen.length);
     bar.hidden = chosen.length === 0;
     document.body.classList.toggle('has-bulk-selection', chosen.length > 0);
     if (selectAll) {
-      selectAll.checked = boxes.length > 0 && chosen.length === boxes.length;
-      selectAll.indeterminate = chosen.length > 0 && chosen.length < boxes.length;
+      selectAll.checked = boxes().length > 0 && chosen.length === boxes().length;
+      selectAll.indeterminate = chosen.length > 0 && chosen.length < boxes().length;
     }
     if (mobileSelectAll) {
-      mobileSelectAll.checked = boxes.length > 0 && chosen.length === boxes.length;
-      mobileSelectAll.indeterminate = chosen.length > 0 && chosen.length < boxes.length;
+      mobileSelectAll.checked = boxes().length > 0 && chosen.length === boxes().length;
+      mobileSelectAll.indeterminate = chosen.length > 0 && chosen.length < boxes().length;
     }
-    boxes.forEach(box => box.closest('tr')?.classList.toggle('is-selected', box.checked));
+    boxes().forEach(box => box.closest('tr')?.classList.toggle('is-selected', box.checked));
   };
-  selectAll?.addEventListener('change', () => { boxes.forEach(box => box.checked = selectAll.checked); sync(); });
-  mobileSelectAll?.addEventListener('change', () => { boxes.forEach(box => box.checked = mobileSelectAll.checked); sync(); });
-  boxes.forEach(box => box.addEventListener('change', sync));
-  document.getElementById('clearBulkSelection')?.addEventListener('click', () => { boxes.forEach(box => box.checked = false); sync(); });
+  let selectionVersion=0;
+  const selectAcrossPages=async control=>{
+    const version=++selectionVersion;
+    document.getElementById('otherPageSelections')?.remove();
+    if(!control.checked){boxes().forEach(box=>box.checked=false);sync();return;}
+    control.disabled=true;
+    try{
+      const query=new URLSearchParams(location.search);
+      const response=await fetch('application_selection.php?'+query,{credentials:'same-origin'});const result=await response.json();if(!response.ok)throw new Error(result.error);
+      if(version!==selectionVersion)return;
+      const holder=document.createElement('div');holder.id='otherPageSelections';holder.hidden=true;
+      const visible=new Set(boxes().map(box=>Number(box.value)));
+      result.rows.forEach(row=>{if(visible.has(Number(row.beneficiary_id)))return;const box=document.createElement('input');box.type='checkbox';box.className='beneficiary-select';box.value=row.beneficiary_id;box.checked=true;box.dataset.beneficiaryName=row.full_name;box.dataset.beneficiaryStatus=row.availment_status;holder.append(box);});
+      bar.append(holder);boxes().forEach(box=>box.checked=true);sync();
+      document.getElementById('selectionScopeNote').textContent=`All ${result.count} matching beneficiaries selected across pages.`;
+    }catch(error){control.checked=false;document.getElementById('selectionScopeNote').textContent=error.message;boxes().forEach(box=>box.checked=false);sync();}
+    finally{control.disabled=false;}
+  };
+  selectAll?.addEventListener('change',()=>selectAcrossPages(selectAll));
+  mobileSelectAll?.addEventListener('change',()=>selectAcrossPages(mobileSelectAll));
+  document.addEventListener('change',event=>{if(event.target.matches('.beneficiary-select'))sync();});
+  document.getElementById('clearBulkSelection')?.addEventListener('click', () => { ++selectionVersion;document.getElementById('otherPageSelections')?.remove();document.getElementById('selectionScopeNote').textContent='';boxes().forEach(box => box.checked = false); sync(); });
   document.getElementById('openBulkStatusModal')?.addEventListener('click', () => {
     const chosen = selected();
     if (!chosen.length) return;

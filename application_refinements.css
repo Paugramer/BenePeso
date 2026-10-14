@@ -34,3 +34,7 @@
 .application-barangay{display:inline-flex;align-items:center;gap:8px;max-width:100%;line-height:1.5}.application-barangay>i{flex-shrink:0;color:var(--muted);margin:0!important}.application-barangay>span{overflow-wrap:anywhere}
 
 @media(min-width:761px){:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page) .panel-card .data-table :is(th,td):nth-child(2){width:27%;padding-right:24px!important}:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page) .panel-card .data-table :is(th,td):nth-child(3){width:13%;padding-left:24px!important;padding-right:24px!important}:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page) .panel-card .data-table :is(th,td):nth-child(4){width:15%;padding-left:24px!important}}
+
+.application-bulk-remarks-form :is(select,input){box-sizing:border-box;width:100%;min-height:44px;padding:12px;border:1px solid #cddfd4;border-radius:10px;font:13px Poppins,Arial,sans-serif;color:#183c2c;background:#fff}.application-bulk-remarks-form textarea{min-height:100px}.requirement-summary{max-width:290px;margin:8px auto 0;color:#a15d00;overflow-wrap:anywhere}
+
+#bulkSelectedCount{margin-right:5px}.selection-scope-note{font-size:12px;line-height:1.5;color:#61776c;max-width:270px}

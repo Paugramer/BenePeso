@@ -121,27 +121,30 @@ window.organizeApplicationActions = (data, role) => {
     dialog.appendChild(frame);dialog.showModal();closeDialogOnHeader(dialog);
   };
   document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('openBulkRemarks')?.addEventListener('click', event => {
+    document.getElementById('openBulkResubmission')?.addEventListener('click', event => {
       const ids = [...document.querySelectorAll('.beneficiary-select:checked')].map(box => Number(box.value));
       if (!ids.length) return;
-      const role = event.currentTarget.dataset.role;
-      const dialog = makeDialog('Edit Remarks');
-      const form = document.createElement('form');form.className = 'application-bulk-remarks-form';
-      const description = document.createElement('p');description.textContent = `Apply the same remarks to ${ids.length} selected applications. This replaces their current remarks.`;
-      const label = document.createElement('label');label.textContent = 'Remarks';label.htmlFor = 'bulkRemarksText';
-      const input = document.createElement('textarea');input.id = 'bulkRemarksText';input.maxLength = 3000;input.rows = 6;
-      const status = document.createElement('p');status.setAttribute('role', 'status');
-      const submit = document.createElement('button');submit.type = 'submit';submit.className = 'btn-main';submit.textContent = 'Apply Remarks';
-      form.append(description, label, input, status, submit);dialog.appendChild(form);dialog.showModal();input.focus();
-      form.addEventListener('submit', async event => {
-        event.preventDefault();submit.disabled = true;status.textContent = 'Saving remarks…';
-        try {
-          const csrf = document.querySelector('input[name="csrf_token"]')?.value;
-          const response = await fetch('application_bulk_remarks.php', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, remarks: input.value, role, csrf_token: csrf }) });
-          const result = await response.json();
-          if (!response.ok) throw new Error(result.error || 'Remarks could not be saved.');
-          status.textContent = `Remarks saved for ${result.count} applications.`;submit.textContent = 'Saved';
-        } catch (error) { status.textContent = error.message;submit.disabled = false; }
+      const button=event.currentTarget;const role=button.dataset.role;const program=button.dataset.program;
+      const dialog=makeDialog('Request Resubmission');const form=document.createElement('form');form.className='application-bulk-remarks-form';
+      const description=document.createElement('p');description.textContent=`Request corrected documents from ${ids.length} selected beneficiaries. Each beneficiary will receive the reason, instructions, and deadline by email.`;
+      const reasonLabel=document.createElement('label');reasonLabel.textContent='Resubmission Reason';reasonLabel.htmlFor='bulkResubmissionReason';
+      const reason=document.createElement('select');reason.id=reasonLabel.htmlFor;reason.required=true;
+      ['','Missing Requirement','Incomplete Document','Unreadable Document','Incorrect Information','Expired Document','Other'].forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value||'Select a reason';reason.append(option);});
+      const label=document.createElement('label');label.textContent='Documents to Resubmit / Instructions';label.htmlFor='bulkResubmissionInstructions';
+      const input=document.createElement('textarea');input.id=label.htmlFor;input.maxLength=2500;input.rows=4;input.required=true;input.placeholder='Example: Submit a clear copy of the front and back of your National ID.';
+      const dueLabel=document.createElement('label');dueLabel.textContent='Resubmission Deadline';dueLabel.htmlFor='bulkResubmissionDeadline';
+      const due=document.createElement('input');due.type='date';due.id=dueLabel.htmlFor;due.required=true;due.min=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+      const status=document.createElement('p');status.setAttribute('role','status');
+      const submit=document.createElement('button');submit.type='submit';submit.className='btn-main';submit.textContent='Save & Notify';
+      form.append(description,reasonLabel,reason,label,input,dueLabel,due,status,submit);dialog.append(form);dialog.showModal();reason.focus();
+      form.addEventListener('submit',async event=>{
+        event.preventDefault();submit.disabled=true;status.textContent='Saving requests and sending emails...';
+        try{
+          const response=await fetch('application_bulk_resubmission.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids,reason:reason.value,instructions:input.value,deadline:due.value,role,program,csrf_token:document.querySelector('input[name="csrf_token"]')?.value})});
+          const result=await response.json();if(!response.ok)throw new Error(result.error||'Resubmission requests could not be saved.');
+          status.textContent=`Requests saved for ${result.count} beneficiaries. Emails sent: ${result.emails_sent}.`+(result.email_failures?` ${result.email_failures} emails could not be sent; contact those beneficiaries.`:'');submit.textContent='Saved';
+          document.querySelectorAll('tr[data-profile]').forEach(row=>{const data=JSON.parse(row.dataset.profile);if(ids.includes(Number(data.id))){data.document_submission={requested_at:true,resubmission_reason:result.reason,resubmission_deadline:result.deadline,resubmission_note:result.instructions};row.dataset.profile=JSON.stringify(data);window.renderRequirementSummary(row,data.requirement_items);}});
+        }catch(error){status.textContent=error.message;submit.disabled=false;}
       });
     });
   });
@@ -192,6 +195,8 @@ window.mountApplicationRequirements = async (modal, id) => {
 window.renderRequirementSummary=(row,items)=>{
  row.querySelector('.requirement-summary')?.remove();const cell=row.cells?.[4];if(!cell)return;
  const data=JSON.parse(row.dataset.profile);if(data.approval!=='Approved'||(data.availment_status || data.availment) !== 'Requirements Received')return;
+ const request=data.document_submission;
+ if(request?.requested_at){const summary=document.createElement('small');summary.className='requirement-summary';summary.textContent=`Needs Resubmission ? ${request.resubmission_reason || 'See instructions'}${request.resubmission_deadline ? ' ? Due '+request.resubmission_deadline : ''}`;summary.title=request.resubmission_note || '';cell.append(summary);return;}
  const issues=Object.values(items||{}).filter(item=>['Missing','Needs Resubmission'].includes(item.status)).length;
  if(!issues)return;
  const summary=document.createElement('small');summary.className='requirement-summary';summary.textContent=`${issues} requirement${issues===1?'':'s'} need attention`;cell.append(summary);
