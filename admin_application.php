@@ -1717,7 +1717,7 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
   <link rel="stylesheet" href="system_mobile.css?v=24">
 <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=3">
+<link rel="stylesheet" href="application_refinements.css?v=4">
 <script src="frontend_polish.js?v=20260925" defer></script>
 <script src="beneficiary_workspace_polish.js?v=4" defer></script>
 <script src="application_actions.js?v=2" defer></script>
@@ -3745,8 +3745,9 @@ function toggleBatchScheduleFields(select) {
               ['Citizenship', data.citizenship], ['Place of Birth', data.place_of_birth], ['ID Type', data.type_of_id], ['ID Number', data.id_number]
           ]],
           ['Program & Status', 'ph-calendar-check', [
-              ['Program', data.program], ['Approval Status', data.approval === 'Approved' ? 'Accepted' : data.approval], ['Status', data.availment === 'Not Yet Availed' ? 'Waiting for Requirements' : data.availment],
-              ['Previous / Last Participation', availmentSummary], ['Last Availed Year', lastAvailmentYear],
+              ['Program', data.program], ['Approval Status', data.approval === 'Approved' ? 'Accepted' : data.approval], ['Status', data.availment === 'Not Yet Availed' ? 'Waiting for Requirements' : (data.availment === 'Requirements Received' ? 'Documents Submitted' : data.availment)],
+              ['Current Participation', availmentSummary], ['Participation Year', lastAvailmentYear],
+              ['SPES Classification', programUpper.includes('SPES') ? data.spes_lifecycle_label : ''],
               ['Date Started / Availed', formatDate(data.date_availed)], ['Date Completed', formatDate(data.date_completed)], [categoryLabel, categoryValue]
           ]],
           ['Employment & Livelihood', 'ph-briefcase-metal', [
@@ -3768,8 +3769,7 @@ function toggleBatchScheduleFields(select) {
               ['Technical-Vocational', [data.tv_school, data.tv_course, data.tv_year_level, data.tv_date_attendance].filter(hasValue).join(' · ')]
           ]],
           ['Past SPES Participation', 'ph-clock-counter-clockwise', [
-              ['SPES Classification', data.spes_lifecycle_label],
-              ['All Recorded Participation', data.spes_all_availments],
+              ['Previous Completed Participation', data.spes_past_participation || 'No past SPES participation recorded.'],
               ['1st Participation', [data.spes_history_1_year, data.spes_history_1_id && `ID: ${data.spes_history_1_id}`].filter(hasValue).join(' · ')],
               ['2nd Participation', [data.spes_history_2_year, data.spes_history_2_id && `ID: ${data.spes_history_2_id}`].filter(hasValue).join(' · ')],
               ['3rd Participation', [data.spes_history_3_year, data.spes_history_3_id && `ID: ${data.spes_history_3_id}`].filter(hasValue).join(' · ')],

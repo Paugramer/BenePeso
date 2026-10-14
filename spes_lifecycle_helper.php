@@ -99,9 +99,20 @@ function spes_ordinal(int $number): string {
     return $number . ([1 => 'st', 2 => 'nd', 3 => 'rd'][$number % 10] ?? 'th');
 }
 
+/** Past participation excludes this application, incomplete/rejected rows and later records. */
+function spes_is_past_participation(array $row, int $currentId, ?string $applicationDate = null): bool {
+    if ((int)($row['beneficiary_id'] ?? 0) === $currentId
+        || ($row['approval_status'] ?? '') !== 'Approved'
+        || ($row['availment_status'] ?? '') !== 'Completed') return false;
+    $date = ($row['date_completed'] ?? '') ?: (($row['date_availed'] ?? '') ?: ($row['created_at'] ?? ''));
+    $cutoff = $applicationDate ? strtotime($applicationDate) : false;
+    $completedAt = $date ? strtotime($date) : false;
+    return $cutoff === false || $completedAt === false || $completedAt <= $cutoff;
+}
+
 function spes_beneficiary_lifecycle_details(mysqli $conn, int $beneficiaryId): array {
-    $empty = ['spes_lifecycle' => 'none', 'spes_lifecycle_label' => '', 'spes_completed_count' => 0, 'spes_graduation_year' => '', 'spes_all_availments' => ''];
-    $base = $conn->prepare('SELECT user_id,email FROM beneficiaries WHERE beneficiary_id=? LIMIT 1');
+    $empty = ['spes_lifecycle' => 'none', 'spes_lifecycle_label' => '', 'spes_completed_count' => 0, 'spes_graduation_year' => '', 'spes_all_availments' => '', 'spes_past_participation' => ''];
+    $base = $conn->prepare('SELECT user_id,email,created_at FROM beneficiaries WHERE beneficiary_id=? LIMIT 1');
     if (!$base) return $empty;
     $base->bind_param('i', $beneficiaryId);
     $base->execute();
@@ -124,6 +135,7 @@ function spes_beneficiary_lifecycle_details(mysqli $conn, int $beneficiaryId): a
     $completed = 0;
     $graduateYear = '';
     $availments = [];
+    $pastParticipation = [];
     while ($row = $rows->fetch_assoc()) {
         $isCompleted = ($row['approval_status'] ?? '') === 'Approved' && ($row['availment_status'] ?? '') === 'Completed';
         if ($isCompleted) {
@@ -138,6 +150,7 @@ function spes_beneficiary_lifecycle_details(mysqli $conn, int $beneficiaryId): a
         $batch = trim((string)($row['program_code'] ?? '')) ?: 'Uncoded batch';
         $status = trim((string)($row['availment_status'] ?? '')) ?: 'Status unavailable';
         $availments[] = $year . ' | ' . $batch . ' | ' . $status;
+        if (spes_is_past_participation($row, $beneficiaryId, $identity['created_at'] ?? null)) $pastParticipation[] = $year . ' | ' . $batch . ' | Completed';
     }
     $stmt->close();
     $classification = $graduateYear !== '' ? 'graduate' : ($completed > 0 ? 'baby' : 'none');
@@ -150,6 +163,7 @@ function spes_beneficiary_lifecycle_details(mysqli $conn, int $beneficiaryId): a
         'spes_completed_count' => $completed,
         'spes_graduation_year' => $graduateYear,
         'spes_all_availments' => implode("\n", array_map(static fn($item) => '* ' . $item, $availments)),
+        'spes_past_participation' => implode("\n", array_map(static fn($item) => '* ' . $item, $pastParticipation)),
     ];
 }
 
