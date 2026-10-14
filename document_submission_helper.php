@@ -17,3 +17,7 @@ function save_document_submission(mysqli $conn,int $id,bool $resubmission,string
  : "INSERT INTO application_document_submissions (beneficiary_id,received_at) VALUES (?,?) ON DUPLICATE KEY UPDATE received_at=VALUES(received_at),resubmission_deadline=NULL,resubmission_note='',requested_at=NULL";
  $s=$conn->prepare($sql);if($resubmission)$s->bind_param('issss',$id,$received,$due,$note,$requested);else $s->bind_param('is',$id,$now);$s->execute();$s->close();
 }
+
+function document_submission_is_pending(mysqli $conn,int $id): bool {
+ try {$s=$conn->prepare('SELECT requested_at FROM application_document_submissions WHERE beneficiary_id=?');$s->bind_param('i',$id);$s->execute();$row=$s->get_result()->fetch_assoc();$s->close();return !empty($row['requested_at']);}catch(Throwable $e){return false;}
+}

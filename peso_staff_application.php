@@ -319,7 +319,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $last_availed_at = (!empty($date_availed)) ? $date_availed . " 00:00:00" : null;
 
       if ($beneficiary_id > 0) {
-          $transition = beneficiary_validate_status_transition($conn, $beneficiary_id, $availment_status, $needs_resubmission);
+          $confirm_resubmission = $availment_status === 'Requirements Received' && !$needs_resubmission && document_submission_is_pending($conn,$beneficiary_id);
+          $transition = beneficiary_validate_status_transition($conn, $beneficiary_id, $availment_status, $needs_resubmission || $confirm_resubmission);
           if (!$transition['allowed']) {
               $_SESSION["show_error_modal"] = true;
               $_SESSION["error_modal_message"] = $transition['message'];
