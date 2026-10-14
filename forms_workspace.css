@@ -28,3 +28,7 @@ body.forms-workspace{font-family:Poppins,-apple-system,BlinkMacSystemFont,sans-s
 #documentPreviewModal footer{justify-content:flex-end;border-top:1px solid #dce9e2}#documentPreviewModal footer .module-btn{font-family:Poppins,sans-serif}
 .document-preview-body{flex:1;min-height:0;display:flex;background:#fff}#documentPreviewFrame{width:100%;height:100%;border:0;flex:1}#documentPreviewMessage{padding:20px;font-size:13px}#documentPreviewModal [hidden]{display:none!important}
 @media(max-width:600px){#documentPreviewModal{width:100vw;height:100dvh;border-radius:0;border:0}#documentPreviewModal header,#documentPreviewModal footer{padding:12px}#documentPreviewModal h2{font-size:15px}#documentPreviewModal footer .module-btn{flex:1}}
+
+/* Match the Report sidebar avatar clipping and image baseline. */
+.forms-workspace .side-area .user-pic-wrap{overflow:hidden;flex-shrink:0}
+.forms-workspace .side-area .user-img-side{display:block}
