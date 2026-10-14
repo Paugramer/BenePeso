@@ -884,7 +884,8 @@
           menu.appendChild(item);
         });
 
-        document.body.appendChild(menu);
+        const nativeDialog=select.closest('dialog[open]');
+        (nativeDialog || document.body).appendChild(menu);
         const rect = root.getBoundingClientRect();
         const isPhoneMenu = window.innerWidth <= 600;
         const viewportGutter = isPhoneMenu ? 12 : 8;
@@ -892,14 +893,17 @@
           ? Math.min(window.innerWidth - (viewportGutter * 2), Math.max(rect.width, 280))
           : rect.width;
         const preferredLeft = rect.left - ((menuWidth - rect.width) / 2);
-        const roomBelow = window.innerHeight - rect.bottom - 12;
+        const bounds=nativeDialog?.getBoundingClientRect();
+        const limitTop=bounds ? bounds.top+8 : 8;
+        const limitBottom=bounds ? bounds.bottom-8 : window.innerHeight-12;
+        const roomBelow = limitBottom - rect.bottom - 6;
         const menuLimit = isPhoneMenu ? 260 : 320;
         const menuHeight = Math.min(menu.scrollHeight, menuLimit);
-        const openAbove = roomBelow < Math.min(menuHeight, 220) && rect.top > roomBelow;
+        const openAbove = roomBelow < Math.min(menuHeight, 220) && rect.top-limitTop > roomBelow;
         menu.style.left = Math.max(viewportGutter, Math.min(preferredLeft, window.innerWidth - menuWidth - viewportGutter)) + 'px';
         menu.style.width = menuWidth + 'px';
-        menu.style.maxHeight = Math.max(150, Math.min(menuLimit, openAbove ? rect.top - 12 : roomBelow)) + 'px';
-        menu.style.top = (openAbove ? Math.max(8, rect.top - Math.min(menuHeight, rect.top - 12) - 6) : rect.bottom + 6) + 'px';
+        menu.style.maxHeight = Math.max(nativeDialog ? 60 : 150, Math.min(menuLimit, openAbove ? rect.top-limitTop-6 : roomBelow)) + 'px';
+        menu.style.top = (openAbove ? Math.max(limitTop, rect.top - Math.min(menuHeight, rect.top-limitTop-6) - 6) : rect.bottom + 6) + 'px';
         menu.classList.toggle('opens-above', openAbove);
         menu.classList.toggle('is-phone-menu', isPhoneMenu);
         root.classList.add('is-open');

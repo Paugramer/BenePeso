@@ -101,7 +101,7 @@ window.organizeApplicationActions = (data, role) => {
     const dialog = document.createElement('dialog');dialog.className = 'application-extra-dialog';
     const header = document.createElement('header');header.className = 'application-extra-header';
     const heading = document.createElement('h2');heading.textContent = title;
-    const close = document.createElement('button');close.type = 'button';close.textContent = '×';close.setAttribute('aria-label', 'Close and return');
+    const close = document.createElement('button');close.type = 'button';close.innerHTML = '<i class="ph-bold ph-x" aria-hidden="true"></i>';close.setAttribute('aria-label', 'Close and return');
     close.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); dialog.close(); }, true);header.append(heading, close);dialog.appendChild(header);
     document.body.appendChild(dialog);
     dialog.addEventListener('close', () => { dialog.remove();restoreProfile(); });
@@ -141,7 +141,7 @@ window.organizeApplicationActions = (data, role) => {
       const due=document.createElement('input');due.type='date';due.id=dueLabel.htmlFor;due.required=true;due.min=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
       const status=document.createElement('p');status.setAttribute('role','status');
       const submit=document.createElement('button');submit.type='submit';submit.className='btn-main';submit.textContent='Save & Notify';
-      form.append(description,reasonLabel,reason,label,input,dueLabel,due,status,submit);dialog.append(form);dialog.showModal();reason.focus();
+      const actions=document.createElement('div');actions.className='application-dialog-actions';actions.append(submit);form.append(description,reasonLabel,reason,label,input,dueLabel,due,status,actions);dialog.append(form);dialog.showModal();reason.focus();
       form.addEventListener('submit',async event=>{
         event.preventDefault();submit.disabled=true;status.textContent='Saving requests and sending emails...';
         try{
@@ -170,7 +170,11 @@ window.loadRequirementChecklist = async (modal, id) => {
   section.append(help,feedback);
   modal.append(section);
   try {
-    const response = await fetch(`application_requirements.php?id=${id}`,{credentials:'same-origin'}); const result = await response.json();if(!response.ok)throw new Error(result.error);
+    const cached=window.currentProfileData;
+    let result;
+    const csrf=document.querySelector('input[name="csrf_token"]')?.value;
+    if(Number(cached?.id)===id && cached.requirement_items && csrf){ result={items:cached.requirement_items,editable:cached.approval==='Approved' && (cached.availment_status || cached.availment)==='Requirements Received',csrf_token:csrf}; }
+    else {const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),15000);try{const response=await fetch(`application_requirements.php?id=${id}`,{credentials:'same-origin',signal:controller.signal});result=await response.json();if(!response.ok)throw new Error(result.error);}finally{clearTimeout(timeout);}}
     if(!section.isConnected)return;
     const form = document.createElement('form');
     const controls = {};
@@ -190,7 +194,7 @@ window.loadRequirementChecklist = async (modal, id) => {
     const count=Object.values(result.items).filter(item=>['Missing','Needs Resubmission','Invalid Document'].includes(item.status)).length;
     feedback.textContent=Object.keys(result.items).length?count ? `${count} requirement${count===1?'':'s'} need attention.` : Object.values(result.items).some(item=>['Not Reviewed','Received'].includes(item.status)) ? 'Review is not yet complete.' : 'Requirements reviewed.':'No requirements configured for this batch. Set the requirements in Programs first.';
     if(result.editable&&Object.keys(controls).length){
-      const save=document.createElement('button');save.type='submit';save.className='btn-main';save.textContent='Save Checklist';form.append(save);
+      const save=document.createElement('button');save.type='submit';save.className='btn-main';save.textContent='Save Checklist';const actions=document.createElement('div');actions.className='application-dialog-actions';actions.append(save);form.append(actions);
       form.addEventListener('submit',async event=>{
         event.preventDefault();const items={};
         for(const [key,{select,note}] of Object.entries(controls)){
@@ -200,7 +204,7 @@ window.loadRequirementChecklist = async (modal, id) => {
         save.disabled=true;feedback.textContent='Saving...';
         try{const r=await fetch(`application_requirements.php?id=${id}`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({items,csrf_token:result.csrf_token})});const saved=await r.json();if(!r.ok)throw new Error(saved.error);feedback.textContent='Checklist saved. No email sent.';
           const tableRow=[...document.querySelectorAll('tr[data-profile]')].find(row=>{try{return Number(JSON.parse(row.dataset.profile).id)===id||Number(JSON.parse(row.dataset.profile).beneficiary_id)===id;}catch{return false;}});
-          if(tableRow){const data=JSON.parse(tableRow.dataset.profile);data.requirement_items=saved.items;tableRow.dataset.profile=JSON.stringify(data);window.renderRequirementSummary?.(tableRow,saved.items);}
+          if(tableRow){const data=JSON.parse(tableRow.dataset.profile);data.requirement_items=saved.items;if(Number(window.currentProfileData?.id)===id)window.currentProfileData.requirement_items=saved.items;tableRow.dataset.profile=JSON.stringify(data);window.renderRequirementSummary?.(tableRow,saved.items);}
         }catch(error){feedback.textContent=error.message;}finally{save.disabled=false;}
       });
     }
