@@ -2,9 +2,16 @@
 require_once __DIR__ . '/auth.php';
 auth_enable_csrf_form_injection();
 require "db.php";
+check_user_role('peso_staff');
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(405); header('Allow: GET');
+    exit('Beneficiary records are read-only. Use Application to update a beneficiary.');
+}
+
 require_once "beneficiary_choices.php";
 require_once "email_helper.php"; // ADDED: Required for sending emails
 require_once "report_columns.php";
+require_once "historical_report_helper.php";
 require_once "beneficiary_import_helper.php";
 require_once "beneficiary_duplicate_helper.php";
 require_once "spes_schema_helper.php";
@@ -28,7 +35,7 @@ if (!isset($conn) || !($conn instanceof mysqli)) {
 /* ==========================================
    PROFESSIONAL FIX: Unified Role Check
 ========================================== */
-check_user_role("peso_staff");
+
 
 $peso_staff_id = (int) $_SESSION["staff_id"];
 
@@ -224,7 +231,8 @@ $approvalFilter = trim($_GET["approval"] ?? "All");
 $availmentFilter = trim($_GET["availment"] ?? "All");
 $spesGroup = trim($_GET['spes_group'] ?? 'all');
 if (!in_array($spesGroup, ['all', 'baby', 'graduate'], true) || stripos($selectedProgramName, 'SPES') === false) $spesGroup = 'all';
-if (stripos($selectedProgramName, 'SPES') === false && in_array($availmentFilter, ['Examination', 'Exam Passed', 'Exam Failed'], true)) $availmentFilter = 'All';
+if (!in_array($approvalFilter, ['All','Rejected'], true)) $approvalFilter='All';
+if (!in_array($availmentFilter, ['All','Completed','Not Qualified','Exam Failed','Cancelled'], true)) $availmentFilter='All';
 $selectedNature = trim($_GET["business_nature"] ?? "All");
 
 /* =========================
@@ -261,23 +269,24 @@ $sqlPrograms = "SELECT c.program_name, c.image_path, COALESCE(t.beneficiary_coun
     SELECT p.program_name, COUNT(b.beneficiary_id) AS beneficiary_count
     FROM programs p
     LEFT JOIN beneficiaries b ON b.program_id = p.program_id
+    WHERE " . historical_record_condition() . "
     GROUP BY p.program_name
   ) t ON t.program_name = c.program_name
   ORDER BY c.program_name ASC";
 $resPrograms = $conn->query($sqlPrograms);
 if ($resPrograms) { while ($row = $resPrograms->fetch_assoc()) { $programs[] = $row; } }
 
-$globalTotalBeneficiaries = 0; $globalApprovedBeneficiaries = 0; $globalPendingBeneficiaries = 0; $globalOngoingAvailments = 0;
+$globalTotalBeneficiaries = 0; $globalCompletedRecords = 0; $globalRejectedRecords = 0; $globalNotCompletedRecords = 0;
 $res = $conn->query("SELECT COUNT(*) AS total,
-  SUM(approval_status = 'Approved') AS approved_total,
-  SUM(approval_status = 'Pending') AS pending_total,
-  SUM(availment_status = 'Ongoing') AS ongoing_total
-  FROM beneficiaries");
+  SUM(approval_status = 'Approved' AND availment_status = 'Completed') AS completed_total,
+  SUM(approval_status = 'Rejected') AS rejected_total,
+  SUM(approval_status = 'Approved' AND availment_status IN ('Not Qualified','Exam Failed','Cancelled')) AS not_completed_total
+  FROM beneficiaries b WHERE " . historical_record_condition());
 if ($res && ($row = $res->fetch_assoc())) {
   $globalTotalBeneficiaries = (int)($row['total'] ?? 0);
-  $globalApprovedBeneficiaries = (int)($row['approved_total'] ?? 0);
-  $globalPendingBeneficiaries = (int)($row['pending_total'] ?? 0);
-  $globalOngoingAvailments = (int)($row['ongoing_total'] ?? 0);
+  $globalCompletedRecords = (int)($row['completed_total'] ?? 0);
+  $globalRejectedRecords = (int)($row['rejected_total'] ?? 0);
+  $globalNotCompletedRecords = (int)($row['not_completed_total'] ?? 0);
 }
 
 $beneficiaries = [];
@@ -300,7 +309,7 @@ if ($selectedProgramName !== "") {
       $stmt->close();
   }
 
-  $whereParts = ["p.program_name = ?"];
+  $whereParts = ["p.program_name = ?", historical_record_condition()];
   $params = [$selectedProgramName];
   $types = "s";
 
@@ -314,7 +323,7 @@ if ($selectedProgramName !== "") {
     $types .= "ssss";
   }
   if ($approvalFilter !== "All") { $whereParts[] = "b.approval_status = ?"; $params[] = $approvalFilter; $types .= "s"; }
-  if ($availmentFilter !== "All") { $whereParts[] = "b.availment_status = ?"; $params[] = $availmentFilter; $types .= "s"; }
+  if ($availmentFilter !== "All") { $whereParts[] = "b.approval_status = 'Approved'"; $whereParts[] = "b.availment_status = ?"; $params[] = $availmentFilter; $types .= "s"; }
   if ($spesGroup !== 'all') $whereParts[] = spes_group_condition_sql($spesGroup, 'b');
 
   if (stripos($selectedProgramName, 'MSME') !== false && $selectedNature !== "All") {
@@ -377,7 +386,7 @@ if ($selectedProgramName !== "") {
   <link rel="icon" type="image/png" href="img/pesologo.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BENEPESO | Staff Beneficiaries</title>
+  <title>BENEPESO | Report</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
   <link rel="stylesheet" href="peso_staff_beneficiaries.css?v=20260924-mobile-performance">
@@ -428,7 +437,9 @@ if ($selectedProgramName !== "") {
     <nav class="nav-area">
       <a href="peso_staff_dashboard.php" class="nav-item"><i class="ph-fill ph-squares-four"></i> Dashboard</a>
       <a href="peso_staff_program.php" class="nav-item"><i class="ph-fill ph-briefcase"></i> Program</a>
-      <a href="peso_staff_beneficiaries.php" class="nav-item active"><i class="ph-fill ph-users"></i> Beneficiaries</a>
+      <a href="peso_staff_application.php" class="nav-item"><i class="ph-fill ph-file-text"></i> Application</a>
+      <a href="peso_staff_beneficiaries.php" class="nav-item active"><i class="ph-fill ph-chart-bar"></i> Report</a>
+      <a href="forms_downloads.php?role=peso_staff" class="nav-item"><i class="ph-fill ph-download-simple"></i> Forms &amp; Downloads</a>
       <a href="peso_staff_activity_log.php" class="nav-item"><i class="ph-fill ph-clock-counter-clockwise"></i> Activity Log</a>
       <form method="POST" action="logout.php" class="sidebar-logout-form"><?php echo auth_csrf_input(); ?><input type="hidden" name="role" value="peso_staff"><button type="submit" class="nav-item logout-item"><i class="ph-bold ph-sign-out"></i> Logout</button></form>
     </nav>
@@ -440,15 +451,15 @@ if ($selectedProgramName !== "") {
         <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
         <?php if ($selectedProgramName !== ""): ?>
             <nav class="breadcrumb">
-                <a href="peso_staff_beneficiaries.php"><i class="ph-fill ph-users" style="font-size: 1rem; margin-right: 6px;"></i> Beneficiaries</a>
+                <a href="peso_staff_beneficiaries.php"><i class="ph-fill ph-users" style="font-size: 1rem; margin-right: 6px;"></i> Report</a>
                 <span class="separator">/</span><span class="current"><?php echo h($selectedProgramName); ?></span>
             </nav>
-            <div class="top-big"><?php echo h($selectedProgramName); ?> Records</div>
-            <div class="top-sub">Review and add beneficiaries under <?php echo h($selectedProgramName); ?>.</div>
+            <div class="top-big"><?php echo h($selectedProgramName); ?> Reports</div>
+            <div class="top-sub">View beneficiary records under <?php echo h($selectedProgramName); ?>.</div>
         <?php else: ?>
-            <div class="eyebrow">Beneficiary Management</div>
-            <div class="top-big">Staff Beneficiaries</div>
-            <div class="top-sub">Select a program to view and add beneficiaries.</div>
+            <div class="eyebrow">Beneficiary Reports</div>
+            <div class="top-big">Report</div>
+            <div class="top-sub">Select a program to view beneficiary records and generate reports.</div>
         <?php endif; ?>
       </div>
 
@@ -466,44 +477,44 @@ if ($selectedProgramName !== "") {
       <section class="stats-grid animate-fade-in" style="animation-delay: 0.1s;">
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">BENEFICIARIES</div>
+                <div class="stat-label">BENEFICIARY RECORDS</div>
                 <div class="stat-icon-sm" style="color: var(--green); background: var(--green-light);"><i class="ph-fill ph-users-three"></i></div>
             </div>
             <div class="stat-value"><?php echo (int)$globalTotalBeneficiaries; ?></div>
             <div class="stat-trend trend-up"><i class="ph-bold ph-users-three"></i> All records</div>
-            <div class="stat-note">Beneficiary records in BENEPESO.</div>
+            <div class="stat-note">Completed and closed beneficiary records.</div>
         </div>
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">APPROVED APPLICATIONS</div>
+                <div class="stat-label">COMPLETED</div>
                 <div class="stat-icon-sm" style="color:#1a6d41; background:#e6f6ec;"><i class="ph-fill ph-check-circle"></i></div>
             </div>
-            <div class="stat-value"><?php echo (int)$globalApprovedBeneficiaries; ?></div>
-            <div class="stat-trend trend-up"><i class="ph-bold ph-check"></i> Accepted</div>
-            <div class="stat-note">Applications accepted by PESO.</div>
+            <div class="stat-value"><?php echo (int)$globalCompletedRecords; ?></div>
+            <div class="stat-trend trend-up"><i class="ph-bold ph-check"></i> Completed</div>
+            <div class="stat-note">Beneficiaries who completed their program.</div>
         </div>
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">PENDING REVIEW</div>
+                <div class="stat-label">REJECTED</div>
                 <div class="stat-icon-sm" style="color:#b06900; background:#fff2e0;"><i class="ph-fill ph-clock-countdown"></i></div>
             </div>
-            <div class="stat-value"><?php echo (int)$globalPendingBeneficiaries; ?></div>
-            <div class="stat-trend trend-warning"><i class="ph-bold ph-clock"></i> For review</div>
+            <div class="stat-value"><?php echo (int)$globalRejectedRecords; ?></div>
+            <div class="stat-trend trend-warning"><i class="ph-bold ph-clock"></i> Rejected</div>
             <div class="stat-note">Applications waiting for review.</div>
         </div>
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">ACTIVE BENEFICIARIES</div>
+                <div class="stat-label">NOT COMPLETED</div>
                 <div class="stat-icon-sm" style="color:#2a5a8a; background:#e8eff4;"><i class="ph-fill ph-play-circle"></i></div>
             </div>
-            <div class="stat-value"><?php echo (int)$globalOngoingAvailments; ?></div>
-            <div class="stat-trend trend-neutral"><i class="ph-bold ph-play"></i> In progress</div>
-            <div class="stat-note">Beneficiaries currently receiving program support.</div>
+            <div class="stat-value"><?php echo (int)$globalNotCompletedRecords; ?></div>
+            <div class="stat-trend trend-neutral"><i class="ph-bold ph-play"></i> Not completed</div>
+            <div class="stat-note">Not Qualified, Exam Not Passed, or Cancelled.</div>
         </div>
       </section>
 
       <section class="panel-card animate-fade-in" style="animation-delay: 0.2s; margin-top: 8px;">
-        <div class="panel-head-flex"><div><div class="panel-title">Programs Overview</div><div class="panel-sub">Select a program below to review applications and beneficiaries.</div></div></div>
+        <div class="panel-head-flex"><div><div class="panel-title">Programs Overview</div><div class="panel-sub">Select a program below to view beneficiary records.</div></div></div>
         <div class="program-grid">
           <?php foreach ($programs as $program): ?>
             <article class="program-card-shell">
@@ -513,12 +524,12 @@ if ($selectedProgramName !== "") {
 
                 <div class="styled-record-counter">
                     <i class="ph-fill ph-users"></i>
-                    <span><strong><?php echo h($program["beneficiary_count"]); ?></strong> Total Records</span>
+                    <span><strong><?php echo h($program["beneficiary_count"]); ?></strong> Beneficiary Records</span>
                 </div>
 
                 <div class="card-actions">
                     <a href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($program["program_name"]); ?>" class="btn-directory">
-                        <i class="ph-fill ph-folder-open"></i> Directory
+                        <i class="ph-fill ph-folder-open"></i> View Records
                     </a>
                 </div>
               </div>
@@ -531,9 +542,8 @@ if ($selectedProgramName !== "") {
       <section class="panel-card animate-fade-in" style="flex: 1; animation-delay: 0.1s; margin-top: 8px; display: flex; flex-direction: column;">
         <div class="records-toolbar">
             <div class="custom-tabs">
-                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'All' && $spesGroup === 'all' ? 'active' : ''; ?>">All Records</a>
-                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Pending', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Pending' && $spesGroup === 'all' ? 'active' : ''; ?>">Needs Approval</a>
-                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Approved', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Approved' && $spesGroup === 'all' ? 'active' : ''; ?>">Accepted</a>
+                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'All' && $availmentFilter === 'All' && $spesGroup === 'all' ? 'active' : ''; ?>">All Records</a>
+                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'Completed', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $availmentFilter === 'Completed' && $spesGroup === 'all' ? 'active' : ''; ?>">Completed</a>
                 <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Rejected', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Rejected' && $spesGroup === 'all' ? 'active' : ''; ?>">Rejected</a>
                 <?php if (stripos($selectedProgramName, 'SPES') !== false): ?>
                 <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'baby', 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'baby' ? 'active' : ''; ?>">SPES Baby</a>
@@ -578,17 +588,11 @@ if ($selectedProgramName !== "") {
               <?php foreach ($barangays as $barangay): ?><option value="<?php echo h($barangay); ?>" <?php echo $selectedBarangay === $barangay ? 'selected' : ''; ?>><?php echo h($barangay); ?></option><?php endforeach; ?>
             </select>
             <select name="availment" class="filter-select auto-submit">
-              <option value="All" <?php echo $availmentFilter === 'All' ? 'selected' : ''; ?>>All Statuses</option>
-              <option value="Not Yet Availed" <?php echo $availmentFilter === 'Not Yet Availed' ? 'selected' : ''; ?>>Waiting for Requirements</option>
-              <option value="Requirements Received" <?php echo $availmentFilter === 'Requirements Received' ? 'selected' : ''; ?>>Requirements Received</option>
-              <option value="Orientation" <?php echo $availmentFilter === 'Orientation' ? 'selected' : ''; ?>>Orientation</option>
-              <option value="Examination" <?php echo $availmentFilter === 'Examination' ? 'selected' : ''; ?>>Examination (Face-to-Face)</option>
-              <option value="Exam Passed" <?php echo $availmentFilter === 'Exam Passed' ? 'selected' : ''; ?>>Exam Passed</option>
+              <option value="All" <?php echo $availmentFilter === 'All' ? 'selected' : ''; ?>>All Status</option>
               <option value="Exam Failed" <?php echo $availmentFilter === 'Exam Failed' ? 'selected' : ''; ?>>Exam Not Passed</option>
-              <option value="Ongoing" <?php echo $availmentFilter === 'Ongoing' ? 'selected' : ''; ?>>Ongoing</option>
-              <option value="Salary Distribution" <?php echo $availmentFilter === 'Salary Distribution' ? 'selected' : ''; ?>>Salary Distribution</option>
               <option value="Completed" <?php echo $availmentFilter === 'Completed' ? 'selected' : ''; ?>>Completed</option>
               <option value="Not Qualified" <?php echo $availmentFilter === 'Not Qualified' ? 'selected' : ''; ?>>Not Qualified</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
 
             <?php if (stripos($selectedProgramName, 'MSME') !== false): ?>
@@ -609,8 +613,8 @@ if ($selectedProgramName !== "") {
         <?php if (!$beneficiaries): ?>
           <div class="empty-state">
             <i class="ph-fill ph-users empty-icon"></i>
-            <div class="empty-title">No beneficiaries found</div>
-            <div class="empty-text">There are no records matching your current filters.</div>
+            <div class="empty-title">No beneficiary records found</div>
+            <div class="empty-text">No completed or closed records match your current filters.</div>
           </div>
         <?php else: ?>
           <div class="table-wrap">
@@ -719,7 +723,7 @@ if ($selectedProgramName !== "") {
             <div class="modal-sub">Choose filters and columns, then print the preview or export an editable workbook.</div>
         </div>
 
-        <form method="GET" action="export_report.php" target="_blank" class="report-form"><input type="hidden" name="report_scope" value="original_beneficiaries">
+        <form method="GET" action="export_report.php" target="_blank" class="report-form"><input type="hidden" name="report_scope" value="historical">
             <input type="hidden" name="program_name" value="<?php echo h($selectedProgramName); ?>">
 
             <div class="report-filter-list" style="flex: 1; overflow-y: auto; padding-right: 8px; display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px;">
@@ -741,18 +745,13 @@ if ($selectedProgramName !== "") {
 
                 <div class="form-group" style="margin:0;">
                     <label>Status Filter</label>
-                    <select name="report_availment" id="report_avail_select">
+                    <select name="report_outcome" id="report_avail_select">
                         <option value="All">All Records</option>
-                        <option value="Not Yet Availed">New (Not Availed)</option>
-                        <option value="Requirements Received">Requirements Received</option>
-                        <option value="Orientation">Orientation</option>
-                        <option value="Examination">Examination (Face-to-Face)</option>
-                        <option value="Exam Passed">Exam Passed</option>
+                        <option value="Rejected">Rejected</option>
                         <option value="Exam Failed">Exam Not Passed</option>
-                        <option value="Ongoing">Ongoing</option>
-                        <option value="Salary Distribution">Salary Distribution</option>
-                        <option value="Completed">Old / Completed</option>
+                        <option value="Completed">Completed</option>
                         <option value="Not Qualified">Not Qualified</option>
+              <option value="Cancelled">Cancelled</option>
                     </select>
                 </div>
                 <?php if (stripos($selectedProgramName, 'SPES') !== false): ?>
@@ -1018,7 +1017,7 @@ if ($selectedProgramName !== "") {
 
     function loadReportData() {
       if (reportDataPromise) return reportDataPromise;
-      const url = `beneficiary_report_data.php?report_scope=original_beneficiaries&program_name=${encodeURIComponent(currentProgramName)}`;
+      const url = `beneficiary_report_data.php?report_scope=historical&program_name=${encodeURIComponent(currentProgramName)}`;
       reportDataPromise = fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
         .then(response => response.json().then(payload => ({ response, payload })))
         .then(({ response, payload }) => {
@@ -2418,7 +2417,7 @@ if ($selectedProgramName !== "") {
 
               let filtered = allBeneficiariesData.filter(b => {
                   let matchBrgy = selectedBrgy === 'All' || b.barangay === selectedBrgy;
-                  let matchAvail = selectedAvail === 'All' || b.availment_status === selectedAvail;
+                  let matchAvail = selectedAvail === 'All' || (b.approval_status === 'Rejected' ? 'Rejected' : b.availment_status) === selectedAvail;
                   let matchBatch = selectedBatchId === '0' || b.program_id == selectedBatchId;
                   let matchNature = selectedNature === 'All' || uniqueReportListItems(b.business_nature)
                       .some(nature => nature.toLowerCase() === selectedNature.toLowerCase());
