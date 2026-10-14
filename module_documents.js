@@ -1,7 +1,18 @@
 (() => {
+  const dialog=document.getElementById('documentPreviewModal'),frame=document.getElementById('documentPreviewFrame'),status=document.getElementById('documentPreviewMessage'),download=document.getElementById('documentPreviewDownload');let trigger=null,blobUrl=null,sequence=0;
+  const start=(card)=>{trigger=card;sequence++;if(blobUrl){URL.revokeObjectURL(blobUrl);blobUrl=null;}frame.hidden=true;frame.removeAttribute('src');status.hidden=false;status.textContent='Loading preview?';download.hidden=true;document.getElementById('documentPreviewTitle').textContent=card.querySelector('h3').textContent;dialog.showModal();return sequence;};
+  const display=(url,name)=>{download.href=url;download.download=name;download.hidden=false;frame.src=url;frame.hidden=false;status.hidden=true;};
+  dialog.querySelectorAll('[data-close-document]').forEach(button=>button.addEventListener('click',()=>dialog.close()));
+  dialog.addEventListener('close',()=>{if(dialog.open)return;sequence++;frame.removeAttribute('src');if(blobUrl){URL.revokeObjectURL(blobUrl);blobUrl=null;}trigger?.focus();});
+  document.querySelectorAll('.document-card').forEach(card=>{
+    const activate=()=>{const guideline=card.querySelector('[data-guideline-program]');if(guideline){guideline.click();return;}start(card);const link=card.querySelector('a'),url=link.getAttribute('href'),name=decodeURIComponent(url.split('/').pop());download.href=url;download.download=name;download.hidden=false;const matchingPdf={'SPES_Form_2_Official.docx':'assets/forms/SPES%20Form%202%20-%20Application%20Form.pdf','SPES_Form_2A_Official.docx':'assets/forms/SPES%20Form%202-A%20-%20Oath%20of%20Undertaking.pdf'};frame.src=matchingPdf[name]||(/\.pdf$/i.test(name)?url:'document_preview.php?file='+encodeURIComponent(decodeURIComponent(url))); frame.hidden=false;status.hidden=true;};
+    card.addEventListener('click',event=>{if(event.target.closest('[data-guideline-program]'))return;event.preventDefault();activate();});
+    card.addEventListener('keydown',event=>{if(event.target===card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();activate();}});
+  });
   const message = document.getElementById('documentDownloadStatus');
   document.querySelectorAll('[data-guideline-program]').forEach(button => {
     button.addEventListener('click', async () => {
+      const current=start(button.closest('.document-card'));
       button.disabled = true;
       message.textContent = 'Preparing guidelines…';
       try {
@@ -58,11 +69,11 @@
           write('Based on the saved program batch information in BENEPESO. Contact PESO Vinzons for updates.');
         }
         const bytes = await pdf.save();
+        if(current!==sequence)return;
         const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-        const link = document.createElement('a'); link.href = url; link.download = `${program}_Guidelines.pdf`; link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
-        message.textContent = 'Guidelines downloaded.';
-      } catch (error) { message.textContent = error.message || 'The guidelines could not be downloaded. Try again.'; }
+        blobUrl=url;display(url,`${program}_Guidelines.pdf`);
+        message.textContent = 'Guidelines ready to preview.';
+      } catch (error) { if(current===sequence){status.textContent=error.message||'Unable to load preview.';message.textContent=status.textContent;} }
       finally { button.disabled = false; }
     });
   });

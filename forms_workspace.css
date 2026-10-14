@@ -19,3 +19,12 @@ body.forms-workspace{font-family:Poppins,-apple-system,BlinkMacSystemFont,sans-s
 @media(max-width:992px){.forms-workspace .module-main{padding:20px}.forms-workspace .module-heading{gap:12px}.forms-workspace .menu-toggle{flex-shrink:0}}
 @media(max-width:600px){.forms-workspace .module-main{padding:12px}.forms-workspace .module-heading{padding:18px;min-height:0;flex-wrap:wrap;border-radius:18px}.forms-workspace .module-heading h1{font-size:22px}.forms-workspace .module-panel{padding:17px;border-radius:18px}.forms-workspace .module-panel h2{font-size:20px}.forms-workspace .document-grid{grid-template-columns:minmax(0,1fr);gap:12px;margin-top:16px}.forms-workspace .document-card{padding:16px}.forms-workspace .document-card .module-btn{width:100%}}
 @media(prefers-reduced-motion:reduce){.forms-workspace .document-card{transition:none}}
+
+.forms-workspace .document-card{cursor:pointer}.forms-workspace .document-card:focus-visible{outline:3px solid #8fbea5;outline-offset:3px}
+#documentPreviewModal{width:min(1200px,calc(100vw - 32px));height:min(900px,calc(100dvh - 32px));max-width:none;max-height:none;padding:0;border:1px solid #c9dfd2;border-radius:20px;background:#fff;color:#173728;overflow:hidden}
+#documentPreviewModal[open]{display:flex;flex-direction:column}#documentPreviewModal::backdrop{background:rgba(13,39,27,.6);backdrop-filter:blur(5px)}
+#documentPreviewModal header,#documentPreviewModal footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;background:#f5faf7;flex:none}
+#documentPreviewModal header{border-bottom:1px solid #dce9e2}#documentPreviewModal h2{font:700 18px/1.4 Poppins,sans-serif;margin:0}#documentPreviewModal header button{width:40px;height:40px;flex-shrink:0;background:#fff;border:1px solid #dce9e2;border-radius:50%;font-size:24px;cursor:pointer}
+#documentPreviewModal footer{justify-content:flex-end;border-top:1px solid #dce9e2}#documentPreviewModal footer .module-btn{font-family:Poppins,sans-serif}
+.document-preview-body{flex:1;min-height:0;display:flex;background:#edf2ef}#documentPreviewFrame{width:100%;height:100%;border:0;flex:1}#documentPreviewMessage{padding:20px;font-size:13px}#documentPreviewModal [hidden]{display:none!important}
+@media(max-width:600px){#documentPreviewModal{width:100vw;height:100dvh;border-radius:0;border:0}#documentPreviewModal header,#documentPreviewModal footer{padding:12px}#documentPreviewModal h2{font-size:15px}#documentPreviewModal footer .module-btn{flex:1}}
