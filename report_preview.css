@@ -42,7 +42,15 @@
 @media(max-width:520px){#generateReportModal .report-template-metadata{grid-template-columns:1fr;font-size:11px;gap:5px;padding:8px 12px}}
 
 /* Heading belongs to the worksheet and shares its zoom and scroll position. */
-#generateReportModal .report-worksheet{width:100%;background:#fff;border:1px solid #9aa9a0}
-#generateReportModal .report-worksheet .preview-header{background:#fff!important;border:0!important;border-bottom:1px solid #aebbb3!important;color:#183b2b;padding:18px 16px!important}
+#generateReportModal .report-worksheet{width:100%;background:#fff;border:0;outline:0;box-shadow:none}
+#generateReportModal .report-worksheet .preview-header{background:#fff!important;border:0!important;border-bottom:0!important;color:#183b2b;padding:18px 16px!important}
 #generateReportModal .report-worksheet .preview-header p{background:none!important;border-radius:0!important;padding:0!important;letter-spacing:.04em}
 #generateReportModal .report-worksheet .official-template-table :is(th,td){border:1px solid #8a9e91!important}
+
+/* Remove the frame around the preview; only interior table dividers remain. */
+#generateReportModal .report-worksheet .official-template-table{border:0!important;outline:0!important;box-shadow:none!important}
+#generateReportModal .report-worksheet .official-template-table tr>:first-child{border-left:0!important}
+#generateReportModal .report-worksheet .official-template-table tr>:last-child{border-right:0!important}
+#generateReportModal .report-worksheet .official-template-table thead tr:first-child>th{border-top:0!important}
+#generateReportModal .report-worksheet .official-template-table tbody tr:last-child>td{border-bottom:0!important}
+#generateReportModal .report-worksheet .official-template-table tbody td[colspan]:not([data-column-start]){border:0!important;background:#fff!important;padding:16px 10px!important}
