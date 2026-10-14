@@ -27,6 +27,30 @@ function beneficiaryImportHeaderKey($value): string
     return preg_replace('/[^a-z0-9]/', '', $value) ?? '';
 }
 
+/** Compare the actual column schema with the selected program's import template. */
+function validateBeneficiaryImportTemplate(array $headers, string $programName): void
+{
+    $program = '';
+    foreach (['MSME', 'SPES', 'TUPAD'] as $candidate) {
+        if (stripos($programName, $candidate) !== false) {
+            $program = $candidate;
+            break;
+        }
+    }
+    if ($program === '') throw new RuntimeException('Unknown import program.');
+    $templateRows = readBeneficiaryImportRows(__DIR__ . '/assets/templates/' . $program . '_Import_Blank.xlsx', 'xlsx');
+    $expected = array_map('beneficiaryImportHeaderKey', $templateRows[0] ?? []);
+    $actual = array_map('beneficiaryImportHeaderKey', $headers);
+    // Blank trailing spreadsheet cells are harmless; missing, extra and duplicate columns are not.
+    while ($actual && end($actual) === '') array_pop($actual);
+    if (!$expected || count($actual) !== count(array_unique($actual))) {
+        throw new RuntimeException('Invalid import column schema.');
+    }
+    sort($expected);
+    sort($actual);
+    if ($actual !== $expected) throw new RuntimeException('Template does not match the selected program.');
+}
+
 function beneficiaryImportColumnIndex(string $letters): int
 {
     $number = 0;

@@ -993,6 +993,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   }
               }
 
+              $programStmt = $conn->prepare("SELECT program_name FROM programs WHERE program_id = ?");
+              $programStmt->bind_param('i', $program_id);
+              $programStmt->execute();
+              $importProgram = $programStmt->get_result()->fetch_assoc();
+              $programStmt->close();
+              if (!$importProgram || strcasecmp(trim($importProgram['program_name']), trim($program_name_post)) !== 0) {
+                  throw new RuntimeException('Import batch does not match the selected program.');
+              }
+              validateBeneficiaryImportTemplate($importRows[$headerIndex], $importProgram['program_name']);
+
               $preparedRows=[];
               for ($importIndex = $headerIndex + 1, $rowTotal = count($importRows); $importIndex < $rowTotal; $importIndex++) {
                   $data = $importRows[$importIndex];
@@ -1373,7 +1383,7 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=4">
   <link rel="stylesheet" href="system_mobile.css?v=24">
   <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=18">
+<link rel="stylesheet" href="application_refinements.css?v=19">
 <script src="frontend_polish.js?v=20261014-dialog" defer></script>
 <script src="beneficiary_workspace_polish.js?v=13" defer></script>
 <script src="application_actions.js?v=16" defer></script>
@@ -2476,7 +2486,7 @@ if ($selectedProgramName !== "") {
       </div>
 
       <div class="form-group">
-        <a class="btn-light import-template-link" download="<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import.xlsx" href="assets/templates/<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import_Blank.xlsx"><i class="ph ph-download-simple" aria-hidden="true"></i> Download Template</a>
+        <p class="import-template-hint">Use the <a class="import-template-link" download="<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import.xlsx" href="assets/templates/<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import_Blank.xlsx">template</a>.</p>
         <label>Upload File *</label>
         <div class="file-upload-box-dashed">
             <input type="file" name="csv_file" id="bulkFileInput" aria-describedby="bulkFileError" accept=".csv,.xlsx" required style="width:100%; padding:15px;">
