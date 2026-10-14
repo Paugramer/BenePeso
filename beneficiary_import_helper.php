@@ -1,5 +1,14 @@
 <?php
 
+class BeneficiaryImportValidationException extends RuntimeException {}
+
+function beneficiaryImportErrorExplanation(Throwable $error): string
+{
+    return $error instanceof BeneficiaryImportValidationException
+        ? $error->getMessage()
+        : 'The file could not be imported. Check its contents and try again. No records were saved.';
+}
+
 function cleanBeneficiaryImportText($value): string
 {
     $value = (string)$value;
@@ -37,18 +46,18 @@ function validateBeneficiaryImportTemplate(array $headers, string $programName):
             break;
         }
     }
-    if ($program === '') throw new RuntimeException('Unknown import program.');
+    if ($program === '') throw new BeneficiaryImportValidationException('Select a valid program batch before importing.');
     $templateRows = readBeneficiaryImportRows(__DIR__ . '/assets/templates/' . $program . '_Import_Blank.xlsx', 'xlsx');
     $expected = array_map('beneficiaryImportHeaderKey', $templateRows[0] ?? []);
     $actual = array_map('beneficiaryImportHeaderKey', $headers);
     // Blank trailing spreadsheet cells are harmless; missing, extra and duplicate columns are not.
     while ($actual && end($actual) === '') array_pop($actual);
     if (!$expected || count($actual) !== count(array_unique($actual))) {
-        throw new RuntimeException('Invalid import column schema.');
+        throw new BeneficiaryImportValidationException('The file has missing or duplicate columns. Use the template for this program.');
     }
     sort($expected);
     sort($actual);
-    if ($actual !== $expected) throw new RuntimeException('Template does not match the selected program.');
+    if ($actual !== $expected) throw new BeneficiaryImportValidationException('The columns do not match this program. Download its import template and try again.');
 }
 
 function beneficiaryImportColumnIndex(string $letters): int
@@ -293,7 +302,7 @@ function updateImportedBeneficiary(mysqli $conn, int $beneficiaryId, array $rowD
     $check = $conn->prepare('SELECT beneficiary_id FROM beneficiaries b WHERE beneficiary_id=? AND ' . historical_record_condition());
     $check->bind_param('i', $beneficiaryId); $check->execute();
     $archived = $check->get_result()->num_rows > 0; $check->close();
-    if ($archived) return false;
+    if ($archived) throw new BeneficiaryImportValidationException('A record already exists in the completed or closed reports and cannot be overwritten. No records were saved.');
     $databaseColumns = beneficiaryTableColumns($conn);
     $blocked = ['beneficiary_id', 'user_id', 'program_id', 'created_by', 'created_at', 'updated_at', 'approval_status', 'availment_status'];
     $fields = [];
@@ -303,6 +312,25 @@ function updateImportedBeneficiary(mysqli $conn, int $beneficiaryId, array $rowD
         $fields[$column] = (string)$value;
     }
     $fields['availment_status'] = $availmentStatus;
+
+    $existingStmt = $conn->prepare('SELECT * FROM beneficiaries WHERE beneficiary_id = ?');
+    $existingStmt->bind_param('i', $beneficiaryId);
+    $existingStmt->execute();
+    $existing = $existingStmt->get_result()->fetch_assoc();
+    $existingStmt->close();
+    $hasChanges = false;
+    foreach ($fields as $column => $value) {
+        $previous = trim((string)($existing[$column] ?? ''));
+        $incoming = trim((string)$value);
+        $numeric = in_array($column, ['age', 'avg_monthly_income', 'initial_capital', 'current_capital', 'daily_earnings', 'hr_total', 'hr_male', 'hr_female', 'emp_regular', 'emp_seasonal', 'emp_contractual', 'emp_family'], true);
+        $same = $numeric && is_numeric($previous) && is_numeric($incoming)
+            ? (float)$previous === (float)$incoming : $previous === $incoming;
+        if (!$same) {
+            $hasChanges = true;
+            break;
+        }
+    }
+    if ($existing && !$hasChanges) throw new BeneficiaryImportValidationException('These records already exist with the same details and status. No records were saved.');
 
     $assignments = array_map(static fn($column) => "`$column` = ?", array_keys($fields));
     $sql = 'UPDATE beneficiaries b SET ' . implode(', ', $assignments) . ', updated_at = NOW() WHERE beneficiary_id = ? AND NOT ' . historical_record_condition();

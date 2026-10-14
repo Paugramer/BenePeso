@@ -64,3 +64,6 @@
 /* Complete the table header grid, including merged section headings. */
 #generateReportModal .report-worksheet .official-template-table thead tr:first-child>th{border-top:1px solid #8fbea5!important}
 #generateReportModal .report-worksheet .official-template-table thead tr>th:first-child{border-left:1px solid #8fbea5!important}
+
+/* Workbook headings scroll with their rows rather than covering beneficiary data. */
+#generateReportModal .report-worksheet .official-template-table :is(thead,thead tr,th){position:static!important;top:auto!important;left:auto!important;z-index:auto!important;transform:none!important}

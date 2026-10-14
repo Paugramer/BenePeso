@@ -65,7 +65,17 @@
 /* Import controls only. */
 #bulkUploadModal .import-upload-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
 #bulkUploadModal .import-upload-heading label{margin:0}
-#bulkUploadModal .import-template-hint{margin:0;font-size:13px;line-height:1.5}
+#bulkUploadModal .import-template-hint{margin:0 0 12px;font-size:13px;line-height:1.6;color:var(--muted);overflow-wrap:anywhere}
+#bulkUploadModal .modal-form,#bulkUploadModal .form-group{min-width:0;max-width:100%}
+#bulkUploadModal .file-upload-box-dashed{display:block;box-sizing:border-box;max-width:100%;min-width:0;border:2px dashed var(--green);border-radius:8px;padding:24px 16px;text-align:center;background:#f9fbf9;cursor:pointer}
+#bulkUploadModal #bulkFileName{max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.6;font-size:13px;letter-spacing:0;text-transform:none}
+#successModal .import-summary-dialog{box-sizing:border-box;max-width:min(620px,calc(100vw - 32px));padding:28px;overflow-x:hidden}
+#successModal .import-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+#successModal .import-summary-stat{min-height:100px;border:0;border-right:1px solid #d9e7df;padding:16px 10px}
+#successModal .import-summary-stat:last-child{border-right:0}
+#successModal .import-summary-stat span{text-transform:none;letter-spacing:0;font-size:12px;line-height:1.5}
+#successModal .import-summary-note{font-size:13px;line-height:1.6;gap:6px}
+@media(max-width:600px){#successModal .import-summary-grid{grid-template-columns:1fr}#successModal .import-summary-stat{min-height:80px;border-right:0}#successModal .import-summary-dialog{padding:24px 20px}}
 #bulkUploadModal .import-template-link{color:var(--green);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 #bulkUploadModal .import-inline-error{margin:8px 0 0;color:#b42318;font-size:12px;line-height:1.5}
 #bulkUploadModal .import-inline-error[hidden]{display:none!important}

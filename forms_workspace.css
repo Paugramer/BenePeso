@@ -30,5 +30,5 @@ body.forms-workspace{font-family:Poppins,-apple-system,BlinkMacSystemFont,sans-s
 @media(max-width:600px){#documentPreviewModal{width:100vw;height:100dvh;border-radius:0;border:0}#documentPreviewModal header,#documentPreviewModal footer{padding:12px}#documentPreviewModal h2{font-size:15px}#documentPreviewModal footer .module-btn{flex:1}}
 
 /* Match the Report sidebar avatar clipping and image baseline. */
-.forms-workspace .side-area .user-pic-wrap{overflow:hidden;flex-shrink:0}
-.forms-workspace .side-area .user-img-side{display:block}
+.forms-workspace .side-area .user-pic-wrap{overflow:hidden;flex-shrink:0;border:2px solid rgba(255,255,255,.8);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.forms-workspace .side-area .user-img-side{display:block;max-width:100%}

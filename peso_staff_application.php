@@ -201,6 +201,8 @@ $importSummary = $_SESSION["import_summary"] ?? null;
 $modalIcon = $_SESSION["modal_icon"] ?? "✓";
 $showErrorModal = $_SESSION["show_error_modal"] ?? false;
 $errorModalMessage = $_SESSION["error_modal_message"] ?? "";
+$importErrorReason = $_SESSION["import_error_reason"] ?? "";
+unset($_SESSION["import_error_reason"]);
 
 unset($_SESSION["flash"], $_SESSION["flash_type"], $_SESSION["show_success_modal"], $_SESSION["success_modal_message"], $_SESSION["import_summary"], $_SESSION["modal_icon"], $_SESSION["show_error_modal"], $_SESSION["error_modal_message"]);
 
@@ -865,6 +867,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   // BULK IMPORT FILE
   if ($action === "bulk_upload_beneficiaries") {
       unset($_SESSION['import_summary']);$_SESSION['show_success_modal']=false;
+      $_SESSION['import_error_reason']='Use a valid Excel (.xlsx) or CSV (.csv) file with this program?s template.';
       $program_id = (int)($_POST["program_id"] ?? 0);
       $batch_availment = trim($_POST["batch_availment_status"] ?? "Not Yet Availed");
       $batch_message = trim($_POST["batch_status_message"] ?? "");
@@ -949,6 +952,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               } catch (Throwable $error) {
                   $_SESSION["show_error_modal"] = true;
                   error_log("Beneficiary import read: ".$error->getMessage());
+                  $_SESSION["import_error_reason"]="The file could not be read. Upload a valid Excel (.xlsx) or CSV (.csv) file.";
                   $_SESSION["error_modal_message"] = "Import Invalid";
       header("Location: " . beneficiary_return_location('peso_staff_application.php', $program_name_post));
                   exit();
@@ -999,11 +1003,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               $importProgram = $programStmt->get_result()->fetch_assoc();
               $programStmt->close();
               if (!$importProgram || strcasecmp(trim($importProgram['program_name']), trim($program_name_post)) !== 0) {
-                  throw new RuntimeException('Import batch does not match the selected program.');
+                  throw new BeneficiaryImportValidationException('The selected batch belongs to another program. Select the correct batch and try again.');
               }
               validateBeneficiaryImportTemplate($importRows[$headerIndex], $importProgram['program_name']);
 
               $preparedRows=[];
+              $importNames=[];
               for ($importIndex = $headerIndex + 1, $rowTotal = count($importRows); $importIndex < $rowTotal; $importIndex++) {
                   $data = $importRows[$importIndex];
                   if (empty(trim(implode("", $data)))) continue;
@@ -1094,9 +1099,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   }
 
                   if($batch_availment==='Requirements Received')$row_data['date_availed']=document_submission_today();
+                  $importNameKey=mb_strtolower($row_data['full_name']);
+                  if(isset($importNames[$importNameKey]))throw new BeneficiaryImportValidationException('The file contains duplicate beneficiaries. Keep one row per person and try again. No records were saved.');
+                  $importNames[$importNameKey]=true;
                   $preparedRows[]=$row_data;
               }
-              if($failedCount||!$preparedRows)throw new RuntimeException('Invalid import rows.');
+              if($failedCount||!$preparedRows)throw new BeneficiaryImportValidationException('Some rows contain missing names or invalid dates, contact numbers, email addresses, or amounts. Check the file and try again. No records were saved.');
               if(!isset($mapped_headers)||(!in_array('full_name',$mapped_headers,true)&&(!in_array('first_name',$mapped_headers,true)||!in_array('last_name',$mapped_headers,true))))throw new RuntimeException('Missing name headers.');
               prepareBeneficiaryImportOutbox($conn);
               runBeneficiaryImportTransaction($conn,$preparedRows,function($row_data)use($conn,$checkStmt,$program_id,$batch_availment,$batch_message,$batch_schedule_date,$batch_schedule_place,$peso_staff_id,&$successCount,&$updatedCount,&$failedCount,&$emailSentCount,&$emailFailedCount,&$emailFailureReasons){
@@ -1168,6 +1176,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               }
               } catch(Throwable $error){
                   error_log('Beneficiary import: '.$error->getMessage());
+                  $_SESSION['import_error_reason']=beneficiaryImportErrorExplanation($error);
                   unset($_SESSION['import_summary']);$_SESSION['show_success_modal']=false;
                   $_SESSION['show_error_modal']=true;$_SESSION['error_modal_message']='Import Invalid';
               }
@@ -1383,7 +1392,7 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=4">
   <link rel="stylesheet" href="system_mobile.css?v=24">
   <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=20">
+<link rel="stylesheet" href="application_refinements.css?v=21">
 <script src="frontend_polish.js?v=20261014-dialog" defer></script>
 <script src="beneficiary_workspace_polish.js?v=13" defer></script>
 <script src="application_actions.js?v=16" defer></script>
@@ -2486,13 +2495,15 @@ if ($selectedProgramName !== "") {
       </div>
 
       <div class="form-group">
-        <div class="import-upload-heading"><label for="bulkFileInput">Upload File *</label><p class="import-template-hint">Use the <a class="import-template-link" download="<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import.xlsx" href="assets/templates/<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import_Blank.xlsx">template</a>.</p></div>
+        <div class="import-upload-heading"><label for="bulkFileInput">Upload File *</label></div>
+        <p class="import-template-hint">Start with the <a class="import-template-link" download="<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import.xlsx" href="assets/templates/<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import_Blank.xlsx">downloadable template</a>, fill in the beneficiary details, then upload the file.</p>
 
-        <div class="file-upload-box-dashed">
-            <input type="file" name="csv_file" id="bulkFileInput" aria-describedby="bulkFileError" accept=".csv,.xlsx" required style="width:100%; padding:15px;">
+        <label class="file-upload-box-dashed">
+            <input type="file" name="csv_file" id="bulkFileInput" aria-describedby="bulkFileError" accept=".csv,.xlsx" required style="display:none;">
             <div style="font-size: 32px; color: var(--green); margin-bottom: 8px;"><i class="ph-fill ph-file-text"></i></div>
             <div class="file-help-text" id="bulkFileName">Select an Excel (.xlsx) or CSV (.csv) file</div>
-        </div>
+        </label>
+        <p id="bulkFileError" class="import-inline-error" role="alert" hidden></p>
       </div>
 
       <div class="modal-actions-flex" style="justify-content: center; margin-top: 32px; border-radius: 0 0 var(--radius-xl) var(--radius-xl);">
@@ -2757,29 +2768,27 @@ function toggleBatchScheduleFields(select) {
     <div class="warning-icon" style="background:#e6f4ed; color:#1f7a54;"><i class="ph-bold ph-check"></i></div>
     <?php if (is_array($importSummary)): ?>
       <div class="success-title">Import completed</div>
-      <p class="import-summary-subtitle">The beneficiary file was processed successfully. Here is a summary of the records.</p>
+      <p class="import-summary-subtitle">Your beneficiary records have been imported successfully.</p>
       <div class="import-summary-grid" aria-label="Import results">
         <div class="import-summary-stat import-summary-stat-primary">
           <strong><?php echo number_format((int)$importSummary['added']); ?></strong>
-          <span>New records added</span>
+          <span>Beneficiaries added</span>
         </div>
         <div class="import-summary-stat">
           <strong><?php echo number_format((int)$importSummary['updated']); ?></strong>
-          <span>Existing records updated</span>
-        </div>
-        <div class="import-summary-stat">
-          <strong><?php echo number_format((int)$importSummary['skipped']); ?></strong>
-          <span>Unnamed rows skipped</span>
+          <span>Beneficiaries updated</span>
         </div>
         <div class="import-summary-stat">
           <strong><?php echo number_format((int)$importSummary['emails_sent']); ?></strong>
-          <span>Status emails scheduled</span>
+          <span>Emails awaiting delivery</span>
         </div>
       </div>
       <div class="import-summary-note">
-        <span><i class="ph ph-info"></i> New records are pending approval. Saved records use the status <strong><?php echo h($importSummary['status']); ?></strong>.</span>
+        <?php if ((int)$importSummary['added'] > 0): ?><span>New beneficiaries are awaiting admin approval.</span><?php endif; ?>
+        <span>Imported status: <strong><?php echo h(beneficiary_lifecycle_label($importSummary['status'])); ?></strong>.</span>
+        <span>Email notifications will be sent automatically. They have not been delivered yet.</span>
         <?php if ((int)$importSummary['emails_failed'] > 0): ?>
-          <span class="import-summary-warning"><?php echo number_format((int)$importSummary['emails_failed']); ?> email notification(s) could not be scheduled.</span>
+          <span class="import-summary-warning"><?php echo number_format((int)$importSummary['emails_failed']); ?> email notification(s) could not be queued for delivery.</span>
           <div class="import-summary-reasons">
             <strong>Reason:</strong>
             <?php foreach (($importSummary['email_failure_reasons'] ?? []) as $reason => $count): ?>
@@ -2788,7 +2797,7 @@ function toggleBatchScheduleFields(select) {
           </div>
         <?php endif; ?>
       </div>
-      <button type="button" class="btn-main import-summary-close" data-close-success>Close Summary</button>
+      <button type="button" class="btn-main import-summary-close" data-close-success>Done</button>
     <?php else: ?>
       <div class="success-title"><?php echo strpos((string)$successModalMessage, "No ") === 0 ? "No Changes" : "Processed"; ?></div>
       <div class="modal-text">
@@ -2803,9 +2812,9 @@ function toggleBatchScheduleFields(select) {
   <div class="modal-backdrop" data-close-error></div>
   <div class="success-dialog" style="border-top: 4px solid #dc2626;">
     <div class="warning-icon"><i class="ph-bold ph-x"></i></div>
-    <div class="success-title" style="color:#dc2626;">Action Failed</div>
+    <div class="success-title" style="color:#dc2626;"><?php echo $errorModalMessage === "Import Invalid" ? "Import Invalid" : "Action Failed"; ?></div>
     <div class="modal-text" style="color: var(--muted);">
-      <?php echo h($errorModalMessage ?: "An error occurred."); ?>
+      <?php echo h($errorModalMessage === "Import Invalid" ? ($importErrorReason ?: "Check the file and use the template for this program.") : ($errorModalMessage ?: "An error occurred.")); ?>
     </div>
     <button type="button" class="btn-danger" style="margin-top: 24px; width: 100%; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer;" data-close-error>Okay</button>
   </div>

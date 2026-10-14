@@ -24,6 +24,25 @@ function normalize_report_workbook(PharData $archive, string $program): void {
         $default=(float)$xp->evaluate('string(//m:sheetFormatPr/@defaultColWidth)');$default=($default>0?$default:8.43)*7+5;
         $widths=[];foreach($xp->query('//m:cols/m:col')as$column)for($c=(int)$column->getAttribute('min');$c<=(int)$column->getAttribute('max');$c++)$widths[$c]=$column->getAttribute('hidden')==='1'?0:(float)$column->getAttribute('width')*7+5;
         $last=1;foreach($xp->query('//m:row[@r="'.$headerRow.'"]/m:c')as$cell){$label=$xp->evaluate('string(m:is)',$cell);if($label==='')$label=$xp->evaluate('string(m:v)',$cell);if(trim($label)==='')continue;preg_match('/^([A-Z]+)/',$cell->getAttribute('r'),$parts);$last=max($last,report_column_number($parts[1]));}
+        // TUPAD's source has three styled, unnamed columns after its two Remarks fields.
+        if (stripos($program, 'TUPAD') !== false) {
+            foreach (iterator_to_array($xp->query('//m:sheetData/m:row/m:c')) as $cell) {
+                preg_match('/^([A-Z]+)/', $cell->getAttribute('r'), $parts);
+                if (report_column_number($parts[1]) > $last) $cell->parentNode->removeChild($cell);
+            }
+            foreach (iterator_to_array($xp->query('//m:cols/m:col')) as $column) {
+                if ((int)$column->getAttribute('min') > $last) $column->parentNode->removeChild($column);
+                elseif ((int)$column->getAttribute('max') > $last) $column->setAttribute('max', (string)$last);
+            }
+            $dimension = $xp->query('//m:dimension')->item(0);
+            if ($dimension) {
+                $lastRow = 1;
+                foreach ($xp->query('//m:sheetData/m:row') as $row) $lastRow = max($lastRow, (int)$row->getAttribute('r'));
+                $columnName = ''; $columnNumber = $last;
+                while ($columnNumber > 0) { $columnNumber--; $columnName = chr(65 + $columnNumber % 26) . $columnName; $columnNumber = intdiv($columnNumber, 26); }
+                $dimension->setAttribute('ref', 'A1:' . $columnName . $lastRow);
+            }
+        }
         $first=stripos($program,'MSME')!==false&&$path==='xl/worksheets/sheet1.xml'?2:1;$tableWidth=0;$leading=0;
         for($c=1;$c<=$last;$c++){if($c<$first)$leading+=$widths[$c]??$default;else$tableWidth+=$widths[$c]??$default;}
         $left=$leading+max(0,($tableWidth-1460)/2);$anchor=1;
