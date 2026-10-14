@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__.'/auth.php';
+require_once __DIR__.'/db.php';
 $role=auth_first_active_role(['admin','peso_staff']);if(!$role){http_response_code(403);exit('Please sign in to preview this document.');}check_user_role($role);
-$allowed=['assets/templates/Tupadforms.xlsx','assets/report_templates/TUPAD_Report_Blank.xlsx','assets/templates/TUPAD_Import_Blank.xlsx','assets/templates/SPES_Form_2_Official.docx','assets/templates/SPES_Form_2A_Official.docx','assets/report_templates/SPES_Report_Blank.xlsx','assets/templates/SPES_Import_Blank.xlsx','assets/report_templates/MSME_Report_Blank.xlsx','assets/templates/MSME_Import_Blank.xlsx'];
+$allowed=['assets/report_templates/TUPAD_Report_Blank.xlsx','assets/templates/TUPAD_Import_Blank.xlsx','assets/templates/SPES_Form_2_Official.docx','assets/templates/SPES_Form_2A_Official.docx','assets/report_templates/SPES_Report_Blank.xlsx','assets/templates/SPES_Import_Blank.xlsx','assets/report_templates/MSME_Report_Blank.xlsx','assets/templates/MSME_Import_Blank.xlsx'];
 $file=(string)($_GET['file']??'');if(!in_array($file,$allowed,true)||!is_file(__DIR__.'/'.$file)){http_response_code(404);exit('Document not found.');}
 header('Content-Type: text/html; charset=UTF-8');header('Cache-Control: private, no-store');header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src data:; frame-ancestors 'self'");header('X-Content-Type-Options: nosniff');
 function preview_escape($text){return htmlspecialchars((string)$text,ENT_QUOTES,'UTF-8');}
