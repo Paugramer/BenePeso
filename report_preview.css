@@ -60,3 +60,7 @@
 #generateReportModal .report-worksheet .official-template-table tbody td[colspan]:not([data-column-start]){border:0!important;background:#fff!important;padding:18px 10px!important;color:#61776c!important}
 #generateReportModal .report-template-metadata{font-family:Arial,sans-serif;gap:6px 20px;padding:12px 14px 18px}
 @media(max-width:760px){#generateReportModal .scrollable-table-wrap{padding:6px!important}#generateReportModal .report-worksheet .preview-header h2{font-size:14px!important}#generateReportModal .report-worksheet .official-template-table th{font-size:12px!important}}
+
+/* Complete the table header grid, including merged section headings. */
+#generateReportModal .report-worksheet .official-template-table thead tr:first-child>th{border-top:1px solid #8fbea5!important}
+#generateReportModal .report-worksheet .official-template-table thead tr>th:first-child{border-left:1px solid #8fbea5!important}
