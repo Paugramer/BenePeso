@@ -1,0 +1,2 @@
+/* Preserve the original beneficiary report modal; no replacement header or footer. */
+#generateReportModal{z-index:10000}#generateReportModal .split-layout{display:flex}#generateReportModal .report-column-list{display:flex;flex-direction:column}#originalReportMessage{font-size:12px;color:#9a442a;margin-top:10px}#generateReportModal .report-controls .report-form{min-height:0;flex:1}#generateReportModal .report-filter-list{min-height:0}#generateReportModal .report-close-button:hover{background:#1f7a54;color:white}
