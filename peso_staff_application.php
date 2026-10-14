@@ -216,7 +216,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   $mutationIds = array_values(array_filter(array_unique(array_map('intval', $mutationIds)), static fn($id) => $id > 0));
   if ($mutationIds) {
       $archived = $conn->query('SELECT beneficiary_id FROM beneficiaries b WHERE beneficiary_id IN (' . implode(',', $mutationIds) . ') AND ' . historical_record_condition() . ' LIMIT 1');
-      if ($archived && $archived->num_rows > 0) { http_response_code(409); exit('Historical records are read-only. Return to Application to review active records.'); }
+      if ($archived && $archived->num_rows > 0) { http_response_code(409); exit('Beneficiary records in Report are read-only. Return to Application to review active records.'); }
   }
 
 
@@ -1170,7 +1170,7 @@ $sqlPrograms = "SELECT c.program_name, c.image_path, COALESCE(t.beneficiary_coun
   LEFT JOIN (
     SELECT p.program_name, COUNT(b.beneficiary_id) AS beneficiary_count
     FROM programs p
-    LEFT JOIN beneficiaries b ON b.program_id = p.program_id
+    LEFT JOIN beneficiaries b ON b.program_id = p.program_id AND NOT " . historical_record_condition() . "
     GROUP BY p.program_name
   ) t ON t.program_name = c.program_name
   ORDER BY c.program_name ASC";
@@ -1181,7 +1181,7 @@ $globalTotalBeneficiaries = 0; $globalApprovedBeneficiaries = 0; $globalPendingB
 $res = $conn->query("SELECT COUNT(*) AS total,
   SUM(approval_status = 'Approved') AS approved_total,
   SUM(approval_status = 'Pending') AS pending_total,
-  SUM(availment_status = 'Ongoing') AS ongoing_total
+  SUM(approval_status = 'Approved' AND availment_status = 'Ongoing') AS ongoing_total
   FROM beneficiaries b WHERE NOT " . historical_record_condition());
 if ($res && ($row = $res->fetch_assoc())) {
   $globalTotalBeneficiaries = (int)($row['total'] ?? 0);
@@ -1380,16 +1380,16 @@ if ($selectedProgramName !== "") {
       <section class="stats-grid animate-fade-in" style="animation-delay: 0.1s;">
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">BENEFICIARIES</div>
+                <div class="stat-label">ACTIVE APPLICATIONS</div>
                 <div class="stat-icon-sm" style="color: var(--green); background: var(--green-light);"><i class="ph-fill ph-users-three"></i></div>
             </div>
             <div class="stat-value"><?php echo (int)$globalTotalBeneficiaries; ?></div>
-            <div class="stat-trend trend-up"><i class="ph-bold ph-users-three"></i> All records</div>
-            <div class="stat-note">Beneficiary records in BENEPESO.</div>
+            <div class="stat-trend trend-up"><i class="ph-bold ph-users-three"></i> Active records</div>
+            <div class="stat-note">Applications being reviewed or processed.</div>
         </div>
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">APPROVED APPLICATIONS</div>
+                <div class="stat-label">ACCEPTED APPLICATIONS</div>
                 <div class="stat-icon-sm" style="color:#1a6d41; background:#e6f6ec;"><i class="ph-fill ph-check-circle"></i></div>
             </div>
             <div class="stat-value"><?php echo (int)$globalApprovedBeneficiaries; ?></div>
@@ -1407,12 +1407,12 @@ if ($selectedProgramName !== "") {
         </div>
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-label">ACTIVE BENEFICIARIES</div>
+                <div class="stat-label">ONGOING BENEFICIARIES</div>
                 <div class="stat-icon-sm" style="color:#2a5a8a; background:#e8eff4;"><i class="ph-fill ph-play-circle"></i></div>
             </div>
             <div class="stat-value"><?php echo (int)$globalOngoingAvailments; ?></div>
             <div class="stat-trend trend-neutral"><i class="ph-bold ph-play"></i> In progress</div>
-            <div class="stat-note">Beneficiaries currently receiving program support.</div>
+            <div class="stat-note">Accepted beneficiaries with an ongoing status.</div>
         </div>
       </section>
 
@@ -1427,7 +1427,7 @@ if ($selectedProgramName !== "") {
 
                 <div class="styled-record-counter">
                     <i class="ph-fill ph-users"></i>
-                    <span><strong><?php echo h($program["beneficiary_count"]); ?></strong> Total Records</span>
+                    <span><strong><?php echo h($program["beneficiary_count"]); ?></strong> Active Applications</span>
                 </div>
 
                 <div class="card-actions">
@@ -1448,14 +1448,14 @@ if ($selectedProgramName !== "") {
                 <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'All' && $spesGroup === 'all' ? 'active' : ''; ?>">Active Applications</a>
                 <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'Pending', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Pending' && $spesGroup === 'all' ? 'active' : ''; ?>">Needs Approval</a>
                 <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'Approved', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Approved' && $spesGroup === 'all' ? 'active' : ''; ?>">Accepted</a>
-                <a href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($selectedProgramName); ?>" class="tab-item">Historical Records</a>
+                <a href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($selectedProgramName); ?>&amp;program_id=<?php echo (int)$selectedProgramId; ?>" class="tab-item">Beneficiary Records</a>
                 <?php if (stripos($selectedProgramName, 'SPES') !== false): ?>
                 <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'baby', 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'baby' ? 'active' : ''; ?>">SPES Baby</a>
                 <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'graduate', 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'graduate' ? 'active' : ''; ?>">Graduated</a>
                 <?php endif; ?>
             </div>
 
-            <a class="btn-main" style="margin-bottom:12px;text-decoration:none" href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($selectedProgramName); ?>"><i class="ph ph-chart-bar"></i> View Reports</a>
+            <a class="btn-main application-view-reports" style="margin-bottom:12px;text-decoration:none;gap:8px" href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($selectedProgramName); ?>&amp;program_id=<?php echo (int)$selectedProgramId; ?>"><i class="ph ph-chart-bar" aria-hidden="true"></i><span>View Reports</span></a>
         </div>
 
         <div class="bulk-selection-bar" id="bulkSelectionBar" hidden>
