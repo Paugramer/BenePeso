@@ -1346,10 +1346,10 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
   <link rel="stylesheet" href="system_mobile.css?v=24">
   <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=12">
+<link rel="stylesheet" href="application_refinements.css?v=13">
 <script src="frontend_polish.js?v=20260925" defer></script>
 <script src="beneficiary_workspace_polish.js?v=12" defer></script>
-<script src="application_actions.js?v=11" defer></script>
+<script src="application_actions.js?v=12" defer></script>
 </head>
 <body class="staff-mobile-page peso-staff-beneficiaries-page">
   <div class="page-wrap">

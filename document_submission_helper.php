@@ -20,7 +20,7 @@ function save_document_submission(mysqli $conn,int $id,bool $resubmission,string
  : "INSERT INTO application_document_submissions (beneficiary_id,received_at) VALUES (?,?) ON DUPLICATE KEY UPDATE received_at=VALUES(received_at),resubmission_deadline=NULL,resubmission_note='',requested_at=NULL,resubmission_reason=''";
  $s=$conn->prepare($sql);if($resubmission)$s->bind_param('isssss',$id,$received,$due,$note,$requested,$reason);else $s->bind_param('is',$id,$now);$s->execute();$s->close();
  if(!$resubmission){
-  if(application_requirements_table_available($conn,'application_requirement_reviews')){$s=$conn->prepare("UPDATE application_requirement_reviews SET review_status='Received' WHERE beneficiary_id=? AND review_status IN ('Missing','Needs Resubmission')");$s->bind_param('i',$id);$s->execute();$s->close();}
+  if(application_requirements_table_available($conn,'application_requirement_reviews')){$s=$conn->prepare("UPDATE application_requirement_reviews SET review_status='Received' WHERE beneficiary_id=? AND review_status IN ('Missing','Needs Resubmission','Invalid Document')");$s->bind_param('i',$id);$s->execute();$s->close();}
   if(application_requirements_table_available($conn,'beneficiary_documents')){$s=$conn->prepare("UPDATE beneficiary_documents SET verification_status='Pending',reviewer_note=NULL,reviewed_by_role=NULL,reviewed_by_id=NULL,reviewed_at=NULL WHERE beneficiary_id=? AND verification_status='Needs Resubmission'");$s->bind_param('i',$id);$s->execute();$s->close();}
  }
 }

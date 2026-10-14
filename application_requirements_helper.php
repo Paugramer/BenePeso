@@ -38,7 +38,7 @@ function application_requirements_issue_sql(?mysqli $connection = null): string 
  global $conn;
  $connection = $connection ?? $conn;
  $conditions = [];
- if(application_requirements_table_available($connection,'application_requirement_reviews')) $conditions[] = "EXISTS (SELECT 1 FROM application_requirement_reviews ar WHERE ar.beneficiary_id=b.beneficiary_id AND ar.review_status IN ('Missing','Needs Resubmission') AND LOCATE(CONVERT(ar.requirement_name USING utf8mb4) COLLATE utf8mb4_unicode_ci,CONVERT(p.requirements USING utf8mb4) COLLATE utf8mb4_unicode_ci)>0)";
+ if(application_requirements_table_available($connection,'application_requirement_reviews')) $conditions[] = "EXISTS (SELECT 1 FROM application_requirement_reviews ar WHERE ar.beneficiary_id=b.beneficiary_id AND ar.review_status IN ('Missing','Needs Resubmission','Invalid Document') AND LOCATE(CONVERT(ar.requirement_name USING utf8mb4) COLLATE utf8mb4_unicode_ci,CONVERT(p.requirements USING utf8mb4) COLLATE utf8mb4_unicode_ci)>0)";
  if(application_requirements_table_available($connection,'beneficiary_documents')) $conditions[] = "EXISTS (SELECT 1 FROM beneficiary_documents bd WHERE bd.beneficiary_id=b.beneficiary_id AND bd.verification_status='Needs Resubmission')";
  if(application_requirements_table_available($connection,'application_document_submissions')) $conditions[] = "EXISTS (SELECT 1 FROM application_document_submissions ds WHERE ds.beneficiary_id=b.beneficiary_id AND ds.requested_at IS NOT NULL)";
  if(!$conditions) return '(1=0)';
