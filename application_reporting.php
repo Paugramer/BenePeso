@@ -55,31 +55,31 @@ $record=enrich_reporting_rows($conn,[$record])[0];
 if ($_SERVER['REQUEST_METHOD']==='POST') foreach(['work_assignment','employment_start','employment_end','report_parent_name','report_parent_occupation','report_remarks','report_remarks_secondary','nm_two_day_earnings','nm_total_earnings'] as $field) $record[$field]=(string)($_POST[$field] ?? ($record[$field] ?? ''));
 $prefix=$role==='admin'?'admin':'peso_staff';
 $description = stripos($record['program_name'],'SPES') !== false
-    ? 'Enter the assigned work. Parent information and dates come from the application and Status updates.'
+    ? 'Update the work assignment and remarks.'
     : (stripos($record['program_name'],'MSME') !== false
-        ? 'Add verified night-market earnings for the MSME report. Leave unknown amounts blank.'
-        : 'Add remarks for the TUPAD beneficiary report. Both remarks fields are optional.');
+        ? 'Record verified night market earnings.'
+        : 'Update the remarks for this beneficiary.');
 $pageTitle = stripos($record['program_name'],'SPES') !== false ? 'Work Assignment' : (stripos($record['program_name'],'MSME') !== false ? 'Night-market Earnings' : 'Remarks');
 if ($embedded) {
-    ?><!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=module_escape($pageTitle)?></title><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="module_center.css"><link rel="stylesheet" href="application_refinements.css?v=4"></head><body class="report-details-page application-embedded"><main class="module-main"><p class="application-editor-description"><?=module_escape($description)?></p><?php
+    ?><!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=module_escape($pageTitle)?></title><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="module_center.css"><link rel="stylesheet" href="application_refinements.css?v=5"></head><body class="report-details-page application-embedded"><main class="module-main"><p class="application-editor-description"><?=module_escape($description)?></p><?php
 } else module_shell_start($role,'application',$pageTitle,$description,'report-details-page');
 ?>
-<section class="module-panel"><h2><?=module_escape($record['full_name'])?></h2><p><?=module_escape($record['program_name'])?></p><?php if (!$embedded): ?><a href="<?=module_escape($prefix.'_application.php?'.http_build_query(['program_name'=>$record['program_name'],'program_id'=>$record['program_id']]))?>" class="module-btn secondary">Back to Application</a><?php endif ?></section>
+<section class="module-panel application-editor-identity"><h2><?=module_escape($record['full_name'])?></h2><p><?=module_escape($record['program_name'])?></p><?php if (!$embedded): ?><a href="<?=module_escape($prefix.'_application.php?'.http_build_query(['program_name'=>$record['program_name'],'program_id'=>$record['program_id']]))?>" class="module-btn secondary">Back to Application</a><?php endif ?></section>
 <?php if($error!==''):?><p role="alert" class="module-note"><?=module_escape($error)?></p><?php endif?><?php if(isset($_GET['saved'])):?><p role="status" class="module-note">Changes saved.</p><?php endif?>
 <?php if(!$embedded && stripos($record['program_name'],'SPES')!==false): ?>
 <section class="module-panel"><h2>From the application</h2><p>These details are displayed automatically. Update parent information through Edit Information and program dates through Status.</p><dl class="report-source-details">
 <?php foreach(['report_parent_name'=>'Parent / guardian','report_parent_occupation'=>'Parent occupation','employment_start'=>'Program start date','employment_end'=>'Program completion date'] as $key=>$label): ?><div><dt><?=module_escape($label)?></dt><dd><?=module_escape(official_report_value($record,$key) ?: 'Not yet recorded')?></dd></div><?php endforeach ?>
 </dl></section>
 <?php endif ?>
-<section class="module-panel"><form method="post"><?=auth_csrf_input()?><div class="module-edit-grid">
+<section class="module-panel application-editor-form"><form method="post"><?=auth_csrf_input()?><div class="module-edit-grid">
 <?php if(stripos($record['program_name'],'SPES')!==false):?>
 <div class="module-field"><label for="work_assignment">Work assignment</label><input id="work_assignment" name="work_assignment" maxlength="250" value="<?=module_escape($record['work_assignment'] ?? '')?>"></div>
 <?php endif?>
 <?php if(stripos($record['program_name'],'MSME')!==false):?>
-<div class="module-field"><label for="nm_two_day_earnings">Earnings for the two night-market days each week</label><input name="nm_two_day_earnings" id="nm_two_day_earnings" maxlength="100" value="<?=module_escape($record['nm_two_day_earnings'] ?? '')?>" placeholder="Verified amount in PHP"></div>
-<div class="module-field"><label for="nm_total_earnings">Total earnings since starting at the night market</label><input name="nm_total_earnings" id="nm_total_earnings" maxlength="100" value="<?=module_escape($record['nm_total_earnings'] ?? '')?>" placeholder="Verified amount in PHP"></div>
+<div class="module-field"><label for="nm_two_day_earnings">Weekly earnings (2 market days)</label><input name="nm_two_day_earnings" id="nm_two_day_earnings" maxlength="100" value="<?=module_escape($record['nm_two_day_earnings'] ?? '')?>" placeholder="Amount in PHP"></div>
+<div class="module-field"><label for="nm_total_earnings">Total night market earnings</label><input name="nm_total_earnings" id="nm_total_earnings" maxlength="100" value="<?=module_escape($record['nm_total_earnings'] ?? '')?>" placeholder="Amount in PHP"></div>
 <?php endif?>
-<div class="module-field"><label for="report_remarks">Remarks (optional)</label><textarea name="report_remarks" id="report_remarks" maxlength="3000"><?=module_escape($record['report_remarks'] ?? '')?></textarea></div>
-<?php if(stripos($record['program_name'],'TUPAD')!==false):?><div class="module-field"><label for="report_remarks_secondary">Additional remarks (optional)</label><textarea name="report_remarks_secondary" id="report_remarks_secondary" maxlength="3000"><?=module_escape($record['report_remarks_secondary'] ?? '')?></textarea><small>Use this only when PESO requests notes in the second remarks field.</small></div><?php endif?>
+<div class="module-field application-remarks-field"><label for="report_remarks">Remarks</label><textarea name="report_remarks" id="report_remarks" maxlength="3000"><?=module_escape($record['report_remarks'] ?? '')?></textarea></div>
+<?php if(stripos($record['program_name'],'TUPAD')!==false):?><div class="module-field application-remarks-field"><label for="report_remarks_secondary">Additional remarks</label><textarea name="report_remarks_secondary" id="report_remarks_secondary" maxlength="3000"><?=module_escape($record['report_remarks_secondary'] ?? '')?></textarea></div><?php endif?>
 </div><div class="module-actions"><button type="submit" class="module-btn">Save Changes</button></div></form></section>
 <?php if ($embedded) echo '</main></body></html>'; else module_shell_end();

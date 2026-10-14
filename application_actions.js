@@ -39,10 +39,10 @@ window.organizeApplicationActions = (data, role) => {
   const id = Number(data.id);
   if (data.approval === 'Approved' && progress && Number.isSafeInteger(id) && id > 0) {
     const program = String(data.program || '').toUpperCase();
-    const label = program.includes('SPES') ? 'Work assignment' : program.includes('MSME') ? 'Night-market earnings' : 'Remarks';
+    const label = program.includes('SPES') ? 'Work Assignment' : program.includes('MSME') ? 'Night Market Earnings' : 'Remarks';
     const details = document.createElement('details');
     details.className = 'application-optional-details';
-    const summary = document.createElement('summary'); summary.textContent = 'Additional information (optional)';
+    const summary = document.createElement('summary'); summary.textContent = 'Additional Information';
     const link = document.createElement('a');
     link.href = `application_reporting.php?id=${id}&role=${role === 'admin' ? 'admin' : 'peso_staff'}&embedded=1`;
     link.textContent = `Edit ${label.toLowerCase()}`;
