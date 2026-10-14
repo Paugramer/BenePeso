@@ -25,5 +25,5 @@ function application_requirements_review_stage(array $record): bool {
  return ($record['approval_status'] ?? '') === 'Approved' && ($record['availment_status'] ?? '') === 'Requirements Received';
 }
 function application_requirements_issue_sql(): string {
- return "(b.approval_status='Approved' AND b.availment_status IN ('Not Yet Availed','Requirements Received') AND (EXISTS (SELECT 1 FROM application_requirement_reviews ar WHERE ar.beneficiary_id=b.beneficiary_id AND ar.review_status IN ('Missing','Needs Resubmission') AND LOCATE(ar.requirement_name,p.requirements)>0) OR EXISTS (SELECT 1 FROM beneficiary_documents bd WHERE bd.beneficiary_id=b.beneficiary_id AND bd.verification_status='Needs Resubmission')))";
+ return "(b.approval_status='Approved' AND b.availment_status IN ('Not Yet Availed','Requirements Received') AND (EXISTS (SELECT 1 FROM application_requirement_reviews ar WHERE ar.beneficiary_id=b.beneficiary_id AND ar.review_status IN ('Missing','Needs Resubmission') AND LOCATE(CONVERT(ar.requirement_name USING utf8mb4) COLLATE utf8mb4_unicode_ci,CONVERT(p.requirements USING utf8mb4) COLLATE utf8mb4_unicode_ci)>0) OR EXISTS (SELECT 1 FROM beneficiary_documents bd WHERE bd.beneficiary_id=b.beneficiary_id AND bd.verification_status='Needs Resubmission')))";
 }
