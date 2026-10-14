@@ -63,10 +63,14 @@
 .application-bulk-remarks-form :is(label,input)[hidden]{display:none!important}.application-checklist-feedback{overflow-wrap:anywhere}
 
 /* Import controls only. */
-#bulkUploadModal .import-template-hint{margin:0 0 12px;font-size:14px;line-height:1.5}
+#bulkUploadModal .import-upload-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+#bulkUploadModal .import-upload-heading label{margin:0}
+#bulkUploadModal .import-template-hint{margin:0;font-size:13px;line-height:1.5}
 #bulkUploadModal .import-template-link{color:var(--green);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 #bulkUploadModal .import-inline-error{margin:8px 0 0;color:#b42318;font-size:12px;line-height:1.5}
 #bulkUploadModal .import-inline-error[hidden]{display:none!important}
+#bulkUploadModal .import-inline-error.is-checking{color:#597465}
+#bulkUploadModal label.has-import-error{border-color:#b42318!important}
 
 /* Report modal only: compact heading after removal of the preview letterhead. */
 .application-workflow-page #generateReportModal .preview-header{padding:12px 18px;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}

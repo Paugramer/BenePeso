@@ -1383,12 +1383,12 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=4">
   <link rel="stylesheet" href="system_mobile.css?v=24">
   <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=19">
+<link rel="stylesheet" href="application_refinements.css?v=20">
 <script src="frontend_polish.js?v=20261014-dialog" defer></script>
 <script src="beneficiary_workspace_polish.js?v=13" defer></script>
 <script src="application_actions.js?v=16" defer></script>
 <link rel="stylesheet" href="shared_sidebar.css?v=6">
-<script src="application_workflow.js?v=1" defer></script>
+<script src="application_workflow.js?v=2" defer></script>
 </head>
 <body class="application-workflow-page staff-mobile-page peso-staff-beneficiaries-page">
   <div class="page-wrap">
@@ -2486,8 +2486,8 @@ if ($selectedProgramName !== "") {
       </div>
 
       <div class="form-group">
-        <p class="import-template-hint">Use the <a class="import-template-link" download="<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import.xlsx" href="assets/templates/<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import_Blank.xlsx">template</a>.</p>
-        <label>Upload File *</label>
+        <div class="import-upload-heading"><label for="bulkFileInput">Upload File *</label><p class="import-template-hint">Use the <a class="import-template-link" download="<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import.xlsx" href="assets/templates/<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import_Blank.xlsx">template</a>.</p></div>
+
         <div class="file-upload-box-dashed">
             <input type="file" name="csv_file" id="bulkFileInput" aria-describedby="bulkFileError" accept=".csv,.xlsx" required style="width:100%; padding:15px;">
             <div style="font-size: 32px; color: var(--green); margin-bottom: 8px;"><i class="ph-fill ph-file-text"></i></div>

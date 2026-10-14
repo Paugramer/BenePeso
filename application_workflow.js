@@ -13,8 +13,30 @@
   if(window.openEditModal){const original=window.openEditModal;window.openEditModal=function(data){const result=original.apply(this,arguments);if(typeof data==='string'){try{data=JSON.parse(data);}catch{return result;}}configure(document.getElementById('availment_status_input'),data,true);return result;};}
   if(window.openQuickStatusModal){const original=window.openQuickStatusModal;window.openQuickStatusModal=function(id){const result=original.apply(this,arguments);configure(document.getElementById('quick_availment_status'),scopeData(id),false);return result;};}
   const input=document.getElementById('bulkFileInput'),error=document.getElementById('bulkFileError'),form=input?.closest('form'),submit=form?.querySelector('button[type="submit"]');
-  const validateFile=()=>{const file=input?.files?.[0],valid=!file||/\.(xlsx|csv)$/i.test(file.name);if(error){error.hidden=valid;error.textContent=valid?'':'Invalid file or format. Must follow the template.';}input?.setCustomValidity(valid?'':'Import Invalid');input?.setAttribute('aria-invalid',String(!valid));if(submit)submit.disabled=!valid;return valid;};
-  input?.addEventListener('change',validateFile);form?.addEventListener('submit',event=>{if(!validateFile()){event.preventDefault();input.focus();}});form?.addEventListener('reset',()=>setTimeout(validateFile,0));
+  let fileState='empty',validationSequence=0,validationController=null;
+  const showFileState=state=>{
+   fileState=state;const invalid=state==='invalid',checking=state==='checking';
+   if(error){error.hidden=!invalid&&!checking;error.textContent=checking?'Checking file...':invalid?'Invalid file or format. Must follow the template.':'';error.classList.toggle('is-checking',checking);}
+   input?.setCustomValidity(invalid?'Import Invalid':checking?'Please wait while the file is checked.':'');
+   input?.setAttribute('aria-invalid',String(invalid));input?.closest('label')?.classList.toggle('has-import-error',invalid);
+   if(submit)submit.disabled=invalid||checking;
+  };
+  const validateFile=async()=>{
+   const sequence=++validationSequence;validationController?.abort();
+   const file=input?.files?.[0];
+   if(!file){showFileState('empty');return;}
+   if(!/\.(xlsx|csv)$/i.test(file.name)){showFileState('invalid');return;}
+   showFileState('checking');validationController=new AbortController();
+   const data=new FormData();data.append('csv_file',file);data.append('program_id',form.querySelector('[name="program_id"]')?.value||'');data.append('program_name',form.querySelector('[name="program_name"]')?.value||'');data.append('csrf_token',form.querySelector('[name="csrf_token"]')?.value||'');
+   try{
+    const response=await fetch('validate_import_template.php',{method:'POST',body:data,credentials:'same-origin',signal:validationController.signal});
+    const result=await response.json();if(sequence!==validationSequence)return;
+    showFileState(response.ok&&result.valid===true?'valid':'invalid');
+   }catch(error){if(sequence===validationSequence&&error.name!=='AbortError')showFileState('invalid');}
+  };
+  input?.addEventListener('change',validateFile);form?.querySelector('[name="program_id"]')?.addEventListener('change',validateFile);
+  form?.addEventListener('submit',event=>{if(input?.files?.length&&fileState!=='valid'){event.preventDefault();event.stopImmediatePropagation();if(fileState!=='checking')validateFile();}},true);
+  form?.addEventListener('reset',()=>{++validationSequence;validationController?.abort();showFileState('empty');});
  };
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
