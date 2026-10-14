@@ -36,7 +36,12 @@ if (empty($program_name)) {
 }
 
 // 3. Build the Beneficiaries Query
-$whereParts = ["p.program_name = ?", historical_record_condition()];
+$whereParts = ["p.program_name = ?"];
+if (($_GET['report_scope'] ?? '') === 'original_beneficiaries') {
+    if (auth_first_active_role(['admin', 'peso_staff']) === 'admin') $whereParts[] = "b.approval_status = 'Approved'";
+} else {
+    $whereParts[] = historical_record_condition();
+}
 $params = [$program_name];
 $types = "s";
 

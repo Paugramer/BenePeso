@@ -34,7 +34,8 @@ $programDateColumns = '';
 if (report_program_column_exists($conn, 'start_date')) $programDateColumns .= ', p.start_date';
 if (report_program_column_exists($conn, 'end_date')) $programDateColumns .= ', p.end_date';
 
-$approvalClause = ' AND ' . historical_record_condition();
+$originalScope = ($_GET['report_scope'] ?? '') === 'original_beneficiaries';
+$approvalClause = $originalScope ? ($isAdmin ? " AND b.approval_status = 'Approved'" : '') : ' AND ' . historical_record_condition();
 $sql = "SELECT b.*, p.program_code, p.program_name$programDateColumns
         FROM beneficiaries b
         JOIN programs p ON b.program_id = p.program_id
