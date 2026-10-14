@@ -3,7 +3,8 @@ require_once __DIR__.'/auth.php';require_once __DIR__.'/db.php';require_once __D
 header('Content-Type: application/json; charset=utf-8');
 function rq_fail(int $code,string $message): void {http_response_code($code);echo json_encode(['error'=>$message]);exit;}
 $role=auth_first_active_role(['admin','peso_staff']);if(!$role)rq_fail(403,'Authorized PESO reviewers only.');
-$id=(int)($_GET['id']??0);ensure_application_requirements($conn);
+$id=(int)($_GET['id']??0);$storageReady=ensure_application_requirements($conn);
+if(!$storageReady)rq_fail(503,'Requirements checklist is temporarily unavailable. Please contact the system administrator.');
 $s=$conn->prepare('SELECT b.beneficiary_id,b.approval_status,b.availment_status,p.program_name,p.requirements FROM beneficiaries b JOIN programs p ON p.program_id=b.program_id WHERE b.beneficiary_id=?');$s->bind_param('i',$id);$s->execute();$record=$s->get_result()->fetch_assoc();$s->close();if(!$record)rq_fail(404,'Application not found.');
 $active=application_requirements_review_stage($record);
 if($_SERVER['REQUEST_METHOD']==='POST'){

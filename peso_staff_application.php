@@ -1213,7 +1213,7 @@ if ($selectedProgramName !== "") {
 
   ensure_application_requirements($conn);
   $whereParts = ["p.program_name = ?", "NOT " . historical_record_condition()];
-  if (($_GET['requirements_review'] ?? '') === 'followup') $whereParts[] = "(b.approval_status='Approved' AND (b.availment_status='Not Yet Availed' OR " . application_requirements_issue_sql() . "))";
+  if (($_GET['requirements_review'] ?? '') === 'followup') $whereParts[] = application_requirements_issue_sql();
   if (($_GET['requirements_review'] ?? '') === 'issues') $whereParts[] = application_requirements_issue_sql();
   $params = [$selectedProgramName];
   $types = "s";
@@ -1456,7 +1456,7 @@ if ($selectedProgramName !== "") {
                 <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'all', 'requirements_review'=>'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'All' && $spesGroup === 'all' && ($_GET['requirements_review'] ?? '')!=='followup' ? 'active' : ''; ?>">Active Applications</a>
                 <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'Pending', 'availment' => 'All', 'spes_group' => 'all', 'requirements_review'=>'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Pending' && $spesGroup === 'all' && ($_GET['requirements_review'] ?? '')!=='followup' ? 'active' : ''; ?>">Needs Approval</a>
                 <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'Approved', 'availment' => 'All', 'spes_group' => 'all', 'requirements_review'=>'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Approved' && $spesGroup === 'all' && ($_GET['requirements_review'] ?? '')!=='followup' ? 'active' : ''; ?>">Accepted</a>
-                <a href="peso_staff_application.php?<?php echo h(build_query(['approval'=>'Approved','availment'=>'All','spes_group'=>'all','requirements_review'=>'followup','page'=>1])); ?>" class="tab-item <?php echo ($_GET['requirements_review'] ?? '')==='followup'?'active':''; ?>">For Submission / Resubmission</a>
+                <a href="peso_staff_application.php?<?php echo h(build_query(['approval'=>'Approved','availment'=>'All','spes_group'=>'all','requirements_review'=>'followup','page'=>1])); ?>" class="tab-item <?php echo ($_GET['requirements_review'] ?? '')==='followup'?'active':''; ?>">Needs Resubmission</a>
                 <?php if (stripos($selectedProgramName, 'SPES') !== false): ?>
                 <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'baby', 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'baby' ? 'active' : ''; ?>">SPES Baby</a>
                 <a href="peso_staff_application.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'graduate', 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'graduate' ? 'active' : ''; ?>">Graduated</a>
@@ -1506,7 +1506,7 @@ if ($selectedProgramName !== "") {
               <option value="All">All Barangays</option>
               <?php foreach ($barangays as $barangay): ?><option value="<?php echo h($barangay); ?>" <?php echo $selectedBarangay === $barangay ? 'selected' : ''; ?>><?php echo h($barangay); ?></option><?php endforeach; ?>
             </select>
-            <select name="requirements_review" aria-label="Requirements review" onchange="this.form.querySelector('input[name=page]').value=1;this.form.requestSubmit()"><option value="all">All Requirements</option><option value="followup" <?=($_GET['requirements_review'] ?? '')==='followup'?'selected':''?>>For Submission / Resubmission</option><option value="issues" <?=($_GET['requirements_review'] ?? '')==='issues'?'selected':''?>>Missing / Needs Resubmission</option></select>
+            <input type="hidden" name="requirements_review" value="<?=($_GET['requirements_review'] ?? '')==='followup'?'followup':'all'?>">
               <select name="availment" class="filter-select auto-submit">
               <option value="All" <?php echo $availmentFilter === 'All' ? 'selected' : ''; ?>>All Status</option>
               <option value="Not Yet Availed" <?php echo $availmentFilter === 'Not Yet Availed' ? 'selected' : ''; ?>>Waiting for Requirements</option>
