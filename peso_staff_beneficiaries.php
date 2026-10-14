@@ -106,7 +106,7 @@ function normalize_availment_status($status): string {
 
 function availment_display_label(string $status): string {
   $normalized = normalize_availment_status($status);
-  if ($normalized === 'Not Yet Availed') return 'Approved – Awaiting Next Step';
+  if ($normalized === 'Not Yet Availed') return 'Waiting for Requirements';
   if ($normalized === 'Requirements Received') return 'Documents Submitted';
   if ($normalized === 'Exam Failed') return 'Exam Not Passed';
   return $normalized;
@@ -342,7 +342,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               $email_sent = false;
               $email_attempted = false;
               if (function_exists('logActivity')) {
-                  logActivity($conn, $peso_staff_id, 'Beneficiaries', 'Update', 'Beneficiary Availment', "Staff updated DOLE availment status to '$availment_status' for ID: $beneficiary_id");
+                  logActivity($conn, $peso_staff_id, 'Beneficiaries', 'Update', 'Beneficiary Availment', "Staff updated DOLE status to '$availment_status' for ID: $beneficiary_id");
               }
 
               $email_attempted = true;
@@ -353,11 +353,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
               $_SESSION["show_success_modal"] = true;
               if (!$email_sent) {
-                  $_SESSION["success_modal_message"] = "DOLE availment status updated to $availment_status, but the notification could not be sent: " . ($email_error ?: "Unknown delivery error.");
+                  $_SESSION["success_modal_message"] = "DOLE status updated to $availment_status, but the notification could not be sent: " . ($email_error ?: "Unknown delivery error.");
               } elseif ($availment_status === 'Orientation') {
                   $_SESSION["success_modal_message"] = "Document verification passed and the Orientation schedule was saved. The beneficiary was notified.";
               } else {
-                  $_SESSION["success_modal_message"] = "DOLE availment status updated to $availment_status successfully and notification sent.";
+                  $_SESSION["success_modal_message"] = "DOLE status updated to $availment_status successfully and email sent.";
               }
               $_SESSION["modal_icon"] = "✓";
           }
@@ -787,7 +787,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                               $email_error = null;
                               $email_date = $availment_status === 'Completed' ? (string)$date_completed : (string)$date_availed;
                               if (sendBENEPESOStatusEmail($conn, $bid, $availment_status, $email_error, '', $email_date, '', (string)$date_completed)) {
-                                  $_SESSION["success_modal_message"] .= " Email notification sent.";
+                                  $_SESSION["success_modal_message"] .= " Email Sent.";
                               } else {
                                   $_SESSION["success_modal_message"] .= " Status changed, but one or more notifications could not be sent: " . ($email_error ?: "Unknown delivery error.");
                               }
@@ -1352,7 +1352,7 @@ if ($selectedProgramName !== "") {
 
       <div class="top-actions">
         <?php if ($selectedProgramName !== ""): ?>
-          <button class="btn-main" type="button" id="openAddBeneficiaryModal"><i class="ph-bold ph-plus" style="font-size: 1.1rem; margin-right: 6px;"></i> Add Manual</button>
+          <button class="btn-main" type="button" id="openAddBeneficiaryModal"><i class="ph-bold ph-plus" style="font-size: 1.1rem; margin-right: 6px;"></i> Add Beneficiaries</button>
           <button class="btn-light" type="button" id="openBulkUploadModal"><i class="ph-bold ph-upload-simple" style="font-size: 1.1rem; margin-right: 6px;"></i> Import File</button>
         <?php endif; ?>
         <div class="top-chip">
@@ -1379,8 +1379,8 @@ if ($selectedProgramName !== "") {
                 <div class="stat-icon-sm" style="color:#1a6d41; background:#e6f6ec;"><i class="ph-fill ph-check-circle"></i></div>
             </div>
             <div class="stat-value"><?php echo (int)$globalApprovedBeneficiaries; ?></div>
-            <div class="stat-trend trend-up"><i class="ph-bold ph-check"></i> Approved</div>
-            <div class="stat-note">Applications approved by PESO.</div>
+            <div class="stat-trend trend-up"><i class="ph-bold ph-check"></i> Accepted</div>
+            <div class="stat-note">Applications accepted by PESO.</div>
         </div>
         <div class="stat-card">
             <div class="stat-top">
@@ -1433,7 +1433,7 @@ if ($selectedProgramName !== "") {
             <div class="custom-tabs">
                 <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'All' && $spesGroup === 'all' ? 'active' : ''; ?>">All Records</a>
                 <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Pending', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Pending' && $spesGroup === 'all' ? 'active' : ''; ?>">Needs Approval</a>
-                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Approved', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Approved' && $spesGroup === 'all' ? 'active' : ''; ?>">Approved</a>
+                <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Approved', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Approved' && $spesGroup === 'all' ? 'active' : ''; ?>">Accepted</a>
                 <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'Rejected', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Rejected' && $spesGroup === 'all' ? 'active' : ''; ?>">Rejected</a>
                 <?php if (stripos($selectedProgramName, 'SPES') !== false): ?>
                 <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'baby', 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'baby' ? 'active' : ''; ?>">SPES Baby</a>
@@ -1450,7 +1450,7 @@ if ($selectedProgramName !== "") {
           <div class="bulk-selection-copy"><div><strong id="bulkSelectedCount">0</strong> selected <span>Choose a bulk action for these beneficiaries.</span></div><div class="bulk-selected-preview" id="bulkSelectedPreview" aria-live="polite"></div></div>
           <div class="bulk-selection-actions">
             <button type="button" class="btn-light" id="clearBulkSelection">Clear</button>
-            <button type="button" class="btn-main" id="openBulkStatusModal"><i class="ph-bold ph-arrows-clockwise"></i> Update Availment & Email</button>
+            <button type="button" class="btn-main" id="openBulkStatusModal"><i class="ph-bold ph-arrows-clockwise"></i> Update Status & Email</button>
           </div>
         </div>
 
@@ -1486,8 +1486,8 @@ if ($selectedProgramName !== "") {
               <?php foreach ($barangays as $barangay): ?><option value="<?php echo h($barangay); ?>" <?php echo $selectedBarangay === $barangay ? 'selected' : ''; ?>><?php echo h($barangay); ?></option><?php endforeach; ?>
             </select>
             <select name="availment" class="filter-select auto-submit">
-              <option value="All" <?php echo $availmentFilter === 'All' ? 'selected' : ''; ?>>All Availment</option>
-              <option value="Not Yet Availed" <?php echo $availmentFilter === 'Not Yet Availed' ? 'selected' : ''; ?>>Not Yet Availed</option>
+              <option value="All" <?php echo $availmentFilter === 'All' ? 'selected' : ''; ?>>All Statuses</option>
+              <option value="Not Yet Availed" <?php echo $availmentFilter === 'Not Yet Availed' ? 'selected' : ''; ?>>Waiting for Requirements</option>
               <option value="Requirements Received" <?php echo $availmentFilter === 'Requirements Received' ? 'selected' : ''; ?>>Requirements Received</option>
               <option value="Orientation" <?php echo $availmentFilter === 'Orientation' ? 'selected' : ''; ?>>Orientation</option>
               <option value="Examination" <?php echo $availmentFilter === 'Examination' ? 'selected' : ''; ?>>Examination (Face-to-Face)</option>
@@ -1532,7 +1532,7 @@ if ($selectedProgramName !== "") {
                           <th>Profile</th>
                           <th>Barangay</th>
                           <th>Batch Code</th>
-                          <th style="text-align: center;">Availment</th>
+                          <th style="text-align: center;">Status</th>
                           <th style="text-align: center;">Actions</th>
                       </tr>
                   </thead>
@@ -1546,7 +1546,7 @@ if ($selectedProgramName !== "") {
                           $availmentStatus = $beneficiary["availment_status"] ?? "Not Yet Availed";
                           $availmentDisplay = $beneficiaryApproval === 'Pending'
                               ? 'Pending Review'
-                              : ($beneficiaryApproval === 'Rejected' ? 'Application Not Approved' : availment_display_label($availmentStatus));
+                              : ($beneficiaryApproval === 'Rejected' ? 'Application Not Accepted' : availment_display_label($availmentStatus));
                           $addedBy = trim($beneficiary["added_by_name"] ?? "Online Applicant"); 
                           
                           $dispName = trim($beneficiary["full_name"] ?? "");
@@ -1598,9 +1598,9 @@ if ($selectedProgramName !== "") {
                           <td style="text-align: center;" onclick="event.stopPropagation();">
                                <div class="action-menu-wrap" style="justify-content: center;">
                                   <?php if ($beneficiaryApproval === 'Approved'): ?>
-                                      <button type="button" class="beneficiary-availment-button" onclick="openQuickStatusModal(<?php echo $bId; ?>, '<?php echo addslashes($availmentStatus); ?>', '<?php echo addslashes($beneficiary['date_availed'] ?? ''); ?>', '<?php echo addslashes($beneficiary['date_completed'] ?? ''); ?>')" title="Update availment">
+                                      <button type="button" class="beneficiary-availment-button" onclick="openQuickStatusModal(<?php echo $bId; ?>, '<?php echo addslashes($availmentStatus); ?>', '<?php echo addslashes($beneficiary['date_availed'] ?? ''); ?>', '<?php echo addslashes($beneficiary['date_completed'] ?? ''); ?>')" title="Update status">
                                           <i class="ph-bold ph-timer" aria-hidden="true"></i>
-                                          <span>Availment</span>
+                                          <span>Status</span>
                                       </button>
                                   <?php endif; ?>
                                   <button type="button" class="btn-edit beneficiary-edit-record" onclick="openEditModal(this.closest('tr').getAttribute('data-profile'))" title="Edit beneficiary record">
@@ -1634,7 +1634,7 @@ if ($selectedProgramName !== "") {
   <div class="modal-backdrop" data-close-bulk-status></div>
   <div class="modal-dialog modal-dialog-sm bulk-status-dialog">
     <div class="modal-head-alt">
-      <div><div class="modal-title">Bulk Availment Update</div><div class="modal-sub"><span class="bulk-modal-count">0</span> beneficiaries will be updated and emailed.</div></div>
+      <div><div class="modal-title">Bulk Status Update</div><div class="modal-sub"><span class="bulk-modal-count">0</span> beneficiaries will be updated and emailed.</div></div>
       <button type="button" class="modal-close-icon" data-close-bulk-status><i class="ph-bold ph-x"></i></button>
     </div>
     <form method="POST" class="modal-form" id="bulkStatusForm">
@@ -1648,7 +1648,7 @@ if ($selectedProgramName !== "") {
         <div class="bulk-selection-guidance" id="bulkSelectionGuidance"></div>
       </section>
       <div class="form-grid">
-        <div class="form-group span-2"><label>New Availment Status *</label>
+        <div class="form-group span-2"><label>New Status *</label>
           <select name="availment_status" id="bulkAvailmentStatus" required>
             <option value="Requirements Received">Documents Submitted</option><option value="Examination">Examination Scheduled (Face-to-Face)</option><option value="Exam Passed">Exam Passed</option><option value="Exam Failed">Exam Not Passed</option><option value="Orientation">Orientation</option><option value="Ongoing">Ongoing</option><option value="Salary Distribution">Salary Distribution</option><option value="Completed">Completed</option><option value="Not Qualified">Not Qualified</option><option value="Cancelled">Cancelled</option>
           </select>
@@ -1756,9 +1756,9 @@ if ($selectedProgramName !== "") {
                   
                   <div class="span-2 divider-line"></div>
                   <div class="form-group">
-                      <label>Availment Status *</label>
+                      <label>Status *</label>
                       <select name="availment_status" id="availment_status_input" required>
-                          <option value="Not Yet Availed">Not Yet Availed</option>
+                          <option value="Not Yet Availed">Waiting for Requirements</option>
                           <option value="Requirements Received">Requirements Received</option>
                           <option value="Orientation">Orientation</option>
                           <option value="Examination">Examination (Face-to-Face)</option>
@@ -1774,7 +1774,7 @@ if ($selectedProgramName !== "") {
                       <label>LGU Approval Status</label>
                       <select name="approval_status" id="approval_status_input" disabled style="background:#f4f8f5; cursor:not-allowed; color:var(--muted);">
                           <option value="Pending">Pending</option>
-                          <option value="Approved">Approved</option>
+                          <option value="Approved">Accepted</option>
                           <option value="Rejected">Rejected</option>
                       </select>
                       <small style="color:var(--muted); font-size:11px;">* Admin will update automatically.</small>
@@ -1931,25 +1931,25 @@ if ($selectedProgramName !== "") {
 
                   <div class="form-group span-2"><label>Special Skills</label><input type="text" name="special_skills" id="special_skills_spes"></div>
 
-                  <h4 class="form-section-title span-2" style="margin-top:10px;">History of SPES Availment</h4>
+                  <h4 class="form-section-title span-2" style="margin-top:10px;">SPES Participation History</h4>
                   <div class="form-group span-2" style="display:grid; grid-template-columns:1.4fr .7fr 1fr; gap:10px;">
                       <div><label>1st Establishment</label><input type="text" name="spes_history_1_establishment" id="spes_history_1_establishment"></div>
-                      <div><label>1st Availment (Year)</label><input type="number" name="spes_history_1_year" id="spes_history_1_year" placeholder="YYYY"></div>
+                      <div><label>1st Participation (Year)</label><input type="number" name="spes_history_1_year" id="spes_history_1_year" placeholder="YYYY"></div>
                       <div><label>SPES ID No.</label><input type="text" name="spes_history_1_id" id="spes_history_1_id"></div>
                       <div><label>2nd Establishment</label><input type="text" name="spes_history_2_establishment" id="spes_history_2_establishment"></div>
-                      <div><label>2nd Availment (Year)</label><input type="number" name="spes_history_2_year" id="spes_history_2_year" placeholder="YYYY"></div>
+                      <div><label>2nd Participation (Year)</label><input type="number" name="spes_history_2_year" id="spes_history_2_year" placeholder="YYYY"></div>
                       <div><label>SPES ID No.</label><input type="text" name="spes_history_2_id" id="spes_history_2_id"></div>
                       <div><label>3rd Establishment</label><input type="text" name="spes_history_3_establishment" id="spes_history_3_establishment"></div>
-                      <div><label>3rd Availment (Year)</label><input type="number" name="spes_history_3_year" id="spes_history_3_year" placeholder="YYYY"></div>
+                      <div><label>3rd Participation (Year)</label><input type="number" name="spes_history_3_year" id="spes_history_3_year" placeholder="YYYY"></div>
                       <div><label>SPES ID No.</label><input type="text" name="spes_history_3_id" id="spes_history_3_id"></div>
                       <div><label>4th Establishment</label><input type="text" name="spes_history_4_establishment" id="spes_history_4_establishment"></div>
-                      <div><label>4th Availment (Year)</label><input type="number" name="spes_history_4_year" id="spes_history_4_year" placeholder="YYYY"></div>
+                      <div><label>4th Participation (Year)</label><input type="number" name="spes_history_4_year" id="spes_history_4_year" placeholder="YYYY"></div>
                       <div><label>SPES ID No.</label><input type="text" name="spes_history_4_id" id="spes_history_4_id"></div>
                   </div>
                   <div class="form-group span-2"><label>Other Related Information / Requests / Interventions from DOLE</label><textarea name="spes_other_info" id="spes_other_info" rows="3" class="not-required" placeholder="Leave blank if none"></textarea></div>
 
-                  <h4 class="form-section-title span-2" style="margin-top:10px;">Current Record Availment Data</h4>
-                  <div class="form-group span-2"><label>Availment Status *</label><select name="availment_status" id="availment_status_input" required><option value="Not Yet Availed">Not Yet Availed</option><option value="Requirements Received">Documents Submitted</option><option value="Examination">Examination Scheduled (Face-to-Face)</option><option value="Exam Passed">Exam Passed</option><option value="Exam Failed">Exam Not Passed</option><option value="Orientation">Orientation</option><option value="Ongoing">Ongoing</option><option value="Salary Distribution">Salary Distribution</option><option value="Completed">Completed</option><option value="Not Qualified">Not Qualified</option></select></div>
+                  <h4 class="form-section-title span-2" style="margin-top:10px;">Current Record Status Data</h4>
+                  <div class="form-group span-2"><label>Status *</label><select name="availment_status" id="availment_status_input" required><option value="Not Yet Availed">Waiting for Requirements</option><option value="Requirements Received">Documents Submitted</option><option value="Examination">Examination Scheduled (Face-to-Face)</option><option value="Exam Passed">Exam Passed</option><option value="Exam Failed">Exam Not Passed</option><option value="Orientation">Orientation</option><option value="Ongoing">Ongoing</option><option value="Salary Distribution">Salary Distribution</option><option value="Completed">Completed</option><option value="Not Qualified">Not Qualified</option></select></div>
                   <div class="date-fields-wrapper" style="display: none; grid-column: 1 / -1; width: 100%;">
                       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                           <div class="form-group" style="margin:0;"><label>Date Received / Started</label><input type="date" name="date_availed" id="date_availed"></div>
@@ -2214,9 +2214,9 @@ if ($selectedProgramName !== "") {
                   
                   <div class="span-2 divider-line"></div>
                   <div class="form-group">
-                      <label>Availment Status *</label>
+                      <label>Status *</label>
                       <select name="availment_status" id="availment_status_input" required>
-                          <option value="Not Yet Availed">Not Yet Availed</option>
+                          <option value="Not Yet Availed">Waiting for Requirements</option>
           <option value="Requirements Received">Requirements Received</option>
           <option value="Orientation">Orientation</option>
           <option value="Examination">Examination (Face-to-Face)</option>
@@ -2232,7 +2232,7 @@ if ($selectedProgramName !== "") {
                       <label>LGU Approval Status</label>
                       <select name="approval_status" id="approval_status_input" disabled style="background:#f4f8f5; cursor:not-allowed; color:var(--muted);">
                           <option value="Pending">Pending</option>
-                          <option value="Approved">Approved</option>
+                          <option value="Approved">Accepted</option>
                           <option value="Rejected">Rejected</option>
                       </select>
                       <small style="color:var(--muted); font-size:11px;">* Staff cannot modify approval status.</small>
@@ -2292,7 +2292,7 @@ if ($selectedProgramName !== "") {
           <div class="form-group">
             <label>Program Progress Status *</label>
             <select name="availment_status" id="quick_availment_status" required onchange="toggleQuickDateFields()">
-              <option value="Not Yet Availed">Approved – Awaiting Next Step</option>
+              <option value="Not Yet Availed">Waiting for Requirements</option>
               <option value="Requirements Received">Documents Submitted</option>
               <option value="Orientation">Orientation</option>
               <option value="Examination">Examination Scheduled (Face-to-Face)</option>
@@ -2370,7 +2370,7 @@ if ($selectedProgramName !== "") {
       </div>
 
       <div class="form-group" style="margin-bottom: 20px;">
-        <label>Batch Availment Status *</label>
+        <label>Batch Status *</label>
         <select name="batch_availment_status" required onchange="toggleBatchScheduleFields(this)">
           <option value="Not Yet Availed">New Beneficiaries (Not Yet Availed)</option>
           <option value="Requirements Received">Requirements Received</option>
@@ -2464,7 +2464,7 @@ function toggleBatchScheduleFields(select) {
                 </div>
 
                 <div class="form-group" style="margin:0;">
-                    <label>Availment Filter</label>
+                    <label>Status Filter</label>
                     <select name="report_availment" id="report_avail_select">
                         <option value="All">All Records</option>
                         <option value="Not Yet Availed">New (Not Availed)</option>
@@ -2686,7 +2686,7 @@ function toggleBatchScheduleFields(select) {
         </div>
       </div>
       <div class="import-summary-note">
-        <span><i class="ph ph-info"></i> New records are pending approval. Saved records use the availment status <strong><?php echo h($importSummary['status']); ?></strong>.</span>
+        <span><i class="ph ph-info"></i> New records are pending approval. Saved records use the status <strong><?php echo h($importSummary['status']); ?></strong>.</span>
         <?php if ((int)$importSummary['emails_failed'] > 0): ?>
           <span class="import-summary-warning"><?php echo number_format((int)$importSummary['emails_failed']); ?> email notification(s) could not be scheduled.</span>
           <div class="import-summary-reasons">
@@ -3062,8 +3062,8 @@ function toggleBatchScheduleFields(select) {
           if (badgeContainer) {
               let displayedAvailment = data.availment;
               if (data.approval === 'Pending') displayedAvailment = 'Pending Review';
-              else if (data.approval === 'Rejected') displayedAvailment = 'Application Not Approved';
-              else if (data.availment === 'Not Yet Availed') displayedAvailment = 'Approved - Awaiting Next Step';
+              else if (data.approval === 'Rejected') displayedAvailment = 'Application Not Accepted';
+              else if (data.availment === 'Not Yet Availed') displayedAvailment = 'Waiting for Requirements';
               else if (data.availment === 'Requirements Received') displayedAvailment = 'Documents Submitted';
               badgeContainer.innerHTML = `<span class="${getAvail(data.availment)}"><span class="pill-dot" style="background:currentColor;"></span> ${displayedAvailment}</span>`;
           }
@@ -3078,7 +3078,7 @@ function toggleBatchScheduleFields(select) {
                   `;
               } else if (data.approval === 'Approved') {
                   footerActions.innerHTML = `
-                      <button type="button" class="btn-edit btn-quick-status" onclick="openQuickStatusModal(${data.id}, '${data.availment}', '${data.date_availed || ''}', '${data.date_completed || ''}')" style="margin-right:10px;"><i class="ph-bold ph-timer" style="margin-right:6px;"></i> Update Availment</button>
+                      <button type="button" class="btn-edit btn-quick-status" onclick="openQuickStatusModal(${data.id}, '${data.availment}', '${data.date_availed || ''}', '${data.date_completed || ''}')" style="margin-right:10px;"><i class="ph-bold ph-timer" style="margin-right:6px;"></i> Update Status</button>
                       <button type="button" class="btn-main" onclick="openEditModal(window.currentProfileData)" style="margin-right:10px;"><i class="ph-bold ph-pencil-simple" style="margin-right:6px;"></i> Full Edit</button>
                       <button type="button" class="btn-light" onclick="document.getElementById('profileModal').classList.remove('show')">Close View</button>
                   `;
@@ -3248,9 +3248,9 @@ function toggleBatchScheduleFields(select) {
               ['Birthdate', formatDate(data.birthdate)], ['Age', data.age], ['Sex', data.sex], ['Civil Status', data.civil_status],
               ['Citizenship', data.citizenship], ['Place of Birth', data.place_of_birth], ['ID Type', data.type_of_id], ['ID Number', data.id_number]
           ]],
-          ['Program & Availment', 'ph-calendar-check', [
-              ['Program', data.program], ['Approval Status', data.approval], ['Availment Status', data.availment],
-              ['Previous / Last Availment', availmentSummary], ['Last Availed Year', lastAvailmentYear],
+          ['Program & Status', 'ph-calendar-check', [
+              ['Program', data.program], ['Approval Status', data.approval === 'Approved' ? 'Accepted' : data.approval], ['Status', data.availment === 'Not Yet Availed' ? 'Waiting for Requirements' : data.availment],
+              ['Previous / Last Participation', availmentSummary], ['Last Availed Year', lastAvailmentYear],
               ['Date Started / Availed', formatDate(data.date_availed)], ['Date Completed', formatDate(data.date_completed)], [categoryLabel, categoryValue]
           ]],
           ['Employment & Livelihood', 'ph-briefcase-metal', [
@@ -3271,13 +3271,13 @@ function toggleBatchScheduleFields(select) {
               ['Tertiary', [data.tert_school, data.tert_course, data.tert_year_level, data.tert_date_attendance].filter(hasValue).join(' · ')],
               ['Technical-Vocational', [data.tv_school, data.tv_course, data.tv_year_level, data.tv_date_attendance].filter(hasValue).join(' · ')]
           ]],
-          ['Past SPES Availments', 'ph-clock-counter-clockwise', [
+          ['Past SPES Participation', 'ph-clock-counter-clockwise', [
               ['SPES Classification', data.spes_lifecycle_label],
-              ['All Recorded Availments', data.spes_all_availments],
-              ['1st Availment', [data.spes_history_1_year, data.spes_history_1_id && `ID: ${data.spes_history_1_id}`].filter(hasValue).join(' · ')],
-              ['2nd Availment', [data.spes_history_2_year, data.spes_history_2_id && `ID: ${data.spes_history_2_id}`].filter(hasValue).join(' · ')],
-              ['3rd Availment', [data.spes_history_3_year, data.spes_history_3_id && `ID: ${data.spes_history_3_id}`].filter(hasValue).join(' · ')],
-              ['4th Availment', [data.spes_history_4_year, data.spes_history_4_id && `ID: ${data.spes_history_4_id}`].filter(hasValue).join(' · ')]
+              ['All Recorded Participation', data.spes_all_availments],
+              ['1st Participation', [data.spes_history_1_year, data.spes_history_1_id && `ID: ${data.spes_history_1_id}`].filter(hasValue).join(' · ')],
+              ['2nd Participation', [data.spes_history_2_year, data.spes_history_2_id && `ID: ${data.spes_history_2_id}`].filter(hasValue).join(' · ')],
+              ['3rd Participation', [data.spes_history_3_year, data.spes_history_3_id && `ID: ${data.spes_history_3_id}`].filter(hasValue).join(' · ')],
+              ['4th Participation', [data.spes_history_4_year, data.spes_history_4_id && `ID: ${data.spes_history_4_id}`].filter(hasValue).join(' · ')]
           ]],
           ['SPES Qualification Review', 'ph-shield-check', [
               ['Age Requirement', data.age ? ((Number(data.age) >= 18 && Number(data.age) <= 30) ? `Meets requirement (${data.age} years old)` : `Does not meet requirement (${data.age} years old; required 18–30)`) : 'For verification'],
@@ -3301,7 +3301,7 @@ function toggleBatchScheduleFields(select) {
 
       sections.forEach(([title, icon, fields]) => {
           if (title === 'Business Information' && !programUpper.includes('MSME')) return;
-          if (title === 'Past SPES Availments' && !programUpper.includes('SPES')) return;
+          if (title === 'Past SPES Participation' && !programUpper.includes('SPES')) return;
           if (title === 'SPES Qualification Review' && !programUpper.includes('SPES')) return;
           if (title === 'Regional Income Reference' && !programUpper.includes('TUPAD')) return;
           const visible = fields.filter(([, value]) => hasValue(value));
@@ -3764,7 +3764,7 @@ function toggleBatchScheduleFields(select) {
       document.querySelectorAll('option[value="Not Yet Availed"]').forEach(option => {
           option.textContent = option.textContent.includes('New Beneficiaries')
               ? 'New Beneficiaries (Initial Stage)'
-              : 'Approved – Awaiting Next Step';
+              : 'Waiting for Requirements';
       });
       document.querySelectorAll('option[value="Requirements Received"]').forEach(option => {
           option.textContent = 'Documents Submitted';
@@ -4071,7 +4071,7 @@ function toggleBatchScheduleFields(select) {
           const subtitleParts = [];
           if (selectedBatchId !== '0' && reportBatchSelect) subtitleParts.push(`Batch: ${reportBatchSelect.options[reportBatchSelect.selectedIndex].text}`);
           subtitleParts.push(selectedBrgy === 'All' || selectedBrgy === '' ? 'Municipality of Vinzons' : `Barangay ${selectedBrgy}, Vinzons`);
-          if (selectedAvail !== 'All') subtitleParts.push(`Availment: ${selectedAvail === 'Not Yet Availed' ? 'Approved – Awaiting Next Step' : (selectedAvail === 'Requirements Received' ? 'Documents Submitted' : selectedAvail)}`);
+          if (selectedAvail !== 'All') subtitleParts.push(`Status: ${selectedAvail === 'Not Yet Availed' ? 'Waiting for Requirements' : (selectedAvail === 'Requirements Received' ? 'Documents Submitted' : selectedAvail)}`);
           if (selectedNature !== 'All') subtitleParts.push(`Vendor Type: ${selectedNature}`);
           if (selectedSpesGroup !== 'all') subtitleParts.push(selectedSpesGroup === 'graduate' ? 'SPES Graduates' : 'SPES Babies');
           const subtitleText = subtitleParts.join(' | ');
@@ -4325,7 +4325,7 @@ function toggleBatchScheduleFields(select) {
                       <td>${parentOcc}</td>
                       <td>${b.avg_monthly_income || ''}</td>
                       <td>${dateApp}</td>
-                      <td style="font-weight:bold; color:#1f7a54;">${b.approval_status || ''}</td>
+                      <td style="font-weight:bold; color:#1f7a54;">${b.approval_status === 'Approved' ? 'Accepted' : (b.approval_status || '')}</td>
                       <td></td>
                       <td>${b.date_availed || ''}</td>
                       <td>${b.date_completed || ''}</td>
@@ -4362,7 +4362,7 @@ function toggleBatchScheduleFields(select) {
                       <td>${b.date_completed || ''}</td>
                       <td></td>
                       <td></td>
-                      <td>${b.availment_status || ''}</td>
+                      <td>${b.availment_status === 'Not Yet Availed' ? 'Waiting for Requirements' : (b.availment_status || '')}</td>
                       <td></td>
                   </tr>`;
               } else {

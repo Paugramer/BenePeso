@@ -453,7 +453,7 @@ if (table_exists($conn, "activity_logs")) {
           <div class="stat-icon"><i class="ph-fill ph-check-circle"></i></div>
         </div>
         <div class="stat-value"><?php echo (int)$activePrograms; ?></div>
-        <div class="stat-trend trend-neutral"><i class="ph-bold ph-check"></i> Approved</div>
+        <div class="stat-trend trend-neutral"><i class="ph-bold ph-check"></i> Accepted</div>
         <div class="stat-note">Approved batches currently in progress.</div>
       </a>
 

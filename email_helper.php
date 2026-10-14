@@ -153,7 +153,7 @@ function queueBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $sta
 }
 
 /**
- * Sends an availment status notification using the beneficiary's current database record.
+ * Sends an status notification using the beneficiary's current database record.
  */
 function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $status, &$error_message = null, string $custom_message = '', string $schedule_date = '', string $schedule_place = '', string $completion_date = ''): bool {
     $error_message = null;
@@ -339,18 +339,18 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
             break;
 
         case 'not yet availed':
-            $subject = $applicant['program_name'] . " - Approved, Next Step Pending";
-            $headline = "Approved - awaiting the next step";
+            $subject = $applicant['program_name'] . " - Waiting for Requirements";
+            $headline = "Waiting for Requirements";
             if (strpos($program_key, 'TUPAD') !== false) {
-                $message = "<p>Your application for <strong>{$safe_program}</strong> is approved.</p><p>Your next step is in-person document submission and verification at PESO Vinzons. Follow the document instructions issued by the office before deployment.</p>";
+                $message = "<p>Your application for <strong>{$safe_program}</strong> is accepted.</p><p>Your next step is in-person document submission and verification at PESO Vinzons. Follow the document instructions issued by the office before deployment.</p>";
             } elseif (strpos($program_key, 'SPES') !== false) {
                 $message = $is_returning_spes
-                    ? "<p>Your updated SPES record for <strong>{$safe_program}</strong> is approved.</p><p>As a returning <strong>SPES Baby</strong>, you are exempt from taking the SPES examination again. Please prepare your latest semester grades and all current requirements, then follow PESO Vinzons' document-submission instructions.</p>"
-                    : "<p>Your application for <strong>{$safe_program}</strong> is approved.</p><p>Please wait for the official examination schedule and instructions from PESO Vinzons. Keep your registered contact details active.</p>";
+                    ? "<p>Your updated SPES record for <strong>{$safe_program}</strong> is accepted.</p><p>As a returning <strong>SPES Baby</strong>, you are exempt from taking the SPES examination again. Please prepare your latest semester grades and all current requirements, then follow PESO Vinzons' document-submission instructions.</p>"
+                    : "<p>Your application for <strong>{$safe_program}</strong> is accepted.</p><p>Please wait for the official examination schedule and instructions from PESO Vinzons. Keep your registered contact details active.</p>";
             } elseif (strpos($program_key, 'MSME') !== false) {
-                $message = "<p>Your profiling record for <strong>{$safe_program}</strong> is approved.</p><p>PESO Vinzons will contact you if another verification step or office action is required. Keep your registered contact details active.</p>";
+                $message = "<p>Your profiling record for <strong>{$safe_program}</strong> is accepted.</p><p>PESO Vinzons will contact you if another verification step or office action is required. Keep your registered contact details active.</p>";
             } else {
-                $message = "<p>Your application for <strong>{$safe_program}</strong> is approved.</p><p>Please wait for the official schedule or next-step instructions from PESO Vinzons.</p>";
+                $message = "<p>Your application for <strong>{$safe_program}</strong> is accepted.</p><p>Please wait for the official schedule or next-step instructions from PESO Vinzons.</p>";
             }
             break;
 

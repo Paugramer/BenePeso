@@ -48,12 +48,12 @@ if ($stmt) {
 
         if (strcasecmp($approval, 'Rejected') === 0) {
             $tone = 'danger';
-            $headline = 'Application not approved';
+            $headline = 'Application not accepted';
             $message = trim((string)($row['approval_note'] ?? '')) ?: 'The office completed its eligibility review.';
             $nextAction = 'Open your program details or contact PESO Vinzons if you need clarification.';
         } elseif (strcasecmp($approval, 'Approved') === 0) {
             $tone = 'success';
-            $headline = 'Application approved';
+            $headline = $availment === 'Not Yet Availed' ? 'Waiting for Requirements' : 'Application accepted';
             $message = 'Your eligibility review has been completed successfully.';
             $nextAction = 'Review the program requirements and wait for the next official instruction.';
 

@@ -441,7 +441,7 @@ if ($search_ready) {
                                 <span class="v-tag"><?= htmlspecialchars($row['program_name']) ?></span>
                                 <span class="v-tag v-tag-batch">Batch: <?= htmlspecialchars($row['program_code'] ?: ('#' . $row['program_id'])) ?></span>
                                 <span class="v-pill <?= strtolower(str_replace(' ', '-', $row['approval_status'] ?? 'pending')) ?>">
-                                    <?= htmlspecialchars($row['approval_status'] ?? 'Pending') ?>
+                                    <?= htmlspecialchars(($row['approval_status'] ?? 'Pending') === 'Approved' ? 'Accepted' : ($row['approval_status'] ?? 'Pending')) ?>
                                 </span>
                             </div>
                             <?php
@@ -488,8 +488,8 @@ if ($search_ready) {
                         </div>
                         <div class="v-card-right">
                             <div class="v-info">
-                                <span class="v-label">Availment</span>
-                                <span class="v-val <?= strtolower(str_replace(' ', '-', $row['availment_status'] ?? '')) ?>"><?= htmlspecialchars($row['availment_status'] ?? 'Processing') ?></span>
+                                <span class="v-label">Status</span>
+                                <span class="v-val <?= strtolower(str_replace(' ', '-', $row['availment_status'] ?? '')) ?>"><?= htmlspecialchars(($row['availment_status'] ?? '') === 'Not Yet Availed' ? 'Waiting for Requirements' : ($row['availment_status'] ?? 'Processing')) ?></span>
                             </div>
                             <div class="v-info">
                                 <span class="v-label">Record Updated</span>
@@ -613,7 +613,7 @@ if ($search_ready) {
         </div>
         <div class="verification-status-grid">
             <article><strong>Pending</strong><p>The application has been received and is awaiting or undergoing review.</p></article>
-            <article><strong>Approved</strong><p>PESO has approved the application record; review the recorded availment stage for the next action.</p></article>
+            <article><strong>Accepted</strong><p>PESO has accepted the application record; review the recorded status for the next action.</p></article>
             <article><strong>Requirements Received</strong><p>Submitted documents have been recorded and may still be undergoing validation.</p></article>
             <article><strong>Ongoing</strong><p>The beneficiary's participation is currently active for the selected program.</p></article>
             <article><strong>Completed</strong><p>The beneficiary's participation has been recorded as completed.</p></article>

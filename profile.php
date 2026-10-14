@@ -1154,7 +1154,7 @@ function getStatusKey(status) {
 }
 
 function getStatusLabel(status) {
-    return status.charAt(0).toUpperCase() + status.slice(1);
+    return status === 'approved' ? 'Accepted' : status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 function formatRequirements(requirements) {
@@ -1316,7 +1316,7 @@ function buildProgramProgress(item) {
     steps[1][1] = approval === 'pending' ? 'Currently being reviewed' : (approval === 'rejected' ? 'Review not approved' : 'Review completed');
 
     return `<div class="bp-service-journey" aria-label="${escapeHtml(item.program_name)} program progress">
-        <div class="bp-service-journey-heading"><span>${escapeHtml(item.program_name)} Program Progress</span><strong>${escapeHtml(item.availment_status || item.approval_status || 'Pending')}</strong></div>
+        <div class="bp-service-journey-heading"><span>${escapeHtml(item.program_name)} Program Progress</span><strong>${escapeHtml(item.availment_status === 'Not Yet Availed' ? 'Waiting for Requirements' : (item.availment_status || (item.approval_status === 'Approved' ? 'Accepted' : item.approval_status) || 'Pending'))}</strong></div>
         <ol style="--bp-progress-steps:${steps.length}">${steps.map((step, index) => {
             const number = index + 1;
             const state = number < activeStep ? 'is-complete' : (number === activeStep ? (outcome || 'is-current') : 'is-upcoming');
@@ -1569,9 +1569,9 @@ function handleCardClick(element) {
     if (status === 'approved') {
         modalIcon.classList.add("icon-success");
         modalIcon.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><path d="m22 4-10 10.01-3-3"></path></svg>`;
-        modalTitle.innerText = "Application Approved";
+        modalTitle.innerText = "Application Accepted";
         modalBody.innerHTML = `
-            <p class="status-message">Your application for <strong>${escapeHtml(title)}</strong> has been approved.</p>
+            <p class="status-message">Your application for <strong>${escapeHtml(title)}</strong> has been accepted.</p>
             <div class="status-batch-reference"><span>Exact batch</span><strong>${escapeHtml(batch)}</strong></div>
             <div class="status-detail-panel">
                 <section class="status-detail-section">
@@ -1608,9 +1608,9 @@ function handleCardClick(element) {
     else if (status === 'rejected') {
         modalIcon.classList.add("icon-danger");
         modalIcon.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path></svg>`;
-        modalTitle.innerText = "Application Not Approved";
+        modalTitle.innerText = "Application Not Accepted";
         modalBody.innerHTML = `
-            <p class="status-message">Your application for <strong>${escapeHtml(title)}</strong> was not approved.</p>
+            <p class="status-message">Your application for <strong>${escapeHtml(title)}</strong> was not accepted.</p>
             <div class="status-batch-reference"><span>Exact batch</span><strong>${escapeHtml(batch)}</strong></div>
             <div class="status-detail-panel">
                 <section class="status-detail-section">

@@ -121,7 +121,7 @@ function getReportColumnDefinitions(string $programName): array
             ['key' => 'spes_history', 'label' => 'SPES History', 'default' => false],
             ['key' => 'spes_lifecycle_label', 'label' => 'SPES Classification', 'default' => true],
             ['key' => 'spes_graduation_year', 'label' => 'SPES Graduation Year', 'default' => false],
-            ['key' => 'spes_all_availments', 'label' => 'All Recorded SPES Availments', 'default' => true],
+            ['key' => 'spes_all_availments', 'label' => 'All Recorded SPES Participation', 'default' => true],
         ];
     }
 

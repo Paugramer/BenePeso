@@ -1349,7 +1349,7 @@ if ($barangay_summary_result) {
         <section class="archive-breakdown" aria-labelledby="archiveBreakdownTitle">
             <div class="archive-breakdown-heading">
                 <h3 id="archiveBreakdownTitle">Beneficiaries by barangay</h3>
-                <span>Approved records · relative scale</span>
+                <span>Accepted records · relative scale</span>
             </div>
             <div id="archBarangayList" class="archive-barangay-list"></div>
         </section>
@@ -1790,12 +1790,12 @@ if ($barangay_summary_result) {
                         <div class="span-2 section-title">Skills & History</div>
                         <div class="form-group span-2"><label>Special Skills (Optional)</label><textarea name="special_skills" class="not-required" rows="3"></textarea></div>
                         
-                        <div class="span-2 section-title" style="margin-top:10px;">History of SPES Availment</div>
+                        <div class="span-2 section-title" style="margin-top:10px;">SPES Participation History</div>
                         <div class="span-2 dynamic-table-wrap">
                             <table class="dynamic-table" id="spesTable">
                                 <thead>
                                     <tr>
-                                        <th>Availment No.</th>
+                                        <th>Participation No.</th>
                                         <th>Establishment</th>
                                         <th>Year</th>
                                         <th>SPES ID NO.</th>
@@ -2745,7 +2745,7 @@ if ($barangay_summary_result) {
         const safeTitle = escapeHtml(title || 'this program');
         const programKey = String(title || '').toUpperCase();
         const safeReason = escapeHtml(reason || 'No reason was provided.');
-        const safeAvailment = escapeHtml((availment || 'approved').toUpperCase());
+        const safeAvailment = escapeHtml((availment === 'Not Yet Availed' ? 'Waiting for Requirements' : (availment || 'Accepted')).toUpperCase());
 
         if (status === 'approved') {
             if (availment === 'exam passed') {
@@ -2787,26 +2787,26 @@ if ($barangay_summary_result) {
             } else if (availment === 'not yet availed') {
                 modalIcon.className = "modal-icon icon-success";
                 modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
-                modalTitle.innerText = "LGU Approved!";
+                modalTitle.innerText = "LGU Accepted!";
                 modalTitle.style.color = "var(--green)";
                 if (programKey.includes('TUPAD')) {
                     modalBody.innerHTML = `<div style="text-align:center;"><h3 style="color:#27ae60; font-size:16px; margin-bottom:10px; font-weight:800;">Next Step: Submit Documents</h3><p style="font-size:14px;color:#444;">Your application for <b>${safeTitle}</b> has been <strong>approved</strong>. Please bring the physical requirements identified by PESO for verification.</p></div>`;
                 } else if (programKey.includes('SPES')) {
                     modalBody.innerHTML = `<div style="text-align:center;"><h3 style="color:#27ae60; font-size:16px; margin-bottom:10px; font-weight:800;">Awaiting Examination Schedule</h3><p style="font-size:14px;color:#444;">Your application for <b>${safeTitle}</b> has been <strong>approved</strong>. PESO Vinzons will send the examination schedule and any required instructions.</p></div>`;
                 } else if (programKey.includes('MSME')) {
-                    modalBody.innerHTML = `<div style="text-align:center;"><h3 style="color:#27ae60; font-size:16px; margin-bottom:10px; font-weight:800;">Profiling Record Approved</h3><p style="font-size:14px;color:#444;">Your profiling record for <b>${safeTitle}</b> has been approved. PESO Vinzons will contact you if another verification step or office action is needed.</p></div>`;
+                    modalBody.innerHTML = `<div style="text-align:center;"><h3 style="color:#27ae60; font-size:16px; margin-bottom:10px; font-weight:800;">Profiling Record Accepted</h3><p style="font-size:14px;color:#444;">Your profiling record for <b>${safeTitle}</b> has been accepted. PESO Vinzons will contact you if another verification step or office action is needed.</p></div>`;
                 } else {
-                    modalBody.innerHTML = `<div style="text-align:center;"><h3 style="color:#27ae60; font-size:16px; margin-bottom:10px; font-weight:800;">Approved – Awaiting Next Step</h3><p style="font-size:14px;color:#444;">Your application for <b>${safeTitle}</b> has been approved. Please wait for the official schedule or instructions from PESO Vinzons.</p></div>`;
+                    modalBody.innerHTML = `<div style="text-align:center;"><h3 style="color:#27ae60; font-size:16px; margin-bottom:10px; font-weight:800;">Waiting for Requirements</h3><p style="font-size:14px;color:#444;">Your application for <b>${safeTitle}</b> has been accepted. Please wait for the official schedule or instructions from PESO Vinzons.</p></div>`;
                 }
             } else {
                 modalIcon.className = "modal-icon icon-success";
                 modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
-                modalTitle.innerText = "Application Approved";
+                modalTitle.innerText = "Application Accepted";
                 modalTitle.style.color = "var(--green)";
                 modalBody.innerHTML = `
                     <div style="text-align:center;">
-                        <h3 style="color:#27ae60; font-size:16px; margin-bottom:10px; font-weight:800;">LGU Approved</h3>
-                        <p style="font-size: 14px; color: #444;">Your application for <b>${safeTitle}</b> has been approved. Tracking status: <strong>${safeAvailment}</strong>.</p>
+                        <h3 style="color:#27ae60; font-size:16px; margin-bottom:10px; font-weight:800;">LGU Accepted</h3>
+                        <p style="font-size: 14px; color: #444;">Your application for <b>${safeTitle}</b> has been accepted. Tracking status: <strong>${safeAvailment}</strong>.</p>
                     </div>
                 `;
             }
@@ -2817,7 +2817,7 @@ if ($barangay_summary_result) {
             modalTitle.innerText = "Application Rejected";
             modalTitle.style.color = "#e74c3c";
             modalBody.innerHTML = `
-                    <p style="text-align:center;">Unfortunately, your application for <b>${safeTitle}</b> was not approved.</p>
+                    <p style="text-align:center;">Unfortunately, your application for <b>${safeTitle}</b> was not accepted.</p>
                 <div class="reason-box" style="background: rgba(231, 76, 60, 0.05); border: 1px solid rgba(231, 76, 60, 0.2); padding: 15px; border-radius: 12px; margin-top: 15px;">
                     <h4 style="color: #c0392b; margin-bottom: 5px;">Reason given by Admin:</h4>
                     <p style="margin:0; white-space:pre-line;">${safeReason}</p>

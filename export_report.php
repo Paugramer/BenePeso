@@ -103,7 +103,7 @@ if ($format === 'xlsx') {
     $subtitleParts = [];
     if ($program_id > 0) $subtitleParts[] = 'Selected batch';
     $subtitleParts[] = getReportLocationLabel($barangay);
-    if ($availment !== 'All') $subtitleParts[] = 'Availment: ' . $availment;
+    if ($availment !== 'All') $subtitleParts[] = 'Status: ' . ($availment === 'Not Yet Availed' ? 'Waiting for Requirements' : $availment);
     if ($business_nature !== 'All') $subtitleParts[] = 'Vendor Type: ' . $business_nature;
     if ($spes_group !== 'all') $subtitleParts[] = $spes_group === 'graduate' ? 'SPES Graduates' : 'SPES Babies';
     outputNativeXlsxReport($reportTitle, $selectedColumns, $beneficiaries, implode(' | ', $subtitleParts));
