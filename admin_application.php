@@ -1717,9 +1717,10 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
   <link rel="stylesheet" href="system_mobile.css?v=24">
 <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=1">
+<link rel="stylesheet" href="application_refinements.css?v=2">
 <script src="frontend_polish.js?v=20260925" defer></script>
-<script src="beneficiary_workspace_polish.js?v=2" defer></script>
+<script src="beneficiary_workspace_polish.js?v=3" defer></script>
+<script src="application_actions.js?v=1" defer></script>
 </head>
 <body class="admin-mobile-page admin-beneficiaries-page">
   <div class="page-wrap">
@@ -2023,28 +2024,8 @@ if ($selectedProgramName !== "") {
                               </span>
                           </td>
                           <td style="text-align: center;" onclick="event.stopPropagation();">
-                               <div class="action-menu-wrap" style="justify-content: center;">
-                                  <?php if ($beneficiaryApproval === 'Pending'): ?>
-                                      <form method="POST" style="margin: 0;" novalidate>
-                                          <input type="hidden" name="action" value="approve_beneficiary">
-                                          <input type="hidden" name="beneficiary_id" value="<?php echo $bId; ?>">
-                                          <input type="hidden" name="program_name" value="<?php echo h($selectedProgramName); ?>">
-                                          <button type="submit" class="btn-icon-approve" title="Accept"><i class="ph-bold ph-check"></i> Accept</button>
-                                      </form>
-                                      <button type="button" class="btn-icon-reject open-reject-modal" onclick="openRejectModal(<?php echo $bId; ?>)" title="Reject"><i class="ph-bold ph-x"></i> Reject</button>
-                                  <?php elseif ($beneficiaryApproval === 'Approved'): ?>
-                                      <a class="btn-edit" href="application_reporting.php?id=<?php echo $bId; ?>&amp;role=admin" title="Edit additional report information"><i class="ph ph-file-text" aria-hidden="true"></i><span><?php echo h(stripos($selectedProgramName, 'SPES') !== false ? 'Work Assignment' : (stripos($selectedProgramName, 'MSME') !== false ? 'Night-market Earnings' : 'Remarks')); ?></span></a>
-                                      <button type="button" class="btn-edit btn-quick-status" onclick="openQuickStatusModal(<?php echo $bId; ?>, '<?php echo addslashes($availmentStatus); ?>', '<?php echo addslashes($beneficiary['date_availed'] ?? ''); ?>', '<?php echo addslashes($beneficiary['date_completed'] ?? ''); ?>')" title="Update status">
-                                          <i class="ph-bold ph-timer" style="font-size: 14px; margin-right:4px;"></i> Status
-                                      </button>
-                                      <button type="button" class="btn-edit" onclick="openEditModal(this.closest('tr').getAttribute('data-profile'))" title="Full Edit Record">
-                                          <i class="ph-bold ph-pencil-simple" style="font-size: 14px; margin-right:4px;"></i> Full Edit
-                                      </button>
-                                  <?php elseif ($beneficiaryApproval === 'Rejected'): ?>
-                                      <button type="button" class="btn-edit" onclick="openEditModal(this.closest('tr').getAttribute('data-profile'))" title="Full Edit Record">
-                                          <i class="ph-bold ph-pencil-simple" style="font-size: 14px; margin-right:4px;"></i> Full Edit
-                                      </button>
-                                  <?php endif; ?>
+                               <div class="action-menu-wrap" style="justify-content:center;">
+                                  <button type="button" class="btn-edit application-view-button" onclick="event.stopPropagation(); window.openProfileModal(this.closest('tr'));" title="View application"><i class="ph ph-eye" aria-hidden="true"></i><span>View Application</span></button>
                               </div>
                           </td>
                       </tr>
@@ -3583,7 +3564,7 @@ function toggleBatchScheduleFields(select) {
                           <input type="hidden" name="action" value="approve_beneficiary">
                           <input type="hidden" name="beneficiary_id" value="${data.id}">
                           <input type="hidden" name="program_name" value="${currentProgramName}">
-                          <button type="submit" class="btn-main" style="padding: 10px 20px;"><i class="ph-bold ph-check" style="margin-right:6px;"></i> Approve</button>
+                          <button type="submit" class="btn-main" style="padding: 10px 20px;"><i class="ph-bold ph-check" style="margin-right:6px;"></i> Accept</button>
                       </form>
                       <button type="button" class="btn-danger" style="border-radius: 12px; padding: 10px 20px; margin-left:10px;" onclick="openRejectModal(${data.id})"><i class="ph-bold ph-x" style="margin-right:6px;"></i> Reject</button>
                       <button type="button" class="btn-light" onclick="document.getElementById('profileModal').classList.remove('show')" style="padding: 10px 20px; margin-left:10px;">Close View</button>
@@ -3606,6 +3587,8 @@ function toggleBatchScheduleFields(select) {
                   footerActions.insertAdjacentHTML('afterbegin', `<button type="button" class="btn-light" onclick="openMsmeForm(${encodeURIComponent(data.id)})" style="display:inline-flex;align-items:center;gap:8px;"><i class="ph-bold ph-file-text"></i> MSME Form</button>`);
               }
           }
+
+          window.organizeApplicationActions?.(data, 'admin');
 
           const pModal = document.getElementById('profileModal');
           if(pModal) pModal.classList.add('show');
@@ -3799,7 +3782,6 @@ function toggleBatchScheduleFields(select) {
           ['Regional Income Reference', 'ph-chart-line-up', [
               ['Reported Family Income', data.avg_monthly_income],
               ['Region V Reference', '2023 PSA threshold for a family of six: ₱16,787.50 monthly / ₱201,450.00 annually.'],
-              ['Use', 'Reference only; apply it when the current program guidelines require an income qualification.']
           ]],
           ['Business Information', 'ph-briefcase', [
               ['Business Name', data.business_name], ['Nature of Business', data.business_nature], ['Ownership Type', data.ownership_type],

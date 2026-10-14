@@ -1304,9 +1304,10 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=3">
   <link rel="stylesheet" href="system_mobile.css?v=24">
   <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=1">
+<link rel="stylesheet" href="application_refinements.css?v=2">
 <script src="frontend_polish.js?v=20260925" defer></script>
-<script src="beneficiary_workspace_polish.js?v=2" defer></script>
+<script src="beneficiary_workspace_polish.js?v=3" defer></script>
+<script src="application_actions.js?v=1" defer></script>
 </head>
 <body class="staff-mobile-page peso-staff-beneficiaries-page">
   <div class="page-wrap">
@@ -1609,17 +1610,8 @@ if ($selectedProgramName !== "") {
                               </span>
                           </td>
                           <td style="text-align: center;" onclick="event.stopPropagation();">
-                               <div class="action-menu-wrap" style="justify-content: center;">
-                                  <?php if ($beneficiaryApproval === 'Approved'): ?>
-                                      <a class="btn-edit" href="application_reporting.php?id=<?php echo $bId; ?>&amp;role=peso_staff" title="Edit additional report information"><i class="ph ph-file-text" aria-hidden="true"></i><span><?php echo h(stripos($selectedProgramName, 'SPES') !== false ? 'Work Assignment' : (stripos($selectedProgramName, 'MSME') !== false ? 'Night-market Earnings' : 'Remarks')); ?></span></a>
-                                      <button type="button" class="beneficiary-availment-button" onclick="openQuickStatusModal(<?php echo $bId; ?>, '<?php echo addslashes($availmentStatus); ?>', '<?php echo addslashes($beneficiary['date_availed'] ?? ''); ?>', '<?php echo addslashes($beneficiary['date_completed'] ?? ''); ?>')" title="Update status">
-                                          <i class="ph-bold ph-timer" aria-hidden="true"></i>
-                                          <span>Status</span>
-                                      </button>
-                                  <?php endif; ?>
-                                  <button type="button" class="btn-edit beneficiary-edit-record" onclick="openEditModal(this.closest('tr').getAttribute('data-profile'))" title="Edit beneficiary record">
-                                      <i class="ph-bold ph-pencil-simple" aria-hidden="true"></i> Edit Record
-                                  </button>
+                               <div class="action-menu-wrap" style="justify-content:center;">
+                                  <button type="button" class="btn-edit application-view-button" onclick="event.stopPropagation(); window.openProfileModal(this.closest('tr'));" title="View application"><i class="ph ph-eye" aria-hidden="true"></i><span>View Application</span></button>
                               </div>
                           </td>
                       </tr>
@@ -3109,6 +3101,8 @@ function toggleBatchScheduleFields(select) {
               }
           }
 
+          window.organizeApplicationActions?.(data, 'peso_staff');
+
           const pModal = document.getElementById('profileModal');
           if(pModal) pModal.classList.add('show');
 
@@ -3301,7 +3295,6 @@ function toggleBatchScheduleFields(select) {
           ['Regional Income Reference', 'ph-chart-line-up', [
               ['Reported Family Income', data.avg_monthly_income],
               ['Region V Reference', '2023 PSA threshold for a family of six: ₱16,787.50 monthly / ₱201,450.00 annually.'],
-              ['Use', 'Reference only; apply it when the current program guidelines require an income qualification.']
           ]],
           ['Business Information', 'ph-briefcase', [
               ['Business Name', data.business_name], ['Nature of Business', data.business_nature], ['Ownership Type', data.ownership_type],

@@ -62,16 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
       tray.appendChild(chip);
     });
 
-    const clear = document.createElement('button');
-    clear.type = 'button';
-    clear.className = 'beneficiary-active-filter beneficiary-clear-filters';
-    clear.innerHTML = '<i class="ph ph-eraser"></i><span>Clear all</span>';
-    clear.addEventListener('click', () => {
-      selects.forEach((select) => { select.selectedIndex = 0; });
-      if (search) search.value = '';
-      submitFilters();
-    });
-    tray.appendChild(clear);
     form.insertAdjacentElement('afterend', tray);
   };
 
