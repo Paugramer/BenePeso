@@ -15,7 +15,7 @@ function normalize_report_workbook(PharData $archive, string $program): void {
             }
         }
         $row = $xp->query('//m:row[@r="1"]')->item(0);
-        if ($row) { $row->setAttribute('ht','110'); $row->setAttribute('customHeight','1'); }
+        if ($row) { $row->setAttribute('ht','140'); $row->setAttribute('customHeight','1'); }
         $headerRow=stripos($program,'MSME')!==false?($path==='xl/worksheets/sheet1.xml'?4:6):(stripos($program,'SPES')!==false?3:10);
         $header=$xp->query('//m:row[@r="'.$headerRow.'"]')->item(0);
         if($header){$header->setAttribute('ht',(string)max((float)$header->getAttribute('ht'),stripos($program,'SPES')!==false?60:90));$header->setAttribute('customHeight','1');}
@@ -26,7 +26,7 @@ function normalize_report_workbook(PharData $archive, string $program): void {
         $doc = new DOMDocument(); $doc->loadXML($archive[$path]->getContent(),LIBXML_NONET);
         $xp = new DOMXPath($doc);
         foreach ($xp->query('//*[local-name()="ext" and @cx and @cy]') as $extent) {
-            $extent->setAttribute('cx','11430000'); $extent->setAttribute('cy','1298864');
+            $extent->setAttribute('cx','13906500'); $extent->setAttribute('cy','1580300');
         }
         $archive[$path] = $doc->saveXML();
     }

@@ -59,7 +59,8 @@ foreach(['SPES','TUPAD','MSME'] as $program) {
         echo "$program template export checks passed\n";
     } finally { unset($zip);if(is_file($path))unlink($path); }
     $parsed=readBeneficiaryXlsxRows(__DIR__.'/../assets/templates/'.$program.'_Import_Blank.xlsx');
-    phase2_check(count($parsed)===1,'Blank import template contains sample records');
+    phase2_check(count($parsed)>=1,'Blank import template is missing its header');
+    foreach(array_slice($parsed,1) as $blankRow)phase2_check(trim(implode('', $blankRow))==='', 'Blank import template contains sample records');
 }
 phase2_check(official_report_value(['report_parent_name'=>'Explicit Guardian','father_occupation'=>'Unrelated occupation'],'report_parent_occupation')==='','Guardian inherited an unrelated occupation');
 phase2_check(official_report_value(['approval_status'=>'Approved','availment_status'=>'Not Qualified'],'approval_status')==='DISQUALIFIED','Explicit disqualification reported as qualified');

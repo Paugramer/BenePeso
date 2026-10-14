@@ -1,0 +1,19 @@
+<?php
+/** Add usable blank input rows and center workbook table headings. */
+require_once __DIR__.'/../report_template_layout.php';
+$ns='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+foreach(['MSME','SPES','TUPAD']as$program)foreach(['import','report']as$type){$relative=$type==='import'?'assets/templates/'.$program.'_Import_Blank.xlsx':'assets/report_templates/'.$program.'_Report_Blank.xlsx';$path=__DIR__.'/../'.$relative;$temp=__DIR__.'/../storage/phase2_validation/grid_'.bin2hex(random_bytes(6)).'.zip';copy($path,$temp);$zip=new PharData($temp,0,null,Phar::ZIP);if($type==='report')normalize_report_workbook($zip,$program);
+$styleDoc=new DOMDocument();$styleDoc->loadXML($zip['xl/styles.xml']->getContent(),LIBXML_NONET);$sx=new DOMXPath($styleDoc);$sx->registerNamespace('m',$ns);$xfs=$sx->query('//m:cellXfs')->item(0);$centerStyles=[];$plainStyles=[];
+for($sheet=1;$sheet<=2;$sheet++){$entry='xl/worksheets/sheet'.$sheet.'.xml';if(!isset($zip[$entry]))continue;$doc=new DOMDocument();$doc->loadXML($zip[$entry]->getContent(),LIBXML_NONET);$xp=new DOMXPath($doc);$xp->registerNamespace('m',$ns);$data=$xp->query('//m:sheetData')->item(0);$headerRows=$type==='import'?[1]:($program==='MSME'?($sheet===1?[3,4]:[5,6]):($program==='SPES'?[3]:[9,10]));
+foreach($headerRows as$r)foreach($xp->query('m:row[@r="'.$r.'"]/m:c',$data)as$cell){$style=(int)$cell->getAttribute('s');if(!isset($centerStyles[$style])){$clone=$sx->query('m:xf',$xfs)->item($style)->cloneNode(true);$alignment=$sx->query('m:alignment',$clone)->item(0);if(!$alignment){$alignment=$styleDoc->createElementNS($ns,'alignment');$clone->appendChild($alignment);}foreach(['horizontal'=>'center','vertical'=>'center','wrapText'=>'1']as$key=>$value)$alignment->setAttribute($key,$value);$clone->setAttribute('applyAlignment','1');$centerStyles[$style]=$sx->query('m:xf',$xfs)->length;$xfs->appendChild($clone);}$cell->setAttribute('s',(string)$centerStyles[$style]);}
+if($type==='import'){
+ foreach(iterator_to_array($xp->query('m:row',$data))as$row)if((int)$row->getAttribute('r')>1){if(trim($row->textContent)!=='')throw new RuntimeException('Import template contains data; refusing to replace it.');$data->removeChild($row);}
+ $columns=[];foreach($xp->query('m:row[@r="1"]/m:c',$data)as$cell)$columns[]=preg_replace('/[0-9]+/','',$cell->getAttribute('r'));
+ for($r=2;$r<=21;$r++){$row=$doc->createElementNS($ns,'row');$row->setAttribute('r',(string)$r);$row->setAttribute('ht','22');$row->setAttribute('customHeight','1');foreach($columns as$col){$cell=$doc->createElementNS($ns,'c');$cell->setAttribute('r',$col.$r);$cell->setAttribute('s','0');$row->appendChild($cell);}$data->appendChild($row);}
+ $dimension=$xp->query('//m:dimension')->item(0);if($dimension)$dimension->setAttribute('ref','A1:'.end($columns).'21');
+}
+if($type==='report'){$firstData=$program==='MSME'?($sheet===1?5:7):($program==='SPES'?4:11);foreach($xp->query('m:row',$data)as$row){if((int)$row->getAttribute('r')<$firstData)continue;foreach($xp->query('m:c',$row)as$cell){$style=(int)$cell->getAttribute('s');$original=$sx->query('m:xf',$xfs)->item($style);if(!$original||(int)$original->getAttribute('fillId')<2)continue;if(!isset($plainStyles[$style])){$clone=$original->cloneNode(true);$clone->setAttribute('fillId','0');$clone->setAttribute('applyFill','1');$plainStyles[$style]=$sx->query('m:xf',$xfs)->length;$xfs->appendChild($clone);}$cell->setAttribute('s',(string)$plainStyles[$style]);}}}
+foreach($xp->query('//m:sheetView')as$view){$view->setAttribute('view','normal');$view->setAttribute('zoomScale','100');$view->setAttribute('zoomScaleNormal','100');$view->setAttribute('zoomScaleSheetLayoutView','100');}
+$zip[$entry]=$doc->saveXML();}
+$xfs->setAttribute('count',(string)$sx->query('m:xf',$xfs)->length);$zip['xl/styles.xml']=$styleDoc->saveXML();unset($zip);copy($temp,$path);unlink($temp);echo 'Completed grid/headings: '.$relative.PHP_EOL;
+}
