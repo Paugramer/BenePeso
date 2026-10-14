@@ -485,7 +485,7 @@ if ($selectedProgramName !== "") {
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
   <link rel="stylesheet" href="admin_beneficiaries.css?v=20260924-mobile-performance">
-  <link rel="stylesheet" href="shared_sidebar.css">
+  <link rel="stylesheet" href="shared_sidebar.css?v=6">
   <style>
       /* Temporary Inline Styles to enforce the A4 Preview Look */
       .spreadsheet-table { border-collapse: collapse; width: max-content; min-width: 100%; table-layout: auto; }

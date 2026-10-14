@@ -1752,7 +1752,7 @@ if ($selectedProgramName !== "") {
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
   <link rel="stylesheet" href="admin_beneficiaries.css?v=20260924-mobile-performance">
-  <link rel="stylesheet" href="shared_sidebar.css">
+  <link rel="stylesheet" href="shared_sidebar.css?v=6">
   <style>
       /* Temporary Inline Styles to enforce the A4 Preview Look */
       .spreadsheet-table { border-collapse: collapse; width: max-content; min-width: 100%; table-layout: auto; }
@@ -1769,7 +1769,7 @@ if ($selectedProgramName !== "") {
 <script src="frontend_polish.js?v=20261014-dialog" defer></script>
 <script src="beneficiary_workspace_polish.js?v=13" defer></script>
 <script src="application_actions.js?v=16" defer></script>
-<link rel="stylesheet" href="shared_sidebar.css?v=5">
+<link rel="stylesheet" href="shared_sidebar.css?v=6">
 </head>
 <body class="admin-mobile-page admin-beneficiaries-page">
   <div class="page-wrap">
