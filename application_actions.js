@@ -36,8 +36,14 @@ window.organizeApplicationActions = (data, role) => {
   if (infoTools) [...footer.querySelectorAll('button')].forEach(button => {
     if (/openSpesForm|openMsmeForm/.test(button.getAttribute('onclick') || '')) infoTools.appendChild(button);
   });
+  const stage = data.availment_status || data.availment;
+  if (progress && data.approval === 'Approved') {
+    const flowNote = document.createElement('p');flowNote.className='application-flow-note';
+    flowNote.textContent = stage === 'Requirements Received' ? 'Documents Submitted ? requirements are under review.' : ['Orientation','Ongoing','Salary Distribution','Completed'].includes(stage) ? 'Orientation confirms that the requirements review is complete.' : stage === 'Not Yet Availed' ? 'Waiting for the required documents.' : '';
+    if(flowNote.textContent)progress.append(flowNote);
+  }
   const id = Number(data.id);
-  if (Number.isSafeInteger(id) && id > 0) window.mountApplicationRequirements?.(modal, id);
+  if (Number.isSafeInteger(id) && id > 0 && data.approval === 'Approved' && ['Not Yet Availed','Requirements Received'].includes(data.availment_status || data.availment)) window.mountApplicationRequirements?.(modal, id);
   if (data.approval === 'Approved' && progress && Number.isSafeInteger(id) && id > 0) {
     const program = String(data.program || '').toUpperCase();
     const label = program.includes('SPES') ? 'Work Assignment' : program.includes('MSME') ? 'Night Market Earnings' : 'Remarks';
@@ -131,12 +137,12 @@ window.organizeApplicationActions = (data, role) => {
 
 window.mountApplicationRequirements = async (modal, id) => {
   modal.querySelector('.application-requirements')?.remove();
-  const section = document.createElement('section'); section.className = 'resume-section application-requirements';
-  const heading = document.createElement('h4'); heading.textContent = 'Requirements Checklist';
-  const help = document.createElement('p');help.textContent = 'Review each document against the batch requirements. Received documents still need verification. Saving this checklist does not send an email.';
+  const section = document.createElement('details'); section.className = 'application-requirements';
+  const heading = document.createElement('summary'); heading.textContent = 'Review Requirements';
+  const help = document.createElement('p');help.textContent = 'Documents Submitted means under review. Record any missing or incorrect documents here. Move to Orientation after the requirements are cleared.';
   const feedback = document.createElement('p');feedback.setAttribute('role','status');feedback.textContent='Loading requirements?';
   section.append(heading,help,feedback);
-  const first = modal.querySelector('.resume-section');first?.after(section);
+  const progress = [...modal.querySelectorAll('.resume-section')].find(section=>section.querySelector('h4 span')?.textContent==='Program & Status');(progress || modal.querySelector('.resume-section'))?.append(section);
   try {
     const response = await fetch(`application_requirements.php?id=${id}`,{credentials:'same-origin'}); const result = await response.json();if(!response.ok)throw new Error(result.error);
     if(!section.isConnected)return;
@@ -152,7 +158,7 @@ window.mountApplicationRequirements = async (modal, id) => {
       row.append(label,select,note);form.append(row);controls[key]={select,note};
     });
     const count=Object.values(result.items).filter(item=>['Missing','Needs Resubmission'].includes(item.status)).length;
-    feedback.textContent=Object.keys(result.items).length?`${count} requirement${count===1?'':'s'} need attention.`:'No requirements configured for this batch. Set the requirements in Programs first.';
+    feedback.textContent=Object.keys(result.items).length?count ? `${count} requirement${count===1?'':'s'} need attention.` : Object.values(result.items).some(item=>['Not Reviewed','Received'].includes(item.status)) ? 'Review is not yet complete.' : 'Requirements reviewed.':'No requirements configured for this batch. Set the requirements in Programs first.';
     if(result.editable&&Object.keys(controls).length){
       const save=document.createElement('button');save.type='submit';save.className='btn-main';save.textContent='Save Checklist';form.append(save);
       form.addEventListener('submit',async event=>{
@@ -173,8 +179,9 @@ window.mountApplicationRequirements = async (modal, id) => {
 };
 window.renderRequirementSummary=(row,items)=>{
  row.querySelector('.requirement-summary')?.remove();const cell=row.cells?.[4];if(!cell)return;
- const values=Object.values(items||{});const issues=values.filter(item=>['Missing','Needs Resubmission'].includes(item.status)).length;
- const unreviewed=values.filter(item=>item.status==='Not Reviewed').length;
- const summary=document.createElement('small');summary.className='requirement-summary';summary.textContent=issues?`${issues} requirement${issues===1?'':'s'} need attention`:unreviewed?`${unreviewed} not reviewed`:values.length?'Requirements reviewed':'Checklist not configured';cell.append(summary);
+ const data=JSON.parse(row.dataset.profile);if(data.approval!=='Approved'||!['Not Yet Availed','Requirements Received'].includes(data.availment_status || data.availment))return;
+ const issues=Object.values(items||{}).filter(item=>['Missing','Needs Resubmission'].includes(item.status)).length;
+ if(!issues)return;
+ const summary=document.createElement('small');summary.className='requirement-summary';summary.textContent=`${issues} requirement${issues===1?'':'s'} need attention`;cell.append(summary);
 };
 document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('tr[data-profile]').forEach(row=>{try{window.renderRequirementSummary(row,JSON.parse(row.dataset.profile).requirement_items);}catch{}});});
