@@ -42,8 +42,8 @@ function report_column_number(string $name): int {
 }
 
 /** Render workbook cells, original header groups, merges and colors; omit its logo row. */
-function report_template_sheets(string $program, array $records): array {
-    $path=build_official_template_report($program,$records);
+function report_template_sheets(string $program, array $records, string $selectedBarangay = 'All'): array {
+    $path=build_official_template_report($program,$records,$selectedBarangay);
     try {
         $archive=new PharData($path,0,null,Phar::ZIP);
         $styleDoc=new DOMDocument();$styleDoc->loadXML($archive['xl/styles.xml']->getContent(),LIBXML_NONET);

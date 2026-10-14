@@ -4,7 +4,7 @@ require_once __DIR__.'/report_template_layout.php';
 require_once __DIR__.'/msme_template_export.php';
 
 /** Populate the sanitized template without changing its column order or styles. */
-function build_official_template_report(string $program, array $rows): string {
+function build_official_template_report(string $program, array $rows, string $selectedBarangay = 'All'): string {
     if (stripos($program,'MSME')!==false) return build_msme_template_report($rows);
     $spes=stripos($program,'SPES')!==false;
     $source=__DIR__.'/assets/report_templates/'.($spes?'SPES':'TUPAD').'_Report_Blank.xlsx';
@@ -42,12 +42,12 @@ function build_official_template_report(string $program, array $rows): string {
         if ($dimension) $dimension->setAttribute('ref','A1:'.$lastColumn.$lastRow);
         $setup=$xpath->query('/m:worksheet/m:pageSetup')->item(0);
         if ($setup) { $setup->setAttribute('orientation','landscape');$setup->setAttribute('fitToWidth','1');$setup->setAttribute('fitToHeight','0'); }
-        if (!$spes && $rows) {
+        if (!$spes) {
             // The export carries only the selected location; no beneficiary names in headings.
-            $barangays=array_values(array_unique(array_column($rows,'barangay')));
+            $barangays=$selectedBarangay !== 'All' ? [$selectedBarangay] : array_values(array_unique(array_column($rows,'barangay')));
             if (count($barangays)===1) {
                 $row=$xpath->query('/m:worksheet/m:sheetData/m:row[@r="7"]')->item(0);
-                if ($row) { $cell=$doc->createElementNS($ns,'c');$cell->setAttribute('r','C7');$cell->setAttribute('t','inlineStr');$inline=$doc->createElementNS($ns,'is');$text=$doc->createElementNS($ns,'t');$text->appendChild($doc->createTextNode($barangays[0]));$inline->appendChild($text);$cell->appendChild($inline);$row->appendChild($cell); }
+                if ($row) { foreach(iterator_to_array($xpath->query('m:c[@r="C7"]',$row)) as $existing) $row->removeChild($existing); $cell=$doc->createElementNS($ns,'c');$cell->setAttribute('r','C7');$cell->setAttribute('t','inlineStr');$inline=$doc->createElementNS($ns,'is');$text=$doc->createElementNS($ns,'t');$text->appendChild($doc->createTextNode($barangays[0]));$inline->appendChild($text);$cell->appendChild($inline);$row->appendChild($cell); }
             }
         }
         $archive['xl/worksheets/sheet1.xml']=$doc->saveXML();
@@ -57,8 +57,8 @@ function build_official_template_report(string $program, array $rows): string {
     } catch (Throwable $e) { unset($archive);if(is_file($temporary)) unlink($temporary);throw $e; }
 }
 
-function output_official_template_report(string $program, array $rows): void {
-    $path=build_official_template_report($program,$rows);
+function output_official_template_report(string $program, array $rows, string $selectedBarangay = 'All'): void {
+    $path=build_official_template_report($program,$rows,$selectedBarangay);
     try {
         $name=(stripos($program,'SPES')!==false?'SPES':(stripos($program,'MSME')!==false?'MSME':'TUPAD')).'_Report_'.date('Ymd').'.xlsx';
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

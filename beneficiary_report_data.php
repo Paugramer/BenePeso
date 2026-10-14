@@ -75,7 +75,7 @@ if (($_GET['template_preview'] ?? '') === '1') {
         return (!$batch||(int)$row['program_id']===$batch)&&($barangay==='All'||$row['barangay']===$barangay)&&($status==='All'||$outcome===$status)&&($group==='all'||($row['spes_lifecycle']??'none')===$group)&&($nature==='All'||in_array(mb_strtolower($nature),$natureValues,true));
     }));
     usort($rows,static fn($a,$b)=>strcasecmp(($barangay==='All'?($a['barangay']??'').' ':'').($a['last_name']??'').' '.($a['first_name']??''),($barangay==='All'?($b['barangay']??'').' ':'').($b['last_name']??'').' '.($b['first_name']??'')));
-    try { echo json_encode(['ok'=>true,'count'=>count($rows),'sheets'=>report_template_sheets($programName,$rows)],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); }
+    try { echo json_encode(['ok'=>true,'count'=>count($rows),'sheets'=>report_template_sheets($programName,$rows,$barangay)],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); }
     catch(Throwable $error){error_log('Report template preview: '.$error->getMessage());http_response_code(500);echo json_encode(['ok'=>false,'message'=>'The report preview could not be prepared. Please try again.']);}
     exit;
 }
