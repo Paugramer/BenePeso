@@ -1,0 +1,30 @@
+<?php
+require_once __DIR__.'/auth.php';
+require_once __DIR__.'/db.php';
+require_once __DIR__.'/module_shell.php';
+$requestedRole=(string)($_GET['role'] ?? '');
+$role=in_array($requestedRole,['admin','peso_staff'],true) ? $requestedRole : auth_first_active_role(['admin','peso_staff']);
+if (!$role) { http_response_code(403); exit('Please sign in as Admin or PESO Staff.'); }
+check_user_role($role);
+module_shell_start($role,'forms','Forms & Downloads','Printable forms and blank templates, grouped by program.');
+$documents=[
+ 'TUPAD'=>[
+ ['TUPAD Beneficiary Form','assets/templates/Tupadforms.xlsx'],
+ ['TUPAD Report Template','assets/report_templates/TUPAD_Report_Blank.xlsx'],
+ ['TUPAD Import Template','assets/templates/TUPAD_Import_Blank.xlsx']],
+ 'SPES'=>[
+ ['SPES Form 2 — Application Form','assets/forms/SPES Form 2 - Application Form.pdf'],
+ ['SPES Form 2-A — Oath of Undertaking','assets/forms/SPES Form 2-A - Oath of Undertaking.pdf'],
+ ['SPES Form 2 — Editable Form','assets/templates/SPES_Form_2_Official.docx'],
+ ['SPES Form 2-A — Editable Undertaking','assets/templates/SPES_Form_2A_Official.docx'],
+ ['SPES Report Template','assets/report_templates/SPES_Report_Blank.xlsx'],
+ ['SPES Import Template','assets/templates/SPES_Import_Blank.xlsx']],
+ 'MSME'=>[
+ ['MSME Profiling Form','assets/forms/MSME Profiling Form.pdf'],
+ ['MSME Report Template','assets/report_templates/MSME_Report_Blank.xlsx'],
+ ['MSME Import Template','assets/templates/MSME_Import_Blank.xlsx']]];
+foreach($documents as $program=>$items):?>
+<section class="module-panel"><h2><?=module_escape($program)?></h2><div class="document-grid">
+<article class="document-card"><div class="document-badges"><span class="document-badge"><?=module_escape($program)?></span><span class="document-badge file-badge">.PDF</span></div><h3>Program Guidelines &amp; Requirements</h3><p>Download the saved information for accepted program batches.</p><button class="module-btn secondary" type="button" data-guideline-program="<?=module_escape($program)?>"><i class="ph ph-download-simple" aria-hidden="true"></i> Download</button></article>
+<?php foreach($items as [$name,$path]): if(!is_file(__DIR__.'/'.$path)) continue;?><article class="document-card"><div class="document-badges"><span class="document-badge"><?=module_escape($program)?></span><span class="document-badge file-badge">.<?=module_escape(strtoupper(pathinfo($path,PATHINFO_EXTENSION)))?></span></div><h3><?=module_escape($name)?></h3><a class="module-btn secondary" download href="<?=module_escape(str_replace('%2F','/',rawurlencode($path)))?>" aria-label="Download <?=module_escape($name)?>"><i class="ph ph-download-simple" aria-hidden="true"></i> Download</a></article><?php endforeach?></div></section>
+<?php endforeach; ?><p id="documentDownloadStatus" class="module-note" role="status" aria-live="polite">Guidelines use the saved program information. Blank forms and report templates contain no beneficiary records.</p><script src="vendor/pdf-lib/pdf-lib.min.js"></script><script src="module_documents.js"></script><?php module_shell_end();

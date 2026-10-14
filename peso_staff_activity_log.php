@@ -308,9 +308,9 @@ if ($stmt) {
       <a href="peso_staff_program.php" class="nav-item" onclick="window.location.href='peso_staff_program.php'; return false;">
         <i class="ph ph-briefcase"></i> Program
       </a>
-      <a href="peso_staff_beneficiaries.php" class="nav-item" onclick="window.location.href='peso_staff_beneficiaries.php'; return false;">
-        <i class="ph ph-users"></i> Beneficiaries
-      </a>
+      <a href="peso_staff_application.php" class="nav-item"><i class="ph ph-file-text"></i> Application</a>
+      <a href="peso_staff_beneficiaries.php" class="nav-item"><i class="ph ph-chart-bar"></i> Report</a>
+      <a href="forms_downloads.php?role=peso_staff" class="nav-item"><i class="ph ph-download-simple"></i> Forms &amp; Downloads</a>
       <a href="peso_staff_activity_log.php" class="nav-item active" onclick="window.location.href='peso_staff_activity_log.php'; return false;">
         <i class="ph ph-clock-counter-clockwise"></i> Activity Log
       </a>

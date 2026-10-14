@@ -395,7 +395,9 @@ if (table_exists($conn, "activity_logs")) {
     <nav class="nav-area">
       <a href="peso_staff_dashboard.php" class="nav-item active"><i class="ph ph-squares-four"></i> Dashboard</a>
       <a href="peso_staff_program.php" class="nav-item"><i class="ph ph-briefcase"></i> Program</a>
-      <a href="peso_staff_beneficiaries.php" class="nav-item"><i class="ph ph-users"></i> Beneficiaries</a>
+      <a href="peso_staff_application.php" class="nav-item"><i class="ph ph-file-text"></i> Application</a>
+      <a href="peso_staff_beneficiaries.php" class="nav-item"><i class="ph ph-chart-bar"></i> Report</a>
+      <a href="forms_downloads.php?role=peso_staff" class="nav-item"><i class="ph ph-download-simple"></i> Forms &amp; Downloads</a>
       <a href="peso_staff_activity_log.php" class="nav-item"><i class="ph ph-clock-counter-clockwise"></i> Activity Log</a>
       <form method="POST" action="logout.php" class="sidebar-logout-form"><?php echo auth_csrf_input(); ?><input type="hidden" name="role" value="peso_staff"><button type="submit" class="nav-item logout-item"><i class="ph ph-sign-out"></i> Logout</button></form>
     </nav>
@@ -457,7 +459,7 @@ if (table_exists($conn, "activity_logs")) {
         <div class="stat-note">Approved batches currently in progress.</div>
       </a>
 
-      <a href="peso_staff_beneficiaries.php" class="stat-card stat-card-link animate-fade-in" style="animation-delay: 0.3s;">
+      <a href="peso_staff_application.php" class="stat-card stat-card-link animate-fade-in" style="animation-delay: 0.3s;">
         <div class="stat-top">
           <div class="stat-label">Unique Beneficiaries</div>
           <div class="stat-icon"><i class="ph-fill ph-users-three"></i></div>
@@ -530,7 +532,7 @@ if (table_exists($conn, "activity_logs")) {
           <div class="panel-title" id="barangayWorkloadTitle">Barangay Workload</div>
           <div class="panel-sub">All barangays with pending applications &bull; preview limited to 5 records per card</div>
         </div>
-        <a href="peso_staff_beneficiaries.php" class="panel-link">View beneficiaries</a>
+        <a href="peso_staff_application.php" class="panel-link">View beneficiaries</a>
       </div>
       <?php if ($barangayWorkload): ?>
         <div class="barangay-carousel" data-barangay-carousel>
@@ -572,7 +574,7 @@ if (table_exists($conn, "activity_logs")) {
           <button type="button" class="workload-modal-close" data-workload-close aria-label="Close"><i class="ph ph-x"></i></button>
         </header>
         <div class="workload-modal-list" data-workload-list></div>
-        <footer class="workload-modal-foot"><span><i class="ph ph-info"></i> Preview limited to 5 records.</span><a href="peso_staff_beneficiaries.php">Open beneficiary directory <i class="ph ph-arrow-right"></i></a></footer>
+        <footer class="workload-modal-foot"><span><i class="ph ph-info"></i> Preview limited to 5 records.</span><a href="peso_staff_application.php">Open beneficiary directory <i class="ph ph-arrow-right"></i></a></footer>
       </section>
     </div>
     <script type="application/json" id="barangayPendingData"><?php echo json_encode($barangayPendingDetails, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>

@@ -3,6 +3,7 @@ require_once __DIR__ . '/auth.php';
 require "db.php";
 require_once "report_columns.php";
 require_once "xlsx_report_helper.php";
+require_once "official_template_export.php";
 require_once "spes_lifecycle_helper.php";
 
 // Clean output buffer to ensure no stray spaces break the Excel file
@@ -35,7 +36,7 @@ if (empty($program_name)) {
 }
 
 // 3. Build the Beneficiaries Query
-$whereParts = ["p.program_name = ?", "b.approval_status = 'Approved'"];
+$whereParts = ["p.program_name = ?", historical_record_condition()];
 $params = [$program_name];
 $types = "s";
 
@@ -68,6 +69,17 @@ if (stripos($program_name, 'SPES') !== false && in_array($spes_group, ['baby', '
     $spes_group = 'all';
 }
 
+$reportOutcome = (string)($_GET['report_outcome'] ?? 'All');
+if (in_array($reportOutcome, ['Completed','Rejected','Not Qualified','Exam Failed','Cancelled'], true)) {
+    if ($reportOutcome === 'Rejected') $whereParts[] = "b.approval_status = 'Rejected'";
+    else { $whereParts[] = 'b.availment_status = ?'; $params[] = $reportOutcome; $types .= 's'; }
+}
+$reportSearch = mb_substr(trim((string)($_GET['report_search'] ?? '')), 0, 120);
+if ($reportSearch !== '') {
+    $whereParts[] = '(b.full_name LIKE ? OR b.barangay LIKE ? OR p.program_code LIKE ?)';
+    $reportLike = '%' . $reportSearch . '%'; array_push($params, $reportLike, $reportLike, $reportLike); $types .= 'sss';
+}
+
 // EXACT ALPHABETICAL SORTING
 $orderBy = ($barangay === "All") ? "b.barangay ASC, b.last_name ASC, b.first_name ASC" : "b.last_name ASC, b.first_name ASC";
 
@@ -91,6 +103,8 @@ if ($stmt) {
     $stmt->close();
 }
 
+$beneficiaries = enrich_reporting_rows($conn, $beneficiaries);
+
 $dateGenerated = date("F d, Y h:i A");
 $safeProgramName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $program_name);
 $filename = "Beneficiaries_" . $safeProgramName . "_" . date("Ymd");
@@ -98,6 +112,7 @@ $reportTitle = getReportProgramTitle($program_name);
 $subtitle = htmlspecialchars(getReportLocationLabel($barangay));
 
 if ($format === 'xlsx') {
+    if (stripos($program_name, 'SPES') !== false || stripos($program_name, 'TUPAD') !== false || stripos($program_name, 'MSME') !== false) output_official_template_report($program_name, $beneficiaries);
     $requestedColumns = isset($_GET['columns']) && is_array($_GET['columns']) ? $_GET['columns'] : [];
     $selectedColumns = getSelectedReportColumns($program_name, $requestedColumns);
     $subtitleParts = [];

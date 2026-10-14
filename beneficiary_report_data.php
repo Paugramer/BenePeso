@@ -2,6 +2,7 @@
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/spes_lifecycle_helper.php';
+require_once __DIR__ . '/historical_report_helper.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: private, no-store, max-age=0');
@@ -32,7 +33,7 @@ $programDateColumns = '';
 if (report_program_column_exists($conn, 'start_date')) $programDateColumns .= ', p.start_date';
 if (report_program_column_exists($conn, 'end_date')) $programDateColumns .= ', p.end_date';
 
-$approvalClause = $isAdmin ? " AND b.approval_status = 'Approved'" : '';
+$approvalClause = ' AND ' . historical_record_condition();
 $sql = "SELECT b.*, p.program_code, p.program_name$programDateColumns
         FROM beneficiaries b
         JOIN programs p ON b.program_id = p.program_id
@@ -56,4 +57,5 @@ if (stripos($programName, 'SPES') !== false && $rows) {
     $rows = spes_enrich_rows($conn, $rows);
 }
 
+$rows = enrich_reporting_rows($conn, $rows);
 echo json_encode(['ok' => true, 'records' => $rows], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

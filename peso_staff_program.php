@@ -256,7 +256,9 @@ if ($active_program) {
         <nav class="nav-area">
             <a href="peso_staff_dashboard.php" class="nav-item"><i class="ph ph-squares-four"></i> Dashboard</a>
             <a href="peso_staff_program.php" class="nav-item active"><i class="ph ph-briefcase"></i> Program</a>
-            <a href="peso_staff_beneficiaries.php" class="nav-item"><i class="ph ph-users"></i> Beneficiaries</a>
+            <a href="peso_staff_application.php" class="nav-item"><i class="ph ph-file-text"></i> Application</a>
+      <a href="peso_staff_beneficiaries.php" class="nav-item"><i class="ph ph-chart-bar"></i> Report</a>
+      <a href="forms_downloads.php?role=peso_staff" class="nav-item"><i class="ph ph-download-simple"></i> Forms &amp; Downloads</a>
             <a href="peso_staff_activity_log.php" class="nav-item"><i class="ph ph-clock-counter-clockwise"></i> Activity Log</a>
             <form method="POST" action="logout.php" class="sidebar-logout-form"><?php echo auth_csrf_input(); ?><input type="hidden" name="role" value="peso_staff"><button type="submit" class="nav-item logout-item"><i class="ph ph-sign-out"></i> Logout</button></form>
         </nav>
@@ -333,7 +335,7 @@ if ($active_program) {
                 <div>
                     <div class="panel-title"><?php echo $active_program ? e($active_program) . ' Directory' : 'Program Directories'; ?></div>
                 </div>
-                <?php if ($active_program): ?><a class="directory-beneficiary-link" href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($active_program); ?>"><i class="ph ph-users-three"></i> Find beneficiaries</a><?php endif; ?>
+                <?php if ($active_program): ?><a class="directory-beneficiary-link" href="peso_staff_application.php?program_name=<?php echo urlencode($active_program); ?>"><i class="ph ph-users-three"></i> Find beneficiaries</a><?php endif; ?>
             </div>
 
             <div class="custom-tabs">
@@ -518,7 +520,7 @@ if ($active_program) {
                                 
                                 <td>
                                     <?php if($b['approval_status'] !== 'Pending'): ?>
-                                        <a href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($b['program_name']); ?>&program_id=<?php echo (int)$b['program_id']; ?>" class="batch-title-link" title="Open Applicants">
+                                        <a href="peso_staff_application.php?program_name=<?php echo urlencode($b['program_name']); ?>&program_id=<?php echo (int)$b['program_id']; ?>" class="batch-title-link" title="Open Applicants">
                                             <div class="batch-title-td" style="color: var(--green); display:flex; align-items:center; gap:6px;">
                                                 <i class="ph <?php echo program_directory_icon($b['program_name']); ?>" aria-hidden="true"></i><?php echo e($b['program_name']); ?> <i class="ph-bold ph-link" style="font-size: 14px;"></i>
                                             </div>
@@ -543,7 +545,7 @@ if ($active_program) {
                                         <div class="slim-fill <?php echo $pct >= 100 ? 'full' : ($pct >= 80 ? 'warning' : 'safe'); ?>" style="width: <?php echo $pct; ?>%;"></div>
                                     </div>
                                     <?php if ((int)$b['pending_beneficiary_count'] > 0): ?>
-                                        <a class="application-queue-link" href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($b['program_name']); ?>&amp;program_id=<?php echo (int)$b['program_id']; ?>&amp;approval=Pending" title="Review pending applications for this batch"><i class="ph ph-hourglass-medium" aria-hidden="true"></i><?php echo (int)$b['pending_beneficiary_count']; ?> awaiting review</a>
+                                        <a class="application-queue-link" href="peso_staff_application.php?program_name=<?php echo urlencode($b['program_name']); ?>&amp;program_id=<?php echo (int)$b['program_id']; ?>&amp;approval=Pending" title="Review pending applications for this batch"><i class="ph ph-hourglass-medium" aria-hidden="true"></i><?php echo (int)$b['pending_beneficiary_count']; ?> awaiting review</a>
                                     <?php else: ?>
                                         <span class="application-queue-clear"><i class="ph ph-check-circle" aria-hidden="true"></i>No pending applications</span>
                                     <?php endif; ?>
@@ -572,7 +574,7 @@ if ($active_program) {
                                                 <i class="ph-bold ph-lock-key"></i> Applicants
                                             </span>
                                         <?php else: ?>
-                                            <a href="peso_staff_beneficiaries.php?program_name=<?php echo urlencode($b['program_name']); ?>&amp;program_id=<?php echo (int)$b['program_id']; ?><?php echo (int)$b['pending_beneficiary_count'] > 0 ? '&amp;approval=Pending' : ''; ?>" class="btn-action-view">
+                                            <a href="peso_staff_application.php?program_name=<?php echo urlencode($b['program_name']); ?>&amp;program_id=<?php echo (int)$b['program_id']; ?><?php echo (int)$b['pending_beneficiary_count'] > 0 ? '&amp;approval=Pending' : ''; ?>" class="btn-action-view">
                                                 <i class="ph-bold <?php echo (int)$b['pending_beneficiary_count'] > 0 ? 'ph-clipboard-text' : 'ph-users'; ?>"></i> <?php echo (int)$b['pending_beneficiary_count'] > 0 ? 'Review ' . (int)$b['pending_beneficiary_count'] : 'Applicants'; ?>
                                             </a>
                                         <?php endif; ?>

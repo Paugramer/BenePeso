@@ -265,6 +265,11 @@ function beneficiaryTableColumns(mysqli $conn): array
 
 function updateImportedBeneficiary(mysqli $conn, int $beneficiaryId, array $rowData, string $availmentStatus): bool
 {
+    require_once __DIR__ . '/historical_report_helper.php';
+    $check = $conn->prepare('SELECT beneficiary_id FROM beneficiaries b WHERE beneficiary_id=? AND ' . historical_record_condition());
+    $check->bind_param('i', $beneficiaryId); $check->execute();
+    $archived = $check->get_result()->num_rows > 0; $check->close();
+    if ($archived) return false;
     $databaseColumns = beneficiaryTableColumns($conn);
     $blocked = ['beneficiary_id', 'user_id', 'program_id', 'created_by', 'created_at', 'updated_at', 'approval_status', 'availment_status'];
     $fields = [];
@@ -276,7 +281,7 @@ function updateImportedBeneficiary(mysqli $conn, int $beneficiaryId, array $rowD
     $fields['availment_status'] = $availmentStatus;
 
     $assignments = array_map(static fn($column) => "`$column` = ?", array_keys($fields));
-    $sql = 'UPDATE beneficiaries SET ' . implode(', ', $assignments) . ', updated_at = NOW() WHERE beneficiary_id = ?';
+    $sql = 'UPDATE beneficiaries b SET ' . implode(', ', $assignments) . ', updated_at = NOW() WHERE beneficiary_id = ? AND NOT ' . historical_record_condition();
     $values = array_values($fields);
     $values[] = $beneficiaryId;
     $types = str_repeat('s', count($fields)) . 'i';
@@ -285,8 +290,9 @@ function updateImportedBeneficiary(mysqli $conn, int $beneficiaryId, array $rowD
     if (!$stmt) return false;
     $stmt->bind_param($types, ...$values);
     $saved = $stmt->execute();
+    $changed = $stmt->affected_rows > 0;
     $stmt->close();
-    return $saved;
+    return $saved && $changed;
 }
 
 function insertImportedBeneficiary(

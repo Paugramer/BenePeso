@@ -3,7 +3,7 @@
 function beneficiary_lifecycle_label(string $status): string
 {
     return [
-        'Not Yet Availed' => 'Approved - Awaiting Documents',
+        'Not Yet Availed' => 'Waiting for Requirements',
         'Requirements Received' => 'Documents Submitted',
         'Examination' => 'Examination Scheduled',
         'Exam Passed' => 'Examination Passed',

@@ -53,7 +53,7 @@ foreach ($documents as $document) {
         break;
     }
 }
-$back = ($role === 'admin' ? 'admin_beneficiaries.php' : 'peso_staff_beneficiaries.php') . '?program_name=' . rawurlencode($beneficiary['program_name']);
+$back = ($role === 'admin' ? 'admin_application.php' : 'peso_staff_application.php') . '?program_name=' . rawurlencode($beneficiary['program_name']);
 $token = auth_csrf_token();
 function td_h($value): string { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); }
 ?>

@@ -109,7 +109,8 @@
   display: flex !important;
   flex-direction: column !important;
   gap: 7px !important;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: #fff !important;
 }
 .sidebar-logout-form { width: 100%; margin: auto 0 0; padding: 0; }
