@@ -36,12 +36,10 @@ body.forms-workspace{font-family:Poppins,-apple-system,BlinkMacSystemFont,sans-s
 /* Use the Application drawer and compact heading treatment on small screens. */
 @media(max-width:992px){
  .forms-workspace .side-area{height:100dvh!important;max-height:100dvh!important;width:min(286px,86vw)!important;min-width:0!important;max-width:86vw!important}
- .forms-workspace .side-top{position:relative!important;min-height:66px;padding:6px 48px 6px 0!important}
- .forms-workspace .side-close{position:absolute!important;top:12px;right:0;display:grid!important;place-items:center;width:42px;height:42px;padding:0;background:#fff;color:#173728;border:1px solid #d6e5dd;border-radius:50%;box-shadow:0 6px 18px rgba(13,54,37,.1);font:24px/1 Poppins,sans-serif;cursor:pointer}
- .forms-workspace .side-brand{min-width:0;gap:8px!important}
+ .forms-workspace .side-top{position:relative!important;min-height:66px;padding:6px 58px 6px 0!important}
+ .forms-workspace .side-close{position:absolute!important;top:12px;right:12px;display:grid!important;place-items:center;width:42px;height:42px;padding:0;background:#fff;color:#173728;border:1px solid #d6e5dd;border-radius:50%;box-shadow:0 6px 18px rgba(13,54,37,.1);font:24px/1 Poppins,sans-serif;cursor:pointer}
+ .forms-workspace .side-brand{min-width:0;gap:12px!important}
  .forms-workspace .side-brand>div{min-width:0}
- .forms-workspace .side-area .side-title{font-size:18px!important}
- .forms-workspace .side-logo{width:40px!important;height:40px!important;flex-basis:40px!important}
  .forms-workspace .nav-area{overscroll-behavior:contain}
  .forms-workspace .sidebar-logout-form{flex-shrink:0}
  .forms-workspace .menu-toggle{width:40px;height:40px;padding:10px;display:flex;flex-direction:column;justify-content:center;gap:4px}

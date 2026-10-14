@@ -2912,7 +2912,7 @@ if ($selectedProgramName !== "") {
 
       <div class="form-group">
         <div class="import-upload-heading"><label for="bulkFileInput">Upload File *</label></div>
-        <p class="import-template-hint">Start with the <a class="import-template-link" download="<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import.xlsx" href="assets/templates/<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import_Blank.xlsx">downloadable template</a>, fill in the beneficiary details, then upload the file.</p>
+        <p class="import-template-hint"><a class="import-template-link" download="<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import.xlsx" href="assets/templates/<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import_Blank.xlsx">Use template</a></p>
 
         <label class="file-upload-box-dashed" style="display: block; border: 2px dashed var(--green); border-radius: 8px; padding: 32px 16px; text-align: center; background: #f9fbf9; cursor: pointer; transition: all 0.2s ease;">
             <input type="file" name="csv_file" id="bulkFileInput" aria-describedby="bulkFileError" accept=".csv,.xlsx" required style="display: none;">
