@@ -23,7 +23,7 @@ function normalize_report_workbook(PharData $archive, string $program): void {
         // Center the drawing against the visible report columns, including hidden-column offsets.
         $default=(float)$xp->evaluate('string(//m:sheetFormatPr/@defaultColWidth)');$default=($default>0?$default:8.43)*7+5;
         $widths=[];foreach($xp->query('//m:cols/m:col')as$column)for($c=(int)$column->getAttribute('min');$c<=(int)$column->getAttribute('max');$c++)$widths[$c]=$column->getAttribute('hidden')==='1'?0:(float)$column->getAttribute('width')*7+5;
-        $last=1;foreach($xp->query('//m:row[@r="'.$headerRow.'"]/m:c')as$cell){preg_match('/^([A-Z]+)/',$cell->getAttribute('r'),$parts);$last=max($last,report_column_number($parts[1]));}
+        $last=1;foreach($xp->query('//m:row[@r="'.$headerRow.'"]/m:c')as$cell){$label=$xp->evaluate('string(m:is)',$cell);if($label==='')$label=$xp->evaluate('string(m:v)',$cell);if(trim($label)==='')continue;preg_match('/^([A-Z]+)/',$cell->getAttribute('r'),$parts);$last=max($last,report_column_number($parts[1]));}
         $first=stripos($program,'MSME')!==false&&$path==='xl/worksheets/sheet1.xml'?2:1;$tableWidth=0;$leading=0;
         for($c=1;$c<=$last;$c++){if($c<$first)$leading+=$widths[$c]??$default;else$tableWidth+=$widths[$c]??$default;}
         $left=$leading+max(0,($tableWidth-1460)/2);$anchor=1;
