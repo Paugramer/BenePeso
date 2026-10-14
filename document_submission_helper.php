@@ -47,3 +47,5 @@ function request_document_resubmission(mysqli $conn,array $ids,string $reason,st
 function document_submission_reason_available(mysqli $conn): bool {
  try{return $conn->query("SHOW COLUMNS FROM application_document_submissions LIKE 'resubmission_reason'")->num_rows>0;}catch(Throwable $e){return false;}
 }
+
+function document_resubmission_filter_reasons(): array {return ['Missing Requirement','Invalid Document'];}

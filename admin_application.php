@@ -1664,7 +1664,8 @@ if ($selectedProgramName !== "") {
   $params = [$selectedProgramName];
   $types = "s";
   $reasonFilter=($_GET['requirements_review'] ?? '')==='followup' ? trim((string)($_GET['resubmission_reason_filter'] ?? '')) : '';
-  if(in_array($reasonFilter,document_resubmission_reasons(),true)){
+  if(!in_array($reasonFilter,document_resubmission_filter_reasons(),true)){ $reasonFilter='';unset($_GET['resubmission_reason_filter']); }
+  if(in_array($reasonFilter,document_resubmission_filter_reasons(),true)){
       if(document_submission_reason_available($conn)){ $whereParts[]="EXISTS (SELECT 1 FROM application_document_submissions ds WHERE ds.beneficiary_id=b.beneficiary_id AND ds.requested_at IS NOT NULL AND (CASE WHEN ds.resubmission_reason IN ('Incomplete Document','Unreadable Document','Incorrect Information','Expired Document') THEN 'Invalid Document' ELSE ds.resubmission_reason END)=?)";$params[]=$reasonFilter;$types.='s'; }else $whereParts[]='1=0';
   }
 
@@ -1954,7 +1955,7 @@ if ($selectedProgramName !== "") {
               <option value="All">All Barangays</option>
               <?php foreach ($barangays as $barangay): ?><option value="<?php echo h($barangay); ?>" <?php echo $selectedBarangay === $barangay ? 'selected' : ''; ?>><?php echo h($barangay); ?></option><?php endforeach; ?>
             </select>
-            <?php if(($_GET['requirements_review'] ?? '')==='followup'): ?><select name="resubmission_reason_filter" aria-label="Resubmission reason" onchange="this.form.querySelector('input[name=page]').value=1;this.form.requestSubmit()"><option value="">All Resubmission Reasons</option><?php foreach(document_resubmission_reasons() as $reason):?><option value="<?=h($reason)?>" <?=($_GET['resubmission_reason_filter'] ?? '')===$reason?'selected':''?>><?=h($reason)?></option><?php endforeach?></select><?php endif; ?>
+            <?php if(($_GET['requirements_review'] ?? '')==='followup'): ?><select name="resubmission_reason_filter" aria-label="Resubmission reason" onchange="this.form.querySelector('input[name=page]').value=1;this.form.requestSubmit()"><option value="">All Resubmission Reasons</option><?php foreach(document_resubmission_filter_reasons() as $reason):?><option value="<?=h($reason)?>" <?=($_GET['resubmission_reason_filter'] ?? '')===$reason?'selected':''?>><?=h($reason)?></option><?php endforeach?></select><?php endif; ?>
             <input type="hidden" name="requirements_review" value="<?=($_GET['requirements_review'] ?? '')==='followup'?'followup':'all'?>">
               <select name="availment" class="filter-select auto-submit">
               <option value="All" <?php echo $availmentFilter === 'All' ? 'selected' : ''; ?>>All Status</option>
