@@ -1297,7 +1297,6 @@ $stmt->bind_param($bindTypes, ...$bindParams);
 
           if (in_array($ext, ["csv", "xlsx"], true)) {
               try {
-              $checkStmt = $conn->prepare("SELECT beneficiary_id FROM beneficiaries WHERE program_id = ? AND LOWER(TRIM(full_name)) = LOWER(TRIM(?))");
 
               $header_map = [
                   'firstname' => 'first_name', 'middlename' => 'middle_name', 'lastname' => 'last_name',
@@ -1529,16 +1528,12 @@ $stmt->bind_param($bindTypes, ...$bindParams);
               if (array_filter($preparedRows, static fn($row) => count(array_intersect(array_keys($row), beneficiaryImportReportingFields())) > 0)) prepareBeneficiaryImportReportStorage($conn);
               validateBeneficiaryImportDuplicates($conn, $program_id, $preparedRows, $batch_availment);
               prepareBeneficiaryImportOutbox($conn);
-              runBeneficiaryImportTransaction($conn,$preparedRows,function($row_data)use($conn,$checkStmt,$program_id,$batch_availment,$batch_message,$batch_schedule_date,$batch_schedule_place,$admin_id,&$successCount,&$updatedCount,&$failedCount,&$emailSentCount,&$emailFailedCount,&$emailFailureReasons){
-                  $full_name=$row_data['full_name'];
-                  $checkStmt->bind_param("is", $program_id, $full_name);
-                  if(!$checkStmt->execute())throw new RuntimeException('Import duplicate check failed.');
-                  $res = $checkStmt->get_result();
+              runBeneficiaryImportTransaction($conn,$preparedRows,function($row_data)use($conn,$program_id,$batch_availment,$batch_message,$batch_schedule_date,$batch_schedule_place,$admin_id,&$successCount,&$updatedCount,&$failedCount,&$emailSentCount,&$emailFailedCount,&$emailFailureReasons){
+                  $existing = resolveBeneficiaryImportMatch($conn, $program_id, $row_data, true);
 
                   $savedBeneficiaryId = 0;
-                  if ($res->num_rows > 0) {
-                      $row = $res->fetch_assoc();
-                      $existing_id = $row['beneficiary_id'];
+                  if ($existing) {
+                      $existing_id = $existing['beneficiary_id'];
                       if (updateImportedBeneficiary($conn, $existing_id, $row_data, $batch_availment)) {
                           $updatedCount++;
                           $savedBeneficiaryId = (int)$existing_id;
@@ -1580,7 +1575,6 @@ $stmt->bind_param($bindTypes, ...$bindParams);
                   recordApplicationActivity($conn, 'admin', $admin_id, 'Import Completed', $description);
               });
 
-              $checkStmt->close();
 
               $emailSummary = " Status emails: $emailSentCount will be sent automatically, $emailFailedCount could not be scheduled.";
 

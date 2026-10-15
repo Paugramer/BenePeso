@@ -347,25 +347,72 @@ function beneficiaryImportFieldsHaveChanges(array $existing, array $fields): boo
     return false;
 }
 
+/** Names locate candidates; identity evidence is required before any update. */
+function beneficiaryImportIdentityMatches(array $existing, array $incoming): bool
+{
+    require_once __DIR__ . '/beneficiary_duplicate_helper.php';
+    $name = beneficiary_identity_key($incoming['full_name'] ?? '');
+    if ($name === '' || $name !== beneficiary_identity_key($existing['full_name'] ?? '')) return false;
+    $birthdate = trim((string)($incoming['birthdate'] ?? ''));
+    $previousBirthdate = trim((string)($existing['birthdate'] ?? ''));
+    if ($birthdate !== '' && $previousBirthdate !== '') return $birthdate === $previousBirthdate;
+    foreach (['id_number', 'email', 'contact_no'] as $field) {
+        $value = trim((string)($incoming[$field] ?? ''));
+        $previous = trim((string)($existing[$field] ?? ''));
+        $missing = ['', 'none', 'n/a', 'na', 'unknown', 'not applicable', '-', '0'];
+        if (in_array(strtolower($value), $missing, true) || in_array(strtolower($previous), $missing, true)) continue;
+        if ($field === 'contact_no') { $value = beneficiary_contact_key($value); $previous = beneficiary_contact_key($previous); }
+        if ($value !== '' && $previous !== '' && strcasecmp($value, $previous) === 0) return true;
+    }
+    return false;
+}
+
+function resolveBeneficiaryImportMatch(mysqli $conn, int $programId, array $incoming, bool $lock = false): ?array
+{
+    $statement = $conn->prepare('SELECT * FROM beneficiaries WHERE program_id=? AND LOWER(TRIM(full_name))=LOWER(TRIM(?))' . ($lock ? ' FOR UPDATE' : ''));
+    $name = $incoming['full_name'];
+    $statement->bind_param('is', $programId, $name);
+    $statement->execute();
+    $candidates = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+    $statement->close();
+    if (!$candidates) return null;
+    $matches = array_values(array_filter($candidates, static fn($record) => beneficiaryImportIdentityMatches($record, $incoming)));
+    if (count($matches) !== 1) {
+        throw new BeneficiaryImportValidationException('A matching name has different or incomplete identity details. Review the existing profile. No records were saved.');
+    }
+    return $matches[0];
+}
+
+function validateBeneficiaryImportStatus(mysqli $conn, array $existing, string $status): void
+{
+    $current = trim((string)($existing['availment_status'] ?? '')) ?: 'Not Yet Availed';
+    if (($existing['approval_status'] ?? '') === 'Rejected' || in_array($current, ['Completed','Not Qualified','Exam Failed','Cancelled'], true)) {
+        throw new BeneficiaryImportValidationException('This record is completed or closed and cannot be changed by import. No records were saved.');
+    }
+    if ($current === $status) return; // Updating details does not advance the workflow.
+    require_once __DIR__ . '/beneficiary_lifecycle_helper.php';
+    if (!function_exists('spes_beneficiary_is_returning')) require_once __DIR__ . '/spes_lifecycle_helper.php';
+    $transition = beneficiary_validate_status_transition($conn, (int)$existing['beneficiary_id'], $status);
+    if (!$transition['allowed']) throw new BeneficiaryImportValidationException($transition['message'] . ' No records were saved.');
+}
+
 /** Count all unchanged/closed matches before any import record is saved. */
 function validateBeneficiaryImportDuplicates(mysqli $conn, int $programId, array $rows, string $status): void
 {
     $columns = beneficiaryTableColumns($conn) + array_fill_keys(beneficiaryImportReportingFields(), true);
     $blocked = ['beneficiary_id','user_id','program_id','created_by','created_at','updated_at','approval_status','availment_status'];
-    $stmt = $conn->prepare('SELECT * FROM beneficiaries WHERE program_id=? AND LOWER(TRIM(full_name))=LOWER(TRIM(?))');
     $duplicates = 0; $closed = 0;
     foreach ($rows as $row) {
-        $name = $row['full_name']; $stmt->bind_param('is', $programId, $name); $stmt->execute();
-        $existing = $stmt->get_result()->fetch_assoc();
+        $existing = resolveBeneficiaryImportMatch($conn, $programId, $row);
         if (!$existing) continue;
         $existing=beneficiaryImportExistingDetails($conn,$existing);
         if ($existing['approval_status'] === 'Rejected' || ($existing['approval_status'] === 'Approved' && in_array($existing['availment_status'], ['Completed','Not Qualified','Exam Failed','Cancelled'], true))) { $closed++; continue; }
+        validateBeneficiaryImportStatus($conn, $existing, $status);
         $fields = [];
         foreach ($row as $column => $value) if ($value !== '' && isset($columns[$column]) && !in_array($column, $blocked, true)) $fields[$column] = (string)$value;
         $fields['availment_status'] = $status;
         if (!beneficiaryImportFieldsHaveChanges($existing, $fields)) $duplicates++;
     }
-    $stmt->close();
     if ($duplicates || $closed) {
         $count = $duplicates + $closed;
         $message = $count . ($count === 1 ? ' record already exists.' : ' records already exist.');
@@ -390,11 +437,16 @@ function updateImportedBeneficiary(mysqli $conn, int $beneficiaryId, array $rowD
     }
     $fields['availment_status'] = $availmentStatus;
 
-    $existingStmt = $conn->prepare('SELECT * FROM beneficiaries WHERE beneficiary_id = ?');
+    $existingStmt = $conn->prepare('SELECT * FROM beneficiaries WHERE beneficiary_id = ? FOR UPDATE');
     $existingStmt->bind_param('i', $beneficiaryId);
     $existingStmt->execute();
     $existing = $existingStmt->get_result()->fetch_assoc();
     $existingStmt->close();
+    if (!$existing || !beneficiaryImportIdentityMatches($existing, $rowData)) {
+        throw new BeneficiaryImportValidationException('The identity details do not match the existing profile. No records were saved.');
+    }
+    // Recheck under the write lock, so a concurrent status update cannot be overwritten.
+    validateBeneficiaryImportStatus($conn, $existing, $availmentStatus);
     $comparison=$fields;foreach(beneficiaryImportReportingFields() as $field)if(($rowData[$field]??'')!=='')$comparison[$field]=(string)$rowData[$field];
     $hasChanges = beneficiaryImportFieldsHaveChanges($existing ? beneficiaryImportExistingDetails($conn,$existing) : [], $comparison);
     if ($existing && !$hasChanges) throw new BeneficiaryImportValidationException('These records already exist with the same details and status. No records were saved.');
