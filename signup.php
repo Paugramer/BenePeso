@@ -16,10 +16,14 @@ unset($_SESSION["form_data"]);
 $google_identity = google_auth_pending_identity();
 $google_registration = $google_identity !== null;
 $google_picture_url = $google_registration ? google_auth_profile_picture_url($google_identity) : '';
+$google_provided_names = [];
 if ($google_registration) {
     $form_data['email'] = $google_identity['email'];
     if (empty($form_data['first_name'])) $form_data['first_name'] = $google_identity['given_name'] ?? '';
     if (empty($form_data['last_name'])) $form_data['last_name'] = $google_identity['family_name'] ?? '';
+    foreach (['first_name' => 'given_name', 'last_name' => 'family_name'] as $field => $claim) {
+        if (trim((string)($google_identity[$claim] ?? '')) !== '' && strlen((string)$form_data[$field]) <= 50) $google_provided_names[$field] = true;
+    }
 }
 
 function get_val($field) {
@@ -52,6 +56,12 @@ $barangays = beneficiary_barangay_options();
   <link rel="stylesheet" href="auth_refresh.css?v=20">
   <link rel="stylesheet" href="beneficiary_mobile.css?v=19">
   <link rel="stylesheet" href="system_readability.css?v=1">
+  <style>
+    #signupForm [data-google-provided][hidden] { display: none !important; }
+    #signupForm .form-row:has(> [data-google-provided][hidden]) { grid-template-columns: minmax(0, 1fr); }
+    .google-profile-summary { margin-bottom: 16px; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+    .google-profile-summary p { margin: 0 0 8px; }
+  </style>
 <script src="frontend_polish.js?v=20260925" defer></script>
   <?php if (!$google_registration): ?>
     <script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('google-library-ready'))"></script>
@@ -135,9 +145,16 @@ $barangays = beneficiary_barangay_options();
           <div class="auth-form-alert" id="signupFormAlert" role="alert" aria-live="assertive" hidden></div>
 
           <div class="form-step active" id="step1">
+              <?php if ($google_registration): ?>
+              <div class="google-profile-summary">
+                <p>Saved from Google: <strong id="googleNameSummary"><?= htmlspecialchars(trim(($form_data['first_name'] ?? '') . ' ' . ($form_data['last_name'] ?? '')), ENT_QUOTES, 'UTF-8') ?></strong>. Your verified email is already included.</p>
+                <p>Add your missing details below.</p>
+                <?php if ($google_provided_names): ?><button type="button" class="privacy-notice-link" id="editGoogleName" aria-expanded="false">Edit name</button><?php endif; ?>
+              </div>
+              <?php endif; ?>
               
               <div class="form-row">
-                <div class="form-group">
+                <div class="form-group"<?= isset($google_provided_names['first_name']) ? ' data-google-provided hidden' : '' ?>>
                   <label for="firstName">First Name</label>
                   <input type="text" id="firstName" name="first_name" maxlength="50" autocomplete="given-name" placeholder="e.g. Juan" value="<?php echo get_val('first_name'); ?>" required>
                 </div>
@@ -148,7 +165,7 @@ $barangays = beneficiary_barangay_options();
               </div>
 
               <div class="form-row">
-                <div class="form-group">
+                <div class="form-group"<?= isset($google_provided_names['last_name']) ? ' data-google-provided hidden' : '' ?>>
                   <label for="lastName">Last Name</label>
                   <input type="text" id="lastName" name="last_name" maxlength="50" autocomplete="family-name" placeholder="e.g. Dela Cruz" value="<?php echo get_val('last_name'); ?>" required>
                 </div>
@@ -190,7 +207,7 @@ $barangays = beneficiary_barangay_options();
                   </div>
               </div>
 
-              <button type="button" class="btn" id="nextBtn1" name="next_btn_1" onclick="goToStep(2)">Next: Address & Security</button>
+              <button type="button" class="btn" id="nextBtn1" name="next_btn_1" onclick="goToStep(2)"><?= $google_registration ? 'Next: Contact & Address' : 'Next: Address & Security' ?></button>
           </div>
 
           <div class="form-step" id="step2">
@@ -223,7 +240,7 @@ $barangays = beneficiary_barangay_options();
                 </div>
               </div>
 
-              <div class="form-group full-width">
+              <div class="form-group full-width"<?= $google_registration ? ' data-google-provided hidden' : '' ?>>
                 <label for="email">Email Address</label>
                 <input type="email" id="email" name="email" placeholder="juan.delacruz@email.com" autocomplete="email" value="<?php echo get_val('email'); ?>" required <?= $google_registration ? 'readonly aria-readonly="true"' : '' ?>>
               </div>
@@ -493,6 +510,7 @@ $barangays = beneficiary_barangay_options();
 
           requiredInputs.forEach(input => {
               if (!String(input.value || '').trim() || !input.checkValidity()) {
+                  input.closest('[data-google-provided]')?.removeAttribute('hidden');
                   isValid = false;
                   firstInvalid ||= input;
                   setFieldError(input, fieldMessage(input));
@@ -832,6 +850,24 @@ $barangays = beneficiary_barangay_options();
   });
 </script>
 <script src="signup_draft.js?v=1"></script>
+<?php if ($google_registration): ?>
+<script>
+(() => {
+  const button = document.getElementById('editGoogleName');
+  const names = [document.getElementById('firstName'), document.getElementById('lastName')];
+  const summary = document.getElementById('googleNameSummary');
+  const update = () => { summary.textContent = names.map(input => input.value.trim()).filter(Boolean).join(' '); };
+  update(); // Include corrections restored from an unfinished registration draft.
+  names.forEach(input => input.addEventListener('input', update));
+  button?.addEventListener('click', () => {
+    names.forEach(input => input.closest('[data-google-provided]')?.removeAttribute('hidden'));
+    button.setAttribute('aria-expanded', 'true');
+    button.hidden = true;
+    names[0].focus();
+  });
+})();
+</script>
+<?php endif; ?>
 
 </body>
 </html>
