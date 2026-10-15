@@ -55,6 +55,15 @@ function validateBeneficiaryImportTemplate(array $headers, string $programName):
     if (!$expected || count($actual) !== count(array_unique($actual))) {
         throw new BeneficiaryImportValidationException('The file has missing or duplicate columns. Use the template for this program.');
     }
+    if ($program === 'MSME') {
+        $optional = ['nightmarketstallboothno','datestarted','nightmarkettwodayearnings','nightmarkettotalearnings','websitesocialmedia','emailaddress','ownercontactnumber'];
+        $expected = array_values(array_diff($expected, $optional));
+        $actual = array_values(array_diff($actual, $optional));
+    }
+    if ($program === 'TUPAD') {
+        $expected = array_map(static fn($key) => $key === 'dependents' ? 'dependentname' : $key, $expected);
+        $actual = array_map(static fn($key) => $key === 'dependents' ? 'dependentname' : $key, $actual);
+    }
     sort($expected);
     sort($actual);
     if ($actual !== $expected) throw new BeneficiaryImportValidationException('The columns do not match this program. Download its import template and try again.');
@@ -296,6 +305,75 @@ function beneficiaryTableColumns(mysqli $conn): array
     return $columns;
 }
 
+function beneficiaryImportReportingFields(): array {
+    return ['nm_stall_no','nm_date_started','owner_contact','nm_two_day_earnings','nm_total_earnings'];
+}
+function beneficiaryImportExistingDetails(mysqli $conn, array $existing): array {
+    require_once __DIR__.'/historical_report_helper.php';
+    return reporting_details_available($conn) ? enrich_reporting_rows($conn, [$existing])[0] : $existing;
+}
+function prepareBeneficiaryImportReportStorage(mysqli $conn): void {
+    $conn->query(file_get_contents(__DIR__.'/database_update_phase2_reporting.sql'));
+    $columns=[];$result=$conn->query('SHOW COLUMNS FROM beneficiary_reporting_details');while($row=$result->fetch_assoc())$columns[$row['Field']]=true;
+    foreach(['nm_stall_no'=>"VARCHAR(100) NOT NULL DEFAULT ''",'nm_date_started'=>'DATE NULL','owner_contact'=>"VARCHAR(30) NOT NULL DEFAULT ''"] as $field=>$type) {
+        if(!isset($columns[$field]))$conn->query("ALTER TABLE beneficiary_reporting_details ADD COLUMN `$field` $type");
+    }
+    $engine=$conn->query("SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='beneficiary_reporting_details'")->fetch_assoc();
+    if(strtolower($engine['ENGINE']??'')!=='innodb')throw new RuntimeException('Supplementary import storage must be transactional.');
+}
+function saveBeneficiaryImportReportDetails(mysqli $conn, int $id, array $row, string $role, int $actor): void {
+    $fields=[];foreach(beneficiaryImportReportingFields() as $field)if(($row[$field]??'')!=='')$fields[$field]=(string)$row[$field];
+    if(!$fields)return;
+    $columns=array_keys($fields);$names=implode(',',array_map(static fn($name)=>"`$name`",$columns));
+    $updates=implode(',',array_map(static fn($name)=>"`$name`=VALUES(`$name`)",$columns));
+    $placeholders=implode(',',array_fill(0,count($fields)+3,'?'));
+    $stmt=$conn->prepare("INSERT INTO beneficiary_reporting_details (beneficiary_id,$names,updated_by_role,updated_by_id) VALUES ($placeholders) ON DUPLICATE KEY UPDATE $updates,updated_by_role=VALUES(updated_by_role),updated_by_id=VALUES(updated_by_id)");
+    $values=array_merge([$id],array_values($fields),[$role,$actor]);$types='i'.str_repeat('s',count($fields)+1).'i';$stmt->bind_param($types,...$values);
+    if(!$stmt->execute())throw new RuntimeException('Supplementary import details could not be saved.');$stmt->close();
+}
+
+function beneficiaryImportFieldsHaveChanges(array $existing, array $fields): bool
+{
+    foreach ($fields as $column => $value) {
+        $previous = trim((string)($existing[$column] ?? ''));
+        $incoming = trim((string)$value);
+        $numeric = in_array($column, ['age', 'avg_monthly_income', 'initial_capital', 'current_capital', 'daily_earnings', 'hr_total', 'hr_male', 'hr_female', 'emp_regular', 'emp_seasonal', 'emp_contractual', 'emp_family', 'nm_two_day_earnings', 'nm_total_earnings'], true);
+        $same = $numeric && is_numeric($previous) && is_numeric($incoming)
+            ? (float)$previous === (float)$incoming : $previous === $incoming;
+        if (!$same) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/** Count all unchanged/closed matches before any import record is saved. */
+function validateBeneficiaryImportDuplicates(mysqli $conn, int $programId, array $rows, string $status): void
+{
+    $columns = beneficiaryTableColumns($conn) + array_fill_keys(beneficiaryImportReportingFields(), true);
+    $blocked = ['beneficiary_id','user_id','program_id','created_by','created_at','updated_at','approval_status','availment_status'];
+    $stmt = $conn->prepare('SELECT * FROM beneficiaries WHERE program_id=? AND LOWER(TRIM(full_name))=LOWER(TRIM(?))');
+    $duplicates = 0; $closed = 0;
+    foreach ($rows as $row) {
+        $name = $row['full_name']; $stmt->bind_param('is', $programId, $name); $stmt->execute();
+        $existing = $stmt->get_result()->fetch_assoc();
+        if (!$existing) continue;
+        $existing=beneficiaryImportExistingDetails($conn,$existing);
+        if ($existing['approval_status'] === 'Rejected' || ($existing['approval_status'] === 'Approved' && in_array($existing['availment_status'], ['Completed','Not Qualified','Exam Failed','Cancelled'], true))) { $closed++; continue; }
+        $fields = [];
+        foreach ($row as $column => $value) if ($value !== '' && isset($columns[$column]) && !in_array($column, $blocked, true)) $fields[$column] = (string)$value;
+        $fields['availment_status'] = $status;
+        if (!beneficiaryImportFieldsHaveChanges($existing, $fields)) $duplicates++;
+    }
+    $stmt->close();
+    if ($duplicates || $closed) {
+        $parts = [];
+        if ($duplicates) $parts[] = $duplicates . ' duplicate ' . ($duplicates === 1 ? 'record' : 'records');
+        if ($closed) $parts[] = $closed . ' completed or closed ' . ($closed === 1 ? 'record' : 'records');
+        throw new BeneficiaryImportValidationException(implode(' and ', $parts) . ' found. Remove these rows and try again. No records were saved.');
+    }
+}
+
 function updateImportedBeneficiary(mysqli $conn, int $beneficiaryId, array $rowData, string $availmentStatus): bool
 {
     require_once __DIR__ . '/historical_report_helper.php';
@@ -318,18 +396,8 @@ function updateImportedBeneficiary(mysqli $conn, int $beneficiaryId, array $rowD
     $existingStmt->execute();
     $existing = $existingStmt->get_result()->fetch_assoc();
     $existingStmt->close();
-    $hasChanges = false;
-    foreach ($fields as $column => $value) {
-        $previous = trim((string)($existing[$column] ?? ''));
-        $incoming = trim((string)$value);
-        $numeric = in_array($column, ['age', 'avg_monthly_income', 'initial_capital', 'current_capital', 'daily_earnings', 'hr_total', 'hr_male', 'hr_female', 'emp_regular', 'emp_seasonal', 'emp_contractual', 'emp_family'], true);
-        $same = $numeric && is_numeric($previous) && is_numeric($incoming)
-            ? (float)$previous === (float)$incoming : $previous === $incoming;
-        if (!$same) {
-            $hasChanges = true;
-            break;
-        }
-    }
+    $comparison=$fields;foreach(beneficiaryImportReportingFields() as $field)if(($rowData[$field]??'')!=='')$comparison[$field]=(string)$rowData[$field];
+    $hasChanges = beneficiaryImportFieldsHaveChanges($existing ? beneficiaryImportExistingDetails($conn,$existing) : [], $comparison);
     if ($existing && !$hasChanges) throw new BeneficiaryImportValidationException('These records already exist with the same details and status. No records were saved.');
 
     $assignments = array_map(static fn($column) => "`$column` = ?", array_keys($fields));

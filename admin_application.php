@@ -1357,6 +1357,9 @@ $stmt->bind_param($bindTypes, ...$bindParams);
                   'modesofpayment' => 'mode_of_payment', 'distributionchannels' => 'distribution_channels',
                   'previouslyavailedassistance' => 'availed_before', 'assistanceavailed' => 'assistance_availed',
                   'pastprograms' => 'past_programs', 'programsneeded' => 'programs_needed',
+                  'nightmarketstallboothno' => 'nm_stall_no', 'datestarted' => 'nm_date_started',
+                  'nightmarkettwodayearnings' => 'nm_two_day_earnings', 'nightmarkettotalearnings' => 'nm_total_earnings',
+                  'ownercontactnumber' => 'owner_contact',
                   'challengesencountered' => 'challenges_encountered'
               ];
 
@@ -1431,7 +1434,7 @@ $stmt->bind_param($bindTypes, ...$bindParams);
                   foreach ($mapped_headers as $index => $col_name) {
                       $val = cleanBeneficiaryImportText($data[$index] ?? "");
 
-                      if (in_array($col_name, ['avg_monthly_income', 'initial_capital', 'current_capital', 'daily_earnings'])) {
+                      if (in_array($col_name, ['avg_monthly_income', 'initial_capital', 'current_capital', 'daily_earnings', 'nm_two_day_earnings', 'nm_total_earnings'])) {
                           $val = str_replace(',', '', $val);
                       }
 
@@ -1442,7 +1445,7 @@ $stmt->bind_param($bindTypes, ...$bindParams);
                       }
                       if ($col_name === 'civil_status' && $val !== '') $val = normalizeBeneficiaryImportCivilStatus($val);
 
-                      if (!empty($val)) {
+                      if ($val !== '') {
                           if (isset($row_data[$col_name]) && $row_data[$col_name] !== '') {
                               if ($col_name === 'contact_no' && $row_data[$col_name] !== $val) {
                                   $row_data[$col_name] .= ' / ' . $val;
@@ -1461,9 +1464,10 @@ $stmt->bind_param($bindTypes, ...$bindParams);
                   if (!empty($row_data['email']) && !filter_var($row_data['email'], FILTER_VALIDATE_EMAIL)) $invalid_import_row = true;
                   if (!empty($row_data['birthdate']) && $row_data['birthdate'] > date('Y-m-d')) $invalid_import_row = true;
                   if (!empty($row_data['date_availed']) && !empty($row_data['date_completed']) && $row_data['date_completed'] < $row_data['date_availed']) $invalid_import_row = true;
-                  foreach (['avg_monthly_income', 'initial_capital', 'current_capital', 'daily_earnings'] as $numeric_field) {
+                  foreach (['avg_monthly_income', 'initial_capital', 'current_capital', 'daily_earnings', 'nm_two_day_earnings', 'nm_total_earnings'] as $numeric_field) {
                       if (($row_data[$numeric_field] ?? '') !== '' && (!is_numeric($row_data[$numeric_field]) || (float)$row_data[$numeric_field] < 0)) $invalid_import_row = true;
                   }
+                  if (!empty($row_data['dependent_name']) && preg_match('/^\d+$/', trim($row_data['dependent_name']))) $invalid_import_row = true;
                   if ($invalid_import_row) {
                       $failedCount++;
                       continue;
@@ -1519,6 +1523,8 @@ $stmt->bind_param($bindTypes, ...$bindParams);
               }
               if($failedCount||!$preparedRows)throw new BeneficiaryImportValidationException('Some rows contain missing names or invalid dates, contact numbers, email addresses, or amounts. Check the file and try again. No records were saved.');
               if(!isset($mapped_headers)||(!in_array('full_name',$mapped_headers,true)&&(!in_array('first_name',$mapped_headers,true)||!in_array('last_name',$mapped_headers,true))))throw new RuntimeException('Missing name headers.');
+              if (array_filter($preparedRows, static fn($row) => count(array_intersect(array_keys($row), beneficiaryImportReportingFields())) > 0)) prepareBeneficiaryImportReportStorage($conn);
+              validateBeneficiaryImportDuplicates($conn, $program_id, $preparedRows, $batch_availment);
               prepareBeneficiaryImportOutbox($conn);
               runBeneficiaryImportTransaction($conn,$preparedRows,function($row_data)use($conn,$checkStmt,$program_id,$batch_availment,$batch_message,$batch_schedule_date,$batch_schedule_place,$admin_id,&$successCount,&$updatedCount,&$failedCount,&$emailSentCount,&$emailFailedCount,&$emailFailureReasons){
                   $full_name=$row_data['full_name'];
@@ -1546,6 +1552,7 @@ $stmt->bind_param($bindTypes, ...$bindParams);
                   }
 
                   if ($savedBeneficiaryId > 0) {
+                      saveBeneficiaryImportReportDetails($conn, $savedBeneficiaryId, $row_data, 'admin', $admin_id);
                       if (in_array($batch_availment, ['Orientation', 'Examination', 'Salary Distribution'], true) && $batch_schedule_date !== '') {
                           $scheduleStmt = $conn->prepare("UPDATE beneficiaries SET date_availed = ?, last_availed_at = ? WHERE beneficiary_id = ?");
                           if (!$scheduleStmt)throw new RuntimeException('Import schedule could not be prepared.');
