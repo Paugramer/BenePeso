@@ -2334,3 +2334,14 @@
     min-height: 36px !important;
   }
 }
+
+/* A single action on the last mobile row fills both grid columns. */
+@media (max-width: 600px) {
+  :is(.admin-beneficiaries-page, .peso-staff-beneficiaries-page) #profileModal #pm_footer_actions > button:last-child:nth-child(odd) {
+    grid-column: 1 / -1 !important;
+    justify-self: center !important;
+    width: 100% !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+  }
+}
