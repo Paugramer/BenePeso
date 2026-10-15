@@ -369,7 +369,7 @@ function validateBeneficiaryImportDuplicates(mysqli $conn, int $programId, array
     if ($duplicates || $closed) {
         $count = $duplicates + $closed;
         $message = $count . ($count === 1 ? ' record already exists.' : ' records already exist.');
-        throw new BeneficiaryImportValidationException($message . ' Remove them from the file and try again. No records were saved.');
+        throw new BeneficiaryImportValidationException($message . ' No records were saved.');
     }
 }
 
