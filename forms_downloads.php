@@ -9,6 +9,7 @@ check_user_role($role);
 module_shell_start($role,'forms','Forms & Templates','Download official forms and blank templates for each program.','forms-workspace');
 $documents=[
  'TUPAD'=>[
+ ['TUPAD Application Form','assets/forms/TUPAD Application Form.pdf'],
  ['TUPAD Report Template','assets/report_templates/TUPAD_Report_Blank.xlsx'],
  ['TUPAD Import Template','assets/templates/TUPAD_Import_Blank.xlsx']],
  'SPES'=>[
