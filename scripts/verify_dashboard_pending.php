@@ -1,0 +1,5 @@
+<?php
+if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
+require __DIR__.'/../db.php';$role=$argv[1]??'admin';$source=file_get_contents(__DIR__.'/../'.$role.'_dashboard.php');$start=strpos($source,'function table_exists');$end=strpos($source,'function format_date_value',$start);if($start===false||$end===false)throw new RuntimeException('Dashboard helper not found');eval(substr($source,$start,$end-$start));
+$conn->query('CREATE TEMPORARY TABLE beneficiaries (beneficiary_id INT,status VARCHAR(20),approval_status VARCHAR(20),review_status VARCHAR(20)) ENGINE=InnoDB');$conn->query("INSERT INTO beneficiaries VALUES(1,'Active','Pending',''),(2,'Active','Approved',''),(3,'Pending','Rejected',''),(4,'Active','Pending','')");
+if(!preg_match('/\$pendingReviews = (.*);/',$source,$parts))throw new RuntimeException('Pending count missing');$pending=eval('return '.$parts[1].';');if($pending!==2)throw new RuntimeException('Dashboard counted lifecycle status instead of approvals');echo $role." dashboard: 2 Pending approvals counted correctly despite misleading record-status values (temporary table).\n";

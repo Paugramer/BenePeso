@@ -5,10 +5,11 @@ function logActivity($conn, $actor_id, $module, $action, $target, $description) 
     $actor_name = 'System';
     $actor_role = 'System';
 
-    if (isset($_SESSION['admin_id'])) {
+    $activeRole = $_SESSION['role'] ?? (isset($_SESSION['admin_id']) ? 'admin' : 'peso_staff');
+    if ($activeRole === 'admin' && isset($_SESSION['admin_id'])) {
         $actor_name = 'PESO Vinzons';
         $actor_role = 'Administrator';
-    } elseif (isset($_SESSION['staff_id'])) {
+    } elseif ($activeRole === 'peso_staff' && isset($_SESSION['staff_id'])) {
         $staff_id = (int)$actor_id;
         $actor_name = 'PESO Staff';
         $actor_role = 'PESO Staff';

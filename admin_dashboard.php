@@ -143,7 +143,7 @@ $totalPrograms = get_count($conn, "programs");
 $totalBeneficiaryRecords = get_count($conn, "beneficiaries");
 $totalBeneficiaries = get_unique_beneficiary_count($conn);
 $activePrograms = get_count_by_status($conn, "programs", ["status", "program_status"], ["Active", "Ongoing", "Open", "Running"]);
-$pendingReviews = get_count_by_status($conn, "beneficiaries", ["status", "approval_status", "review_status"], ["Pending", "For Review", "Review"]);
+$pendingReviews = get_count_by_status($conn, "beneficiaries", ["approval_status", "review_status", "status"], ["Pending", "For Review", "Review"]);
 
 $dashboardRefreshedAt = date("M j, Y, g:i A");
 

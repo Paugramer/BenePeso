@@ -475,18 +475,18 @@ function prepareBeneficiaryImportOutbox(mysqli $conn): void {
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         KEY idx_notification_outbox_created (created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
-    $result=$conn->query("SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('beneficiaries','notification_outbox')");
+    $result=$conn->query("SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('beneficiaries','notification_outbox','activity_logs')");
     $tables=[];while($row=$result->fetch_assoc())$tables[$row['TABLE_NAME']]=strtolower($row['ENGINE']);
-    if(($tables['beneficiaries']??'')!=='innodb'||($tables['notification_outbox']??'')!=='innodb')throw new RuntimeException('Import requires transactional storage.');
+    if(($tables['beneficiaries']??'')!=='innodb'||($tables['notification_outbox']??'')!=='innodb'||($tables['activity_logs']??'')!=='innodb')throw new RuntimeException('Import requires transactional storage.');
 }
 function queueBeneficiaryImportEmail(mysqli $conn,int $id,string $status,string $message,string $date,string $place): bool {
     $dedupe=hash('sha256',implode('|',[$id,$status,$message,$date,$place]));
     $stmt=$conn->prepare("INSERT INTO notification_outbox (dedupe_key,beneficiary_id,status_name,custom_message,schedule_date,schedule_place,last_error) VALUES (?,?,?,?,?,?, '') ON DUPLICATE KEY UPDATE last_error='',updated_at=NOW()");
     if(!$stmt)return false;$stmt->bind_param('sissss',$dedupe,$id,$status,$message,$date,$place);$ok=$stmt->execute();$stmt->close();return $ok;
 }
-function runBeneficiaryImportTransaction(mysqli $conn,array $rows,callable $save): void {
+function runBeneficiaryImportTransaction(mysqli $conn,array $rows,callable $save,?callable $afterSave = null): void {
     if(!$rows)throw new RuntimeException('No import records.');
     if(!$conn->begin_transaction())throw new RuntimeException('Import transaction could not start.');
-    try {foreach($rows as$row)$save($row);if(!$conn->commit())throw new RuntimeException('Import commit failed.');}
+    try {foreach($rows as$row)$save($row);if($afterSave)$afterSave();if(!$conn->commit())throw new RuntimeException('Import commit failed.');}
     catch(Throwable $error){$conn->rollback();throw $error;}
 }

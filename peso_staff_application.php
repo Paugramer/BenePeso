@@ -8,6 +8,7 @@ require_once "beneficiary_choices.php";
 require_once "email_helper.php"; // ADDED: Required for sending emails
 require_once "report_columns.php";
 require_once "beneficiary_import_helper.php";
+require_once __DIR__."/application_audit_helper.php";
 require_once "beneficiary_duplicate_helper.php";
 require_once "spes_schema_helper.php";
 require_once "spes_lifecycle_helper.php";
@@ -957,6 +958,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   error_log("Beneficiary import read: ".$error->getMessage());
                   $_SESSION["import_error_reason"]="The file could not be read. Upload a valid Excel (.xlsx) or CSV (.csv) file.";
                   $_SESSION["error_modal_message"] = "Import Invalid";
+                  recordRejectedApplicationImport($conn, 'peso_staff', $peso_staff_id, $program_id, $_SESSION['import_error_reason'] ?? 'Invalid file or template. No records were saved.');
       header("Location: " . beneficiary_return_location('peso_staff_application.php', $program_name_post));
                   exit();
               }
@@ -984,6 +986,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               if (!$header_found) {
                   $_SESSION["show_error_modal"] = true;
                   $_SESSION["error_modal_message"] = "Import Invalid";
+                  recordRejectedApplicationImport($conn, 'peso_staff', $peso_staff_id, $program_id, $_SESSION['import_error_reason'] ?? 'Invalid file or template. No records were saved.');
       header("Location: " . beneficiary_return_location('peso_staff_application.php', $program_name_post));
                   exit();
               }
@@ -1139,7 +1142,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   }
 
                   if ($savedBeneficiaryId > 0) {
-                      saveBeneficiaryImportReportDetails($conn, $savedBeneficiaryId, $row_data, 'peso_staff', $staff_id);
+                      saveBeneficiaryImportReportDetails($conn, $savedBeneficiaryId, $row_data, 'peso_staff', $peso_staff_id);
                       if (in_array($batch_availment, ['Orientation', 'Examination', 'Salary Distribution'], true) && $batch_schedule_date !== '') {
                           $scheduleStmt = $conn->prepare("UPDATE beneficiaries SET date_availed = ?, last_availed_at = ? WHERE beneficiary_id = ?");
                           if (!$scheduleStmt)throw new RuntimeException('Import schedule could not be prepared.');
@@ -1159,6 +1162,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   }
 
                   if(!$savedBeneficiaryId)throw new RuntimeException('Import record could not be saved.');
+              }, function() use ($conn, $peso_staff_id, $program_id, $program_name_post, $batch_availment, &$successCount, &$updatedCount, &$emailSentCount) {
+                  $description = $program_name_post . ' / Batch ' . $program_id . ': ' . $successCount . ' added, ' . $updatedCount . ' updated, ' . $emailSentCount . ' pending emails. Status: ' . beneficiary_lifecycle_label($batch_availment) . '. New records: Pending approval.';
+                  recordApplicationActivity($conn, 'peso_staff', $peso_staff_id, 'Import Completed', $description);
               });
 
               $checkStmt->close();
@@ -1194,6 +1200,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       } else {
           $_SESSION["show_error_modal"] = true;
           $_SESSION["error_modal_message"] = "Import Invalid";
+      }
+      if (!empty($_SESSION['show_error_modal']) && ($_SESSION['error_modal_message'] ?? '') === 'Import Invalid') {
+          recordRejectedApplicationImport($conn, 'peso_staff', $peso_staff_id, $program_id, $_SESSION['import_error_reason'] ?? 'Invalid file or template. No records were saved.');
       }
       header("Location: " . beneficiary_return_location('peso_staff_application.php', $program_name_post));
       exit();

@@ -1,0 +1,14 @@
+<?php
+if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
+require __DIR__.'/../db.php';require __DIR__.'/../application_audit_helper.php';require __DIR__.'/../beneficiary_import_helper.php';
+$conn->query("CREATE TEMPORARY TABLE activity_logs (staff_id INT NULL,actor_name VARCHAR(150),actor_role VARCHAR(30),module_name VARCHAR(80),action_type VARCHAR(80),target_name VARCHAR(150),description TEXT,ip_address VARCHAR(64),created_at DATETIME) ENGINE=InnoDB");
+$conn->query('CREATE TEMPORARY TABLE audit_test_rows (id INT PRIMARY KEY) ENGINE=InnoDB');
+$conn->query("CREATE TEMPORARY TABLE peso_staff (staff_id INT PRIMARY KEY,first_name VARCHAR(50),last_name VARCHAR(50),status VARCHAR(20)) ENGINE=InnoDB");$conn->query("INSERT INTO peso_staff VALUES (7,'Synthetic','Reviewer','Active')");
+$_SESSION=['admin_id'=>1,'admin_name'=>'Synthetic Admin','staff_id'=>7,'role'=>'peso_staff'];
+runBeneficiaryImportTransaction($conn,[1,2],function($id)use($conn){$conn->query('INSERT INTO audit_test_rows VALUES ('.$id.')');},function()use($conn){recordApplicationActivity($conn,'peso_staff',7,'Import Completed','2 added, 0 updated, 2 pending emails.');});
+$log=$conn->query('SELECT * FROM activity_logs')->fetch_assoc();if((int)$log['staff_id']!==7||$log['actor_role']!=='PESO Staff'||$log['actor_name']!=='Synthetic Reviewer')throw new LogicException('Staff attribution failed');
+try{runBeneficiaryImportTransaction($conn,[3],function($id)use($conn){$conn->query('INSERT INTO audit_test_rows VALUES ('.$id.')');},function()use($conn){recordApplicationActivity($conn,'admin',1,'Import Completed','Must roll back');throw new RuntimeException('Synthetic audit failure');});throw new LogicException('Failure expected');}catch(RuntimeException $error){}
+if((int)$conn->query('SELECT COUNT(*) n FROM activity_logs')->fetch_assoc()['n']!==1||(int)$conn->query('SELECT COUNT(*) n FROM audit_test_rows')->fetch_assoc()['n']!==2)throw new LogicException('Rollback failed');
+recordRejectedApplicationImport($conn,'admin',1,9,'7 records already exist. No records were saved.');$logs=$conn->query("SELECT * FROM activity_logs WHERE action_type='Import Rejected'")->fetch_all(MYSQLI_ASSOC);if(count($logs)!==1||$logs[0]['staff_id']!==null||$logs[0]['actor_role']!=='Administrator')throw new LogicException('Rejected audit wrong');
+require __DIR__.'/../functions.php';logActivity($conn,7,'Beneficiaries','Requirements Review','Synthetic Record','Review attribution test');$last=$conn->query("SELECT * FROM activity_logs WHERE action_type='Requirements Review'")->fetch_assoc();if((int)$last['staff_id']!==7||$last['actor_role']!=='PESO Staff')throw new LogicException('Shared logger attribution wrong');
+echo "Import/audit commit together; failure rolls back both; rejected import logged once; multi-role staff attribution correct (temporary tables only).\n";

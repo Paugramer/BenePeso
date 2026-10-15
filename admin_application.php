@@ -10,6 +10,7 @@ require_once "email_helper.php";
 require_once "program_eligibility_helper.php";
 require_once "report_columns.php";
 require_once "beneficiary_import_helper.php";
+require_once __DIR__."/application_audit_helper.php";
 require_once "beneficiary_duplicate_helper.php";
 require_once "spes_schema_helper.php";
 require_once "spes_lifecycle_helper.php";
@@ -1370,6 +1371,7 @@ $stmt->bind_param($bindTypes, ...$bindParams);
                   error_log("Beneficiary import read: ".$error->getMessage());
                   $_SESSION["import_error_reason"]="The file could not be read. Upload a valid Excel (.xlsx) or CSV (.csv) file.";
                   $_SESSION["error_modal_message"] = "Import Invalid";
+                  recordRejectedApplicationImport($conn, 'admin', $admin_id, $program_id, $_SESSION['import_error_reason'] ?? 'Invalid file or template. No records were saved.');
       header("Location: " . beneficiary_return_location('admin_application.php', $program_name_post));
                   exit();
               }
@@ -1397,6 +1399,7 @@ $stmt->bind_param($bindTypes, ...$bindParams);
               if (!$header_found) {
                   $_SESSION["show_error_modal"] = true;
                   $_SESSION["error_modal_message"] = "Import Invalid";
+                  recordRejectedApplicationImport($conn, 'admin', $admin_id, $program_id, $_SESSION['import_error_reason'] ?? 'Invalid file or template. No records were saved.');
       header("Location: " . beneficiary_return_location('admin_application.php', $program_name_post));
                   exit();
               }
@@ -1572,6 +1575,9 @@ $stmt->bind_param($bindTypes, ...$bindParams);
                   }
 
                   if(!$savedBeneficiaryId)throw new RuntimeException('Import record could not be saved.');
+              }, function() use ($conn, $admin_id, $program_id, $program_name_post, $batch_availment, &$successCount, &$updatedCount, &$emailSentCount) {
+                  $description = $program_name_post . ' / Batch ' . $program_id . ': ' . $successCount . ' added, ' . $updatedCount . ' updated, ' . $emailSentCount . ' pending emails. Status: ' . beneficiary_lifecycle_label($batch_availment) . '. New records: Accepted.';
+                  recordApplicationActivity($conn, 'admin', $admin_id, 'Import Completed', $description);
               });
 
               $checkStmt->close();
@@ -1607,6 +1613,9 @@ $stmt->bind_param($bindTypes, ...$bindParams);
       } else {
           $_SESSION["show_error_modal"] = true;
           $_SESSION["error_modal_message"] = "Import Invalid";
+      }
+      if (!empty($_SESSION['show_error_modal']) && ($_SESSION['error_modal_message'] ?? '') === 'Import Invalid') {
+          recordRejectedApplicationImport($conn, 'admin', $admin_id, $program_id, $_SESSION['import_error_reason'] ?? 'Invalid file or template. No records were saved.');
       }
       header("Location: " . beneficiary_return_location('admin_application.php', $program_name_post));
       exit();
