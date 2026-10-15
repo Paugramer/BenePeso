@@ -2503,7 +2503,7 @@ if ($selectedProgramName !== "") {
 
       <div class="form-group">
         <div class="import-upload-heading"><label for="bulkFileInput">Upload File *</label></div>
-        <p class="import-template-hint"><a class="import-template-link" download="<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import.xlsx" href="assets/templates/<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import_Blank.xlsx">Use template</a></p>
+        <p class="import-template-hint"><a class="import-template-link" download="<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import.xlsx" href="assets/templates/<?=h(stripos($selectedProgramName,'MSME')!==false?'MSME':(stripos($selectedProgramName,'SPES')!==false?'SPES':'TUPAD'))?>_Import_Blank.xlsx">Use template</a>, fill in the beneficiary details, then upload the file.</p>
 
         <label class="file-upload-box-dashed">
             <input type="file" name="csv_file" id="bulkFileInput" aria-describedby="bulkFileError" accept=".csv,.xlsx" required style="display:none;">

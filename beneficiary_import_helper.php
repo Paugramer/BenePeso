@@ -367,10 +367,9 @@ function validateBeneficiaryImportDuplicates(mysqli $conn, int $programId, array
     }
     $stmt->close();
     if ($duplicates || $closed) {
-        $parts = [];
-        if ($duplicates) $parts[] = $duplicates . ' duplicate ' . ($duplicates === 1 ? 'record' : 'records');
-        if ($closed) $parts[] = $closed . ' completed or closed ' . ($closed === 1 ? 'record' : 'records');
-        throw new BeneficiaryImportValidationException(implode(' and ', $parts) . ' found. Remove these rows and try again. No records were saved.');
+        $count = $duplicates + $closed;
+        $message = $count . ($count === 1 ? ' record already exists.' : ' records already exist.');
+        throw new BeneficiaryImportValidationException($message . ' Remove them from the file and try again. No records were saved.');
     }
 }
 
