@@ -29,8 +29,8 @@ function beneficiary_lifecycle_flow(string $programName, bool $returningSpes = f
 }
 
 /**
- * Enforces one successful milestone at a time. Negative terminal outcomes can
- * be recorded from any active stage, while SPES examination cannot be skipped.
+ * Enforces one successful milestone at a time. Accepted applications cannot
+ * be marked Not Qualified or Cancelled; SPES examination results remain supported.
  */
 function beneficiary_validate_status_transition(mysqli $conn, int $beneficiaryId, string $targetStatus, bool $allowDocumentResubmission = false): array
 {
@@ -63,7 +63,7 @@ function beneficiary_validate_status_transition(mysqli $conn, int $beneficiaryId
             'current' => $current,
         ];
     }
-    if (in_array($targetStatus, ['Not Qualified', 'Cancelled'], true)) return ['allowed' => true, 'message' => '', 'current' => $current];
+    if (in_array($targetStatus, ['Not Qualified', 'Cancelled'], true)) return ['allowed' => false, 'message' => 'Choose the next required program stage. Not Qualified and Cancelled are not available in this workflow.', 'current' => $current];
     if (($record['approval_status'] ?? '') !== 'Approved') {
         return ['allowed' => false, 'message' => 'Approve the application before updating its program progress.'];
     }

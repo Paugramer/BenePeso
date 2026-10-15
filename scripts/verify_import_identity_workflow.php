@@ -51,6 +51,12 @@ reject_import_safety(fn()=>updateImportedBeneficiary($conn,900007,incoming_impor
 $closed=incoming_import_row($seed[5]);$closed['email']='changed@example.invalid';
 reject_import_safety(fn()=>updateImportedBeneficiary($conn,900006,$closed,'Completed'));
 
+foreach ([900001,900002,900003,900004,900007] as $id) {
+    foreach (['Not Qualified','Cancelled'] as $target) {
+        reject_import_safety(fn()=>updateImportedBeneficiary($conn,$id,incoming_import_row($seed[$id-900001]),$target));
+    }
+}
+
 $changed=$active;$changed['email']='new-contact@example.invalid';
 check_import_safety(updateImportedBeneficiary($conn,900001,$changed,'Ongoing'),'Legitimate detail update failed');
 check_import_safety(updateImportedBeneficiary($conn,900003,incoming_import_row($seed[2]),'Salary Distribution'),'TUPAD legal next step failed');
