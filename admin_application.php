@@ -1827,7 +1827,7 @@ if ($selectedProgramName !== "") {
 <script src="beneficiary_workspace_polish.js?v=13" defer></script>
 <script src="application_actions.js?v=17" defer></script>
 <link rel="stylesheet" href="shared_sidebar.css?v=6">
-<script src="application_workflow.js?v=4" defer></script>
+<script src="application_workflow.js?v=5" defer></script>
 </head>
 <body class="application-workflow-page admin-mobile-page admin-beneficiaries-page">
   <div class="page-wrap">

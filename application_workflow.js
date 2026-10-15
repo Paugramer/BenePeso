@@ -18,7 +18,7 @@
    if(!select||!data)return;
    const stage=current(data),values=legal(data);
    select.replaceChildren();
-   const option=new Option(label(stage)+' (Current)',stage,true,true);
+   const option=new Option(label(stage),stage,true,true);
    // Keep the current stage visible on the closed control, but offer only valid next steps.
    option.disabled=!edit;option.hidden=true;select.append(option);
    values.forEach(s=>select.append(new Option(label(s),s)));
