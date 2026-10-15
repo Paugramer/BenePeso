@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/application_requirements_helper.php';
 require_once __DIR__.'/document_submission_helper.php';
+require_once __DIR__.'/application_acceptance_helper.php';
 require_once __DIR__ . '/auth.php';
 auth_enable_csrf_form_injection();
 require "db.php";
@@ -392,14 +393,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   // 1. APPROVE LOGIC (Includes Email & Slot Checking)
   if ($action === "approve_beneficiary") {
       $beneficiary_id = (int)($_POST["beneficiary_id"] ?? 0);
+      try {
+          $submission_deadline = acceptance_notice_deadline($_POST['submission_deadline'] ?? null);
+          // Schema preparation stays outside the approval transaction.
+          ensure_acceptance_notice_storage($conn);
+      } catch (Throwable $error) {
+          $_SESSION['show_error_modal'] = true;
+          $_SESSION['error_modal_message'] = $error instanceof InvalidArgumentException ? $error->getMessage() : 'Acceptance could not be prepared. Please try again.';
+          header("Location: " . beneficiary_return_location('admin_application.php', $program_name_post));
+          exit();
+      }
 
       if ($beneficiary_id > 0) {
           $conn->begin_transaction();
 
           // Fetch beneficiary details and program slots
-          $fetch_query = "SELECT b.email, b.first_name, b.last_name, b.full_name, b.program_id, b.approval_status, b.birthdate, b.spes_type, b.spes_is_pregnant, b.tert_year_level,
+          $fetch_query = "SELECT b.beneficiary_id, b.email, b.first_name, b.last_name, b.full_name, b.program_id, b.approval_status, b.birthdate, b.spes_type, b.spes_is_pregnant, b.tert_year_level,
                                  b.business_name, b.ownership_type, b.business_nature, b.primary_products, b.business_size,
-                                 p.program_name, p.slots, p.minimum_age, p.maximum_age,
+                                 p.program_name, p.requirements, p.slots, p.minimum_age, p.maximum_age,
                                  t.is_pregnant, t.is_pwd, t.has_work_limitation, t.capable_of_work
                           FROM beneficiaries b
                           JOIN programs p ON b.program_id = p.program_id
@@ -508,10 +519,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                       $_SESSION["show_error_modal"] = true;
                       $_SESSION["error_modal_message"] = "Approval could not be completed. Please refresh and try again.";
                   } else {
-                  $conn->commit();
+                  try {
+                      $acceptance_requirements = acceptance_notice_requirements($conn, $row);
+                      save_acceptance_notice($conn, $beneficiary_id, $submission_deadline, $acceptance_requirements, $admin_id);
+                      $conn->commit();
+                  } catch (Throwable $error) {
+                      $conn->rollback();
+                      error_log('Acceptance notice save failed: '.$error->getMessage());
+                      $_SESSION['show_error_modal'] = true;
+                      $_SESSION['error_modal_message'] = 'Acceptance was not saved. Refresh and try again.';
+                      header("Location: " . beneficiary_return_location('admin_application.php', $program_name_post));
+                      exit();
+                  }
 
                   if (function_exists('logActivity')) {
-                      logActivity($conn, $admin_id, 'Beneficiaries', 'Approve', 'Beneficiary Record', "Admin approved beneficiary ID: $beneficiary_id");
+                      logActivity($conn, $admin_id, 'Beneficiaries', 'Approve', 'Beneficiary Record', "Admin accepted beneficiary ID: $beneficiary_id; requirements submission deadline: $submission_deadline");
                   }
 
                   // Send Approval Email to the User
@@ -519,23 +541,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                       $notification_attempts++;
                       $approve_subject = "Application Accepted: " . $program_name;
                       $approve_headline = "Application accepted";
-                       $approve_body = "
-                            <p>Dear " . h($first_name) . ",</p>
-                            <p>PESO Vinzons has approved your application for <strong>{$program_name}</strong>.</p>
-                            <p>Your application was assessed against the program requirements and available slots.</p>
-                       ";
-                        if (stripos((string)$program_name, 'TUPAD') !== false) {
-                           $needsFitness = ($row['is_pwd'] ?? 'No') === 'Yes' || ($row['has_work_limitation'] ?? 'No') === 'Yes';
-                           $approve_body .= "<p><strong>Required next step:</strong> Visit the PESO Vinzons office for in-person document verification. Bring your original National ID and a photocopy of its front and back.";
-                           if ($needsFitness) $approve_body .= " Please also bring a fitness-to-work certificate so the office can assess an appropriate work assignment or accommodation.";
-                           $approve_body .= " Documents are not accepted online. Deployment may proceed after all applicable documents are verified.</p>";
-                        } elseif (stripos((string)$program_name, 'SPES') !== false && spes_beneficiary_is_returning($conn, $beneficiary_id)) {
-                            $approve_subject = "SPES Baby Form Approved: " . $program_name;
-                            $approve_headline = "Your updated SPES form is approved";
-                            $approve_body .= "<p><strong>You remain exam-exempt as a returning SPES Baby.</strong> Please prepare your latest semester grades and all other current requirements. Follow the document-submission schedule and instructions that PESO Vinzons sends to you.</p>";
-                        } else {
-                            $approve_body .= "<p>Please wait for an official email or account update from PESO Vinzons regarding your schedule and required documents.</p>";
-                       }
+                      $returning_spes = stripos($program_name, 'SPES') !== false && spes_beneficiary_is_returning($conn, $beneficiary_id);
+                      $approve_body = acceptance_notice_body($first_name, $program_name, $submission_deadline, $acceptance_requirements, $returning_spes);
                       if (!sendBENEPESOEmail($user_email, $approve_subject, $approve_headline, $approve_body)) {
                           $notification_failures++;
                       }
@@ -1815,10 +1822,10 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="beneficiary_workspace_polish.css?v=4">
 <link rel="stylesheet" href="system_mobile.css?v=25">
 <link rel="stylesheet" href="system_readability.css?v=1">
-<link rel="stylesheet" href="application_refinements.css?v=21">
+<link rel="stylesheet" href="application_refinements.css?v=22">
 <script src="frontend_polish.js?v=20261014-dialog" defer></script>
 <script src="beneficiary_workspace_polish.js?v=13" defer></script>
-<script src="application_actions.js?v=16" defer></script>
+<script src="application_actions.js?v=17" defer></script>
 <link rel="stylesheet" href="shared_sidebar.css?v=6">
 <script src="application_workflow.js?v=3" defer></script>
 </head>

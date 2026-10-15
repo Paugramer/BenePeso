@@ -114,6 +114,54 @@ window.organizeApplicationActions = (data, role) => {
       }
     }, true);
   };
+  // Acceptance needs a reviewed submission notice before the original POST proceeds.
+  document.addEventListener('submit', async event => {
+    const original = event.target;
+    if (!(original instanceof HTMLFormElement) || original.elements.namedItem('action')?.value !== 'approve_beneficiary') return;
+    if (original.dataset.acceptanceConfirmed === '1') { delete original.dataset.acceptanceConfirmed; return; }
+    event.preventDefault(); event.stopImmediatePropagation();
+    if (document.querySelector('.application-acceptance-dialog[open]')) return;
+    const id = Number(original.elements.namedItem('beneficiary_id')?.value);
+    if (!Number.isSafeInteger(id) || id < 1) return;
+    rememberProfile();
+    const dialog = makeDialog('Accept Application');
+    dialog.classList.add('application-acceptance-dialog');
+    const form = document.createElement('form'); form.className = 'application-bulk-remarks-form';
+    const status = document.createElement('p'); status.setAttribute('role', 'status'); status.textContent = 'Loading requirements...';
+    form.append(status); dialog.append(form); dialog.showModal();
+    try {
+      const response = await fetch(`application_acceptance_details.php?id=${id}`, { credentials: 'same-origin' });
+      const data = await response.json();
+      if (!dialog.open) return;
+      if (!response.ok) throw new Error(data.error || 'Unable to load requirements. Please try again.');
+      status.textContent = '';
+      const description = document.createElement('p');
+      description.textContent = `Accept ${data.name} for ${data.program}. The email will instruct the applicant to submit these requirements at the PESO Vinzons office.`;
+      const heading = document.createElement('h3'); heading.textContent = 'Requirements';
+      const list = document.createElement('ul');
+      for (const item of data.requirements) { const li = document.createElement('li'); li.textContent = item; list.append(li); }
+      if (!data.requirements.length) { const li = document.createElement('li'); li.textContent = 'No checklist is configured. The email will ask the applicant to contact PESO to confirm the required documents.'; list.append(li); }
+      const label = document.createElement('label'); label.htmlFor = 'acceptanceSubmissionDeadline'; label.textContent = 'Requirements Submission Deadline *';
+      const due = document.createElement('input'); due.type = 'date'; due.id = label.htmlFor; due.required = true; due.min = data.today;
+      const note = document.createElement('p'); note.textContent = 'The applicant must keep their registered email active and check their inbox and spam folder for PESO updates.';
+      const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'btn-light'; cancel.textContent = 'Cancel'; cancel.addEventListener('click', () => dialog.close());
+      const submit = document.createElement('button'); submit.type = 'submit'; submit.className = 'btn-main'; submit.textContent = 'Accept & Notify';
+      const actions = document.createElement('div'); actions.className = 'application-dialog-actions'; actions.append(cancel, submit);
+      form.replaceChildren(description, heading, list, label, due, note, status, actions);
+      form.addEventListener('submit', confirm => {
+        confirm.preventDefault();
+        if (!form.reportValidity()) return;
+        let field = original.elements.namedItem('submission_deadline');
+        if (!field) { field = document.createElement('input'); field.type = 'hidden'; field.name = 'submission_deadline'; original.append(field); }
+        field.value = due.value;
+        original.dataset.acceptanceConfirmed = '1'; submit.disabled = true;
+        dialog.close(); original.requestSubmit();
+      });
+      due.focus();
+    } catch (error) {
+      if (dialog.open) status.textContent = error.message || 'Unable to load requirements. Close this window and try again.';
+    }
+  }, true);
   window.openApplicationExtra = (url, label) => {
     rememberProfile();profile()?.classList.remove('show');profile()?.setAttribute('aria-hidden', 'true');
     const dialog = makeDialog(label);

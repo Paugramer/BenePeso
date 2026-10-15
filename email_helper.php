@@ -18,9 +18,57 @@ function benepeso_recipient_name(string ...$candidates): string {
     return 'Applicant';
 }
 
+/** Build the shared branded email without contacting SMTP (also used by offline checks). */
+function benepeso_prepare_email_content(PHPMailer $mail, string $headline, string $body_content): void {
+    $mail->isHTML(true);
+    $mail->CharSet = 'UTF-8';
+    $headline = htmlspecialchars($headline, ENT_QUOTES, 'UTF-8');
+    $logo_html = '';
+    $logo = __DIR__ . '/img/pesologo.png';
+    if (is_file($logo)) {
+        $mail->addEmbeddedImage($logo, 'benepeso-office-logo', 'peso-vinzons.png', 'base64', 'image/png');
+        $logo_html = "<img src='cid:benepeso-office-logo' alt='PESO Vinzons logo' width='80' height='80' style='display:block;width:80px;height:80px;margin:0 auto 14px;background:#ffffff;border-radius:50%;'>";
+    }
+    $current_year = date("Y");
+
+        // Professional Green BENEPESO HTML Template
+        $mail->Body = "
+        <div style='font-family: Arial, sans-serif; background-color: #f4f8f5; padding: 40px 20px; color: #163524;'>
+            <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #dbe6df;'>
+
+                <!-- Header -->
+                <div style='background-color: #1f7a54; padding: 30px; text-align: center;'>
+                    {$logo_html}
+                    <h1 style='color: #ffffff; margin: 0; font-size: 26px; letter-spacing: 1px; font-weight: 800;'>PESO Vinzons</h1>
+                    <p style='color: #e6f4ed; margin: 5px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;'>Official Applicant Notice</p>
+                </div>
+
+                <!-- Body Content -->
+                <div style='padding: 40px 30px; text-align: left;'>
+                    <h2 style='margin-top: 0; color: #145339; font-size: 22px; font-weight: 800; text-align: center;'>{$headline}</h2>
+                    <div style='color: #66786f; font-size: 15px; line-height: 1.6; margin-bottom: 30px;'>
+                        {$body_content}
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div style='background-color: #f9fbf9; padding: 25px; text-align: center; border-top: 1px solid #dbe6df;'>
+                    <p style='color: #9ab0a3; font-size: 12px; margin: 0; line-height: 1.5;'>
+                        © {$current_year} PESO Vinzons<br>Public Employment Service Office • Municipality of Vinzons, Camarines Norte
+                    </p>
+                </div>
+
+            </div>
+        </div>";
+
+        // Plain text fallback for email clients that do not support HTML
+        $mail->AltBody = html_entity_decode(strip_tags(str_replace(['<br>', '</p>', '</h1>', '</h2>', '<li>', '</li>'], ["\n", "\n\n", "\n\n", "\n\n", '- ', "\n"], $headline . "\n" . $body_content)), ENT_QUOTES, 'UTF-8');
+
+}
+
 /**
  * Reusable function to send beautifully formatted BENEPESO emails
- * 
+ *
  * @param string $to_email     The email address of the recipient
  * @param string $subject      The subject line of the email
  * @param string $headline     The big bold text inside the email body
@@ -74,40 +122,8 @@ function sendBENEPESOEmail($to_email, $subject, $headline, $body_content, &$erro
         );
         $mail->XMailer = "PESO Vinzons Notification Service";
         $mail->Subject = $subject;
-        
-        $current_year = date("Y");
 
-        // Professional Green BENEPESO HTML Template
-        $mail->Body = "
-        <div style='font-family: Arial, sans-serif; background-color: #f4f8f5; padding: 40px 20px; color: #163524;'>
-            <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #dbe6df;'>
-                
-                <!-- Header -->
-                <div style='background-color: #1f7a54; padding: 30px; text-align: center;'>
-                    <h1 style='color: #ffffff; margin: 0; font-size: 26px; letter-spacing: 1px; font-weight: 800;'>PESO Vinzons</h1>
-                    <p style='color: #e6f4ed; margin: 5px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;'>Official Applicant Notice</p>
-                </div>
-                
-                <!-- Body Content -->
-                <div style='padding: 40px 30px; text-align: left;'>
-                    <h2 style='margin-top: 0; color: #145339; font-size: 22px; font-weight: 800; text-align: center;'>{$headline}</h2>
-                    <div style='color: #66786f; font-size: 15px; line-height: 1.6; margin-bottom: 30px;'>
-                        {$body_content}
-                    </div>
-                </div>
-                
-                <!-- Footer -->
-                <div style='background-color: #f9fbf9; padding: 25px; text-align: center; border-top: 1px solid #dbe6df;'>
-                    <p style='color: #9ab0a3; font-size: 12px; margin: 0; line-height: 1.5;'>
-                        © {$current_year} PESO Vinzons<br>Public Employment Service Office • Municipality of Vinzons, Camarines Norte
-                    </p>
-                </div>
-                
-            </div>
-        </div>";
-
-        // Plain text fallback for email clients that do not support HTML
-        $mail->AltBody = strip_tags(str_replace(['<br>', '</p>', '</h1>', '</h2>'], ["\n", "\n\n", "\n\n", "\n\n"], $headline . "\n" . $body_content));
+        benepeso_prepare_email_content($mail, (string)$headline, (string)$body_content);
 
         $mail->send();
         $masked_email = preg_replace('/(^.).*(@.*$)/', '$1***$2', $to_email);
@@ -298,7 +314,7 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
             $headline = "You passed the SPES examination";
             $message = "
                 <p>Your examination result for <strong>{$safe_program}</strong> has been recorded as <strong>Passed</strong>.</p>
-                <p>Please wait for your official assignment, start schedule, and any further instructions from PESO Vinzons. Keep your registered contact details active.</p>
+                <p>Please wait for your official assignment, start schedule, and any further instructions from PESO Vinzons. Keep your registered email active and check your inbox and spam folder for PESO updates.</p>
             ";
             break;
 
@@ -346,11 +362,11 @@ function sendBENEPESOStatusEmail(mysqli $conn, int $beneficiary_id, string $stat
             } elseif (strpos($program_key, 'SPES') !== false) {
                 $message = $is_returning_spes
                     ? "<p>Your updated SPES record for <strong>{$safe_program}</strong> is accepted.</p><p>As a returning <strong>SPES Baby</strong>, you are exempt from taking the SPES examination again. Please prepare your latest semester grades and all current requirements, then follow PESO Vinzons' document-submission instructions.</p>"
-                    : "<p>Your application for <strong>{$safe_program}</strong> is accepted.</p><p>Please wait for the official examination schedule and instructions from PESO Vinzons. Keep your registered contact details active.</p>";
+                    : "<p>Your application for <strong>{$safe_program}</strong> is accepted.</p><p>Please submit your requirements in person at the PESO Vinzons office for document verification. PESO will send the examination schedule after the document review. Keep your registered email active and check your inbox and spam folder for PESO updates.</p>";
             } elseif (strpos($program_key, 'MSME') !== false) {
-                $message = "<p>Your profiling record for <strong>{$safe_program}</strong> is accepted.</p><p>PESO Vinzons will contact you if another verification step or office action is required. Keep your registered contact details active.</p>";
+                $message = "<p>Your profiling record for <strong>{$safe_program}</strong> is accepted.</p><p>Please submit your requirements in person at the PESO Vinzons office for verification. Keep your registered email active and check your inbox and spam folder for PESO updates.</p>";
             } else {
-                $message = "<p>Your application for <strong>{$safe_program}</strong> is accepted.</p><p>Please wait for the official schedule or next-step instructions from PESO Vinzons.</p>";
+                $message = "<p>Your application for <strong>{$safe_program}</strong> is accepted.</p><p>Please submit your requirements in person at the PESO Vinzons office. Contact the office to confirm the required documents and submission schedule.</p>";
             }
             break;
 

@@ -86,3 +86,10 @@
 .application-workflow-page #generateReportModal .preview-header{padding:12px 18px;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
 .application-workflow-page #generateReportModal .preview-header h2{margin:0;line-height:1.4}
 .application-workflow-page #generateReportModal .preview-header p{margin:0}
+.application-acceptance-dialog .application-bulk-remarks-form{flex:1;min-height:0;max-height:none;overflow-y:auto}
+.application-acceptance-dialog h3{font-size:14px;margin:16px 0 8px}
+.application-acceptance-dialog ul{padding-left:22px;overflow-wrap:anywhere}
+.application-acceptance-dialog li{margin:6px 0}
+.application-acceptance-dialog [role=status]{color:#b91c1c}
+.application-acceptance-dialog .application-dialog-actions{flex-wrap:wrap}
+@media(max-width:600px){.application-acceptance-dialog .application-dialog-actions{display:grid;grid-template-columns:1fr}.application-acceptance-dialog .application-dialog-actions>button{width:100%;min-height:44px}}
