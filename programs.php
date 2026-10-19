@@ -58,7 +58,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_eligibility') {
         JOIN programs p ON b.program_id = p.program_id
         WHERE b.user_id = ?
         AND (b.approval_status = 'Pending'
-             OR (b.approval_status = 'Approved' AND b.availment_status IN ('Not Yet Availed', 'Requirements Received', 'Orientation', 'Examination', 'Exam Passed', 'Exam Failed', 'Ongoing', 'Salary Distribution')))
+             OR (b.approval_status = 'Approved' AND b.availment_status IN ('Not Yet Availed', 'Requirements Received', 'Orientation', 'Examination', 'Exam Passed', 'Ongoing', 'Salary Distribution')))
         ORDER BY b.created_at DESC LIMIT 1
     ");
     $activeAppStmt->bind_param("i", $user_id);
@@ -206,7 +206,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
         WHERE b.user_id=?
           AND (b.approval_status='Pending'
                OR (b.approval_status='Approved' AND b.availment_status IN
-                   ('Not Yet Availed','Requirements Received','Orientation','Examination','Exam Passed','Exam Failed','Ongoing','Salary Distribution')))
+                   ('Not Yet Availed','Requirements Received','Orientation','Examination','Exam Passed','Ongoing','Salary Distribution')))
         ORDER BY b.created_at DESC LIMIT 1");
     $activeApplicationStmt->bind_param('i', $user_id);
     $activeApplicationStmt->execute();
@@ -652,7 +652,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action']) && $_POST['
         WHERE b.user_id=?
           AND (b.approval_status='Pending'
                OR (b.approval_status='Approved' AND b.availment_status IN
-                   ('Not Yet Availed','Requirements Received','Orientation','Examination','Exam Passed','Exam Failed','Ongoing','Salary Distribution')))
+                   ('Not Yet Availed','Requirements Received','Orientation','Examination','Exam Passed','Ongoing','Salary Distribution')))
         LIMIT 1 FOR UPDATE");
     $activeApplicationStmt->bind_param('i', $user_id);
     $activeApplicationStmt->execute();

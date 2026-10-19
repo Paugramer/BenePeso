@@ -4,6 +4,7 @@ require_once __DIR__.'/document_submission_helper.php';
 require_once __DIR__ . '/auth.php';
 auth_enable_csrf_form_injection();
 require "db.php";
+check_user_role("peso_staff");
 require_once "beneficiary_choices.php";
 require_once "email_helper.php"; // ADDED: Required for sending emails
 require_once "report_columns.php";
@@ -28,11 +29,6 @@ if (file_exists("functions.php")) {
 if (!isset($conn) || !($conn instanceof mysqli)) {
   die("Database connection not found. Please check db.php");
 }
-
-/* ==========================================
-   PROFESSIONAL FIX: Unified Role Check
-========================================== */
-check_user_role("peso_staff");
 
 $peso_staff_id = (int) $_SESSION["staff_id"];
 

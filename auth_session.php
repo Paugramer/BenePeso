@@ -1,5 +1,8 @@
 <?php
 
+// Keep deadlines and PHP date checks aligned with PESO Vinzons local time.
+date_default_timezone_set('Asia/Manila');
+
 function start_secure_session(): void
 {
     if (session_status() === PHP_SESSION_ACTIVE) {

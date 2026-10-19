@@ -1,5 +1,7 @@
 <?php
 
+date_default_timezone_set('Asia/Manila');
+
 function load_local_environment(string $path): void
 {
     if (!is_file($path) || !is_readable($path)) {

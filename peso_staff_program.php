@@ -2,6 +2,7 @@
 require_once __DIR__ . '/auth.php';
 auth_enable_csrf_form_injection();
 require "db.php";
+check_user_role("peso_staff");
 require_once "batch_code_helper.php";
 require_once "program_eligibility_helper.php";
 require_once "tupad_category_helper.php";
@@ -25,7 +26,6 @@ if (!function_exists('time_ago')) {
     }
 }
 
-check_user_role("peso_staff");
 sync_program_statuses($conn);
 
 $staff_id = (int)$_SESSION["staff_id"];

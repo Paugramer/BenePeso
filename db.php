@@ -14,6 +14,10 @@ try {
   if (!$conn->set_charset("utf8mb4")) {
     throw new RuntimeException('Unable to configure the database character set.');
   }
+  // A numeric offset works even when MySQL timezone tables are not installed.
+  if (!$conn->query("SET time_zone = '+08:00'")) {
+    throw new RuntimeException('Unable to configure the database time zone.');
+  }
 } catch (Throwable $error) {
   error_log('BENEPESO database connection failed: ' . $error->getMessage());
   http_response_code(503);

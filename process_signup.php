@@ -31,9 +31,16 @@ $email          = $google_registration
 $password       = $_POST["password"] ?? "";
 $confirm_pass   = $_POST["confirm_password"] ?? "";
 
+// Preserve retry fields without retaining passwords or request tokens in the session.
+$signup_form_data = array_intersect_key($_POST, array_flip([
+    'first_name', 'middle_name', 'last_name', 'ext_name', 'birthdate', 'sex',
+    'civil_status', 'contact_no', 'street_purok_zone', 'barangay', 'district',
+    'email', 'privacy_acknowledgment',
+]));
+
 if (!isset($_POST['privacy_acknowledgment']) || $_POST['privacy_acknowledgment'] !== '1') {
     $_SESSION["flash"] = "Please read and acknowledge the Privacy Notice before registering.";
-    $_SESSION["form_data"] = $_POST;
+    $_SESSION["form_data"] = $signup_form_data;
     header("Location: signup.php");
     exit();
 }
@@ -45,7 +52,7 @@ if ($first_name === "" || $last_name === "" || $birthdate === "" || $sex === "" 
     $civil_status === "" || $contact_no === "" || $street_purok === "" || 
     $barangay === "" || $email === "" || (!$google_registration && $password === "")) {
     $_SESSION["flash"] = "Please complete all required fields.";
-    $_SESSION["form_data"] = $_POST; 
+    $_SESSION["form_data"] = $signup_form_data;
     header("Location: signup.php");
     exit();
 }
@@ -57,14 +64,14 @@ $identity_errors = validate_beneficiary_identity_input([
 ]);
 if ($identity_errors) {
     $_SESSION['flash'] = implode(' ', $identity_errors);
-    $_SESSION['form_data'] = $_POST;
+    $_SESSION['form_data'] = $signup_form_data;
     header('Location: signup.php');
     exit();
 }
 
 if (!in_array($civil_status, $valid_civil_statuses, true)) {
     $_SESSION["flash"] = "Please select a valid civil status.";
-    $_SESSION["form_data"] = $_POST;
+    $_SESSION["form_data"] = $signup_form_data;
     header("Location: signup.php");
     exit();
 }
@@ -80,7 +87,7 @@ $age = $valid_birthdate ? $birth_date_object->diff($today)->y : -1;
 if (!$valid_birthdate || $birth_date_object > $today || $age < 18) {
     $_SESSION['flash'] = 'You must be at least 18 years old to create a BENEPESO account. Please check your birthdate.';
     $_SESSION['show_age_notice'] = true;
-    $_SESSION['form_data'] = $_POST;
+    $_SESSION['form_data'] = $signup_form_data;
     header('Location: signup.php');
     exit();
 }
@@ -111,7 +118,7 @@ if ($profile_error === UPLOAD_ERR_OK) {
         ];
     } else {
         $_SESSION['flash'] = 'Profile picture must be a valid JPG, PNG, or WebP image up to 5 MB.';
-        $_SESSION['form_data'] = $_POST;
+        $_SESSION['form_data'] = $signup_form_data;
         header('Location: signup.php');
         exit();
     }
@@ -119,35 +126,35 @@ if ($profile_error === UPLOAD_ERR_OK) {
     $_SESSION['flash'] = $profile_error === UPLOAD_ERR_INI_SIZE || $profile_error === UPLOAD_ERR_FORM_SIZE
         ? 'Profile picture must be no larger than 5 MB.'
         : 'Profile picture upload was interrupted. Please select the image again.';
-    $_SESSION['form_data'] = $_POST;
+    $_SESSION['form_data'] = $signup_form_data;
     header($google_registration ? 'Location: signup.php?google=complete' : 'Location: signup.php');
     exit();
 }
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $_SESSION["flash"] = "Please enter a valid email address.";
-    $_SESSION["form_data"] = $_POST; 
+    $_SESSION["form_data"] = $signup_form_data;
     header("Location: signup.php");
     exit();
 }
 
 if (!preg_match("/^09\d{9}$/", $contact_no)) {
     $_SESSION["flash"] = "Contact number must be 11 digits and start with 09.";
-    $_SESSION["form_data"] = $_POST; 
+    $_SESSION["form_data"] = $signup_form_data;
     header("Location: signup.php");
     exit();
 }
 
 if (!in_array($barangay, $valid_barangays, true)) {
     $_SESSION["flash"] = "Please select a valid barangay.";
-    $_SESSION["form_data"] = $_POST; 
+    $_SESSION["form_data"] = $signup_form_data;
     header("Location: signup.php");
     exit();
 }
 
 if (!$google_registration && $password !== $confirm_pass) {
     $_SESSION["flash"] = "Passwords do not match.";
-    $_SESSION["form_data"] = $_POST; 
+    $_SESSION["form_data"] = $signup_form_data;
     header("Location: signup.php");
     exit();
 }
@@ -160,7 +167,7 @@ if (!$google_registration && (
     || !preg_match('/[^A-Za-z0-9]/', $password)
 )) {
     $_SESSION["flash"] = "Use at least 10 characters with uppercase, lowercase, a number, and a symbol.";
-    $_SESSION["form_data"] = $_POST; 
+    $_SESSION["form_data"] = $signup_form_data;
     header("Location: signup.php");
     exit();
 }
@@ -197,7 +204,7 @@ if (!$email_found) {
 
 if ($email_found) {
     $_SESSION["flash"] = "This email is already registered in the system.";
-    $_SESSION["form_data"] = $_POST; 
+    $_SESSION["form_data"] = $signup_form_data;
     header("Location: signup.php");
     exit();
 }
@@ -208,7 +215,7 @@ if ($check_contact) {
     $check_contact->execute();
     if ($check_contact->get_result()->num_rows > 0) {
         $_SESSION["flash"] = "This contact number is already registered.";
-        $_SESSION["form_data"] = $_POST; 
+        $_SESSION["form_data"] = $signup_form_data;
         header("Location: signup.php");
         exit();
     }
@@ -227,7 +234,7 @@ if ($check_identity) {
     $check_identity->execute();
     if ($check_identity->get_result()->num_rows > 0) {
         $_SESSION["flash"] = "An account with the same name and birthdate already exists. Please sign in, recover the existing account, or contact PESO Vinzons for assistance.";
-        $_SESSION["form_data"] = $_POST;
+        $_SESSION["form_data"] = $signup_form_data;
         $check_identity->close();
         header("Location: signup.php");
         exit();
@@ -244,7 +251,7 @@ if ($profile_upload === null && $google_picture_url !== '') {
         $profile_upload['source'] = 'google';
     } else {
         $_SESSION['flash'] = 'Your Google profile photo could not be imported securely. Please upload a clear JPG, PNG, or WebP photo to continue.';
-        $_SESSION['form_data'] = $_POST;
+        $_SESSION['form_data'] = $signup_form_data;
         header('Location: signup.php?google=complete');
         exit();
     }
@@ -252,7 +259,7 @@ if ($profile_upload === null && $google_picture_url !== '') {
 
 if ($profile_upload === null) {
     $_SESSION['flash'] = 'Please upload a clear JPG, PNG, or WebP profile photo to continue.';
-    $_SESSION['form_data'] = $_POST;
+    $_SESSION['form_data'] = $signup_form_data;
     header($google_registration ? 'Location: signup.php?google=complete' : 'Location: signup.php');
     exit();
 }
@@ -264,7 +271,7 @@ if ($profile_upload !== null) {
             @unlink($profile_upload['tmp_name']);
         }
         $_SESSION['flash'] = 'Profile picture storage is unavailable. Please try again.';
-        $_SESSION['form_data'] = $_POST;
+        $_SESSION['form_data'] = $signup_form_data;
         header('Location: signup.php');
         exit();
     }
@@ -285,7 +292,7 @@ if ($profile_upload !== null) {
             @unlink($profile_upload['tmp_name']);
         }
         $_SESSION['flash'] = 'Profile picture could not be saved. Please try again.';
-        $_SESSION['form_data'] = $_POST;
+        $_SESSION['form_data'] = $signup_form_data;
         header('Location: signup.php');
         exit();
     }
@@ -311,7 +318,7 @@ if (!$stmt) {
     if ($uploaded_profile_path !== null && is_file($uploaded_profile_path)) unlink($uploaded_profile_path);
     error_log('BENEPESO registration prepare failed: ' . $conn->error);
     $_SESSION["flash"] = "Registration is temporarily unavailable. Please try again.";
-    $_SESSION["form_data"] = $_POST; 
+    $_SESSION["form_data"] = $signup_form_data;
     header("Location: signup.php");
     exit();
 }
@@ -329,7 +336,7 @@ if ($stmt->execute()) {
         $conn->query("DELETE FROM users WHERE user_id = " . $new_user_id);
         if ($uploaded_profile_path !== null && is_file($uploaded_profile_path)) unlink($uploaded_profile_path);
         $_SESSION["flash"] = "Registration could not be completed. Please try again.";
-        $_SESSION["form_data"] = $_POST;
+        $_SESSION["form_data"] = $signup_form_data;
         header("Location: signup.php");
         exit();
     }
@@ -338,7 +345,7 @@ if ($stmt->execute()) {
         $conn->query("DELETE FROM users WHERE user_id = " . $new_user_id);
         if ($uploaded_profile_path !== null && is_file($uploaded_profile_path)) unlink($uploaded_profile_path);
         $_SESSION["flash"] = "Your profile was valid, but Google sign-in could not be linked safely. Please try again.";
-        $_SESSION["form_data"] = $_POST;
+        $_SESSION["form_data"] = $signup_form_data;
         header("Location: signup.php?google=complete");
         exit();
     }
@@ -363,7 +370,7 @@ if ($stmt->execute()) {
 
 if ($uploaded_profile_path !== null && is_file($uploaded_profile_path)) unlink($uploaded_profile_path);
 $_SESSION["flash"] = "System error during registration.";
-$_SESSION["form_data"] = $_POST; 
+$_SESSION["form_data"] = $signup_form_data;
 header("Location: signup.php");
 exit();
 ?>
