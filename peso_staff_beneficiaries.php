@@ -405,7 +405,7 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20261014-restored" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
-<link rel="stylesheet" href="report_preview.css?v=10"><script src="report_preview.js?v=5" defer></script>
+<link rel="stylesheet" href="report_preview.css?v=10"><script src="report_preview.js?v=6" defer></script>
 </head>
 <body class="staff-mobile-page peso-staff-beneficiaries-page">
   <div class="page-wrap">
