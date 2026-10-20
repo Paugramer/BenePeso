@@ -60,7 +60,10 @@ function official_report_columns(string $program): array {
             'programs_needed'=>'Programs/Services Needed','challenges_encountered'=>'Please sellect what applies'];
     } else return getReportColumnDefinitions($program);
     $columns = [];
-    foreach ($map as $key=>$label) $columns[] = ['key'=>$key,'label'=>$label,'default'=>true];
+    $commonFields=['first_name','last_name','middle_name','ext_name','birthdate','street_purok_zone','barangay','report_province'];
+    // SPES/MSME retain their source template's combined name/address columns.
+    if (stripos($program,'TUPAD')===false) $commonFields=array_merge($commonFields,['owner_name','complete_address']);
+    foreach ($map as $key=>$label) $columns[] = ['key'=>$key,'label'=>$label,'default'=>in_array($key,$commonFields,true)];
     return $columns;
 }
 
