@@ -25,3 +25,10 @@ vendor/pdf-lib/*
 .idea/
 Thumbs.db
 .DS_Store
+
+# Private runtime sessions, audit screenshots, and local browser profiles
+/storage/
+__pycache__/
+
+# Microsoft Office temporary lock files
+~$*
