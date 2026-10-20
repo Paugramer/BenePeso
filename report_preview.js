@@ -37,7 +37,14 @@
   modal.querySelector('.report-filter-toggle')?.addEventListener('click',event=>{const visible=modal.classList.toggle('filters-open');event.currentTarget.setAttribute('aria-expanded',String(visible));});
   modal.querySelectorAll('.report-filter-list select').forEach(select=>select.addEventListener('change',refresh));
   columns.forEach(input=>input.addEventListener('change',()=>{columnPage=0;draw();}));
-  modal.querySelectorAll('[data-report-columns]').forEach(button=>button.addEventListener('click',()=>{columns.forEach(input=>input.checked=button.dataset.reportColumns==='all'||input.dataset.default==='1');columnPage=0;draw();}));
+  modal.querySelectorAll('[data-report-columns]').forEach(button=>button.addEventListener('click',()=>{
+   const common=new Set(['first_name','middle_name','last_name','ext_name','birthdate','street_purok_zone','barangay','report_province']);
+   // Keep each source template's column order, including combined fields where used.
+   if(!columns.some(input=>input.value==='first_name'))common.add('owner_name');
+   if(!columns.some(input=>input.value==='street_purok_zone'))common.add('complete_address');
+   columns.forEach(input=>input.checked=button.dataset.reportColumns==='all'||common.has(input.value));
+   columnPage=0;draw();
+  }));
   modal.querySelectorAll('[data-report-column-page]').forEach(button=>button.addEventListener('click',()=>{columnPage+=button.dataset.reportColumnPage==='next'?1:-1;draw();}));
   modal.querySelectorAll('[data-report-zoom]').forEach(button=>button.addEventListener('click',()=>{zoom=button.dataset.reportZoom==='fit'?1:Math.min(1.5,Math.max(.65,Math.round((zoom+(button.dataset.reportZoom==='in'?.1:-.1))*10)/10));modal.querySelector('.report-zoom-value').value=Math.round(zoom*100)+'%';draw();}));
   field('report_print_button').addEventListener('click',()=>{
