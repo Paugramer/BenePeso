@@ -1,12 +1,5 @@
-/* Original beneficiary styles own the page; only submission-specific controls here. */
-.requirements-native .requirements-search-row{display:flex;align-items:center;gap:12px;width:100%}
-.requirements-native .requirements-search-row .filter-search{flex:1;min-width:0}
-.requirements-native .requirements-search-row .search-input{width:100%;border:0;outline:0;background:transparent;font:inherit}
-.requirements-native #requirementsFilters{display:flex;flex-direction:column;align-items:stretch;margin-bottom:28px}
-.requirements-native .requirements-filter-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;width:100%;padding-top:10px;border-top:1px solid #dce7df}
+/* Shared beneficiary styles provide all page and modal presentation. */
 .requirements-native [hidden]{display:none!important}
-.requirements-native .requirements-filter-fields select{width:100%;min-height:48px;border:1px solid #d1e3d8;border-radius:12px;padding:10px 14px;background:#f8fbf9;color:#274e3c;font:500 13px Poppins,sans-serif}
-.requirements-native .submission-pager{display:flex;justify-content:center;align-items:center;gap:16px;margin-top:20px;font-size:12px}
-.submission-dialog{border:1px solid #d5e6dd;border-radius:20px;padding:28px;width:min(620px,92vw);max-height:85vh;overflow:auto;color:#183b2b;font:13px Poppins,sans-serif;box-shadow:0 20px 70px #123b2a33}
-.submission-dialog::backdrop{background:#102d2466}.submission-dialog>form{display:flex;justify-content:flex-end}.submission-dialog h2{font-size:20px;margin:14px 0}.submission-dialog dl{display:grid;grid-template-columns:1fr 1fr;gap:18px}.submission-dialog dt{font-weight:600;color:#61776c;font-size:11px}.submission-dialog dd{margin:5px 0;overflow-wrap:anywhere}.submission-export-actions{display:flex;gap:12px;flex-wrap:wrap}
-@media(max-width:760px){.requirements-native .requirements-filter-fields{grid-template-columns:1fr 1fr}.requirements-native .requirements-search-row{flex-wrap:wrap}.requirements-native .requirements-search-row .filter-search{flex-basis:100%}.submission-dialog dl{grid-template-columns:1fr}}
+.requirements-native .pagination-wrapper{order:5}
+.requirements-native .beneficiary-secondary-filters{grid-column:1/-1}
+.requirements-native #requirementsFilters{margin-bottom:28px}

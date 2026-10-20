@@ -244,6 +244,11 @@
       const lastAvailmentYear = lastAvailmentYearMatch ? lastAvailmentYearMatch[0] : '';
       const availmentSummary = lastAvailmentYear ? `${data.program} — ${lastAvailmentYear}` : '';
       const sections = [
+          ['Documents Submitted', 'ph-files', [
+              ['Last Recorded Submission', data.submitted_on], ['Requirements Review', data.review_status],
+              ['Verified Requirements', data.checklist_summary], ['Resubmission Deadline', data.followup_deadline],
+              ['Follow-up Instructions', data.submission_notes]
+          ]],
           ['Personal Information', 'ph-user-circle', [
               ['Full Address', address], ['Contact Number', data.contact_no], ['Email Address', data.email || data.business_email],
               ['Birthdate', formatDate(data.birthdate)], ['Age', data.age], ['Sex', data.sex], ['Civil Status', data.civil_status],

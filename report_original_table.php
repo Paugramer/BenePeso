@@ -8,7 +8,7 @@
                           <th>Barangay</th>
                           <th>Batch Code</th>
                           <th style="text-align: center;">Status</th>
-                          <th style="text-align: center;">Details</th>
+                          <th style="text-align: center;">Actions</th>
                       </tr>
                   </thead>
                   <tbody>
@@ -29,6 +29,7 @@
                                $dispName = trim(($beneficiary["first_name"] ?? "") . " " . ($beneficiary["last_name"] ?? ""));
                           }
                           $initial = strtoupper(substr($dispName, 0, 1));
+                          if (!empty($submissionReportMode)) $availmentDisplay = $beneficiary['review_status'];
                           
                           $bData = $beneficiary;
                           $bData['program'] = $program;
@@ -57,7 +58,7 @@
                                   </div>
                                   <div>
                                       <div style="font-weight: 800; color: var(--green-dark); font-size: 13.5px; text-transform: uppercase;"><?php echo module_escape($dispName); ?></div>
-                                      <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px;">Added <?php echo module_escape(!empty($beneficiary['created_at'])?date('M d, Y',strtotime($beneficiary['created_at'])):'?'); ?></div>
+                                      <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px;"><?php echo !empty($submissionReportMode) ? 'Submitted '.module_escape($beneficiary['submitted_on']) : 'Added '.module_escape(!empty($beneficiary['created_at'])?date('M d, Y',strtotime($beneficiary['created_at'])):'?'); ?></div>
                                   </div>
                               </div>
                           </td>

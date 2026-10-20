@@ -1,4 +1,7 @@
 (() => {
+  if (typeof window.showBeneficiaryNotice !== 'function') {
+    window.showBeneficiaryNotice = (title,message) => window.alert(title+'\n'+message);
+  }
   const program = document.getElementById('requirementsProgram');
   program?.addEventListener('change', () => {
     document.getElementById('requirementsBatch').value = '0';
@@ -8,13 +11,8 @@
   document.getElementById('submissionFilterToggle')?.addEventListener('click', event => {
     const fields = document.getElementById('submissionFilterFields');
     fields.hidden = !fields.hidden;
+    filters.classList.toggle('filters-open', !fields.hidden);
     event.currentTarget.setAttribute('aria-expanded', String(!fields.hidden));
-  });
-  document.getElementById('openSubmissionExport')?.addEventListener('click', () => {
-    document.getElementById('submissionExport').showModal();
-  });
-  document.querySelectorAll('[data-submission-detail]').forEach(button => {
-    button.addEventListener('click', () => document.getElementById(button.dataset.submissionDetail).showModal());
   });
   filters?.querySelectorAll('select:not(#requirementsProgram)').forEach(select => {
     select.addEventListener('change', () => filters.requestSubmit());
