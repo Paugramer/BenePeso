@@ -46,23 +46,4 @@ if($format==='print') { ?>
 <?php rr_table($rows,$columns);?><script src="requirements_report.js"></script></body></html>
 <?php exit; }
 $page=max(1,(int)rr_input('page','1'));$pages=max(1,(int)ceil($total/25));$page=min($page,$pages);$offset=($page-1)*25;
-$prefix=$role==='admin'?'admin':'peso_staff';
-module_shell_start($role,'report',($filters['program_name'] ? $filters['program_name'].' Reports' : 'Report'),'View submitted documents and their current review status.','report-workspace requirements-report-page'); ?>
-<link rel="stylesheet" href="requirements_report.css?v=2">
-<section class="module-panel report-record-panel panel-card">
-<div class="report-workspace-toolbar panel-head-flex">
-<?php render_report_tabs($role,$filters['program_name'],$filters['program_id'],$filters['search'],'documents'); ?>
-<a class="module-btn secondary" href="<?=$prefix?>_beneficiaries.php"><i class="ph ph-squares-four"></i> All Programs</a>
-</div>
-<p class="requirements-note">Face-to-face submissions and PESO review status. This list does not certify DOLE approval.</p>
-<form method="get" class="requirements-filters filter-container records-filter-container" id="requirementsFilters"><input type="hidden" name="role" value="<?=module_escape($role)?>">
-<label>Program<select name="program_name" id="requirementsProgram"><option value="">All Programs</option><?php foreach($programs as $program):?><option value="<?=module_escape($program['program_name'])?>" <?=$filters['program_name']===$program['program_name']?'selected':''?>><?=module_escape($program['program_name'])?></option><?php endforeach?></select></label>
-<label>Batch<select name="program_id" id="requirementsBatch"><option value="0">All Batches</option><?php foreach($batches as $batch):?><option value="<?=(int)$batch['program_id']?>" <?=$filters['program_id']===(int)$batch['program_id']?'selected':''?>><?=module_escape($batch['program_code'])?></option><?php endforeach?></select></label>
-<label>Barangay<select name="barangay"><option value="All">All Barangays</option><?php foreach($barangays as $item):?><option value="<?=module_escape($item['barangay'])?>" <?=$filters['barangay']===$item['barangay']?'selected':''?>><?=module_escape($item['barangay'])?></option><?php endforeach?></select></label>
-<label>Requirements Review<select name="review_status"><?php foreach($statuses as $status):?><option value="<?=module_escape($status)?>" <?=$filters['review_status']===$status?'selected':''?>><?=module_escape($status==='All'?'All Review Statuses':$status)?></option><?php endforeach?></select></label>
-<label class="requirements-search">Search<input type="search" name="search" maxlength="120" placeholder="Name, barangay, or batch" value="<?=module_escape($filters['search'])?>"></label>
-<button class="module-btn" type="submit">Apply Filters</button><a class="module-btn secondary" href="requirements_report.php?role=<?=module_escape($role)?>">Reset</a></form>
-<div class="requirements-actions"><p><?=module_escape($summary)?></p><div><a class="module-btn secondary" data-requirements-format="print" target="_blank" rel="noopener" href="requirements_report.php?<?=module_escape(http_build_query($query+['format'=>'print']))?>">Print Filtered List</a><a class="module-btn" data-requirements-format="xlsx" href="requirements_report.php?<?=module_escape(http_build_query($query+['format'=>'xlsx']))?>">Download Excel</a></div></div>
-<?php rr_table(array_slice($rows,$offset,25),$columns,$offset);?>
-<nav class="module-pager" aria-label="Submission report pages"><?php if($page>1):?><a class="module-btn secondary" href="?<?=module_escape(http_build_query($query+['page'=>$page-1]))?>">Previous</a><?php endif?><span>Page <?=$page?> of <?=$pages?></span><?php if($page<$pages):?><a class="module-btn secondary" href="?<?=module_escape(http_build_query($query+['page'=>$page+1]))?>">Next</a><?php endif?></nav>
-</section><script src="requirements_report.js"></script><?php module_shell_end();
+require __DIR__.'/requirements_report_view.php';
