@@ -9,6 +9,7 @@ check_user_role($role);
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') { http_response_code(405); header('Allow: GET'); exit('This report is read-only.'); }
 require_once __DIR__ . '/requirements_report_helper.php';
 require_once __DIR__ . '/module_shell.php';
+require_once __DIR__ . '/report_tabs.php';
 header('Cache-Control: private, no-store');
 function rr_input(string $key, string $default=''): string {
     return is_string($_GET[$key] ?? null) ? mb_substr(trim($_GET[$key]),0,120) : $default;
@@ -46,13 +47,15 @@ if($format==='print') { ?>
 <?php exit; }
 $page=max(1,(int)rr_input('page','1'));$pages=max(1,(int)ceil($total/25));$page=min($page,$pages);$offset=($page-1)*25;
 $prefix=$role==='admin'?'admin':'peso_staff';
-module_shell_start($role,'report','Documents Submitted','Recorded face-to-face submissions and their current checklist review status.','requirements-report-page'); ?>
-<link rel="stylesheet" href="requirements_report.css">
-<section class="module-panel">
-<nav class="requirements-tabs" aria-label="Report views"><a class="module-btn secondary" href="<?=$prefix?>_beneficiaries.php?<?=module_escape(http_build_query(['program_name'=>$filters['program_name']]))?>">Historical Reports</a><a class="module-btn" aria-current="page" href="requirements_report.php?<?=module_escape(http_build_query($query))?>">Documents Submitted</a></nav>
-<p class="requirements-note">For DOLE review, select <strong>Verified / Complete</strong>, then print or download the filtered list. This records PESO checklist verification, not DOLE approval. Submission records remain available after applicants advance to later stages; dates show the latest recorded submission, including resubmissions.</p>
-<p><a class="module-btn secondary" href="requirements_report.php?<?=module_escape(http_build_query(array_replace($query,['review_status'=>'Verified / Complete'])))?>">View Verified / Complete List</a></p>
-<form method="get" class="requirements-filters" id="requirementsFilters"><input type="hidden" name="role" value="<?=module_escape($role)?>">
+module_shell_start($role,'report',($filters['program_name'] ? $filters['program_name'].' Reports' : 'Report'),'View submitted documents and their current review status.','report-workspace requirements-report-page'); ?>
+<link rel="stylesheet" href="requirements_report.css?v=2">
+<section class="module-panel report-record-panel panel-card">
+<div class="report-workspace-toolbar panel-head-flex">
+<?php render_report_tabs($role,$filters['program_name'],$filters['program_id'],$filters['search'],'documents'); ?>
+<a class="module-btn secondary" href="<?=$prefix?>_beneficiaries.php"><i class="ph ph-squares-four"></i> All Programs</a>
+</div>
+<p class="requirements-note">Face-to-face submissions and PESO review status. This list does not certify DOLE approval.</p>
+<form method="get" class="requirements-filters filter-container records-filter-container" id="requirementsFilters"><input type="hidden" name="role" value="<?=module_escape($role)?>">
 <label>Program<select name="program_name" id="requirementsProgram"><option value="">All Programs</option><?php foreach($programs as $program):?><option value="<?=module_escape($program['program_name'])?>" <?=$filters['program_name']===$program['program_name']?'selected':''?>><?=module_escape($program['program_name'])?></option><?php endforeach?></select></label>
 <label>Batch<select name="program_id" id="requirementsBatch"><option value="0">All Batches</option><?php foreach($batches as $batch):?><option value="<?=(int)$batch['program_id']?>" <?=$filters['program_id']===(int)$batch['program_id']?'selected':''?>><?=module_escape($batch['program_code'])?></option><?php endforeach?></select></label>
 <label>Barangay<select name="barangay"><option value="All">All Barangays</option><?php foreach($barangays as $item):?><option value="<?=module_escape($item['barangay'])?>" <?=$filters['barangay']===$item['barangay']?'selected':''?>><?=module_escape($item['barangay'])?></option><?php endforeach?></select></label>
