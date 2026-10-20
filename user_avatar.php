@@ -1,9 +1,9 @@
 <?php
 
-require_once __DIR__ . '/auth_session.php';
+require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/db.php';
 
-if (($_SESSION['role'] ?? '') !== 'user' || empty($_SESSION['user_id'])) {
+if (auth_first_active_role(['user']) === null) {
     http_response_code(404);
     exit;
 }

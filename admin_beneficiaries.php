@@ -561,6 +561,7 @@ if ($selectedProgramName !== "") {
       </div>
 
       <div class="top-actions">
+        <?php if ($selectedProgramName === ""): ?><a class="btn-main" href="requirements_report.php?role=admin">Requirements Submitted</a><?php endif; ?>
         <?php if ($selectedProgramName !== ""): ?>
         <?php endif; ?>
         <div class="top-chip">
@@ -639,6 +640,7 @@ if ($selectedProgramName !== "") {
       <section class="panel-card animate-fade-in" style="flex: 1; animation-delay: 0.1s; margin-top: 8px; display: flex; flex-direction: column;">
         <div class="records-toolbar">
             <div class="custom-tabs">
+                <a href="requirements_report.php?<?php echo h(http_build_query(['role' => 'admin', 'program_name' => $selectedProgramName, 'program_id' => $selectedProgramId, 'barangay' => $selectedBarangay, 'search' => $search])); ?>" class="tab-item">Requirements Submitted</a>
                 <a href="admin_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'All' && $availmentFilter === 'All' && $spesGroup === 'all' ? 'active' : ''; ?>">All Records</a>
                 <a href="admin_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'Completed', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $availmentFilter === 'Completed' && $spesGroup === 'all' ? 'active' : ''; ?>">Completed</a>
                 <a href="admin_beneficiaries.php?<?php echo h(build_query(['approval' => 'Rejected', 'availment' => 'All', 'spes_group' => 'all', 'page' => 1])); ?>" class="tab-item <?php echo $approvalFilter === 'Rejected' && $spesGroup === 'all' ? 'active' : ''; ?>">Rejected</a>
