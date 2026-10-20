@@ -32,7 +32,7 @@ $summary.=' | '.$total.' record'.($total===1?'':'s');
 $format=rr_input('format');
 if($format==='xlsx') {
     require_once __DIR__.'/report_columns.php';require_once __DIR__.'/xlsx_report_helper.php';
-    outputNativeXlsxReport('Requirements Submitted',$columns,$rows,$summary);
+    outputNativeXlsxReport('Documents Submitted',$columns,$rows,$summary);
 }
 function rr_table(array $rows,array $columns,int $offset=0): void { ?>
 <div class="module-table-wrap requirements-table"><table class="module-table"><thead><tr><th>No.</th><?php foreach($columns as $column):?><th><?=module_escape($column['label'])?></th><?php endforeach?></tr></thead><tbody>
@@ -40,17 +40,18 @@ function rr_table(array $rows,array $columns,int $offset=0): void { ?>
 <?php if(!$rows):?><tr><td colspan="<?=count($columns)+1?>">No recorded submissions match these filters.</td></tr><?php endif?></tbody></table></div>
 <?php }
 if($format==='print') { ?>
-<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Requirements Submitted</title><link rel="stylesheet" href="requirements_report.css"></head><body class="requirements-print">
-<header><img id="requirementsLetterhead" src="assets/peso_official_report_header.png" alt="PESO Vinzons official letterhead"><h1>Requirements Submitted</h1><p><?=module_escape($summary)?></p><p>Submission and review records only. This list does not certify DOLE approval.</p></header>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Documents Submitted</title><link rel="stylesheet" href="requirements_report.css"></head><body class="requirements-print">
+<header><img id="requirementsLetterhead" src="assets/peso_official_report_header.png" alt="PESO Vinzons official letterhead"><h1>Documents Submitted</h1><p><?=module_escape($summary)?></p><p>Submission and review records only. This list does not certify DOLE approval.</p></header>
 <?php rr_table($rows,$columns);?><script src="requirements_report.js"></script></body></html>
 <?php exit; }
 $page=max(1,(int)rr_input('page','1'));$pages=max(1,(int)ceil($total/25));$page=min($page,$pages);$offset=($page-1)*25;
 $prefix=$role==='admin'?'admin':'peso_staff';
-module_shell_start($role,'report','Requirements Submitted','Recorded face-to-face submissions and their current checklist review status.','requirements-report-page'); ?>
+module_shell_start($role,'report','Documents Submitted','Recorded face-to-face submissions and their current checklist review status.','requirements-report-page'); ?>
 <link rel="stylesheet" href="requirements_report.css">
 <section class="module-panel">
-<nav class="requirements-tabs" aria-label="Report views"><a class="module-btn secondary" href="<?=$prefix?>_beneficiaries.php?<?=module_escape(http_build_query(['program_name'=>$filters['program_name']]))?>">Historical Reports</a><a class="module-btn" aria-current="page" href="requirements_report.php?<?=module_escape(http_build_query($query))?>">Requirements Submitted</a></nav>
-<p class="requirements-note">Includes recorded submissions even after the applicant advances to a later program stage. “Verified / Complete” describes the PESO checklist; it does not mean forwarded to or approved by DOLE. The date is the latest recorded submission, including resubmissions.</p>
+<nav class="requirements-tabs" aria-label="Report views"><a class="module-btn secondary" href="<?=$prefix?>_beneficiaries.php?<?=module_escape(http_build_query(['program_name'=>$filters['program_name']]))?>">Historical Reports</a><a class="module-btn" aria-current="page" href="requirements_report.php?<?=module_escape(http_build_query($query))?>">Documents Submitted</a></nav>
+<p class="requirements-note">For DOLE review, select <strong>Verified / Complete</strong>, then print or download the filtered list. This records PESO checklist verification, not DOLE approval. Submission records remain available after applicants advance to later stages; dates show the latest recorded submission, including resubmissions.</p>
+<p><a class="module-btn secondary" href="requirements_report.php?<?=module_escape(http_build_query(array_replace($query,['review_status'=>'Verified / Complete'])))?>">View Verified / Complete List</a></p>
 <form method="get" class="requirements-filters" id="requirementsFilters"><input type="hidden" name="role" value="<?=module_escape($role)?>">
 <label>Program<select name="program_name" id="requirementsProgram"><option value="">All Programs</option><?php foreach($programs as $program):?><option value="<?=module_escape($program['program_name'])?>" <?=$filters['program_name']===$program['program_name']?'selected':''?>><?=module_escape($program['program_name'])?></option><?php endforeach?></select></label>
 <label>Batch<select name="program_id" id="requirementsBatch"><option value="0">All Batches</option><?php foreach($batches as $batch):?><option value="<?=(int)$batch['program_id']?>" <?=$filters['program_id']===(int)$batch['program_id']?'selected':''?>><?=module_escape($batch['program_code'])?></option><?php endforeach?></select></label>
