@@ -38,8 +38,9 @@ $programDateColumns = '';
 if (report_program_column_exists($conn, 'start_date')) $programDateColumns .= ', p.start_date';
 if (report_program_column_exists($conn, 'end_date')) $programDateColumns .= ', p.end_date';
 
-$approvalClause = ' AND ' . historical_record_condition();
-$sql = "SELECT b.*, p.program_code, p.program_name$programDateColumns
+$approvalClause = ' AND ' . report_record_condition($conn);
+$submissionEvidence=report_submission_condition($conn);
+$sql = "SELECT b.*, ($submissionEvidence) AS report_has_submission, p.program_code, p.program_name$programDateColumns
         FROM beneficiaries b
         JOIN programs p ON b.program_id = p.program_id
         WHERE p.program_name = ?$approvalClause
@@ -72,7 +73,7 @@ if (($_GET['template_preview'] ?? '') === '1') {
         $outcome=$row['approval_status']==='Rejected'?'Rejected':$row['availment_status'];
         $natureValues=explode(',',str_replace([';',', ',' ,'],[',',',',','],$row['business_nature']??''));
         $natureValues=array_map(static fn($value)=>mb_strtolower(trim($value)),$natureValues);
-        return (!$batch||(int)$row['program_id']===$batch)&&($barangay==='All'||$row['barangay']===$barangay)&&($status==='All'||$outcome===$status)&&($group==='all'||($row['spes_lifecycle']??'none')===$group)&&($nature==='All'||in_array(mb_strtolower($nature),$natureValues,true));
+        return (!$batch||(int)$row['program_id']===$batch)&&($barangay==='All'||$row['barangay']===$barangay)&&($status==='All'||($status==='Documents Submitted'?!empty($row['report_has_submission']):$outcome===$status))&&($group==='all'||($row['spes_lifecycle']??'none')===$group)&&($nature==='All'||in_array(mb_strtolower($nature),$natureValues,true));
     }));
     usort($rows,static fn($a,$b)=>strcasecmp(($barangay==='All'?($a['barangay']??'').' ':'').($a['last_name']??'').' '.($a['first_name']??''),($barangay==='All'?($b['barangay']??'').' ':'').($b['last_name']??'').' '.($b['first_name']??'')));
     try { echo json_encode(['ok'=>true,'count'=>count($rows),'sheets'=>report_template_sheets($programName,$rows,$barangay)],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); }

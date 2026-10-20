@@ -36,7 +36,7 @@ if (empty($program_name)) {
 }
 
 // 3. Build the Beneficiaries Query
-$whereParts = ["p.program_name = ?", historical_record_condition()];
+$whereParts = ["p.program_name = ?", report_record_condition($conn)];
 $params = [$program_name];
 $types = "s";
 
@@ -74,6 +74,7 @@ if (in_array($reportOutcome, ['Completed','Rejected','Not Qualified','Exam Faile
     if ($reportOutcome === 'Rejected') $whereParts[] = "b.approval_status = 'Rejected'";
     else { $whereParts[] = "b.approval_status = 'Approved'"; $whereParts[] = 'b.availment_status = ?'; $params[] = $reportOutcome; $types .= 's'; }
 }
+if ($reportOutcome==='Documents Submitted') $whereParts[]=report_submission_condition($conn);
 $reportSearch = mb_substr(trim((string)($_GET['report_search'] ?? '')), 0, 120);
 if ($reportSearch !== '') {
     $whereParts[] = '(b.full_name LIKE ? OR b.barangay LIKE ? OR p.program_code LIKE ?)';

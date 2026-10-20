@@ -13,7 +13,9 @@
    const sheet=sheets[sheetIndex];if(!sheet)return;worksheetHeader.remove();viewport.innerHTML=sheet.html;const worksheet=document.createElement('div');worksheet.className='report-worksheet';worksheet.append(worksheetHeader,...viewport.childNodes);viewport.append(worksheet);
    const selected=new Set(columns.filter(input=>input.checked).map(input=>input.value));
    const indices=sheet.column_keys.map((key,index)=>({key,index})).filter(item=>item.key!=='_number'&&selected.has(item.key)).map(item=>item.index);
-   const perPage=Math.max(1,Math.min(8,Math.floor((viewport.clientWidth||innerWidth)/140)-1)),total=Math.max(1,Math.ceil(indices.length/perPage));columnPage=Math.min(columnPage,total-1);
+   const fitTogether=indices.length<=8;
+   const perPage=fitTogether?Math.max(1,indices.length):Math.max(1,Math.min(8,Math.floor((viewport.clientWidth||innerWidth)/140)-1)),total=Math.max(1,Math.ceil(indices.length/perPage));columnPage=Math.min(columnPage,total-1);
+   worksheet.style.minWidth=fitTogether && (viewport.clientWidth||innerWidth)<960?'960px':'';
    const visible=new Set([0,...indices.slice(columnPage*perPage,(columnPage+1)*perPage)]);
    viewport.querySelectorAll('col').forEach(col=>{if(!visible.has(Number(col.dataset.templateColumn)))col.remove();});
    viewport.querySelectorAll('[data-column-start]').forEach(cell=>{const start=Number(cell.dataset.columnStart),end=Number(cell.dataset.columnEnd);let width=0;for(let i=start;i<=end;i++)if(visible.has(i))width++;cell.hidden=!width;if(width)cell.colSpan=width;});

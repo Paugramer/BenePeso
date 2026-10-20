@@ -16,7 +16,7 @@ while ($result && ($record = $result->fetch_assoc())) $programs[] = $record['pro
 $reportPrefix=$moduleRole==='admin'?'admin':'peso_staff';
 if(empty($_GET['program_name'])){
  $counts=[];$summary=['total'=>0,'completed'=>0,'rejected'=>0,'other'=>0];
- foreach($conn->query("SELECT p.program_name,COUNT(*) total,SUM(b.approval_status='Approved' AND b.availment_status='Completed') completed,SUM(b.approval_status='Rejected') rejected FROM beneficiaries b JOIN programs p ON p.program_id=b.program_id WHERE ".historical_record_condition()." GROUP BY p.program_name") as $r){$counts[$r['program_name']]=$r;foreach(['total','completed','rejected'] as $key)$summary[$key]+=(int)$r[$key];}
+ foreach($conn->query("SELECT p.program_name,COUNT(*) total,SUM(b.approval_status='Approved' AND b.availment_status='Completed') completed,SUM(b.approval_status='Rejected') rejected FROM beneficiaries b JOIN programs p ON p.program_id=b.program_id WHERE ".report_record_condition($conn)." GROUP BY p.program_name") as $r){$counts[$r['program_name']]=$r;foreach(['total','completed','rejected'] as $key)$summary[$key]+=(int)$r[$key];}
  $summary['other']=$summary['total']-$summary['completed']-$summary['rejected'];$images=[];foreach($conn->query('SELECT program_name,image_path FROM program_categories') as $r)$images[$r['program_name']]=$r['image_path'];
  module_shell_start($moduleRole,'report','Report','Select a program to view beneficiary records and download reports.','report-workspace');
  ?><div class="report-stat-grid"><?php foreach(['total'=>'Beneficiary Records','completed'=>'Completed','rejected'=>'Rejected','other'=>'Not Completed'] as $key=>$label):?><article class="report-stat"><div class="report-stat-top"><span><?=module_escape($label)?></span><span class="report-stat-icon"><i class="ph ph-<?=$key==='total'?'users-three':($key==='completed'?'check-circle':($key==='rejected'?'x-circle':'warning-circle'))?>"></i></span></div><strong><?=$summary[$key]?></strong><p class="report-stat-caption"><?=$key==='total'?'All records':($key==='completed'?'Completed participation':($key==='rejected'?'Rejected applications':'Not completed'))?></p><p class="report-stat-note"><?=$key==='total'?'Beneficiary records across all programs.':($key==='completed'?'Beneficiaries who completed their program.':($key==='rejected'?'Applications not accepted by PESO.':'Not Qualified, Exam Not Passed, and Cancelled.'))?></p></article><?php endforeach?></div>
@@ -38,7 +38,7 @@ $stmt->bind_param('s', $program); $stmt->execute(); $result=$stmt->get_result();
 while ($record=$result->fetch_assoc()) $batches[]=$record;
 $stmt->close();
 if ($batch && !in_array($batch, array_map('intval', array_column($batches,'program_id')), true)) $batch=0;
-$where = ['p.program_name=?', historical_record_condition()]; $params=[$program]; $types='s';
+$where = ['p.program_name=?', report_record_condition($conn)]; $params=[$program]; $types='s';
 if($spesGroup!=='all')$where[]=spes_group_condition_sql($spesGroup,'b');
 if ($batch) { $where[]='b.program_id=?'; $params[]=$batch; $types.='i'; }
 if ($status!=='All') { $where[]=$status==='Rejected' ? "b.approval_status='Rejected'" : 'b.availment_status=?'; if ($status!=='Rejected') { $params[]=$status; $types.='s'; } }

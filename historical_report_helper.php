@@ -5,6 +5,18 @@ function historical_record_condition(string $alias = 'b'): string {
     return "($alias.approval_status = 'Rejected' OR ($alias.approval_status = 'Approved' AND COALESCE($alias.availment_status, '') IN ('Completed','Not Qualified','Exam Failed','Cancelled')))";
 }
 
+/** Submission evidence expands reports without closing active applications. */
+function report_submission_condition(mysqli $conn, string $alias = 'b'): string {
+    $condition="($alias.approval_status='Approved' AND $alias.availment_status='Requirements Received')";
+    try { $available=(bool)$conn->query('SELECT 1 FROM application_document_submissions LIMIT 0'); }
+    catch(Throwable $error) { $available=false; }
+    if($available) $condition.=" OR EXISTS (SELECT 1 FROM application_document_submissions report_ds WHERE report_ds.beneficiary_id=$alias.beneficiary_id AND report_ds.received_at IS NOT NULL AND report_ds.received_at>'1000-01-01')";
+    return '('.$condition.')';
+}
+function report_record_condition(mysqli $conn, string $alias = 'b'): string {
+    return '('.historical_record_condition($alias).' OR '.report_submission_condition($conn,$alias).')';
+}
+
 function reporting_details_available(mysqli $conn): bool {
     $result = $conn->query("SHOW TABLES LIKE 'beneficiary_reporting_details'");
     return $result && $result->num_rows > 0;

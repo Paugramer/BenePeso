@@ -48,3 +48,12 @@ rr_check(requirements_report_review_status([['status'=>'Verified']],['requested_
 rr_check(requirements_report_review_status([],[])==='Not Reviewed','Empty checklist marked complete.');
 rr_check((int)$conn->query('SELECT COUNT(*) n FROM beneficiaries')->fetch_assoc()['n']===9,'Report mutated fixture records.');
 echo "Submission evidence, latest/legacy dates, review states, nine filters and combined filters passed; temporary tables only.\n";
+require_once __DIR__.'/../historical_report_helper.php';
+$conn->query("INSERT INTO beneficiaries VALUES (10,1,'SYNTHETIC HISTORICAL','Alpha','Approved','Completed',NULL)");
+$scope=report_record_condition($conn);
+$reportIds=array_map('intval',array_column($conn->query('SELECT beneficiary_id FROM beneficiaries b WHERE '.$scope.' ORDER BY beneficiary_id')->fetch_all(MYSQLI_ASSOC),'beneficiary_id'));
+rr_check($reportIds===[1,2,3,4,6,8,9,10],'All Records did not combine submitted and historical records correctly.');
+$submissionIds=array_map('intval',array_column($conn->query('SELECT beneficiary_id FROM beneficiaries b WHERE '.report_submission_condition($conn).' ORDER BY beneficiary_id')->fetch_all(MYSQLI_ASSOC),'beneficiary_id'));
+rr_check($submissionIds===[1,2,3,4,6,8,9],'Documents Submitted filter included unsubmitted records.');
+rr_check((int)$conn->query('SELECT COUNT(*) n FROM beneficiaries b WHERE beneficiary_id=1 AND '.historical_record_condition())->fetch_assoc()['n']===0,'Submission report scope incorrectly closed an active application.');
+echo "All Records/submission scopes passed; active application classification preserved.\n";

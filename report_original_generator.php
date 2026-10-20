@@ -39,7 +39,7 @@ $result=$conn->query("SELECT DISTINCT business_nature FROM beneficiaries WHERE b
                 <div class="form-group" style="margin:0;">
                     <label>Status Filter</label>
                     <select name="report_outcome" id="report_avail_select">
-<?php foreach (['All'=>'All Records','Completed'=>'Completed','Rejected'=>'Rejected'] as $value=>$label): ?><option value="<?=module_escape($value)?>"><?=module_escape($label)?></option><?php endforeach; ?>
+<?php foreach (['All'=>'All Records','Completed'=>'Completed','Rejected'=>'Rejected','Documents Submitted'=>'Documents Submitted'] as $value=>$label): ?><option value="<?=module_escape($value)?>" <?=$status===$value?'selected':''?>><?=module_escape($label)?></option><?php endforeach; ?>
                     </select>
                 </div>
                 <?php if (stripos($selectedProgramName, 'SPES') !== false): ?>

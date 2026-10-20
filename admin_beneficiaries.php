@@ -364,7 +364,7 @@ $sqlPrograms = "SELECT c.program_name, c.image_path, COALESCE(t.beneficiary_coun
     SELECT p.program_name, COUNT(b.beneficiary_id) AS beneficiary_count
     FROM programs p
     LEFT JOIN beneficiaries b ON b.program_id = p.program_id
-    WHERE " . historical_record_condition() . "
+    WHERE " . report_record_condition($conn) . "
     GROUP BY p.program_name
   ) t ON t.program_name = c.program_name
   ORDER BY c.program_name ASC";
@@ -376,7 +376,7 @@ $res = $conn->query("SELECT COUNT(*) AS total,
   SUM(approval_status = 'Approved' AND availment_status = 'Completed') AS completed_total,
   SUM(approval_status = 'Rejected') AS rejected_total,
   SUM(approval_status = 'Approved' AND availment_status IN ('Not Qualified','Exam Failed','Cancelled')) AS not_completed_total
-  FROM beneficiaries b WHERE " . historical_record_condition());
+  FROM beneficiaries b WHERE " . report_record_condition($conn));
 if ($res && ($row = $res->fetch_assoc())) {
   $globalTotalBeneficiaries = (int)($row['total'] ?? 0);
   $globalCompletedRecords = (int)($row['completed_total'] ?? 0);
@@ -404,7 +404,7 @@ if ($selectedProgramName !== "") {
       $stmt->close();
   }
 
-  $whereParts = ["p.program_name = ?", historical_record_condition()];
+  $whereParts = ["p.program_name = ?", report_record_condition($conn)];
   $params = [$selectedProgramName];
   $types = "s";
 
@@ -500,7 +500,7 @@ if ($selectedProgramName !== "") {
 <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20261014-restored" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
-<link rel="stylesheet" href="report_preview.css?v=10"><script src="report_preview.js?v=9" defer></script>
+<link rel="stylesheet" href="report_preview.css?v=10"><script src="report_preview.js?v=10" defer></script>
 </head>
 <body class="admin-mobile-page admin-beneficiaries-page">
   <div class="page-wrap">
@@ -579,7 +579,7 @@ if ($selectedProgramName !== "") {
             </div>
             <div class="stat-value"><?php echo (int)$globalTotalBeneficiaries; ?></div>
             <div class="stat-trend trend-up"><i class="ph-bold ph-users-three"></i> All records</div>
-            <div class="stat-note">Completed and closed beneficiary records.</div>
+            <div class="stat-note">Submitted, completed, and closed beneficiary records.</div>
         </div>
         <div class="stat-card">
             <div class="stat-top">
@@ -844,9 +844,10 @@ if ($selectedProgramName !== "") {
                 <div class="form-group" style="margin:0;">
                     <label>Status Filter</label>
                     <select name="report_outcome" id="report_avail_select">
-                        <option value="All">All Records</option>
-                        <option value="Rejected">Rejected</option>
-                        <option value="Completed">Completed</option>
+                        <option value="All" <?=$approvalFilter==='All' && $availmentFilter==='All'?'selected':''?>>All Records</option>
+                        <option value="Rejected" <?=$approvalFilter==='Rejected'?'selected':''?>>Rejected</option>
+                        <option value="Completed" <?=$availmentFilter==='Completed'?'selected':''?>>Completed</option>
+                        <option value="Documents Submitted">Documents Submitted</option>
                     </select>
                 </div>
                 <?php if (stripos($selectedProgramName, 'SPES') !== false): ?>
