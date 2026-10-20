@@ -561,7 +561,6 @@ if ($selectedProgramName !== "") {
       </div>
 
       <div class="top-actions">
-        <?php if ($selectedProgramName === ""): ?><a class="btn-main" href="requirements_report.php?role=admin">Documents Submitted</a><?php endif; ?>
         <?php if ($selectedProgramName !== ""): ?>
         <?php endif; ?>
         <div class="top-chip">
