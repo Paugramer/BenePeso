@@ -31,7 +31,7 @@ function build_msme_template_report(array $records): string {
             }
             $cursor=$firstData;
             foreach($records as $index=>$record) {
-                $products=official_report_list($record['primary_products'] ?? '');$prices=official_report_list($record['product_price'] ?? '');
+                [$products,$prices]=official_report_product_lists($record);
                 $height=max(10,count($products),count($prices));$blockRows=[];
                 for($offset=0;$offset<$height;$offset++) {
                     $row=$prototype[min($offset,9)]->cloneNode(true);$number=$cursor+$offset;$row->setAttribute('r',(string)$number);

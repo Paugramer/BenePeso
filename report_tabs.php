@@ -7,10 +7,10 @@ function render_report_tabs(string $role, string $program, int $batch, string $s
     ?>
     <nav class="report-tabs custom-tabs" aria-label="Report views">
     <?php foreach ($tabs as $value=>$label): ?>
-      <a class="tab-item <?=$active===$value && $spesGroup==='all'?'active':''?>" href="<?=$prefix?>_beneficiaries.php?<?=module_escape(http_build_query($base+['outcome'=>$value,'spes_group'=>'all']))?>"><?=module_escape($label)?></a>
+      <a class="tab-item <?=$active===$value && $spesGroup==='all'?'active':''?>" href="<?=$prefix?>_beneficiaries.php?<?=module_escape(http_build_query($base+['outcome'=>$value,'approval'=>$value==='Rejected'?'Rejected':'All','availment'=>$value==='Completed'?'Completed':'All','spes_group'=>'all','page'=>1]))?>"><?=module_escape($label)?></a>
     <?php endforeach; ?>
     <?php if (stripos($program,'SPES')!==false): foreach (['baby'=>'SPES Baby','graduate'=>'Graduated'] as $value=>$label): ?>
-      <a class="tab-item <?=$active!=='documents' && $spesGroup===$value?'active':''?>" href="<?=$prefix?>_beneficiaries.php?<?=module_escape(http_build_query($base+['outcome'=>'All','spes_group'=>$value]))?>"><?=module_escape($label)?></a>
+      <a class="tab-item <?=$active!=='documents' && $spesGroup===$value?'active':''?>" href="<?=$prefix?>_beneficiaries.php?<?=module_escape(http_build_query($base+['outcome'=>'All','approval'=>'All','availment'=>'All','spes_group'=>$value,'page'=>1]))?>"><?=module_escape($label)?></a>
     <?php endforeach; endif; ?>
       <a class="tab-item <?=$active==='documents'?'active':''?>" <?=$active==='documents'?'aria-current="page"':''?> href="requirements_report.php?<?=module_escape(http_build_query(['role'=>$role]+$base))?>">Documents Submitted</a>
     </nav>

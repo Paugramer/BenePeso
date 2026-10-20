@@ -10,6 +10,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') { http_response_code(405); header('All
 require_once __DIR__ . '/requirements_report_helper.php';
 require_once __DIR__ . '/module_shell.php';
 require_once __DIR__ . '/report_tabs.php';
+require_once __DIR__ . '/report_columns.php';
+require_once __DIR__ . '/spes_lifecycle_helper.php';
+require_once __DIR__ . '/historical_report_helper.php';
 header('Cache-Control: private, no-store');
 function rr_input(string $key, string $default=''): string {
     return is_string($_GET[$key] ?? null) ? mb_substr(trim($_GET[$key]),0,120) : $default;
@@ -31,30 +34,34 @@ if($filters['review_status']!=='All')$summary.=' | '.$filters['review_status'];
 if($filters['search']!=='')$summary.=' | Search: '.$filters['search'];
 $summary.=' | '.$total.' record'.($total===1?'':'s');
 $format=rr_input('format');
-if (in_array($format,['xlsx','print'],true) && isset($_GET['columns']) && is_array($_GET['columns'])) {
-    $selectedColumns=array_filter($_GET['columns'],'is_string');
-    $columns=array_values(array_filter($columns,static fn($column)=>in_array($column['key'],$selectedColumns,true)));
-    if (!$columns) { http_response_code(400); exit('Select at least one report column.'); }
-}
 if($format==='xlsx') {
     require_once __DIR__.'/report_columns.php';require_once __DIR__.'/xlsx_report_helper.php';
-    outputNativeXlsxReport('Documents Submitted',$columns,$rows,$summary);
+    require_once __DIR__.'/official_template_export.php';
+    $exportRows=$rows;
+    if(stripos($filters['program_name'],'SPES')!==false && $exportRows) $exportRows=spes_enrich_rows($conn,$exportRows);
+    $exportRows=enrich_reporting_rows($conn,$exportRows);
+    output_official_template_report($filters['program_name'],$exportRows,$filters['barangay']);
 }
-function rr_table(array $rows,array $columns,int $offset=0): void { ?>
-<div class="module-table-wrap requirements-table"><table class="module-table spreadsheet-table official-template-table"><colgroup><?php for($c=0;$c<=count($columns);$c++):?><col data-template-column="<?=$c?>"><?php endfor?></colgroup><thead><tr><th data-column-start="0" data-column-end="0">No.</th><?php foreach($columns as $c=>$column):?><th data-column-start="<?=$c+1?>" data-column-end="<?=$c+1?>"><?=module_escape($column['label'])?></th><?php endforeach?></tr></thead><tbody>
-<?php foreach($rows as $i=>$row):?><tr data-record-id="<?=(int)$row['beneficiary_id']?>"><td data-column-start="0" data-column-end="0"><?=$offset+$i+1?></td><?php foreach($columns as $c=>$column):?><td data-column-start="<?=$c+1?>" data-column-end="<?=$c+1?>"><?=nl2br(module_escape($row[$column['key']] ?? ''))?></td><?php endforeach?></tr><?php endforeach?>
-<?php if(!$rows):?><tr><td colspan="<?=count($columns)+1?>">No recorded submissions match these filters.</td></tr><?php endif?></tbody></table></div>
-<?php }
 if($format==='preview') {
-    ob_start(); rr_table($rows,$columns); $html=ob_get_clean();
+    require_once __DIR__.'/xlsx_report_helper.php';
+    require_once __DIR__.'/official_template_export.php';
+    $previewRows=$rows;
+    if(stripos($filters['program_name'],'SPES')!==false && $previewRows) $previewRows=spes_enrich_rows($conn,$previewRows);
+    $previewRows=enrich_reporting_rows($conn,$previewRows);
     header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(['ok'=>true,'count'=>$total,'sheets'=>[['name'=>'Documents Submitted','html'=>$html,'column_keys'=>array_merge(['_number'],array_column($columns,'key')),'headers'=>array_merge(['No.'],array_column($columns,'label'))]]],JSON_INVALID_UTF8_SUBSTITUTE);
+    try { echo json_encode(['ok'=>true,'count'=>$total,'sheets'=>report_template_sheets($filters['program_name'],$previewRows,$filters['barangay'])],JSON_INVALID_UTF8_SUBSTITUTE); }
+    catch(Throwable $error) { error_log('Submission report preview: '.$error->getMessage()); http_response_code(500); echo json_encode(['ok'=>false,'message'=>'The report preview could not be prepared. Please try again.']); }
     exit;
 }
-if($format==='print') { ?>
-<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Documents Submitted</title><link rel="stylesheet" href="requirements_report.css"></head><body class="requirements-print">
-<header><img id="requirementsLetterhead" src="assets/peso_official_report_header.png" alt="PESO Vinzons official letterhead"><h1>Documents Submitted</h1><p><?=module_escape($summary)?></p><p>Submission and review records only. This list does not certify DOLE approval.</p></header>
-<?php rr_table($rows,$columns);?><script src="requirements_report.js"></script></body></html>
+if($format==='print') {
+    require_once __DIR__.'/xlsx_report_helper.php'; require_once __DIR__.'/official_template_export.php';
+    $printRows=$rows;
+    if(stripos($filters['program_name'],'SPES')!==false && $printRows) $printRows=spes_enrich_rows($conn,$printRows);
+    $printRows=enrich_reporting_rows($conn,$printRows);
+    $printSheets=report_template_sheets($filters['program_name'],$printRows,$filters['barangay']); ?>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title><?=module_escape(getReportProgramTitle($filters['program_name']))?></title><link rel="stylesheet" href="requirements_report.css"></head><body class="requirements-print">
+<?php foreach($printSheets as $sheet):?><section style="break-after:page"><header><img id="requirementsLetterhead" src="assets/peso_official_report_header.png" alt="PESO Vinzons official letterhead"><h1><?=module_escape(getReportProgramTitle($filters['program_name']))?></h1><p><?=module_escape($summary)?></p></header><div class="requirements-table"><?=$sheet['html']?></div></section><?php endforeach?>
+<script src="requirements_report.js"></script></body></html>
 <?php exit; }
 $page=max(1,(int)rr_input('page','1'));$pages=max(1,(int)ceil($total/25));$page=min($page,$pages);$offset=($page-1)*25;
 require __DIR__.'/requirements_report_view.php';

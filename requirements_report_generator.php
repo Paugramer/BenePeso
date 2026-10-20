@@ -1,4 +1,4 @@
-<?php $selectedProgramName=$filters['program_name']; $reportProgramTitle='Documents Submitted'; $submissionColumns=$columns; ?>
+<?php $selectedProgramName=$filters['program_name']; $reportProgramTitle=getReportProgramTitle($selectedProgramName); $submissionColumns=array_values(array_filter(official_report_columns($selectedProgramName),static fn($column)=>$column['label']!=='')); ?>
 <div class="modal" id="generateReportModal" data-submission-report="1" aria-hidden="true">
   <div class="modal-backdrop" data-close-report></div>
   <div class="modal-dialog split-layout" style="position: relative; overflow: hidden !important;">
@@ -33,7 +33,7 @@
 
                 <div class="form-group" style="margin:0"><label>Requirements Review</label><select name="review_status" id="report_avail_select"><?php foreach($statuses as $status):?><option value="<?=module_escape($status)?>" <?=$filters['review_status']===$status?'selected':''?>><?=module_escape($status==='All'?'All Review Statuses':$status)?></option><?php endforeach?></select></div>
 <details class="report-column-picker">
-                    <summary><span>Report Columns</span><span class="report-column-count"></span></summary>
+                    <summary><span>Preview Columns</span><span class="report-column-count"></span></summary><p class="report-preview-format-note">Print and Export Data use the complete original report format.</p>
                     <div class="report-column-tools">
                         <button type="button" data-report-columns="essential">Common Fields</button>
                         <button type="button" data-report-columns="all">Select All</button>
@@ -41,7 +41,7 @@
                     <div class="report-column-list">
                         <?php foreach ($submissionColumns as $columnIndex => $column): ?>
                             <label>
-                                <input type="checkbox" name="columns[]" value="<?php echo module_escape($column['key']); ?>" data-column-index="<?php echo $columnIndex + 1; ?>" data-default="<?php echo true ? '1' : '0'; ?>" checked>
+                                <input type="checkbox" name="columns[]" value="<?php echo module_escape($column['key']); ?>" data-column-index="<?php echo $columnIndex + 1; ?>" data-default="<?php echo $column['default'] ? '1' : '0'; ?>" checked>
                                 <span><?php echo module_escape($column['label']); ?></span>
                             </label>
                         <?php endforeach; ?>
@@ -67,7 +67,7 @@
         <div class="spreadsheet-container">
             <div class="preview-header">
                 <img class="official-report-header" src="assets/peso_official_report_header.png?v=20260820-compact" alt="PESO Vinzons official letterhead">
-                <h2>Documents Submitted</h2>
+                <h2><?=module_escape($reportProgramTitle)?></h2>
                 <p id="preview_subtitle_top">Municipality of Vinzons</p>
             </div>
             <div class="report-view-toolbar" aria-label="Report preview controls">
@@ -97,4 +97,4 @@
 </div>
 
 
-<script>window.currentReportTitle='Documents Submitted';</script><script src="report_preview.js?v=7" defer></script>
+<script>window.currentReportTitle=<?=json_encode($reportProgramTitle,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT)?>;</script><script src="report_preview.js?v=7" defer></script>

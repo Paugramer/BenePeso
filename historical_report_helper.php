@@ -72,9 +72,27 @@ function official_report_list($value): array {
     return array_map('trim', preg_split('/[;\r\n]+/', $raw));
 }
 
+/** Accept both the paired product form and legacy separate product/price lists. */
+function official_report_product_lists(array $row): array {
+    $raw=$row['primary_products'] ?? '';
+    $decoded=is_array($raw)?$raw:json_decode((string)$raw,true);
+    if(is_array($decoded) && is_array($decoded[0] ?? null)) {
+        $products=[]; $prices=[];
+        foreach($decoded as $pair) {
+            if(!is_array($pair)) continue;
+            $name=$pair[0] ?? $pair['name'] ?? ''; $price=$pair[1] ?? $pair['price'] ?? '';
+            $products[]=is_scalar($name)?(string)$name:'';
+            $prices[]=is_scalar($price)?(string)$price:'';
+        }
+        $storedPrices=official_report_list($row['product_price'] ?? '');
+        return [$products,$storedPrices ?: $prices];
+    }
+    return [official_report_list($raw),official_report_list($row['product_price'] ?? '')];
+}
+
 function official_report_value(array $row, string $key): string {
     if ($key === 'approval_status' && in_array($row['availment_status'] ?? '', ['Not Qualified','Exam Failed'], true)) return 'DISQUALIFIED';
-    if (in_array($key, ['primary_products','product_price'], true)) return implode("\n", official_report_list($row[$key] ?? ''));
+    if (in_array($key, ['primary_products','product_price'], true)) { $lists=official_report_product_lists($row); return implode("\n",$lists[$key==='primary_products'?0:1]); }
 
     if ($key === 'report_workers') return 'Male: '.(int)($row['hr_male'] ?? 0)."\nFemale: ".(int)($row['hr_female'] ?? 0)."\nTotal: ".getReportCellValue($row,'hr_total');
     if ($key === 'employment_type') {
