@@ -32,3 +32,10 @@ __pycache__/
 
 # Microsoft Office temporary lock files
 ~$*
+
+# Local research paper and revision documents
+/deliverables/FINAL-PAPER-BENEPESO_REVISED.docx
+/deliverables/BenePeso_Paper_Review.docx
+/deliverables/BenePeso_Paper_System_Review.md
+/deliverables/BenePeso_Replacement_Text.md
+/deliverables/BenePeso_Revised_Paper_Pending_Checks.md
