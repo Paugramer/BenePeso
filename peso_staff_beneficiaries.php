@@ -465,7 +465,7 @@ if ($selectedProgramName !== "") {
       </div>
 
       <div class="top-actions">
-        <?php if ($selectedProgramName === ""): ?><a class="btn-main" href="requirements_report.php?role=peso_staff">Requirements Submitted</a><?php endif; ?>
+        <?php if ($selectedProgramName === ""): ?><a class="btn-main" href="requirements_report.php?role=peso_staff">Documents Submitted</a><?php endif; ?>
         <?php if ($selectedProgramName !== ""): ?>
         <?php endif; ?>
         <div class="top-chip">
