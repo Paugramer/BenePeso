@@ -40,7 +40,7 @@ if($format==='xlsx') {
     $exportRows=$rows;
     if(stripos($filters['program_name'],'SPES')!==false && $exportRows) $exportRows=spes_enrich_rows($conn,$exportRows);
     $exportRows=enrich_reporting_rows($conn,$exportRows);
-    output_official_template_report($filters['program_name'],$exportRows,$filters['barangay']);
+    output_official_template_report($filters['program_name'],$exportRows,$filters['barangay'],$_GET['columns'] ?? null);
 }
 if($format==='preview') {
     require_once __DIR__.'/xlsx_report_helper.php';

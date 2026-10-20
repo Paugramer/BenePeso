@@ -21,7 +21,7 @@ function xlsxInlineCell(string $reference, string $value, int $style): string
     return '<c r="' . $reference . '" t="inlineStr" s="' . $style . '"><is><t xml:space="preserve">' . xlsxXml($value) . '</t></is></c>';
 }
 
-function outputNativeXlsxReport(string $programName, array $columns, array $rows, string $subtitle): void
+function outputNativeXlsxReport(string $programName, array $columns, array $rows, string $subtitle, bool $officialValues = false): void
 {
     $headerImagePath = __DIR__ . '/assets/peso_official_report_header.png';
     $columnCount = count($columns) + 1;
@@ -63,7 +63,7 @@ function outputNativeXlsxReport(string $programName, array $columns, array $rows
         $style = $rowIndex % 2 === 0 ? 4 : 5;
         $cells = xlsxInlineCell('A' . $excelRow, (string)($rowIndex + 1), $style);
         foreach ($columns as $columnIndex => $column) {
-            $cellValue = getReportCellValue($row, $column['key']);
+            $cellValue = $officialValues ? official_report_value($row, $column['key']) : getReportCellValue($row, $column['key']);
             $cellStyle = strpos($cellValue, "\n") !== false ? ($rowIndex % 2 === 0 ? 6 : 7) : $style;
             $cells .= xlsxInlineCell(xlsxColumnName($columnIndex + 2) . $excelRow, $cellValue, $cellStyle);
         }

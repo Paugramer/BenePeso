@@ -34,7 +34,7 @@
                 <div class="form-group" style="margin:0"><label>Status Filter</label><select id="submissionScopeStatus" aria-label="Report status"><option selected>Documents Submitted</option></select></div>
 <div class="form-group" style="margin:0"><label>Requirements Review</label><select name="review_status" id="report_avail_select"><?php foreach($statuses as $status):?><option value="<?=module_escape($status)?>" <?=$filters['review_status']===$status?'selected':''?>><?=module_escape($status==='All'?'All Review Statuses':$status)?></option><?php endforeach?></select></div>
 <details class="report-column-picker">
-                    <summary><span>Preview Columns</span><span class="report-column-count"></span></summary><p class="report-preview-format-note">Print and Export Data use the complete original report format.</p>
+                    <summary><span>Preview Columns</span><span class="report-column-count"></span></summary><p class="report-preview-format-note">Preview, Print and Export Data use the checked fields in original order.</p>
                     <div class="report-column-tools">
                         <button type="button" data-report-columns="essential">Common Fields</button>
                         <button type="button" data-report-columns="all">Select All</button>
@@ -98,4 +98,4 @@
 </div>
 
 
-<script>window.currentReportTitle=<?=json_encode($reportProgramTitle,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT)?>;</script><script src="report_preview.js?v=10" defer></script>
+<script>window.currentReportTitle=<?=json_encode($reportProgramTitle,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT)?>;</script><script src="report_preview.js?v=11" defer></script>

@@ -113,7 +113,7 @@ $reportTitle = getReportProgramTitle($program_name);
 $subtitle = htmlspecialchars(getReportLocationLabel($barangay));
 
 if ($format === 'xlsx') {
-    if (stripos($program_name, 'SPES') !== false || stripos($program_name, 'TUPAD') !== false || stripos($program_name, 'MSME') !== false) output_official_template_report($program_name, $beneficiaries, $barangay);
+    if (stripos($program_name, 'SPES') !== false || stripos($program_name, 'TUPAD') !== false || stripos($program_name, 'MSME') !== false) output_official_template_report($program_name, $beneficiaries, $barangay, $_GET['columns'] ?? null);
     $requestedColumns = isset($_GET['columns']) && is_array($_GET['columns']) ? $_GET['columns'] : [];
     $selectedColumns = getSelectedReportColumns($program_name, $requestedColumns);
     $subtitleParts = [];

@@ -57,7 +57,14 @@ function build_official_template_report(string $program, array $rows, string $se
     } catch (Throwable $e) { unset($archive);if(is_file($temporary)) unlink($temporary);throw $e; }
 }
 
-function output_official_template_report(string $program, array $rows, string $selectedBarangay = 'All'): void {
+function output_official_template_report(string $program, array $rows, string $selectedBarangay = 'All', $requestedColumns = null): void {
+    if ($requestedColumns !== null) {
+        if (!is_array($requestedColumns)) { http_response_code(400); exit('Invalid report fields.'); }
+        $definitions=array_values(array_filter(official_report_columns($program),static fn($column)=>$column['label']!==''));
+        $selected=array_values(array_filter($definitions,static fn($column)=>in_array($column['key'],$requestedColumns,true)));
+        if (!$selected) { http_response_code(400); exit('Select at least one report field.'); }
+        if (count($selected)<count($definitions)) outputNativeXlsxReport(getReportProgramTitle($program),$selected,$rows,getReportLocationLabel($selectedBarangay),true);
+    }
     $path=build_official_template_report($program,$rows,$selectedBarangay);
     try {
         $name=(stripos($program,'SPES')!==false?'SPES':(stripos($program,'MSME')!==false?'MSME':'TUPAD')).'_Report_'.date('Ymd').'.xlsx';

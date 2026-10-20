@@ -51,20 +51,34 @@
   modal.querySelectorAll('[data-report-zoom]').forEach(button=>button.addEventListener('click',()=>{zoom=button.dataset.reportZoom==='fit'?1:Math.min(1.5,Math.max(.65,Math.round((zoom+(button.dataset.reportZoom==='in'?.1:-.1))*10)/10));modal.querySelector('.report-zoom-value').value=Math.round(zoom*100)+'%';draw();}));
   field('report_print_button').addEventListener('click',()=>{
    if(!loaded)return;if(!count){showBeneficiaryNotice('No Records Found','No records match the selected report filters.');return;}
+   const selected=new Set(columns.filter(input=>input.checked).map(input=>input.value));
+   if(!selected.size){showBeneficiaryNotice('No Columns Selected','Select at least one field before printing.');return;}
    const popup=window.open('','_blank','width=1400,height=900');if(!popup){showBeneficiaryNotice('Print Window Blocked','Please allow pop-ups, then try printing again.');return;}
    popup.document.write('<!doctype html><html><head><title>Beneficiary Report</title><style>@page{size:A3 landscape;margin:8mm}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#163b2a}section{break-after:page}section:last-child{break-after:auto}h1{font-size:18pt;text-align:center;margin:0 0 6px}p{text-align:center;font-size:10pt}.report-template-metadata{display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;font-size:9pt}.report-template-metadata>div{display:flex;gap:8px}.report-template-metadata dd{margin:0}table{border-collapse:collapse;width:100%;table-layout:fixed}th,td{border:1px solid #333;padding:5px 3px;font-size:8pt;line-height:1.4;white-space:pre-line;overflow-wrap:anywhere;vertical-align:middle}th{font-size:9pt;min-height:60px}thead{display:table-header-group}tr{break-inside:avoid}</style></head><body></body></html>');popup.document.close();
-   sheets.forEach(sheet=>{const section=popup.document.createElement('section'),title=popup.document.createElement('h1'),subtitle=popup.document.createElement('p');title.textContent=currentReportTitle;subtitle.textContent=field('preview_subtitle_top').textContent+(sheets.length>1?' — '+sheet.name:'');section.append(title,subtitle);const table=popup.document.createElement('div');table.innerHTML=sheet.html;section.append(table);popup.document.body.append(section);});
-   // Keep the complete original worksheet together; paginate only down the rows.
-   popup.document.querySelectorAll('section').forEach((section,index)=>{
-    const total=sheets[index].column_keys.length;
-    section.style.setProperty('--report-font',total>22?'5.5pt':total>15?'6.5pt':'8pt');
+   sheets.forEach(sheet=>{
+    const visible=new Set([0,...sheet.column_keys.map((key,index)=>selected.has(key)?index:-1).filter(index=>index>0)]);
+    if(visible.size===1)return;
+    const section=popup.document.createElement('section'),title=popup.document.createElement('h1'),subtitle=popup.document.createElement('p');
+    title.textContent=currentReportTitle;subtitle.textContent=field('preview_subtitle_top').textContent+(sheets.length>1?' — '+sheet.name:'');section.append(title,subtitle);
+    const table=popup.document.createElement('div');table.innerHTML=sheet.html;
+    table.querySelectorAll('col').forEach(col=>{if(!visible.has(Number(col.dataset.templateColumn)))col.remove();});
+    table.querySelectorAll('[data-column-start]').forEach(cell=>{
+     let span=0;for(let i=Number(cell.dataset.columnStart);i<=Number(cell.dataset.columnEnd);i++)if(visible.has(i))span++;
+     if(!span)cell.remove();else cell.colSpan=span;
+    });
+    section.style.setProperty('--report-font',visible.size>22?'5.5pt':visible.size>15?'6.5pt':'9pt');
+    section.append(table);popup.document.body.append(section);
    });
+   // Keep the complete original worksheet together; paginate only down the rows.
    const printStyle=popup.document.createElement('style');
    printStyle.textContent='@page{size:A4 landscape;margin:8mm}body{color:#111}section{margin:0 auto 24px;max-width:281mm}h1{font-size:11pt;line-height:1.25}p{font-size:8pt;margin:5px 0 10px}.report-template-metadata{font-size:7pt;margin-bottom:8px}table{width:100%;table-layout:fixed}th,td{font-size:var(--report-font);line-height:1.25;padding:3px 2px;overflow-wrap:anywhere;word-break:normal;print-color-adjust:exact;-webkit-print-color-adjust:exact}th{font-size:var(--report-font)}col:first-child{width:6mm}thead{display:table-header-group}tr{break-inside:avoid}@media print{section{margin:0;max-width:none;break-after:page}section:last-child{break-after:auto}}';
    popup.document.head.append(printStyle);
    popup.focus();setTimeout(()=>popup.print(),150);
   });
-  form.addEventListener('submit',event=>{if(!loaded||!count){event.preventDefault();showBeneficiaryNotice('No Records Found','No records match the selected report filters.');}});
+  form.addEventListener('submit',event=>{
+   if(!loaded||!count){event.preventDefault();showBeneficiaryNotice('No Records Found','No records match the selected report filters.');return;}
+   if(!columns.some(input=>input.checked)){event.preventDefault();showBeneficiaryNotice('No Columns Selected','Select at least one field before exporting.');}
+  });
   window.addEventListener('resize',draw);
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize);else initialize();

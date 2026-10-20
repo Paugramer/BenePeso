@@ -405,7 +405,7 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20261014-restored" defer></script>
 <script src="beneficiary_workspace_polish.js?v=2" defer></script>
-<link rel="stylesheet" href="report_preview.css?v=10"><script src="report_preview.js?v=10" defer></script>
+<link rel="stylesheet" href="report_preview.css?v=10"><script src="report_preview.js?v=11" defer></script>
 </head>
 <body class="staff-mobile-page peso-staff-beneficiaries-page">
   <div class="page-wrap">
@@ -771,7 +771,7 @@ if ($selectedProgramName !== "") {
                 <?php endif; ?>
 
                 <details class="report-column-picker">
-                    <summary><span>Preview Columns</span><span class="report-column-count"></span></summary><p class="report-preview-format-note">Print and Export Data use the complete original report format.</p>
+                    <summary><span>Preview Columns</span><span class="report-column-count"></span></summary><p class="report-preview-format-note">Preview, Print and Export Data use the checked fields in original order.</p>
                     <div class="report-column-tools">
                         <button type="button" data-report-columns="essential">Common Fields</button>
                         <button type="button" data-report-columns="all">Select All</button>
