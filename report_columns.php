@@ -245,6 +245,38 @@ function reportCompleteAddress(array $row): string
     return $address;
 }
 
+/** Separate report columns must not repeat the known location suffix in St./Zone. */
+function reportStreetAddress(array $row): string
+{
+    $street=trim((string)($row['street_purok_zone'] ?? ''), " \t\n\r\0\x0B,;");
+    $parts=[trim((string)($row['province'] ?? '')) ?: 'Camarines Norte',
+        trim((string)($row['municipality'] ?? '')) ?: 'Vinzons',trim((string)($row['barangay'] ?? ''))];
+    do {
+        $previous=$street;
+        foreach($parts as $part){
+            if($part==='')continue;
+            $words=preg_split('/[\s\p{Pd}]+/u',$part,-1,PREG_SPLIT_NO_EMPTY);
+            $pattern=implode('[\s\p{Pd}]+',array_map(static fn($word)=>preg_quote($word,'/'),$words));
+            $street=preg_replace('/(?:^|[\s,;]+)'.$pattern.'[\s,;]*$/iu','',$street);
+            $street=trim($street," \t\n\r\0\x0B,;");
+        }
+    } while($previous!==$street);
+    return $street;
+}
+
+/** The legacy district field can contain a province; resolve it only for reporting. */
+function reportDistrictValue(array $row): string
+{
+    $municipality=trim((string)($row['municipality'] ?? '')) ?: 'Vinzons';
+    $province=trim((string)($row['province'] ?? '')) ?: 'Camarines Norte';
+    if(strcasecmp($municipality,'Vinzons')===0 && strcasecmp($province,'Camarines Norte')===0)return '2nd District';
+    $district=trim((string)($row['district'] ?? ''));
+    foreach(['1st District'=>'(?:1|1st|first|i)','2nd District'=>'(?:2|2nd|second|ii)'] as $label=>$number){
+        if(preg_match('/^(?:(?:district|dist\.?)\s*)?'.$number.'(?:\s+(?:(?:legislative|congressional)\s+)?district)?$/i',$district))return $label;
+    }
+    return '';
+}
+
 function getReportCellValue(array $row, string $key): string
 {
     switch ($key) {
@@ -312,6 +344,12 @@ function getReportCellValue(array $row, string $key): string
             return (string)($row['contact_no'] ?? '');
         case 'complete_address':
             return reportCompleteAddress($row);
+        case 'street_purok_zone':
+            return reportStreetAddress($row);
+        case 'municipality':
+            return trim((string)($row['municipality'] ?? '')) ?: 'Vinzons';
+        case 'district':
+            return reportDistrictValue($row);
         case 'birthdate':
         case 'created_at':
         case 'start_date':
