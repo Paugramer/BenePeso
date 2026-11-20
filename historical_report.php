@@ -6,6 +6,8 @@ require_once __DIR__ . '/historical_report_helper.php';
 require_once __DIR__ . '/spes_lifecycle_helper.php';
 require_once __DIR__ . '/module_shell.php';
 require_once __DIR__ . '/report_tabs.php';
+require_once __DIR__ . '/report_date_helper.php';
+$reportDates=report_date_request($_GET);
 $moduleRole = $moduleRole ?? auth_first_active_role(['admin','peso_staff']);
 if (!$moduleRole) { http_response_code(403); exit('Authorized PESO staff only.'); }
 check_user_role($moduleRole);
@@ -43,6 +45,7 @@ if($spesGroup!=='all')$where[]=spes_group_condition_sql($spesGroup,'b');
 if ($batch) { $where[]='b.program_id=?'; $params[]=$batch; $types.='i'; }
 if ($status!=='All') { $where[]=$status==='Rejected' ? "b.approval_status='Rejected'" : 'b.availment_status=?'; if ($status!=='Rejected') { $params[]=$status; $types.='s'; } }
 if ($search!=='') { $where[]='(b.full_name LIKE ? OR b.barangay LIKE ? OR p.program_code LIKE ?)'; $like='%'.$search.'%'; array_push($params,$like,$like,$like); $types.='sss'; }
+report_date_sql($reportDates,$where,$params,$types);
 $from=' FROM beneficiaries b JOIN programs p ON p.program_id=b.program_id WHERE '.implode(' AND ', $where);
 $stmt=$conn->prepare('SELECT COUNT(*) total'.$from); $stmt->bind_param($types,...$params); $stmt->execute(); $total=(int)$stmt->get_result()->fetch_assoc()['total']; $stmt->close();
 $pages=max(1,(int)ceil($total/25)); $page=min($page,$pages); $offset=($page-1)*25;
@@ -50,15 +53,16 @@ $stmt=$conn->prepare('SELECT b.*,p.program_code,p.program_name'.$from.' ORDER BY
 $queryParams=$params; $queryParams[]=$offset; $queryTypes=$types.'i'; $stmt->bind_param($queryTypes,...$queryParams); $stmt->execute(); $result=$stmt->get_result(); $rows=[];
 while ($row=$result->fetch_assoc()) $rows[]=$row;
 $stmt->close(); $rows=enrich_reporting_rows($conn,$rows); $columns=official_report_columns($program);
-$export=['program_name'=>$program,'program_id'=>$batch,'report_outcome'=>$status,'report_search'=>$search,'export_format'=>'xlsx','report_spes_group'=>$spesGroup];
+$export=['program_name'=>$program,'program_id'=>$batch,'report_outcome'=>$status,'report_search'=>$search,'export_format'=>'xlsx','report_spes_group'=>$spesGroup]+$reportDates;
 module_shell_start($moduleRole,'report',$program.' Reports','View beneficiary records, review details, and download reports.','report-workspace');
 $baseQuery=['program_name'=>$program,'program_id'=>$batch,'search'=>$search];
 ?>
 <section class="module-panel report-record-panel panel-card">
 <div class="report-workspace-toolbar panel-head-flex"><?php render_report_tabs($moduleRole,$program,$batch,$search,$status,$spesGroup); ?><a class="module-btn secondary" href="<?=$reportPrefix?>_beneficiaries.php"><i class="ph ph-squares-four"></i> All Programs</a></div>
 <form class="report-filters filter-container records-filter-container" method="get"><input type="hidden" name="program_name" value="<?=module_escape($program)?>"><input type="hidden" name="spes_group" value="<?=module_escape($spesGroup)?>">
-<div class="report-search-row"><div class="report-search filter-search system-search"><i class="ph ph-magnifying-glass"></i><input class="search-input" type="search" id="reportSearch" aria-label="Search beneficiary records" name="search" maxlength="120" value="<?=module_escape($search)?>" placeholder="Search by name, barangay, or batch..."></div><button class="beneficiary-filter-toggle" type="button" id="reportFilterToggle" aria-expanded="<?=$batch||$status!=='All'?'true':'false'?>" aria-controls="reportFilterFields"><i class="ph ph-sliders-horizontal"></i> More filters</button></div>
-<div class="report-filter-fields" id="reportFilterFields" <?=$batch||$status!=='All'?'':'hidden'?>>
+<div class="report-search-row"><div class="report-search filter-search system-search"><i class="ph ph-magnifying-glass"></i><input class="search-input" type="search" id="reportSearch" aria-label="Search beneficiary records" name="search" maxlength="120" value="<?=module_escape($search)?>" placeholder="Search by name, barangay, or batch..."></div><button class="beneficiary-filter-toggle" type="button" id="reportFilterToggle" aria-expanded="<?=$batch||$status!=='All'||$reportDates['date_from']||$reportDates['date_to']?'true':'false'?>" aria-controls="reportFilterFields"><i class="ph ph-sliders-horizontal"></i> More filters</button></div>
+<div class="report-filter-fields" id="reportFilterFields" <?=$batch||$status!=='All'||$reportDates['date_from']||$reportDates['date_to']?'':'hidden'?>>
+<?php render_report_date_fields($reportDates,"list_dates","Application date",true); ?>
 <div class="module-field"><label for="reportBatch">Batch</label><select name="program_id" id="reportBatch"><option value="0">All Batches</option><?php foreach($batches as $item):?><option value="<?=(int)$item['program_id']?>" <?=$batch===(int)$item['program_id']?'selected':''?>><?=module_escape($item['program_code'])?></option><?php endforeach?></select></div>
 <div class="module-field"><label for="reportOutcome">Status</label><select name="outcome" id="reportOutcome"><?php foreach($outcomes as $item):?><option value="<?=module_escape($item)?>" <?=$status===$item?'selected':''?>><?=module_escape($item==='All'?'All Status':$item)?></option><?php endforeach?></select></div></div></form>
 <div class="report-result-bar"><p><?=$total?> beneficiary record<?=$total===1?'':'s'?></p><?php if($rows):?><div class="report-download-actions"><a class="module-btn" href="export_report.php?<?=module_escape(http_build_query($export))?>"><i class="ph ph-download-simple"></i> Download Excel</a><button class="module-btn secondary" type="button" data-print-report><i class="ph ph-printer"></i> Print</button></div><?php endif?></div>
@@ -66,7 +70,7 @@ $baseQuery=['program_name'=>$program,'program_id'=>$batch,'search'=>$search];
 <?php require __DIR__.'/report_original_table.php'; ?>
 <?php foreach($rows as $row):?><template id="reportRecord-<?=(int)$row['beneficiary_id']?>"><div class="report-detail-identity"><h2><?=module_escape($row['full_name'])?></h2><p><?=module_escape($row['program_code'])?> / <?=module_escape($row['approval_status']==='Rejected'?'Rejected':$row['availment_status'])?></p></div><dl class="report-detail-grid"><?php foreach($columns as $column):if($column['label']==='')continue;?><div><dt><?=module_escape($column['label'])?></dt><dd><?=module_escape(official_report_value($row,$column['key']) ?: '-')?></dd></div><?php endforeach?></dl></template><?php endforeach?>
 <div class="report-print-table"><h2><?=module_escape($program)?> Report</h2><table class="module-table"><thead><tr><th>No.</th><th>Batch</th><th>Status</th><?php foreach($columns as $column):?><th><?=module_escape($column['label'])?></th><?php endforeach?></tr></thead><tbody><?php foreach($rows as $index=>$row):?><tr><td><?=$offset+$index+1?></td><td><?=module_escape($row['program_code'])?></td><td><?=module_escape($row['approval_status']==='Rejected'?'Rejected':$row['availment_status'])?></td><?php foreach($columns as $column):?><td><?=module_escape(official_report_value($row,$column['key']))?></td><?php endforeach?></tr><?php endforeach?></tbody></table></div>
-<nav class="module-pager" aria-label="Report pages"><?php $paging=['program_name'=>$program,'program_id'=>$batch,'outcome'=>$status,'search'=>$search,'spes_group'=>$spesGroup];?><?php if($page>1):?><a class="module-btn secondary" href="?<?=module_escape(http_build_query($paging+['page'=>$page-1]))?>">Previous</a><?php endif?><span>Page <?=$page?> of <?=$pages?></span><?php if($page<$pages):?><a class="module-btn secondary" href="?<?=module_escape(http_build_query($paging+['page'=>$page+1]))?>">Next</a><?php endif?></nav>
+<nav class="module-pager" aria-label="Report pages"><?php $paging=['program_name'=>$program,'program_id'=>$batch,'outcome'=>$status,'search'=>$search,'spes_group'=>$spesGroup]+$reportDates;?><?php if($page>1):?><a class="module-btn secondary" href="?<?=module_escape(http_build_query($paging+['page'=>$page-1]))?>">Previous</a><?php endif?><span>Page <?=$page?> of <?=$pages?></span><?php if($page<$pages):?><a class="module-btn secondary" href="?<?=module_escape(http_build_query($paging+['page'=>$page+1]))?>">Next</a><?php endif?></nav>
 <?php else:?><div class="report-empty"><i class="ph ph-users"></i><h2>No beneficiary records found</h2><p>No completed or closed records match these filters.</p></div><?php endif?></section>
 <?php require __DIR__.'/report_original_profile.php'; ?>
 <?php require __DIR__.'/report_original_generator.php'; ?>

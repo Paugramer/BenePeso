@@ -2,6 +2,7 @@
 require_once __DIR__ . '/auth_session.php';
 require "db.php";
 require_once __DIR__ . '/program_catalog.php';
+require_once __DIR__ . '/program_slot_helper.php';
 
 /** * SMART REDIRECTION 
  * If Staff or Admin is already logged in, skip the public page.
@@ -90,6 +91,7 @@ while ($program = $batch_result->fetch_assoc()) {
     $family = &$program_families[$family_key];
     $family['batch_count']++;
     $family['remaining_slots'] += $remaining;
+    $family['slots'] = (int)$family['slots'] + (int)$program['slots'];
     $category = trim((string)($program['tupad_category'] ?? ''));
     if ($category !== '' && !in_array($category, $family['categories'], true)) {
         $family['categories'][] = $category;
@@ -167,7 +169,7 @@ if ($updated_stmt) {
     
     <link rel="stylesheet" href="frontend_polish.css?v=20260929">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
-    <link rel="stylesheet" href="index.css?v=37">
+    <link rel="stylesheet" href="index.css?v=slots20261120-37">
     <link rel="stylesheet" href="beneficiary_mobile.css?v=18">
     <link rel="stylesheet" href="public_finish.css?v=1">
     <link rel="stylesheet" href="system_readability.css?v=1">
@@ -391,6 +393,7 @@ if ($updated_stmt) {
                         foreach ($programs as $row):
                             $img = !empty($row['image_path']) ? htmlspecialchars($row['image_path']) : 'img/pesologo.png';
                             $remaining_slots = max(0, (int)$row['remaining_slots']);
+                            $capacity=program_slot_summary((int)($row['slots'] ?? 0),(int)$row['remaining_slots']);
                             $is_available = empty($row['catalog_only']);
                             $batch_count = $is_available ? max(1, (int)$row['batch_count']) : 0;
                             $batch_label = !$is_available ? 'No active batch' : ($batch_count > 1 ? $batch_count . ' open batches' : $row['program_code']);
@@ -404,7 +407,9 @@ if ($updated_stmt) {
                             $modalData = htmlspecialchars(json_encode([
                                 'title' => $row['program_name'],
                                 'code' => $batch_label,
-                                'slots' => $remaining_slots, 
+                                'slots' => $remaining_slots,
+                                'capacity' => $capacity['label'],
+                                'nearlyFull' => $capacity['warning'],
                                 'venue' => $row['venue'],
                                 'start' => format_date($row['start_date']),
                                 'end' => format_date($row['end_date']),
@@ -420,8 +425,8 @@ if ($updated_stmt) {
                                     <img src="<?= $img ?>" alt="<?= htmlspecialchars($row['program_name']) ?> program poster" class="card-img" decoding="async" onerror="this.onerror=null; this.src='img/pesologo.png';">
                                     <div class="program-image-badges" aria-hidden="true">
                                         <span class="program-code-badge"><?= htmlspecialchars($batch_label) ?></span>
-                                        <span class="program-slot-badge <?= $remaining_slots <= 0 ? 'is-full' : '' ?>">
-                                            <?= !$is_available ? 'Unavailable' : ($remaining_slots > 0 ? number_format($remaining_slots) . ' slots' : 'Full') ?>
+                                        <span class="program-slot-badge <?= $capacity['warning'] ? 'is-full' : '' ?>">
+                                            <?= !$is_available ? 'Unavailable' : $capacity['label'] ?>
                                         </span>
                                     </div>
                                 </div>
@@ -583,7 +588,7 @@ if ($updated_stmt) {
                         <div class="m-grid-item">
                             <div class="m-grid-header">
                                 <svg class="m-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                                <span class="m-label">Available Slots</span>
+                                <span class="m-label">Slot Capacity</span>
                             </div>
                             <span class="m-value" id="m_slots"></span>
                         </div>
@@ -694,7 +699,8 @@ if ($updated_stmt) {
         document.getElementById('m_code').textContent = noBatch ? 'No active batch' : 'Batch Code: ' + (data.code || 'N/A');
         
         document.getElementById('m_desc').textContent = data.desc || 'No description provided.';
-        document.getElementById('m_slots').textContent = noBatch ? 'No batches available' : (data.slots || '0');
+        document.getElementById('m_slots').textContent = noBatch ? 'No batches available' : data.capacity;
+        document.getElementById('m_slots').style.color = data.nearlyFull ? '#b42318' : '';
         document.getElementById('m_venue').textContent = data.venue || 'TBA';
         document.getElementById('m_start').textContent = data.start;
         document.getElementById('m_end').textContent = data.end;

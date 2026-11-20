@@ -43,7 +43,7 @@ function build_msme_template_report(array $records): string {
                     if(!$cell) { $cell=$doc->createElementNS($ns,'c');$cell->setAttribute('r',$ref);$row->appendChild($cell); }
                     foreach(iterator_to_array($cell->childNodes) as $child) $cell->removeChild($child);
                     $cell->setAttribute('t','inlineStr');$inline=$doc->createElementNS($ns,'is');$text=$doc->createElementNS($ns,'t');$text->setAttributeNS('http://www.w3.org/XML/1998/namespace','xml:space','preserve');
-                    $text->appendChild($doc->createTextNode(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/u','',$value)));$inline->appendChild($text);$cell->appendChild($inline);
+                    $text->appendChild($doc->createTextNode(xlsxText($value)));$inline->appendChild($text);$cell->appendChild($inline);
                 };
                 if($sheet===1) {
                     $write('B',0,(string)($index+1));

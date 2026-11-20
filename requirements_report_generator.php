@@ -15,6 +15,7 @@
             <input type="hidden" name="program_name" value="<?php echo module_escape($selectedProgramName); ?>">
             
             <input type="hidden" name="role" value="<?=module_escape($role)?>"><input type="hidden" name="search" value="<?=module_escape($filters['search'])?>"><div class="report-filter-list" style="flex: 1; overflow-y: auto; padding-right: 8px; display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px;">
+<?php render_report_date_fields($filters,"preview_dates","Submission date"); ?>
                 <div class="form-group" style="margin:0;">
                     <label>Select Batch Filter</label>
                     <select name="program_id" id="report_batch_select">
@@ -98,4 +99,4 @@
 </div>
 
 
-<script>window.currentReportTitle=<?=json_encode($reportProgramTitle,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT)?>;</script><script src="report_preview.js?v=11" defer></script>
+<script>window.currentReportTitle=<?=json_encode($reportProgramTitle,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT)?>;</script><script src="report_preview.js?v=12" defer></script>

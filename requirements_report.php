@@ -1,4 +1,5 @@
 <?php
+if (($_GET['format'] ?? '') === 'xlsx') ob_start();
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/db.php';
 $requestedRole = $_GET['role'] ?? '';
@@ -20,6 +21,7 @@ function rr_input(string $key, string $default=''): string {
 $statuses = ['All','Not Reviewed','Under Review','Needs Resubmission','Verified / Complete'];
 $filters = ['program_name'=>rr_input('program_name'),'program_id'=>max(0,(int)rr_input('program_id','0')),
     'barangay'=>rr_input('barangay','All'),'search'=>rr_input('search'),'review_status'=>rr_input('review_status','All')];
+$filters += report_date_request($_GET);
 if (!in_array($filters['review_status'],$statuses,true)) $filters['review_status']='All';
 $programs=$conn->query('SELECT DISTINCT program_name FROM programs ORDER BY program_name')->fetch_all(MYSQLI_ASSOC);
 $batches=$conn->query('SELECT program_id,program_name,program_code FROM programs ORDER BY program_name,program_code')->fetch_all(MYSQLI_ASSOC);
@@ -32,6 +34,7 @@ $summary=($filters['program_name'] ?: 'All Programs') . ' | ' . ($filters['baran
 if($filters['program_id'])foreach($batches as $batch)if((int)$batch['program_id']===$filters['program_id'])$summary.=' | Batch: '.$batch['program_code'];
 if($filters['review_status']!=='All')$summary.=' | '.$filters['review_status'];
 if($filters['search']!=='')$summary.=' | Search: '.$filters['search'];
+if ($dateLabel=report_date_label($filters,'Submission date')) $summary.=' | '.$dateLabel;
 $summary.=' | '.$total.' record'.($total===1?'':'s');
 $format=rr_input('format');
 if($format==='xlsx') {

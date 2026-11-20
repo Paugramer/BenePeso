@@ -3,6 +3,7 @@
 function render_report_tabs(string $role, string $program, int $batch, string $search, string $active = 'All', string $spesGroup = 'all'): void {
     $prefix = $role === 'admin' ? 'admin' : 'peso_staff';
     $base = ['program_name'=>$program,'program_id'=>$batch,'search'=>$search];
+    foreach (['date_from','date_to'] as $key) if (is_string($_GET[$key] ?? null)) $base[$key]=$_GET[$key];
     $tabs = ['All'=>'All Records','Completed'=>'Completed','Rejected'=>'Rejected'];
     ?>
     <nav class="report-tabs custom-tabs" aria-label="Report views">

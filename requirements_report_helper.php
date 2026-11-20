@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__."/report_date_helper.php";
 require_once __DIR__ . '/application_requirements_helper.php';
 require_once __DIR__ . '/beneficiary_lifecycle_helper.php';
 
@@ -67,6 +68,7 @@ function requirements_report_rows(mysqli $conn, array $filters): array
         if ($recorded === '' && $row['availment_status'] === 'Requirements Received') $recorded = (string)($row['date_availed'] ?? '');
         $row['submitted_on'] = preg_match('/^\d{4}-\d{2}-\d{2}/', $recorded) && substr($recorded,0,10) > '1000-01-01'
             ? substr($recorded,0,10) : 'Not recorded';
+        if (!report_date_matches($row['submitted_on'],$filters)) continue;
         $verified = count(array_filter($items, static fn($item)=>in_array($item['status'],['Verified','Not Applicable'],true)));
         $row['checklist_summary'] = $items ? $verified . ' / ' . count($items) : 'No checklist items';
         $row['progress_label'] = beneficiary_lifecycle_label((string)$row['availment_status']);

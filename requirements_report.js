@@ -14,6 +14,10 @@
     filters.classList.toggle('filters-open', !fields.hidden);
     event.currentTarget.setAttribute('aria-expanded', String(!fields.hidden));
   });
+  if (filters && [...filters.querySelectorAll('[data-date-range] input')].some(input => input.value)) {
+    document.getElementById('submissionFilterFields').hidden = false;
+    document.getElementById('submissionFilterToggle').setAttribute('aria-expanded','true');
+  }
   filters?.querySelectorAll('select:not(#requirementsProgram)').forEach(select => {
     select.addEventListener('change', () => filters.requestSubmit());
   });

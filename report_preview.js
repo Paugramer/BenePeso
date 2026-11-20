@@ -8,7 +8,9 @@
   const worksheetHeader=modal.querySelector('.preview-header');
   const columns=[...modal.querySelectorAll('.report-column-list input')];let sheets=[],sheetIndex=0,columnPage=0,zoom=1,count=0,requestNumber=0,controller,loaded=false;
   const field=id=>document.getElementById(id);
-  const filters=()=>modal.dataset.submissionReport?new URLSearchParams({format:'preview',role:form.elements.role.value,program_name:form.elements.program_name.value,program_id:field('report_batch_select')?.value||'0',barangay:field('report_brgy_select')?.value||'All',review_status:field('report_avail_select')?.value||'All',search:form.elements.search.value}):new URLSearchParams({template_preview:'1',program_name:form.elements.program_name.value,program_id:field('report_batch_select')?.value||'0',report_barangay:field('report_brgy_select')?.value||'All',report_outcome:field('report_avail_select')?.value||'All',report_spes_group:field('report_spes_group_select')?.value||'all',business_nature:field('report_nature_select')?.value||'All'});
+  const baseFilters=()=>modal.dataset.submissionReport?new URLSearchParams({format:'preview',role:form.elements.role.value,program_name:form.elements.program_name.value,program_id:field('report_batch_select')?.value||'0',barangay:field('report_brgy_select')?.value||'All',review_status:field('report_avail_select')?.value||'All',search:form.elements.search.value}):new URLSearchParams({template_preview:'1',program_name:form.elements.program_name.value,program_id:field('report_batch_select')?.value||'0',report_barangay:field('report_brgy_select')?.value||'All',report_outcome:field('report_avail_select')?.value||'All',report_spes_group:field('report_spes_group_select')?.value||'all',business_nature:field('report_nature_select')?.value||'All'});
+  const filters=()=>{const query=baseFilters();for(const key of ['date_from','date_to'])query.set(key,form.elements[key]?.value||'');return query;};
+  const dateLabel=()=>{const from=form.elements.date_from?.value||'',to=form.elements.date_to?.value||'';return from||to?`${modal.dataset.submissionReport?'Submission date':'Application date'}: ${from||'Any date'} to ${to||'Any date'}`:'';};
   function draw(){
    const sheet=sheets[sheetIndex];if(!sheet)return;worksheetHeader.remove();viewport.innerHTML=sheet.html;const worksheet=document.createElement('div');worksheet.className='report-worksheet';worksheet.append(worksheetHeader,...viewport.childNodes);viewport.append(worksheet);
    const selected=new Set(columns.filter(input=>input.checked).map(input=>input.value));
@@ -29,8 +31,10 @@
    sheetBar.replaceChildren();if(sheets.length>1)sheets.forEach((item,index)=>{const button=document.createElement('button');button.type='button';button.textContent=item.name;button.className=index===sheetIndex?'active':'';button.onclick=()=>{sheetIndex=index;columnPage=0;draw();};sheetBar.append(button);});
   }
   async function refresh(){
+   if(!form.checkValidity()){controller?.abort();requestNumber++;loaded=false;message.hidden=false;message.textContent="From date must be on or before To date.";field("report_print_button").disabled=true;return;}
    const sequence=++requestNumber;controller?.abort();controller=new AbortController();loaded=false;message.hidden=false;message.textContent='Preparing report preview…';field('report_print_button').disabled=true;
    const selectedBarangay=field('report_brgy_select');field('preview_subtitle_top').textContent=String(form.elements.program_name.value).toUpperCase().includes('TUPAD')?'Municipality of Vinzons':(selectedBarangay?.value==='All'?'Municipality of Vinzons':`Barangay ${selectedBarangay?.value}, Vinzons`);
+   if(dateLabel())field('preview_subtitle_top').textContent+=' | '+dateLabel();
    try{const response=await fetch((modal.dataset.submissionReport?'requirements_report.php?':'beneficiary_report_data.php?')+filters(),{credentials:'same-origin',signal:controller.signal});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.message||'Unable to prepare report. Please try again.');if(sequence!==requestNumber)return;sheets=data.sheets;count=data.count;sheetIndex=Math.min(sheetIndex,sheets.length-1);columnPage=0;loaded=true;message.textContent='';message.hidden=true;draw();field('report_print_button').disabled=false;}
    catch(error){if(error.name==='AbortError')return;message.hidden=false;message.textContent=error.message;viewport.replaceChildren(worksheetHeader);}
   }
@@ -38,6 +42,7 @@
   modal.querySelectorAll('[data-close-report]').forEach(button=>button.addEventListener('click',()=>{modal.classList.remove('show','filters-open');modal.setAttribute('aria-hidden','true');controller?.abort();open.focus();}));
   modal.querySelector('.report-filter-toggle')?.addEventListener('click',event=>{const visible=modal.classList.toggle('filters-open');event.currentTarget.setAttribute('aria-expanded',String(visible));});
   modal.querySelectorAll('.report-filter-list select').forEach(select=>select.addEventListener('change',refresh));
+  modal.querySelectorAll('[data-date-range] input').forEach(input=>input.addEventListener('change',refresh));
   columns.forEach(input=>input.addEventListener('change',()=>{columnPage=0;draw();}));
   modal.querySelectorAll('[data-report-columns]').forEach(button=>button.addEventListener('click',()=>{
    const common=new Set(['first_name','middle_name','last_name','ext_name','birthdate','street_purok_zone','barangay','report_province']);

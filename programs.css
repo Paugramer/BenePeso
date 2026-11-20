@@ -3456,3 +3456,9 @@ input[type="number"] { -moz-appearance: textfield; }
     .beneficiary-programs-page .program-faq summary,
     .beneficiary-programs-page .program-faq p { font-size: 12.5px; }
 }
+
+/* Show occupied capacity consistently in cards, details and batch choices. */
+.beneficiary-programs-page .slots-badge.warning,
+.beneficiary-programs-page .batch-choice-card.is-nearly-full .batch-choice-slots { color:#b42318; background:#fff0ee; border:1px solid #f3b9b2; }
+.beneficiary-programs-page .slots-badge.warning .pulse-dot { background:#b42318; }
+.beneficiary-programs-page .slots-badge { white-space:normal; line-height:1.5; }

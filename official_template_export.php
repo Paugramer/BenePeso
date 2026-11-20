@@ -32,7 +32,7 @@ function build_official_template_report(string $program, array $rows, string $se
                 if (($styles[$column] ?? '')!=='') $cell->setAttribute('s',$styles[$column]);
                 $inline=$doc->createElementNS($ns,'is');$text=$doc->createElementNS($ns,'t');$text->setAttributeNS('http://www.w3.org/XML/1998/namespace','xml:space','preserve');
                 // XML 1.0 excludes these control characters, even in text nodes.
-                $text->appendChild($doc->createTextNode(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/u','',(string)$value)));
+                $text->appendChild($doc->createTextNode(xlsxText((string)$value)));
                 $inline->appendChild($text);$cell->appendChild($inline);$row->appendChild($cell);
             }
             $data->appendChild($row);
@@ -47,7 +47,7 @@ function build_official_template_report(string $program, array $rows, string $se
             $barangays=$selectedBarangay !== 'All' ? [$selectedBarangay] : array_values(array_unique(array_column($rows,'barangay')));
             if (count($barangays)===1) {
                 $row=$xpath->query('/m:worksheet/m:sheetData/m:row[@r="7"]')->item(0);
-                if ($row) { foreach(iterator_to_array($xpath->query('m:c[@r="C7"]',$row)) as $existing) $row->removeChild($existing); $cell=$doc->createElementNS($ns,'c');$cell->setAttribute('r','C7');$cell->setAttribute('t','inlineStr');$inline=$doc->createElementNS($ns,'is');$text=$doc->createElementNS($ns,'t');$text->appendChild($doc->createTextNode($barangays[0]));$inline->appendChild($text);$cell->appendChild($inline);$row->appendChild($cell); }
+                if ($row) { foreach(iterator_to_array($xpath->query('m:c[@r="C7"]',$row)) as $existing) $row->removeChild($existing); $cell=$doc->createElementNS($ns,'c');$cell->setAttribute('r','C7');$cell->setAttribute('t','inlineStr');$inline=$doc->createElementNS($ns,'is');$text=$doc->createElementNS($ns,'t');$text->appendChild($doc->createTextNode(xlsxText($barangays[0])));$inline->appendChild($text);$cell->appendChild($inline);$row->appendChild($cell); }
             }
         }
         $archive['xl/worksheets/sheet1.xml']=$doc->saveXML();
@@ -68,9 +68,7 @@ function output_official_template_report(string $program, array $rows, string $s
     $path=build_official_template_report($program,$rows,$selectedBarangay);
     try {
         $name=(stripos($program,'SPES')!==false?'SPES':(stripos($program,'MSME')!==false?'MSME':'TUPAD')).'_Report_'.date('Ymd').'.xlsx';
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="'.$name.'"');
-        header('Content-Length: '.filesize($path));header('Cache-Control: private, no-store');readfile($path);
+        sendXlsxDownload($path, $name);
     } finally { if(is_file($path)) unlink($path); }
     exit;
 }

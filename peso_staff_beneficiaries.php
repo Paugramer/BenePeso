@@ -12,6 +12,8 @@ require_once "beneficiary_choices.php";
 require_once "email_helper.php"; // ADDED: Required for sending emails
 require_once "report_columns.php";
 require_once "historical_report_helper.php";
+require_once __DIR__."/report_date_helper.php";
+$reportDates=report_date_request($_GET);
 require_once "beneficiary_import_helper.php";
 require_once "beneficiary_duplicate_helper.php";
 require_once "spes_schema_helper.php";
@@ -332,6 +334,8 @@ if ($selectedProgramName !== "") {
       $types .= "s";
   }
 
+  report_date_sql($reportDates,$whereParts,$params,$types);
+
   $countSql = "SELECT COUNT(b.beneficiary_id) as total FROM beneficiaries b JOIN programs p ON b.program_id = p.program_id WHERE " . implode(" AND ", $whereParts);
   $countStmt = $conn->prepare($countSql);
   if ($countStmt) {
@@ -404,8 +408,8 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="system_mobile.css?v=24">
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20261014-restored" defer></script>
-<script src="beneficiary_workspace_polish.js?v=2" defer></script>
-<link rel="stylesheet" href="report_preview.css?v=10"><script src="report_preview.js?v=11" defer></script>
+<script src="beneficiary_workspace_polish.js?v=dates20261120-2" defer></script>
+<link rel="stylesheet" href="report_preview.css?v=10"><script src="report_preview.js?v=12" defer></script>
 </head>
 <body class="staff-mobile-page peso-staff-beneficiaries-page">
   <div class="page-wrap">
@@ -550,7 +554,7 @@ if ($selectedProgramName !== "") {
                 <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'baby', 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'baby' ? 'active' : ''; ?>">SPES Baby</a>
                 <a href="peso_staff_beneficiaries.php?<?php echo h(build_query(['approval' => 'All', 'availment' => 'All', 'spes_group' => 'graduate', 'page' => 1])); ?>" class="tab-item <?php echo $spesGroup === 'graduate' ? 'active' : ''; ?>">Graduated</a>
                 <?php endif; ?>
-                <a href="requirements_report.php?<?php echo h(http_build_query(['role' => 'peso_staff', 'program_name' => $selectedProgramName, 'program_id' => $selectedProgramId, 'barangay' => $selectedBarangay, 'search' => $search])); ?>" class="tab-item">Documents Submitted</a>
+                <a href="requirements_report.php?<?php echo h(http_build_query(['role' => 'peso_staff', 'program_name' => $selectedProgramName, 'program_id' => $selectedProgramId, 'barangay' => $selectedBarangay, 'search' => $search]+$reportDates)); ?>" class="tab-item">Documents Submitted</a>
             </div>
 
             <button class="btn-main" type="button" id="openReportModal" style="margin-bottom: 12px;">
@@ -575,6 +579,7 @@ if ($selectedProgramName !== "") {
               <i class="ph ph-caret-down beneficiary-filter-caret"></i>
             </button>
             <div class="beneficiary-secondary-filters" id="beneficiarySecondaryFilters">
+<?php render_report_date_fields($reportDates,"list_dates","Application date",true); ?>
             <select name="program_id" class="filter-select auto-submit">
                 <option value="0">All Batches</option>
                 <?php foreach($batches as $b): ?><option value="<?php echo $b['program_id']; ?>" <?php echo $selectedProgramId == $b['program_id'] ? 'selected' : ''; ?>><?php echo h($b['program_code']); ?></option><?php endforeach; ?>
@@ -729,6 +734,7 @@ if ($selectedProgramName !== "") {
             <input type="hidden" name="program_name" value="<?php echo h($selectedProgramName); ?>">
 
             <div class="report-filter-list" style="flex: 1; overflow-y: auto; padding-right: 8px; display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px;">
+<?php render_report_date_fields($reportDates,"preview_dates"); ?>
                 <div class="form-group" style="margin:0;">
                     <label>Select Batch Filter</label>
                     <select name="program_id" id="report_batch_select">

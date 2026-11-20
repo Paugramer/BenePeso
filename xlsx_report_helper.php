@@ -1,8 +1,37 @@
 <?php
 
+function xlsxText(string $value): string
+{
+    $value = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
+    return preg_replace('/[^\x{9}\x{A}\x{D}\x{20}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u', '', $value);
+}
+
 function xlsxXml(string $value): string
 {
-    return htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars(xlsxText($value), ENT_XML1 | ENT_QUOTES, 'UTF-8');
+}
+
+/** Send only workbook bytes, including when an earlier include buffered whitespace. */
+function sendXlsxDownload(string $path, string $filename): void
+{
+    $stream = fopen($path, 'rb');
+    if ($stream === false) throw new RuntimeException('The report workbook could not be opened.');
+    try {
+        if (fread($stream, 4) !== "PK\x03\x04") throw new RuntimeException('Invalid report workbook.');
+        rewind($stream);
+        while (ob_get_level() > 0) {
+            if (!ob_end_clean()) throw new RuntimeException('The report output buffer could not be cleared.');
+        }
+        if (headers_sent() && PHP_SAPI !== 'cli') throw new RuntimeException('Report headers have already been sent.');
+        ini_set('zlib.output_compression', '0');
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
+        header('Content-Length: ' . fstat($stream)['size']);
+        header('Cache-Control: private, no-store');
+        fpassthru($stream);
+    } finally {
+        fclose($stream);
+    }
 }
 
 function xlsxColumnName(int $number): string
@@ -79,9 +108,9 @@ function outputNativeXlsxReport(string $programName, array $columns, array $rows
   <sheetData>' . implode('', $sheetRows) . '</sheetData>
   <autoFilter ref="A7:' . $lastColumn . $lastRow . '"/>
   <mergeCells count="2"><mergeCell ref="A4:' . $lastColumn . '4"/><mergeCell ref="A5:' . $lastColumn . '5"/></mergeCells>
-  <drawing r:id="rId1"/>
   <pageMargins left="0.25" right="0.25" top="0.5" bottom="0.5" header="0.2" footer="0.2"/>
   <pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0" paperSize="9"/>
+  <drawing r:id="rId1"/>
 </worksheet>';
 
     $styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -147,11 +176,7 @@ function outputNativeXlsxReport(string $programName, array $columns, array $rows
 
         $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $programName);
         $filename = $safeName . '_Beneficiary_Report_' . date('Ymd') . '.xlsx';
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Content-Length: ' . filesize($temporaryPath));
-        header('Cache-Control: no-store, no-cache, must-revalidate');
-        readfile($temporaryPath);
+        sendXlsxDownload($temporaryPath, $filename);
     } finally {
         if (is_file($temporaryPath)) unlink($temporaryPath);
     }

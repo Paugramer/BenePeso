@@ -7,6 +7,15 @@ function normalize_report_workbook(PharData $archive, string $program): void {
         if (!isset($archive[$path])) continue;
         $doc = new DOMDocument(); $doc->loadXML($archive[$path]->getContent(), LIBXML_NONET);
         $xp = new DOMXPath($doc); $xp->registerNamespace('m',$ns);
+        // Excel requires cells in column order. Replaced template headings can
+        // otherwise append C7 after AA7, which tolerant readers silently accept.
+        foreach ($xp->query('/m:worksheet/m:sheetData/m:row') as $sheetRow) {
+            $cells = iterator_to_array($xp->query('m:c', $sheetRow));
+            usort($cells, static fn($left, $right) =>
+                report_column_number(preg_replace('/\d+/', '', $left->getAttribute('r'))) <=>
+                report_column_number(preg_replace('/\d+/', '', $right->getAttribute('r'))));
+            foreach ($cells as $cell) $sheetRow->appendChild($cell);
+        }
         foreach ($xp->query('//m:sheetView') as $view) {
             $view->setAttribute('view','normal'); $view->setAttribute('topLeftCell','A1');
             $view->setAttribute('zoomScale','100'); $view->setAttribute('zoomScaleNormal','100');

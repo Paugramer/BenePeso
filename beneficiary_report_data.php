@@ -4,6 +4,7 @@ require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/spes_lifecycle_helper.php';
 require_once __DIR__ . '/historical_report_helper.php';
 require_once __DIR__ . '/report_columns.php';
+require_once __DIR__ . '/report_date_helper.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: private, no-store, max-age=0');
@@ -19,6 +20,8 @@ if ($activeRole === null) {
     exit;
 }
 $isAdmin = $activeRole === 'admin';
+try { $reportDates=report_date_filters($_GET); }
+catch (InvalidArgumentException $error) { http_response_code(400); echo json_encode(['ok'=>false,'message'=>$error->getMessage()]); exit; }
 
 $programName = trim((string)($_GET['program_name'] ?? ''));
 if ($programName === '' || mb_strlen($programName) > 120) {
@@ -63,6 +66,7 @@ if (stripos($programName, 'SPES') !== false && $rows) {
     $rows = spes_enrich_rows($conn, $rows);
 }
 
+$rows = array_values(array_filter($rows,static fn($row)=>report_date_matches((string)($row['created_at'] ?? ''),$reportDates)));
 $rows = enrich_reporting_rows($conn, $rows);
 if (($_GET['template_preview'] ?? '') === '1') {
     require_once __DIR__.'/xlsx_report_helper.php';

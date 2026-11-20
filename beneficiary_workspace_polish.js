@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // The selected values already appear in their dropdowns; no duplicate chip tray.
   };
 
-  const hasActiveFilters = activeSelects().length > 0;
+  const hasActiveFilters = activeSelects().length > 0 || [...form.querySelectorAll('[data-date-range] input')].some(input => input.value);
   setExpanded(hasActiveFilters);
   updateCounter();
   renderActiveFilters();

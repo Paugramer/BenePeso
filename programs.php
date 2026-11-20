@@ -12,6 +12,7 @@ require_once "spes_schema_helper.php";
 require_once "spes_lifecycle_helper.php";
 require_once __DIR__ . '/activity_log_helper.php';
 require_once __DIR__ . '/program_catalog.php';
+require_once __DIR__ . '/program_slot_helper.php';
 
 check_user_role('user');
 
@@ -891,7 +892,7 @@ if ($barangay_summary_result) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="home.css?v=18">
-    <link rel="stylesheet" href="programs.css?v=47">
+    <link rel="stylesheet" href="programs.css?v=slots20261120-47">
     <link rel="stylesheet" href="frontend_polish.css?v=20260929">
     <link rel="stylesheet" href="beneficiary_responsive.css?v=10">
     <link rel="stylesheet" href="beneficiary_content_enhancements.css?v=1">
@@ -1012,6 +1013,7 @@ if ($barangay_summary_result) {
                         foreach($active_programs as $index => $row): 
                             $delay = $index * 0.1;
                             $remaining_slots = max(0, (int)$row['remaining_slots']);
+                            $capacity=program_slot_summary((int)($row['slots'] ?? 0),(int)$row['remaining_slots']);
                             
                             $user_status = $row['user_approval_status']; 
                             $user_availment = $row['user_availment_status'];
@@ -1056,8 +1058,8 @@ if ($barangay_summary_result) {
 
                             $is_available = empty($row['catalog_only']);
                             $action_type = !$is_available ? 'unavailable' : ($user_status ? 'status' : 'apply');
-                            $badge_class = $user_status ? 'slots-badge current-program' : (($remaining_slots <= 5) ? 'slots-badge warning' : 'slots-badge');
-                            $badge_text = !$is_available ? 'No active batch' : ($user_status ? 'Your Current Program' : $remaining_slots . ' Slots');
+                            $badge_class = 'slots-badge'.($user_status ? ' current-program' : '').($capacity['warning'] ? ' warning' : '');
+                            $badge_text = !$is_available ? 'No active batch' : $capacity['label'];
                     ?>
                         <article class="program-card<?= !$is_available ? ' program-card--unavailable' : '' ?>"
                                  style="animation-delay: <?= $delay ?>s;"
@@ -1071,6 +1073,8 @@ if ($barangay_summary_result) {
                                  data-start="<?= $safe_start ?>"
                                  data-end="<?= $safe_end ?>"
                                  data-slots="<?= $remaining_slots ?>"
+                                 data-total-slots="<?= $capacity['total'] ?>"
+                                 data-filled-slots="<?= $capacity['filled'] ?>"
                                  data-status="<?= htmlspecialchars(strtolower($user_status ?? '')) ?>"
                                  data-availment="<?= htmlspecialchars(strtolower($user_availment ?? '')) ?>"
                                  data-reason="<?= $safe_reason ?>"
@@ -2408,8 +2412,11 @@ if ($barangay_summary_result) {
             representative.querySelector('.program-category-badge')?.remove();
             const slotBadge = representative.querySelector('.floating-badge');
             if (slotBadge) {
-                slotBadge.className = 'slots-badge floating-badge grouped-batch-badge';
-                slotBadge.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="12" height="12" rx="2"></rect><path d="M8 9h12v10a2 2 0 0 1-2 2H8V9Z"></path></svg><span>Choose batch</span>';
+                const total = groupCards.reduce((sum, card) => sum + Number(card.dataset.totalSlots || 0), 0);
+                const filled = groupCards.reduce((sum, card) => sum + Number(card.dataset.filledSlots || 0), 0);
+                const left = groupCards.reduce((sum, card) => sum + Number(card.dataset.slots || 0), 0);
+                slotBadge.className = 'slots-badge floating-badge grouped-batch-badge' + (total > 0 && filled / total >= .9 ? ' warning' : '');
+                slotBadge.textContent = `${filled}/${total} filled | ${left} left`;
             }
             const schedulePanel = representative.querySelector('.program-card-schedule');
             if (schedulePanel) {
@@ -2472,8 +2479,9 @@ if ($barangay_summary_result) {
             choice.type = 'button';
             const hasStatus = card.dataset.action === 'status';
             choice.className = `batch-choice-card${hasStatus ? ' has-user-status' : ''}`;
-            choice.setAttribute('aria-label', `${card.dataset.batch || 'Batch'}: ${hasStatus ? 'view your status' : `${card.dataset.slots || '0'} slots available`}`);
-            choice.innerHTML = `<span class="batch-choice-number">${index + 1}</span><span class="batch-choice-copy"><strong>${escapeHtml(card.dataset.batch || 'Batch')}</strong><small>${escapeHtml(card.dataset.start || 'TBA')} – ${escapeHtml(card.dataset.end || 'TBA')}</small></span><span class="batch-choice-slots">${hasStatus ? 'View your status' : `${escapeHtml(card.dataset.slots || '0')} slots`}</span><span class="batch-choice-arrow" aria-hidden="true">→</span>`;
+            choice.classList.toggle('is-nearly-full', Number(card.dataset.totalSlots)>0 && Number(card.dataset.filledSlots)/Number(card.dataset.totalSlots)>=.9);
+            choice.setAttribute('aria-label', `${card.dataset.batch || 'Batch'}: ${hasStatus ? 'view your status' : `${card.dataset.filledSlots || '0'}/${card.dataset.totalSlots || '0'} filled, ${card.dataset.slots || '0'} slots left`}`);
+            choice.innerHTML = `<span class="batch-choice-number">${index + 1}</span><span class="batch-choice-copy"><strong>${escapeHtml(card.dataset.batch || 'Batch')}</strong><small>${escapeHtml(card.dataset.start || 'TBA')} – ${escapeHtml(card.dataset.end || 'TBA')}</small></span><span class="batch-choice-slots">${escapeHtml(card.dataset.filledSlots || '0')}/${escapeHtml(card.dataset.totalSlots || '0')} filled | ${escapeHtml(card.dataset.slots || '0')} left</span><span class="batch-choice-arrow" aria-hidden="true">→</span>`;
             choice.addEventListener('click', () => {
                 closeModal('batchChooserModal');
                 openProgramDetails(card);
@@ -2690,8 +2698,10 @@ if ($barangay_summary_result) {
         if (eligibilityTarget) renderProgramDetailList(eligibilityTarget, eligibility, 'No eligibility rules specified.');
         
         let badge = document.getElementById('detBadge');
-        badge.innerText = slots + " Slots Available";
-        badge.className = (slots <= 5) ? 'slots-badge warning' : 'slots-badge';
+        const totalSlots = Number(element.dataset.totalSlots || 0);
+        const filledSlots = Number(element.dataset.filledSlots || 0);
+        badge.textContent = `${filledSlots}/${totalSlots} filled | ${slots} left`;
+        badge.className = totalSlots > 0 && filledSlots / totalSlots >= .9 ? 'slots-badge warning' : 'slots-badge';
 
         let footer = document.getElementById('detAction');
         footer.replaceChildren();
