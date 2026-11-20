@@ -408,7 +408,7 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="system_mobile.css?v=24">
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20261014-restored" defer></script>
-<script src="beneficiary_workspace_polish.js?v=dates20261120-2" defer></script>
+<script src="beneficiary_workspace_polish.js?v=collapsed20261120-3" defer></script>
 <link rel="stylesheet" href="report_preview.css?v=10"><script src="report_preview.js?v=13" defer></script>
 <link rel="stylesheet" href="report_ui.css?v=1"></head>
 <body class="staff-mobile-page peso-staff-beneficiaries-page">
@@ -578,7 +578,7 @@ if ($selectedProgramName !== "") {
               <span class="beneficiary-filter-count" hidden>0</span>
               <i class="ph ph-caret-down beneficiary-filter-caret"></i>
             </button>
-            <div class="beneficiary-secondary-filters" id="beneficiarySecondaryFilters">
+            <div class="beneficiary-secondary-filters" id="beneficiarySecondaryFilters" hidden>
 <?php render_report_date_fields($reportDates,"list_dates","Application date",true); ?>
             <select name="program_id" class="filter-select auto-submit">
                 <option value="0">All Batches</option>

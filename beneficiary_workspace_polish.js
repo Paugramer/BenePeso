@@ -37,8 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // The selected values already appear in their dropdowns; no duplicate chip tray.
   };
 
-  const hasActiveFilters = activeSelects().length > 0 || [...form.querySelectorAll('[data-date-range] input')].some(input => input.value);
-  setExpanded(hasActiveFilters);
+  // A selected tab or filter must not open the panel without a user click.
+  setExpanded(false);
   updateCounter();
   renderActiveFilters();
 
