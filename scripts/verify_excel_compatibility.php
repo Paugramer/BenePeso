@@ -20,6 +20,19 @@ function excel_check(bool $ok, string $message): void {
 }
 
 function excel_validate(string $path): void {
+    $package=file_get_contents($path);
+    $end=strrpos($package,"PK\x05\x06");
+    excel_check($end!==false,'Missing ZIP directory');
+    $central=unpack('Voffset',substr($package,$end+16,4))['offset'];
+    $count=unpack('vcount',substr($package,$end+10,2))['count'];
+    for($index=0;$index<$count;$index++) {
+        $needed=unpack('vversion',substr($package,$central+6,2))['version'];
+        $local=unpack('Voffset',substr($package,$central+42,4))['offset'];
+        $localNeeded=unpack('vversion',substr($package,$local+4,2))['version'];
+        excel_check($needed>=20 && $localNeeded>=20,'ZIP version headers are rejected by Microsoft Office');
+        $lengths=unpack('vname/vextra/vcomment',substr($package,$central+28,6));
+        $central+=46+$lengths['name']+$lengths['extra']+$lengths['comment'];
+    }
     $stream=fopen($path,'rb'); $signature=fread($stream,4); fclose($stream);
     excel_check($signature === "PK\x03\x04", 'Workbook contains output before the ZIP signature');
     $zip=new PharData($path,0,null,Phar::ZIP);
@@ -47,6 +60,9 @@ function excel_validate(string $path): void {
             $previous=$position;
         }
         $xp=new DOMXPath($doc); $xp->registerNamespace('m',$ns);
+        foreach($xp->query('/m:worksheet/m:pageSetup') as $setup) foreach(['horizontalDpi','verticalDpi'] as $attribute) {
+            excel_check(!$setup->hasAttribute($attribute)||(int)$setup->getAttribute($attribute)>=1,'Invalid print resolution');
+        }
         foreach ($xp->query('/m:worksheet/m:sheetData/m:row') as $row) {
             $column=0;
             foreach ($xp->query('m:c',$row) as $cell) {
@@ -61,6 +77,8 @@ function excel_validate(string $path): void {
     unset($zip);
 }
 
+$fixtureDirectory=($argv[1] ?? '')==='--fixtures' ? ($argv[2] ?? '') : '';
+if($fixtureDirectory!=='' && !is_dir($fixtureDirectory)) mkdir($fixtureDirectory,0700,true);
 $sample=['first_name'=>'SYNTHETIC', 'last_name'=>'TEST', 'full_name'=>"SYNTHETIC José\x01\xEF\xBF\xBE",
     'barangay'=>'Alpha','contact_no'=>'09123456789','id_number'=>'001234',
     'business_name'=>'SYNTHETIC BUSINESS','approval_status'=>'Approved',
@@ -70,7 +88,7 @@ foreach (['SPES','TUPAD','MSME'] as $program) {
     foreach ([[],[$sample],[$sample,$sample]] as $rows) {
         foreach (['All','Alpha'] as $barangay) {
             $path=build_official_template_report($program,$rows,$barangay);
-            try { excel_validate($path); } finally { unlink($path); }
+            try { excel_validate($path); if($fixtureDirectory!=='')copy($path,$fixtureDirectory.DIRECTORY_SEPARATOR.$program.'_'.count($rows).'_'.$barangay.'.xlsx'); } finally { unlink($path); }
         }
     }
     echo $program . ": empty, one/multiple records and location filters passed\n";
@@ -93,6 +111,7 @@ foreach (['empty','populated'] as $mode) {
             excel_check(strpos($sheet,'José')!==false,'Unicode name was corrupted');
         }
         unset($zip);
+        if($fixtureDirectory!=='')copy($path,$fixtureDirectory.DIRECTORY_SEPARATOR.'Native_'.$mode.'.xlsx');
     } finally { unlink($path); }
 }
 echo "Native selected-column exports: schema order, XML text and clean binary output passed\n";

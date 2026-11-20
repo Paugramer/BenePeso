@@ -53,6 +53,7 @@ function build_official_template_report(string $program, array $rows, string $se
         $archive['xl/worksheets/sheet1.xml']=$doc->saveXML();
         normalize_report_workbook($archive,$program);
         unset($archive);
+        finalizeXlsxPackage($temporary);
         return $temporary;
     } catch (Throwable $e) { unset($archive);if(is_file($temporary)) unlink($temporary);throw $e; }
 }

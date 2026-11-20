@@ -4,7 +4,7 @@ $selectedProgramName=$program;$reportProgramTitle=getReportProgramTitle($program
 $result=$conn->query("SELECT DISTINCT barangay FROM beneficiaries WHERE barangay IS NOT NULL AND barangay<>'' ORDER BY barangay");while($record=$result->fetch_assoc())$barangays[]=$record['barangay'];
 $result=$conn->query("SELECT DISTINCT business_nature FROM beneficiaries WHERE business_nature IS NOT NULL AND business_nature<>'' ORDER BY business_nature");while($record=$result->fetch_assoc()){foreach(official_report_list($record['business_nature']) as $nature)$businessNatures[]=$nature;}$businessNatures=array_values(array_unique($businessNatures));
 ?>
-<link rel="stylesheet" href="report_preview.css?v=10">
+<link rel="stylesheet" href="report_preview.css?v=10"><link rel="stylesheet" href="report_ui.css?v=1">
 <div class="modal" id="generateReportModal" aria-hidden="true">
   <div class="modal-backdrop" data-close-report></div>
   <div class="modal-dialog split-layout" style="position: relative; overflow: hidden !important;">
@@ -124,4 +124,4 @@ $result=$conn->query("SELECT DISTINCT business_nature FROM beneficiaries WHERE b
   </div>
 </div>
 
-<script>window.currentReportTitle=<?=json_encode($reportProgramTitle,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT)?>;</script><script src="report_preview.js?v=12" defer></script>
+<script>window.currentReportTitle=<?=json_encode($reportProgramTitle,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT)?>;</script><script src="report_preview.js?v=13" defer></script>

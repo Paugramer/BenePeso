@@ -2,6 +2,20 @@
  function initialize(){
   const modal=document.getElementById('generateReportModal'),open=document.getElementById('openReportModal');if(!modal||!open)return;
   const filterToggle=modal.querySelector('.report-filter-toggle');if(filterToggle)modal.querySelector('.report-view-toolbar').prepend(filterToggle);
+  const controls=modal.querySelector('.report-controls'),preview=modal.querySelector('.report-preview');
+  const back=document.createElement('button');back.type='button';back.className='report-back-to-preview';back.textContent='\u2190 Back to preview';controls.querySelector('.report-controls-heading').prepend(back);
+  function setFilters(visible){
+   modal.classList.toggle('filters-open',visible);filterToggle?.setAttribute('aria-expanded',String(visible));
+   const small=matchMedia('(max-width:900px)').matches;controls.inert=small&&!visible;preview.inert=small&&visible;
+  }
+  setFilters(false);
+  new MutationObserver(()=>{if(!modal.classList.contains('show'))document.body.classList.remove('report-preview-active');}).observe(modal,{attributes:true,attributeFilter:['class']});
+  modal.querySelector('.report-close-button').textContent='\u00d7';
+  modal.querySelector('[data-report-zoom="out"]').textContent='\u2212';
+  modal.querySelector('[data-report-zoom="in"]').textContent='+';
+  modal.querySelector('[data-report-zoom="fit"]').textContent='Fit width';
+  modal.querySelector('[data-report-zoom="fit"]')?.setAttribute('aria-label','Fit report width');
+  modal.querySelectorAll('[data-report-column-page]').forEach(button=>button.textContent=button.dataset.reportColumnPage==='next'?'Next':'Previous');
   const viewport=modal.querySelector('.scrollable-table-wrap'),form=modal.querySelector('.report-form'),message=document.createElement('p');
   message.className='report-preview-message';message.setAttribute('role','status');viewport.before(message);
   const sheetBar=document.createElement('div');sheetBar.className='report-sheet-tabs';modal.querySelector('.report-column-pagination').before(sheetBar);
@@ -38,9 +52,11 @@
    try{const response=await fetch((modal.dataset.submissionReport?'requirements_report.php?':'beneficiary_report_data.php?')+filters(),{credentials:'same-origin',signal:controller.signal});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.message||'Unable to prepare report. Please try again.');if(sequence!==requestNumber)return;sheets=data.sheets;count=data.count;sheetIndex=Math.min(sheetIndex,sheets.length-1);columnPage=0;loaded=true;message.textContent='';message.hidden=true;draw();field('report_print_button').disabled=false;}
    catch(error){if(error.name==='AbortError')return;message.hidden=false;message.textContent=error.message;viewport.replaceChildren(worksheetHeader);}
   }
-  open.addEventListener('click',()=>{modal.classList.add('show');modal.setAttribute('aria-hidden','false');refresh();});
-  modal.querySelectorAll('[data-close-report]').forEach(button=>button.addEventListener('click',()=>{modal.classList.remove('show','filters-open');modal.setAttribute('aria-hidden','true');controller?.abort();open.focus();}));
-  modal.querySelector('.report-filter-toggle')?.addEventListener('click',event=>{const visible=modal.classList.toggle('filters-open');event.currentTarget.setAttribute('aria-expanded',String(visible));});
+  open.addEventListener('click',()=>{modal.classList.add('show');modal.setAttribute('aria-hidden','false');document.body.classList.add('report-preview-active');setFilters(false);refresh();});
+  modal.querySelectorAll('[data-close-report]').forEach(button=>button.addEventListener('click',()=>{modal.classList.remove('show');setFilters(false);modal.setAttribute('aria-hidden','true');document.body.classList.remove('report-preview-active');controller?.abort();open.focus();}));
+  filterToggle?.addEventListener('click',()=>{setFilters(!modal.classList.contains('filters-open'));if(modal.classList.contains('filters-open'))back.focus();});
+  back.addEventListener('click',()=>{setFilters(false);filterToggle?.focus();});
+  document.addEventListener('keydown',event=>{if(event.key!=='Escape'||!modal.classList.contains('show'))return;event.preventDefault();if(modal.classList.contains('filters-open'))back.click();else modal.querySelector('.report-close-button').click();});
   modal.querySelectorAll('.report-filter-list select').forEach(select=>select.addEventListener('change',refresh));
   modal.querySelectorAll('[data-date-range] input').forEach(input=>input.addEventListener('change',refresh));
   columns.forEach(input=>input.addEventListener('change',()=>{columnPage=0;draw();}));
@@ -84,7 +100,7 @@
    if(!loaded||!count){event.preventDefault();showBeneficiaryNotice('No Records Found','No records match the selected report filters.');return;}
    if(!columns.some(input=>input.checked)){event.preventDefault();showBeneficiaryNotice('No Columns Selected','Select at least one field before exporting.');}
   });
-  window.addEventListener('resize',draw);
+  window.addEventListener('resize',()=>{setFilters(modal.classList.contains('filters-open'));draw();});
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize);else initialize();
 })();

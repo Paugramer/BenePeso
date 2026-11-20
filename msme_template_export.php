@@ -68,6 +68,6 @@ function build_msme_template_report(array $records): string {
             $archive[$path]=$doc->saveXML();
         }
         normalize_report_workbook($archive,'MSME');
-        unset($archive);return $temporary;
+        unset($archive);finalizeXlsxPackage($temporary);return $temporary;
     } catch(Throwable $e) { unset($archive);if(is_file($temporary))unlink($temporary);throw $e; }
 }

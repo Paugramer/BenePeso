@@ -50,6 +50,36 @@ function xlsxInlineCell(string $reference, string $value, int $style): string
     return '<c r="' . $reference . '" t="inlineStr" s="' . $style . '"><is><t xml:space="preserve">' . xlsxXml($value) . '</t></is></c>';
 }
 
+/** Phar ZIPs declare version 0, which Microsoft's package reader rejects. */
+function finalizeXlsxPackage(string $path): void
+{
+    $bytes=file_get_contents($path);
+    if ($bytes===false) throw new RuntimeException('The report package could not be read.');
+    $end=strrpos($bytes,"PK\x05\x06");
+    if ($end===false || strlen($bytes)-$end<22) throw new RuntimeException('Invalid report ZIP directory.');
+    $directory=unpack('vdisk/vstartDisk/vdiskCount/vcount/Vsize/Voffset/vcommentLength',substr($bytes,$end+4,18));
+    if ($directory['disk']!==0 || $directory['startDisk']!==0 || $directory['diskCount']!==$directory['count']
+        || $directory['offset']+$directory['size']!==$end || $end+22+$directory['commentLength']!==strlen($bytes)) {
+        throw new RuntimeException('Unsupported report ZIP directory.');
+    }
+    $cursor=$directory['offset'];
+    for ($index=0;$index<$directory['count'];$index++) {
+        if (substr($bytes,$cursor,4)!=="PK\x01\x02") throw new RuntimeException('Invalid report ZIP entry.');
+        $lengths=unpack('vname/vextra/vcomment',substr($bytes,$cursor+28,6));
+        $offset=unpack('Voffset',substr($bytes,$cursor+42,4))['offset'];
+        if (substr($bytes,$offset,4)!=="PK\x03\x04") throw new RuntimeException('Invalid report ZIP local header.');
+        $versions=unpack('vmade/vneeded',substr($bytes,$cursor+4,4));
+        $made=($versions['made'] & 0xff00) | max(20,$versions['made'] & 0xff);
+        $bytes=substr_replace($bytes,pack('vv',$made,max(20,$versions['needed'])),$cursor+4,4);
+        $localVersion=unpack('vversion',substr($bytes,$offset+4,2))['version'];
+        $bytes=substr_replace($bytes,pack('v',max(20,$localVersion)),$offset+4,2);
+        $cursor+=46+$lengths['name']+$lengths['extra']+$lengths['comment'];
+    }
+    if ($cursor!==$end) throw new RuntimeException('Invalid report ZIP directory size.');
+    if (file_put_contents($path,$bytes,LOCK_EX)!==strlen($bytes)) throw new RuntimeException('The report package could not be finalized.');
+    clearstatcache(true,$path);
+}
+
 function outputNativeXlsxReport(string $programName, array $columns, array $rows, string $subtitle, bool $officialValues = false): void
 {
     $headerImagePath = __DIR__ . '/assets/peso_official_report_header.png';
@@ -117,8 +147,8 @@ function outputNativeXlsxReport(string $programName, array $columns, array $rows
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <fonts count="3">
     <font><sz val="10"/><name val="Calibri"/><family val="2"/></font>
-    <font><b/><color rgb="FFFFFFFF"/><sz val="16"/><name val="Calibri"/></font>
-    <font><b/><color rgb="FFFFFFFF"/><sz val="10"/><name val="Calibri"/></font>
+    <font><b/><sz val="16"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>
+    <font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>
   </fonts>
   <fills count="5">
     <fill><patternFill patternType="none"/></fill>
@@ -174,6 +204,7 @@ function outputNativeXlsxReport(string $programName, array $columns, array $rows
         if (is_file($headerImagePath)) $archive->addFile($headerImagePath, 'xl/media/peso_official_report_header.png');
         unset($archive);
 
+        finalizeXlsxPackage($temporaryPath);
         $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $programName);
         $filename = $safeName . '_Beneficiary_Report_' . date('Ymd') . '.xlsx';
         sendXlsxDownload($temporaryPath, $filename);

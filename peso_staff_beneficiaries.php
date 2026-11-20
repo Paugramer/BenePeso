@@ -409,8 +409,8 @@ if ($selectedProgramName !== "") {
   <link rel="stylesheet" href="system_readability.css?v=1">
 <script src="frontend_polish.js?v=20261014-restored" defer></script>
 <script src="beneficiary_workspace_polish.js?v=dates20261120-2" defer></script>
-<link rel="stylesheet" href="report_preview.css?v=10"><script src="report_preview.js?v=12" defer></script>
-</head>
+<link rel="stylesheet" href="report_preview.css?v=10"><script src="report_preview.js?v=13" defer></script>
+<link rel="stylesheet" href="report_ui.css?v=1"></head>
 <body class="staff-mobile-page peso-staff-beneficiaries-page">
   <div class="page-wrap">
   <div class="sidebar-overlay" id="sidebarOverlay"></div>

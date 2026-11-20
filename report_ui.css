@@ -1,0 +1,220 @@
+/* Shared report controls for Admin, PESO Staff and document submissions. */
+body.report-preview-active { overflow:hidden!important; }
+:is(.records-filter-container,:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal) {
+  --report-ink:#173d2d;
+  --report-muted:#61756b;
+  --report-line:#d7e4dc;
+  --report-green:#1d7954;
+}
+.records-filter-container .report-date-fields,
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-fields {
+  box-sizing:border-box;grid-column:1/-1;display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;
+  align-items:end;gap:10px 14px;width:100%;min-width:0;
+  margin:0;padding:14px;border:1px solid var(--report-line);
+  border-radius:12px;background:#f7faf8;
+}
+.records-filter-container .report-date-heading,
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-heading {
+  grid-column:1/-1;font:600 13px/1.4 Poppins,Arial,sans-serif;
+  color:var(--report-ink);text-transform:none;letter-spacing:0;
+}
+.records-filter-container .report-date-field,
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-field { min-width:0;width:100%;margin:0!important; }
+.records-filter-container .report-date-field label,
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-field label {
+  display:block;margin:0 0 6px!important;font:500 12px/1.4 Poppins,Arial,sans-serif!important;
+  color:var(--report-muted)!important;text-transform:none!important;letter-spacing:0!important;
+}
+.records-filter-container .report-date-field input,
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-field input {
+  box-sizing:border-box;display:block;width:100%;max-width:100%;min-width:0;
+  min-height:44px;padding:10px 12px!important;border:1px solid #cbded2!important;
+  border-radius:8px!important;background:#fff!important;color:var(--report-ink);
+  font:400 14px/1.4 Poppins,Arial,sans-serif!important;box-shadow:none;
+  color-scheme:light;
+}
+.report-date-field input:focus-visible {
+  outline:2px solid #3f956b;outline-offset:2px;
+}
+.records-filter-container .report-date-actions,
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-actions { display:flex;align-items:center;gap:8px;min-width:0; }
+.records-filter-container .report-date-actions button,
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-actions button {
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-height:44px;margin:0!important;padding:10px 16px!important;width:auto!important;
+  border:1px solid var(--report-line)!important;border-radius:8px!important;
+  background:#fff!important;color:var(--report-ink)!important;
+  font:600 13px/1.4 Poppins,Arial,sans-serif!important;
+  letter-spacing:0!important;text-transform:none!important;white-space:nowrap;
+  box-shadow:none!important;cursor:pointer;
+}
+.records-filter-container .report-date-actions .btn-main {
+  background:var(--report-green)!important;border-color:var(--report-green)!important;color:#fff!important;
+}
+.records-filter-container .report-date-actions button:hover,
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-actions button:hover { filter:brightness(.96); }
+.records-filter-container .beneficiary-secondary-filters { display:flex!important;flex-wrap:wrap;align-items:center;gap:12px!important;min-width:0; }
+.records-filter-container .beneficiary-secondary-filters[hidden] { display:none!important; }
+.records-filter-container .beneficiary-secondary-filters>.report-date-fields { flex:1 1 100%; }
+.records-filter-container .beneficiary-secondary-filters .filter-select {
+  flex:1 1 180px;height:44px;min-height:44px!important;font:500 13px/1.4 Poppins,Arial,sans-serif!important;
+}
+
+/* The worksheet scrolls inside its viewport; the surrounding controls stay readable. */
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal { padding:16px!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .split-layout {
+  box-sizing:border-box;display:grid!important;grid-template-columns:320px minmax(0,1fr);
+  width:100%!important;max-width:1600px!important;
+  height:calc(100vh - 32px)!important;height:calc(100dvh - 32px)!important;
+  min-height:0!important;max-height:960px!important;margin:auto!important;border-radius:16px!important;
+}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-controls {
+  box-sizing:border-box;display:flex!important;flex-direction:column;
+  width:auto!important;min-width:0;min-height:0;height:100%!important;
+  padding:24px 20px 16px!important;background:#fff!important;
+  border-right:1px solid var(--report-line)!important;box-shadow:none!important;
+}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-controls-heading {
+  flex:none;margin:0 0 18px!important;padding:0 0 18px!important;
+  border-bottom:1px solid var(--report-line);
+}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-title-row { gap:10px;align-items:center; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-controls .modal-title {
+  font:700 22px/1.25 Poppins,Arial,sans-serif!important;letter-spacing:-.4px!important;
+}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-program-label {
+  margin-top:5px;font:500 12px/1.5 Poppins,Arial,sans-serif!important;
+  text-transform:none!important;letter-spacing:0!important;color:var(--report-muted)!important;
+}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-controls .modal-sub {
+  margin:12px 0 0!important;font:400 13px/1.55 Poppins,Arial,sans-serif!important;
+  color:var(--report-muted)!important;
+}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-form { flex:1;height:auto!important;min-height:0!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-filter-list {
+  display:flex!important;flex-direction:column;flex:1;min-height:0;
+  gap:16px!important;padding-right:6px!important;margin-bottom:16px!important;
+  overflow-y:auto!important;overscroll-behavior:contain;scrollbar-width:thin;
+}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-filter-list .form-group>label {
+  font:500 12px/1.45 Poppins,Arial,sans-serif!important;margin-bottom:6px!important;
+  color:var(--report-muted)!important;text-transform:none!important;letter-spacing:0!important;
+}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-filter-list select {
+  box-sizing:border-box;width:100%;min-height:44px!important;height:auto;
+  border:1px solid #cbded2!important;border-radius:8px!important;
+  padding:11px 34px 11px 12px!important;background-color:#fff!important;
+  color:var(--report-ink);font:500 13px/1.5 Poppins,Arial,sans-serif!important;
+}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-fields {
+  grid-template-columns:minmax(0,1fr);gap:10px;padding:12px;
+}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-actions { grid-column:1/-1;justify-content:flex-end; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-actions button { min-height:36px;padding:7px 11px!important;font-size:12px!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-column-picker { border-radius:10px; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-column-picker summary { font:600 13px/1.5 Poppins,Arial,sans-serif!important;text-transform:none!important;letter-spacing:0!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-column-list label { font:400 13px/1.5 Poppins,Arial,sans-serif!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-actions { display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;flex:none;gap:10px;padding-top:14px!important;border-top:1px solid var(--report-line); }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-actions button {
+  min-height:46px!important;padding:12px!important;border-radius:9px!important;
+  font:600 13px/1.4 Poppins,Arial,sans-serif!important;box-shadow:none!important;
+}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-preview { min-width:0;min-height:0;width:auto!important;height:100%!important;padding:0!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .spreadsheet-container { border:0!important;border-radius:0!important;box-shadow:none!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-view-toolbar {
+  display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between;flex-wrap:wrap;
+  min-height:68px!important;padding:12px 72px 12px 16px!important;gap:8px!important;
+}
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-view-label { font:500 12px/1.4 Poppins,Arial,sans-serif!important;text-transform:none!important;letter-spacing:0!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-zoom-controls { display:flex!important;align-items:center;gap:6px!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-zoom-controls button { min-width:36px;min-height:36px;border-radius:8px;font:500 12px/1.4 Poppins,Arial,sans-serif!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-zoom-value { font:600 12px/1.4 Poppins,Arial,sans-serif!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-sheet-tabs { display:flex!important;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding:10px 16px;scrollbar-width:thin; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-sheet-tabs:empty { display:none!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-sheet-tabs button { flex:0 0 auto;width:auto;white-space:nowrap;max-width:none;font:500 12px/1.4 Poppins,Arial,sans-serif!important;padding:9px 12px; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-column-pagination { grid-template-columns:auto minmax(0,1fr) auto;gap:8px;padding:8px 16px; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-column-pagination button { min-height:36px;padding:7px 10px;font:500 12px/1.4 Poppins,Arial,sans-serif!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-column-page-status { font:500 12px/1.4 Poppins,Arial,sans-serif!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-close-button { width:40px!important;height:40px!important;top:14px!important;right:14px!important;z-index:70!important; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-back-to-preview { display:none; }
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .preview-header p { text-transform:none!important;letter-spacing:0!important; }
+
+@media(max-width:1100px) {
+  .records-filter-container .beneficiary-secondary-filters .filter-select { flex-basis:calc(50% - 6px); }
+  .records-filter-container .report-date-fields { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .records-filter-container .report-date-actions { grid-column:1/-1;justify-content:flex-end; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .split-layout { grid-template-columns:290px minmax(0,1fr); }
+}
+@media(max-width:900px) {
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal { padding:0!important; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .split-layout {
+    display:flex!important;width:100%!important;max-width:100%!important;
+    height:100vh!important;height:100dvh!important;max-height:100dvh!important;
+    min-height:0!important;border-radius:0!important;
+  }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-controls {
+    position:absolute!important;inset:0!important;z-index:60!important;
+    width:100%!important;max-width:100%!important;height:100%!important;
+    padding:16px 20px max(14px,env(safe-area-inset-bottom))!important;
+    border:0!important;transform:translateX(-105%);visibility:hidden;pointer-events:none;
+    transition:transform .2s ease,visibility .2s ease;
+  }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal.filters-open .report-controls { transform:translateX(0);visibility:visible;pointer-events:auto; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal.filters-open .report-preview { visibility:hidden; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-controls-heading { margin-bottom:16px!important;padding-bottom:16px!important; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-back-to-preview {
+    display:inline-flex;align-items:center;gap:8px;min-height:40px;
+    width:max-content!important;justify-content:flex-start!important;
+    margin:0 50px 16px 0;padding:8px 0;border:0;background:transparent;
+    color:var(--report-green);font:600 13px/1.4 Poppins,Arial,sans-serif;cursor:pointer;
+  }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-controls .modal-title { font-size:21px!important; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-controls .modal-sub { font-size:13px!important; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-preview { width:100%!important;flex:1 1 100%; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-filter-toggle {
+    display:inline-flex!important;position:static!important;transform:none!important;
+    width:auto!important;min-height:40px!important;padding:8px 12px!important;
+    box-shadow:none!important;font:600 13px/1.4 Poppins,Arial,sans-serif!important;
+  }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-view-label { display:none!important; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-view-toolbar { justify-content:flex-start;gap:10px!important;padding:12px 64px 12px 12px!important; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-zoom-controls { justify-content:flex-start!important;flex-wrap:nowrap!important; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-fit-button span { display:none; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-sheet-tabs { padding:8px 12px; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-column-pagination { padding:8px 12px; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-close-button { top:12px!important;right:12px!important; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-field input,
+  .records-filter-container .report-date-field input { font-size:16px!important; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-fields { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:640px) {
+  .records-filter-container .beneficiary-secondary-filters .filter-select { flex-basis:100%; }
+}
+@media(max-width:480px) {
+  .records-filter-container .report-date-fields { padding:12px;gap:10px; }
+  .records-filter-container .report-date-actions { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%; }
+  .records-filter-container .report-date-actions button { width:100%!important;padding:10px!important; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-controls { padding-inline:16px!important; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-field input,.records-filter-container .report-date-field input { padding:10px 8px!important; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-view-toolbar { min-height:64px!important; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-column-pagination button { padding:7px 8px; }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-column-page-status { font-size:11px!important; }
+}
+@media(max-width:380px) {
+  .records-filter-container .report-date-fields,:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-date-fields { grid-template-columns:minmax(0,1fr); }
+}
+@media(prefers-reduced-motion:reduce) { :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-controls { transition:none; } }
+
+/* Override legacy icon-only pagination and keep the close control above the mobile panel. */
+:is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .split-layout>button.report-close-button[data-close-report] {
+  top:12px!important;right:12px!important;z-index:80!important;font:400 26px/1 Arial,sans-serif!important;
+}
+@media(max-width:900px) {
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-column-pagination {
+    grid-template-columns:auto minmax(0,1fr) auto!important;
+  }
+  :is(.admin-beneficiaries-page,.peso-staff-beneficiaries-page,.report-workspace) #generateReportModal .report-column-pagination button {
+    width:auto!important;min-width:62px!important;min-height:40px!important;height:auto!important;padding:8px!important;font:500 12px/1.4 Poppins,Arial,sans-serif!important;
+  }
+}

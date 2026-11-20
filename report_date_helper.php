@@ -51,12 +51,15 @@ function report_date_label(array $filters, string $basis='Application date'): st
 function render_report_date_fields(array $filters, string $prefix, string $basis='Application date', bool $apply=false): void {
     $escape=static fn($value)=>htmlspecialchars($value,ENT_QUOTES,'UTF-8');
     ?>
-    <div class="report-date-fields" data-date-range style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;width:100%">
+    <div class="report-date-fields" data-date-range role="group" aria-label="<?=$escape($basis.' range')?>">
+      <div class="report-date-heading"><?=$escape($basis)?></div>
       <?php foreach (['date_from'=>'From','date_to'=>'To'] as $key=>$label): ?>
-      <div class="form-group" style="margin:0;flex:1;min-width:145px"><label for="<?=$escape($prefix.'_'.$key)?>"><?=$escape($basis.' · '.$label)?></label><input style="width:100%;min-height:42px;padding:8px;border:1px solid #ccd8d1;border-radius:8px;font:inherit" type="date" id="<?=$escape($prefix.'_'.$key)?>" name="<?=$key?>" value="<?=$escape($filters[$key] ?? '')?>" min="1000-01-01" max="9999-12-31"></div>
+      <div class="form-group report-date-field"><label for="<?=$escape($prefix.'_'.$key)?>"><?=$label?></label><input type="date" id="<?=$escape($prefix.'_'.$key)?>" name="<?=$key?>" value="<?=$escape($filters[$key] ?? '')?>" min="1000-01-01" max="9999-12-31"></div>
       <?php endforeach; ?>
-      <?php if($apply):?><button class="btn-main" type="submit">Apply dates</button><?php endif?>
-      <button type="button" class="btn-edit" data-clear-report-dates>Clear dates</button>
+      <div class="report-date-actions">
+        <?php if($apply):?><button class="btn-main" type="submit">Apply dates</button><?php endif?>
+        <button type="button" class="btn-edit" data-clear-report-dates>Clear dates</button>
+      </div>
     </div>
     <script src="report_date_filters.js?v=1" defer></script>
     <?php

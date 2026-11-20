@@ -7,6 +7,11 @@ function normalize_report_workbook(PharData $archive, string $program): void {
         if (!isset($archive[$path])) continue;
         $doc = new DOMDocument(); $doc->loadXML($archive[$path]->getContent(), LIBXML_NONET);
         $xp = new DOMXPath($doc); $xp->registerNamespace('m',$ns);
+        foreach ($xp->query('/m:worksheet/m:pageSetup') as $pageSetup) {
+            foreach (['horizontalDpi','verticalDpi'] as $attribute) {
+                if ($pageSetup->hasAttribute($attribute) && (int)$pageSetup->getAttribute($attribute)<1) $pageSetup->removeAttribute($attribute);
+            }
+        }
         // Excel requires cells in column order. Replaced template headings can
         // otherwise append C7 after AA7, which tolerant readers silently accept.
         foreach ($xp->query('/m:worksheet/m:sheetData/m:row') as $sheetRow) {
