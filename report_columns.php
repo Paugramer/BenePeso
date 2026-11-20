@@ -228,6 +228,23 @@ function reportBulletListValue($value): string
     return implode("\n", array_map(static fn($item) => '• ' . $item, $items));
 }
 
+/** Imports can store the entire address in the street field. Append only missing locations. */
+function reportCompleteAddress(array $row): string
+{
+    $explicit=trim((string)($row['address'] ?? ''));
+    if ($explicit!=='') return $explicit;
+    $address=trim((string)($row['street_purok_zone'] ?? ''), " \t\n\r\0\x0B,;");
+    $normalize=static fn(string $value): string => ' '.trim(mb_strtolower(preg_replace('/[^\p{L}\p{N}]+/u',' ',$value))).' ';
+    foreach ([(string)($row['barangay'] ?? ''),
+        trim((string)($row['municipality'] ?? '')) ?: 'Vinzons',
+        trim((string)($row['province'] ?? '')) ?: 'Camarines Norte'] as $part) {
+        $part=trim($part);
+        if ($part==='' || strpos($normalize($address),$normalize($part))!==false) continue;
+        $address.=($address!=='' ? ', ' : '').$part;
+    }
+    return $address;
+}
+
 function getReportCellValue(array $row, string $key): string
 {
     switch ($key) {
@@ -294,8 +311,7 @@ function getReportCellValue(array $row, string $key): string
         case 'owner_contact':
             return (string)($row['contact_no'] ?? '');
         case 'complete_address':
-            if (!empty($row['address'])) return trim((string)$row['address']);
-            return trim(($row['street_purok_zone'] ?? '') . ' ' . ($row['barangay'] ?? '') . ' Vinzons, Camarines Norte');
+            return reportCompleteAddress($row);
         case 'birthdate':
         case 'created_at':
         case 'start_date':
